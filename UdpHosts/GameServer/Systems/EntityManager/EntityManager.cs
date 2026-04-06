@@ -1851,6 +1851,10 @@ public class EntityManager
             FlushViewChangesToScoped(vehicle.Vehicle_CombatView, vehicle.EntityId, ChannelType.ReliableGss);
             FlushViewChangesToScoped(vehicle.Vehicle_MovementView, vehicle.EntityId);
         }
+        else if (entity is OutpostEntity outpost)
+        {
+            FlushViewChangesToScoped(outpost.Outpost_ObserverView, outpost.EntityId);
+        }
         else if (entity is DeployableEntity deployable)
         {
             FlushViewChangesToScoped(deployable.Deployable_ObserverView, deployable.EntityId);
