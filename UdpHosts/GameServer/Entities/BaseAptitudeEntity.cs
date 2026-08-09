@@ -12,6 +12,12 @@ public abstract class BaseAptitudeEntity : BaseEntity, IAptitudeTarget
 
     protected EffectState[] ActiveEffects = new EffectState[MaxEffectCount];
 
+    // Last change time sent per effect slot. Consecutive transitions on the same slot can
+    // land within the same millisecond (e.g. a remove chain immediately applying a follow-up
+    // effect), which would repeat the previous change time; a client deduplicating on that
+    // field would drop the second transition, so bump it to keep it strictly increasing.
+    private readonly ushort[] _statusEffectChangeTimes = new ushort[MaxEffectCount];
+
     public BaseAptitudeEntity(IShard shard, ulong eid, CharacterEntity owner = null)
     : base(shard, eid)
     {
@@ -73,7 +79,7 @@ public abstract class BaseAptitudeEntity : BaseEntity, IAptitudeTarget
 
         ActiveEffects[firstFreeIndex] = state;
 
-        var time = unchecked((ushort)state.Time);
+        var time = NextStatusEffectChangeTime(state.Index, unchecked((ushort)state.Time));
         var data = new StatusEffectData
         {
             Id = state.Effect.Id,
@@ -91,9 +97,20 @@ public abstract class BaseAptitudeEntity : BaseEntity, IAptitudeTarget
     public void ClearEffect(EffectState state)
     {
         ActiveEffects[state.Index] = null;
-        var time = unchecked((ushort)state.Context.Shard.CurrentTime);
+        var time = NextStatusEffectChangeTime(state.Index, unchecked((ushort)state.Context.Shard.CurrentTime));
         ClearStatusEffect(state.Index, time, state.Effect.Id);
         Shard.EntityMan.FlushChanges(this); // Force flush so that we communicate every change
+    }
+
+    private ushort NextStatusEffectChangeTime(byte index, ushort time)
+    {
+        if (time == _statusEffectChangeTimes[index])
+        {
+            time++;
+        }
+
+        _statusEffectChangeTimes[index] = time;
+        return time;
     }
 
     public abstract void SetStatusEffect(byte index, ushort time, StatusEffectData data);

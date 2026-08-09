@@ -222,7 +222,10 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         { StatModifierIdentifier.ThrustAirControl,     1.0f },
         { StatModifierIdentifier.Friction,             1.0f },
         { StatModifierIdentifier.AmmoConsumption,      1.0f },
-        { StatModifierIdentifier.MaxTurnRate,          0.0f },
+        // Must be nonzero: Charge-style rushes multiply this by 0 while active, and the
+        // restore sends the recomputed base back to the client. A base of 0 makes the
+        // restore identical to the lock value, leaving the client's vertical aim capped at 0.
+        { StatModifierIdentifier.MaxTurnRate,          1.0f },
         { StatModifierIdentifier.TurnSpeed,            1.0f },
         { StatModifierIdentifier.TimeDilation,         1.0f },
         { StatModifierIdentifier.AccuracyModifier,     1.0f },

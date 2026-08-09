@@ -207,8 +207,8 @@ public class Factory
             //     return new RequireEnergyCommand(SDBInterface.GetRequireEnergyCommandDef(commandId));
             // case CommandType.HealDamage:
             //     return new HealDamageCommand(SDBInterface.GetHealDamageCommandDef(commandId));
-            // case CommandType.Bullrush:
-            //     return new BullrushCommand(SDBInterface.GetBullrushCommandDef(commandId));
+            case CommandType.Bullrush:
+                return new BullrushCommand(SDBInterface.GetBullrushCommandDef(commandId));
             // case CommandType.EnergyToDamage:
             //     return new EnergyToDamageCommand(SDBInterface.GetEnergyToDamageCommandDef(commandId));
             // case CommandType.RequireGrapple:
