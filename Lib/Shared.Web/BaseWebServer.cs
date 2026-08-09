@@ -117,8 +117,16 @@ public abstract class BaseWebServer
             _ = app.UseDeveloperExceptionPage();
         }
 
-        _ = app.UseHttpsRedirection()
-               .UseSerilogRequestLogging()
+        // Local Linux change: the client runs under Proton and does not share the
+        // host trust store, so it cannot validate the ASP.NET dev certificate it
+        // gets redirected to. Everything here is loopback, so staying on HTTP is
+        // no loss. Unset PIN_DISABLE_HTTPS_REDIRECT to restore upstream behaviour.
+        if (Environment.GetEnvironmentVariable("PIN_DISABLE_HTTPS_REDIRECT") != "1")
+        {
+            _ = app.UseHttpsRedirection();
+        }
+
+        _ = app.UseSerilogRequestLogging()
                .UseRouting()
                .UseEndpoints(endpoints => { _ = endpoints.MapControllers(); });
 
