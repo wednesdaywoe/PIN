@@ -104,7 +104,7 @@ public class WeaponSim
             uint lastSpreadTime = weaponSimState.LastSpreadTime;
             PRNG.PRNG.Spread(time, weapon.SlotIndex, round, aimForward, aimRight, aimUp, spreadPct, lastSpreadDirection, lastSpreadTime, out Vector3 direction);
             uint trace = PRNG.PRNG.Trace(time, round);
-            _shard.ProjectileSim.FireProjectile(entity, trace, origin, direction, ammo);
+            _shard.ProjectileSim.FireProjectile(entity, trace, origin, direction, ammo, weapon);
             weaponSimState.LastSpreadDirection = direction;
             weaponSimState.LastSpreadTime = time;
         }

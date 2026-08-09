@@ -186,8 +186,7 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         baseController.GibVisualsIdProp = new GibVisuals { Id = 0, Time = AssignedShard.CurrentTime + 1 };
         baseController.RespawnTimesProp = new RespawnTimesData(); // Shake it up
         baseController.RespawnTimesProp = null; // It's dirt
-        baseController.CurrentHealthProp = HardcodedCharacterData.MaxHealth;
-        baseController.MaxHealthProp = new MaxVital { Value = HardcodedCharacterData.MaxHealth, Time = AssignedShard.CurrentTime };
+        CharacterEntity.SetMaxHealth(HardcodedCharacterData.MaxHealth, true); // Also updates the entity fields, not just the controller props
         baseController.CurrentShieldsProp = 0;
         baseController.ZoneUnlocksProp = 0xFFFFFFFFFFFFFFFFUL;
         baseController.RegionUnlocksProp = 0xFFFFFFFFFFFFFFFFUL;

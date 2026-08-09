@@ -122,6 +122,17 @@ public class BaseController : Base
         player.Ready();
     }
 
+    [MessageID((byte)Commands.RequestRespawn)]
+    public void RequestRespawn(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        if (player.CharacterEntity?.CharacterState.State != CharacterStateData.CharacterStatus.Dead)
+        {
+            return;
+        }
+
+        player.Respawn();
+    }
+
     [MessageID((byte)Commands.MovementInput)]
     public void MovementInput(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
     {

@@ -14,6 +14,7 @@ public static class HardcodedCharacterData
     public static byte Level = 45;
     public static byte EffectiveLevel = 45;
     public static int MaxHealth = 19192;
+    public static int MonsterMaxHealth = 2500;
     public static int GeneratedLoadoutCounter = 20001;
     public static HashSet<uint> HostileFactionIds = [2, 3, 5, 6, 7, 8, 17, 22, 42, 43, 45, 46, 47, 48];
 

@@ -21,8 +21,11 @@ using GameServer.Systems.Encounters;
 using GameServer.Test;
 using GrpcGameServerAPIClient;
 using Serilog;
+using DealtHitEvent = AeroMessages.GSS.V66.Character.Event.DealtHit;
 using GibVisuals = AeroMessages.GSS.V66.Character.GibVisuals;
+using KilledEvent = AeroMessages.GSS.V66.Character.Event.Killed;
 using LoadoutVisualType = AeroMessages.GSS.V66.Character.LoadoutConfig_Visual.LoadoutVisualType;
+using TookHitEvent = AeroMessages.GSS.V66.Character.Event.TookHit;
 
 namespace GameServer.Entities.Character;
 
@@ -68,6 +71,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public short MovementState { get; set; }
     public ushort MovementShortTime { get; set; }
     public bool Alive { get; set; }
+    public bool IsAlive => CharacterState.State == CharacterStateData.CharacterStatus.Living && CurrentHealth > 0;
     public short TimeSinceLastJump { get; set; }
     public bool IsAirborne { get; set; }
     public bool IsMoving { get => MovementStateContainer.Sprint || MovementStateContainer.Movement; }
@@ -323,6 +327,9 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             Flags = 0 | HostilityInfoData.HostilityFlags.Faction,
             FactionId = (byte)monsterInfo.FactionId
         });
+
+        // TODO: Derive from monsterInfo.ScalingTableId (dbcharacter::MonsterScaling) once that table is loaded
+        SetMaxHealth(HardcodedCharacterData.MonsterMaxHealth, true);
 
         ApplyLoadout(loadout);
 
@@ -1380,6 +1387,78 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     {
         CurrentShields = Math.Min(Math.Max(0, newValue), MaxShields.Value);
         Character_BaseController?.CurrentShieldsProp = CurrentShields;
+    }
+
+    public void TakeDamage(int amount, CharacterEntity attacker, byte damageType, DamageResponseFlags damageFlags)
+    {
+        if (amount <= 0 || !IsAlive)
+        {
+            return;
+        }
+
+        SetCurrentHealth(CurrentHealth - amount);
+
+        var damageData = new DamageHitStruct
+        {
+            Target = AeroEntityId,
+            HaveDealer = (byte)(attacker != null ? 1 : 0),
+            Dealer = attacker?.AeroEntityId ?? default,
+            DamageValue = amount,
+            DamageType = damageType,
+        };
+
+        if (attacker is { IsPlayerControlled: true })
+        {
+            var dealtHit = new DealtHitEvent
+            {
+                HaveDamage = 1,
+                DamageData = damageData,
+                RepeatHitIdx = 0,
+                DamageFlags = damageFlags,
+            };
+            attacker.Player.NetChannels[ChannelType.ReliableGss].SendMessage(dealtHit, attacker.EntityId);
+        }
+
+        if (IsPlayerControlled)
+        {
+            var tookHit = new TookHitEvent
+            {
+                HaveDamage = 1,
+                DamageData = damageData,
+                RepeatHitIdx = 0,
+                DamageFlags = damageFlags,
+                ShortTime = Shard.CurrentShortTime,
+                Unk2 = 0,
+            };
+            Player.NetChannels[ChannelType.ReliableGss].SendMessage(tookHit, EntityId);
+        }
+
+        if (CurrentHealth <= 0)
+        {
+            Die(attacker);
+        }
+    }
+
+    public void Die(CharacterEntity killer)
+    {
+        Alive = false;
+        SetCharacterState(CharacterStateData.CharacterStatus.Dead, Shard.CurrentTime);
+
+        var killed = new KilledEvent
+        {
+            ShortTime = Shard.CurrentShortTime,
+            Killer = killer?.AeroEntityId ?? default,
+            Unk1 = 0,
+            Unk2 = 0,
+            Unk3 = 0,
+        };
+        Shard.EntityMan.SendToScoped(this, killed);
+
+        if (!IsPlayerControlled)
+        {
+            // Until death is hooked into AI/encounters, corpses just despawn after a while
+            Shard.EntityMan.SetRemainingLifetime(this, 30_000);
+        }
     }
 
     private void InitFields()

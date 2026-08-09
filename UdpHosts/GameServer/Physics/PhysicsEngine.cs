@@ -236,7 +236,7 @@ public partial class PhysicsEngine
         });
     }
 
-    public void ProjectileRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, uint trace)
+    public ProjectileHitResult? ProjectileRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, uint trace)
     {
         var speed = 500f;
         var maxRange = 500f;
@@ -262,7 +262,6 @@ public partial class PhysicsEngine
                 bodyPosition.Z -= 0.9f;
                 DebugProjectileHitCallbacks?.SendDebugProjectilePoseHit(source, trace, hitPosition, bodyPosition);
 
-                // Temporary debug testing below
                 var hitEntityId = _bodyToEntityId.GetValueOrDefault(hitHandler.HitCollidable.BodyHandle);
                 if (hitEntityId != 0)
                 {
@@ -270,6 +269,7 @@ public partial class PhysicsEngine
                     var shape = body.Collidable.Shape;
                     bool headshot = false;
                     bool crit = false;
+                    float damageMod = 1f;
                     if (_poseCompoundToAssetId.ContainsKey(shape))
                     {
                         var poseId = _poseCompoundToAssetId[shape];
@@ -279,15 +279,22 @@ public partial class PhysicsEngine
 
                         headshot = poseShapeData.ShapeFlags.Headshot;
                         crit = physicsMaterial?.IsCritHit == 1;
-                        var damageMod = poseShapeData.DamageMod;
-
-                        _logger.Debug($"ProjectileRayCast Impact on {poseShapeData.Name}");
-                        _logger.Debug($"You hit {poseShapeData.Name} of {hitEntityId}");
-                        if (source.IsPlayerControlled)
+                        if (poseShapeData.DamageMod > 0)
                         {
-                            _eventBus.Enqueue(new DebugChatDirectMessageEvent($"You hit {poseShapeData.Name} of {hitEntityId}", source.Player));
+                            damageMod = poseShapeData.DamageMod;
                         }
+
+                        _logger.Debug($"ProjectileRayCast Impact on {poseShapeData.Name} of {hitEntityId}");
                     }
+
+                    return new ProjectileHitResult
+                    {
+                        HitEntityId = hitEntityId,
+                        Position = hitPosition,
+                        Headshot = headshot,
+                        Crit = crit,
+                        DamageMod = damageMod,
+                    };
                 }
             }
         }
@@ -297,6 +304,8 @@ public partial class PhysicsEngine
             var timeoutDirection = -Vector3.Normalize(direction);
             DebugProjectileHitCallbacks?.SendDebugProjectileTimeout(source, trace, timeoutPosition, timeoutDirection);
         }
+
+        return null;
     }
 
     public (bool, Vector3, ulong) TargetRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, float maxRange = 500f)
