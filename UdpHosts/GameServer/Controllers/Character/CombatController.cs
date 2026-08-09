@@ -293,4 +293,45 @@ public class CombatController : Base
             shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, new AptitudeTargets(targets));
         }
     }
+
+    [MessageID((byte)Commands.DeactivateAbility)]
+    public void DeactivateAbility(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var deactivateAbility = packet.Unpack<DeactivateAbility>();
+        _logger.Information("DeactivateAbility Slot {AbilitySlotIndex}", deactivateAbility?.AbilitySlotIndex);
+        if (deactivateAbility == null)
+        {
+            return;
+        }
+
+        var character = player.CharacterEntity;
+        if (character?.CurrentLoadout == null)
+        {
+            return;
+        }
+
+        var moduleId = character.CurrentLoadout.GetAbilityModuleIdBySlotIndex(deactivateAbility.AbilitySlotIndex);
+        if (moduleId == 0)
+        {
+            return;
+        }
+
+        var abilityId = SDBInterface.GetAbilityModule(moduleId)?.AbilityChainId ?? 0;
+        if (abilityId == 0)
+        {
+            return;
+        }
+
+        // Sent when a held ability ends. Effects only expire on their own if they have a
+        // DurationChain (AbilitySystem.ProcessTarget), so without this the ones applied here
+        // stay forever. charge leaves the client's camera pitch-locked until you relog.
+        var shard = character.Shard;
+        foreach (var activeEffect in character.GetActiveEffects())
+        {
+            if (activeEffect?.Context?.AbilityId == abilityId)
+            {
+                shard.Abilities.DoRemoveEffect(activeEffect);
+            }
+        }
+    }
 }

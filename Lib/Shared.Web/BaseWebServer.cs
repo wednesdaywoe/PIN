@@ -96,7 +96,7 @@ public abstract class BaseWebServer
                              c.SwaggerEndpoint("/swagger/v1/swagger.json", "Firefall API");
                          });
 
-        // log requests which produce 404 responses so we can fill in the missing endpoints
+        // log requests which produce 404 so missing endpoints can be filled in
         app.Use(async (context, next) =>
                 {
                     context.Request.EnableBuffering();
@@ -117,10 +117,10 @@ public abstract class BaseWebServer
             _ = app.UseDeveloperExceptionPage();
         }
 
-        // Local Linux change: the client runs under Proton and does not share the
-        // host trust store, so it cannot validate the ASP.NET dev certificate it
-        // gets redirected to. Everything here is loopback, so staying on HTTP is
-        // no loss. Unset PIN_DISABLE_HTTPS_REDIRECT to restore upstream behaviour.
+        // Local Linux change: client runs under Proton and does not share the
+        // host trust store, so it cant validate the ASP.NET dev cert it
+        // redirects to. Everything here is loopback.
+        // Unset PIN_DISABLE_HTTPS_REDIRECT to restore upstream behaviour.
         if (Environment.GetEnvironmentVariable("PIN_DISABLE_HTTPS_REDIRECT") != "1")
         {
             _ = app.UseHttpsRedirection();
