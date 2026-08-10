@@ -1409,6 +1409,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         }
 
         SetCurrentHealth(CurrentHealth - amount);
+        Logger.Debug("{Target} took {Amount} damage from {Attacker}, {Health} health left", this, amount, attacker, CurrentHealth);
 
         var damageData = new DamageHitStruct
         {

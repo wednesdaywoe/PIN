@@ -1642,7 +1642,9 @@ public class EntityManager
             // We don't flush Character_MovementView as those changes are basically handled entirely by CurrentPoseUpdate
             FlushViewChangesToScoped(character.Character_ObserverView, character.EntityId);
             FlushViewChangesToScoped(character.Character_EquipmentView, character.EntityId);
-            FlushViewChangesToScoped(character.Character_CombatView, character.EntityId);
+
+            // CombatView update wasn't corrected. The client holds on to the last one it saw until something else writes it
+            FlushViewChangesToScoped(character.Character_CombatView, character.EntityId, ChannelType.ReliableGss);
             FlushViewChangesToScoped(character.Character_TinyObjectView, character.EntityId);
         }
         else if (entity is MeldingEntity melding)
@@ -1662,7 +1664,7 @@ public class EntityManager
             }
 
             FlushViewChangesToScoped(vehicle.Vehicle_ObserverView, vehicle.EntityId);
-            FlushViewChangesToScoped(vehicle.Vehicle_CombatView, vehicle.EntityId);
+            FlushViewChangesToScoped(vehicle.Vehicle_CombatView, vehicle.EntityId, ChannelType.ReliableGss);
             FlushViewChangesToScoped(vehicle.Vehicle_MovementView, vehicle.EntityId);
         }
         else if (entity is DeployableEntity deployable)
@@ -1705,7 +1707,7 @@ public class EntityManager
         }
     }
 
-    public void FlushViewChangesToScoped<TPacket>(TPacket view, ulong entityId)
+    public void FlushViewChangesToScoped<TPacket>(TPacket view, ulong entityId, ChannelType channel = ChannelType.UnreliableGss)
     where TPacket : class, IAeroViewInterface
     {
         // We can only call SerializeChangesToMemory once but we need to send to multiple players.
@@ -1718,7 +1720,7 @@ public class EntityManager
                 bool shouldSend = client.Status.Equals(IPlayer.PlayerStatus.Playing) || client.Status.Equals(IPlayer.PlayerStatus.Loading);
                 if (shouldSend)
                 {
-                    client.NetChannels[ChannelType.UnreliableGss].SendChanges(view, entityId, update);
+                    client.NetChannels[channel].SendChanges(view, entityId, update);
                 }
             }
         }

@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using System.Numerics;
-using GameServer.Entities;
 using GameServer.Entities.Character;
 using GameServer.Enums;
 using GameServer.StaticDB;
@@ -63,6 +63,16 @@ public class InflictDamageCommand : Command, ICommand
             return true;
         }
 
+        var damaged = new HashSet<IAptitudeTarget>();
+
+        foreach (IAptitudeTarget target in context.Targets)
+        {
+            if (damaged.Add(target))
+            {
+                ApplyDamage(target, attacker, context, damage, damageType);
+            }
+        }
+
         if (splashRange > 0)
         {
             Vector3 origin;
@@ -81,13 +91,14 @@ public class InflictDamageCommand : Command, ICommand
 
             foreach (var pair in context.Shard.Entities)
             {
-                if (pair.Value is not BaseAptitudeEntity splashTarget)
+                // Non-characters can not take damage yet, and splash never hits whoever set it off
+                if (pair.Value is not CharacterEntity splashTarget || splashTarget == attacker || ReferenceEquals(pair.Value, context.Self))
                 {
                     continue;
                 }
 
                 var distance = Vector3.Distance(origin, splashTarget.Position);
-                if (distance > splashRange)
+                if (distance > splashRange || !damaged.Add(splashTarget))
                 {
                     continue;
                 }
@@ -98,21 +109,14 @@ public class InflictDamageCommand : Command, ICommand
                     scale = 1f - ((distance - Params.Pointblankrange) / (splashRange - Params.Pointblankrange));
                 }
 
-                ApplyDamage(splashTarget, attacker, damage * scale, damageType);
-            }
-        }
-        else
-        {
-            foreach (IAptitudeTarget target in context.Targets)
-            {
-                ApplyDamage(target, attacker, damage, damageType);
+                ApplyDamage(splashTarget, attacker, context, damage * scale, damageType);
             }
         }
 
         return true;
     }
 
-    private void ApplyDamage(IAptitudeTarget target, CharacterEntity attacker, float damage, byte damageType)
+    private void ApplyDamage(IAptitudeTarget target, CharacterEntity attacker, Context context, float damage, byte damageType)
     {
         if (target is not CharacterEntity character)
         {
@@ -120,8 +124,14 @@ public class InflictDamageCommand : Command, ICommand
             return;
         }
 
-        // TODO: Use hostility rules once implemented; for now players can not damage other players (splash self-damage is allowed)
-        if (attacker is { IsPlayerControlled: true } && character.IsPlayerControlled && character != attacker)
+        // Prevent players from killing themselves with their own abilties
+        if (character == attacker || ReferenceEquals(target, context.Self))
+        {
+            return;
+        }
+
+        // TODO: Use hostility rules once implemented; for now players can not damage other players
+        if (attacker is { IsPlayerControlled: true } && character.IsPlayerControlled)
         {
             return;
         }
