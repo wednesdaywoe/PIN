@@ -78,6 +78,11 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public bool IsCrouching { get => MovementStateContainer.Crouch; }
     public bool IsAttached { get => AttachedToEntity != null; }
 
+    // Weapon damage modifiers applied by aptitude commands (SetWeaponDamage / SetWeaponDamageType)
+    public float? WeaponDamageOverride { get; set; }
+    public float WeaponDamageMultiplier { get; set; } = 1f;
+    public byte? WeaponDamageTypeOverride { get; set; }
+
     public Dictionary<PermissionFlagsData.CharacterPermissionFlags, bool> CurrentPermissions { get; set; } = new Dictionary<PermissionFlagsData.CharacterPermissionFlags, bool>()
     {
         { PermissionFlagsData.CharacterPermissionFlags.movement, true },
@@ -1214,6 +1219,11 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     }
 
 #nullable enable
+
+    public float GetEffectiveWeaponDamage(WeaponTemplateResult weapon)
+    {
+        return (WeaponDamageOverride ?? weapon.DamagePerRound) * WeaponDamageMultiplier;
+    }
 
     public StatsData[] GetActiveWeaponAttributes()
     {

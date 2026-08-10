@@ -36,7 +36,7 @@ public class ProjectileSim
         }
 
         // TODO: Range based damage decay (weapon.MinDamage, ammo.DamageDecayRangefrac, ammo.MinDamageFrac)
-        float damage = weapon.DamagePerRound * hit.DamageMod;
+        float damage = entity.GetEffectiveWeaponDamage(weapon) * hit.DamageMod;
         if (hit.Headshot && weapon.HeadshotMult > 0)
         {
             damage *= weapon.HeadshotMult;
@@ -48,7 +48,40 @@ public class ProjectileSim
             damageFlags |= DamageResponseFlags.Critical;
         }
 
-        target.TakeDamage((int)MathF.Round(damage), entity, ammo.Damagetype, damageFlags);
+        var damageType = entity.WeaponDamageTypeOverride ?? ammo.Damagetype;
+        target.TakeDamage((int)MathF.Round(damage), entity, damageType, damageFlags);
+    }
+
+    /// <summary>
+    ///    Fires a single hitscan projectile on for an ability (FireProjectile aptitude command).
+    ///    Damage comes from the command instead of the equipped weapon, so no headshot multiplier.
+    /// </summary>
+    public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage)
+    {
+        var hit = _shard.Physics.ProjectileRayCast(origin, direction, shooter, 0);
+        if (hit == null)
+        {
+            return;
+        }
+
+        if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not CharacterEntity target || target == shooter)
+        {
+            return;
+        }
+
+        // TODO: Use hostility rules once implemented; for now players can not damage each other
+        if (shooter.IsPlayerControlled && target.IsPlayerControlled)
+        {
+            return;
+        }
+
+        var damageFlags = (DamageResponseFlags)0;
+        if (hit.Headshot || hit.Crit)
+        {
+            damageFlags |= DamageResponseFlags.Critical;
+        }
+
+        target.TakeDamage((int)MathF.Round(damage * hit.DamageMod), shooter, ammo.Damagetype, damageFlags);
     }
 
     /*
