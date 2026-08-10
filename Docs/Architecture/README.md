@@ -75,8 +75,9 @@ A shard is a zone instance plus its game loop. Everything gameplay-related hangs
 ```
 git clone --recurse-submodules …      # AeroMessages, BepuPhysics2, Bitter are submodules
 dotnet build PIN.sln
+dotnet test PIN.sln                   # Tests/GameServer.Tests
 ```
 
 Builds clean on macOS and Linux with the .NET 10 SDK and no game installed. Running it needs
-`clientdb.sd2` from the client, so compile-checking and code review stay viable offline; see
-[the Cookbook](10-cookbook.md#what-can-be-verified-without-the-game).
+`clientdb.sd2` from the client, so compile-checking, the tests and code review stay viable offline;
+see [the Cookbook](10-cookbook.md#what-can-be-verified-without-the-game).

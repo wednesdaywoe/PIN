@@ -50,6 +50,14 @@ is invisible to clients.
 [Layer 8](08-static-data.md). Record → `StaticDBLoader.Load*` → field + `Init` line + accessor in
 `SDBInterface`. Composite joins belong in `SDBUtils`.
 
+### …a test
+
+[Tests/GameServer.Tests](../../Tests/GameServer.Tests), which is xUnit and needs no clientdb. It
+reaches anything reachable without a `Shard`, so the practical question is usually whether the logic
+you want to cover can be lifted out of an entity or a tick loop first. `SplashFalloff` and
+`ShieldRecharge` were both pulled out of their callers for exactly that reason, and both are small
+enough to show what a worthwhile extraction looks like.
+
 ## Debugging playbook
 
 | Symptom | First thing to check |
@@ -80,11 +88,11 @@ Anything that lands without a client behind it goes in the queue at
 git submodule update --init --recursive     # AeroMessages, BepuPhysics2, Bitter
 dotnet build PIN.sln                        # ~30s clean, expect warnings, 0 errors
 dotnet build PIN.sln -c Release             # what CI runs
+dotnet test PIN.sln                         # Tests/GameServer.Tests, no clientdb needed
 ```
 
-CI ([.github/workflows](../../.github/workflows)) builds Debug and Release on Linux, Windows and
-macOS against .NET 10 and .NET 11. There's no test project in the solution, so `dotnet test` does
-nothing today.
+CI ([.github/workflows](../../.github/workflows)) builds Debug and Release and runs the tests on
+Linux, Windows and macOS against .NET 10 and .NET 11.
 
 That means the following is fully checkable offline:
 
@@ -92,6 +100,11 @@ That means the following is fully checkable offline:
 - Anything expressible as a pure function over inputs: spread and PRNG maths, `RegistryOp`,
   splash falloff, damage composition, `SDBUtils` joins, guid packing, packet header encode/decode
 - Reading and reasoning about protocol/data flow, which is most of the work in this codebase
+
+[Tests/GameServer.Tests](../../Tests/GameServer.Tests) covers the first slice of that second bullet.
+Worth knowing what it does and doesn't buy: a test can say the range decay curve does what
+`DamageFalloff.Resolve` means it to do, but only the client can say whether that's the curve Firefall
+shipped. Where a model is a guess, the test pins the guess and the in-game entry checks it.
 
 And the following genuinely needs the game:
 

@@ -42,7 +42,10 @@ time, movement spread bonus. `Tick` (50ms) decays accumulated spread after `MsSp
 and ramps the movement bonus down.
 
 Both `GetCurrentSpreadPct` and `ProcessWeaponSpread` carry the comment *"Consider this whole thing
-a sham, needs further RE."* Treat the formulas as approximations, not ground truth.
+a sham, needs further RE."* Treat the formulas as approximations, not ground truth. `PRNG.Spread`
+itself is on firmer ground: `SpreadTests.ReproducesACapturedClientShot` runs a shot captured from the
+real client through it and matches the direction the client produced to within 1e-5, so the RNG is
+right even where the spread percentage feeding it isn't.
 
 Live debugging: `Preferences.DebugWeapon` makes `DebugWeaponSpread` push a JSON blob
 (`WeaponSim.Spread`) to the client each tick with the resolved weapon, spread, and flags.
@@ -67,6 +70,9 @@ starting at or past max range, a floor at or above full damage, `DamageDecay` un
 therefore leaves damage as it was before decay existed rather than quietly weakening every weapon.
 `/dbg_weapon` prints the inputs, the resolved curve and samples along it, so it can be checked
 against real client damage numbers without firing a shot.
+
+`DamageFalloffTests` covers the shape and every path into a disabled curve, so what's left for the
+game is only whether this is the right shape.
 
 ## Applying damage
 
@@ -105,7 +111,9 @@ touching health, so hit events, death and respawn all stay consistent.
 [ShieldSim](../../UdpHosts/GameServer/Systems/Combat/ShieldSim.cs) refills shields on a 100ms tick,
 once `ShieldRechargeDelayMs` has gone by without a hit landing. At a low rate a tick is worth a
 fraction of a point, so `CharacterEntity.RechargeShields` carries the remainder between ticks instead
-of truncating it away and never regenerating anything.
+of truncating it away and never regenerating anything. That carry is
+[ShieldRecharge](../../UdpHosts/GameServer/Systems/Combat/ShieldRecharge.cs), covered by
+`ShieldRechargeTests`.
 
 Max shields and both recharge numbers are placeholders in `HardcodedCharacterData`, next to the
 hardcoded max health. `dbitems::Battleframe` carries `base_shields` and the
@@ -139,7 +147,8 @@ modifier that must be undone when its effect ends.
 - `Weapondamage` / `Weapondamagetype` / `UseWeaponRadius` pull from the initiator's equipped
   weapon and its ammo.
 - Splash centres on `Context.InitPosition` when `Frominitiatorpos` is set, otherwise the first
-  target, otherwise `Self`. Falloff is linear from `Pointblankrange` out to the splash range.
+  target, otherwise `Self`. Falloff is linear from `Pointblankrange` out to the splash range and
+  lives in `SplashFalloff`, which is another guess and covered by `SplashFalloffTests`.
 - A `HashSet` guards against a target taking both direct and splash damage from one execution.
 
 ## Hostility
@@ -173,6 +182,10 @@ guard.
 
 In game, `/hostility` (alias `/stance`) prints both sides' faction and team, the stance each way,
 and whether damage is allowed.
+
+`HostilityRulesTests` covers every path that answers before the faction table is consulted, which
+includes same-team, same-faction and the missing-flag fallbacks. Anything involving two different
+factions goes through the table and so needs a real clientdb.
 
 ## Current gaps
 

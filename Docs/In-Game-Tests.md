@@ -1,6 +1,6 @@
 # In-Game Test Queue
 
-A running log of checks that need a real client and a real `clientdb.sd2`, written down as work
+A running log of checks for me to run with a real client, written down as work
 lands so nothing accumulates unverified. Work through it at the game machine, record the result
 inline, and delete entries once they've passed and the behaviour is covered elsewhere.
 
@@ -14,12 +14,13 @@ world state (two clients, a particular NPC), say so. That's usually what makes a
 
 ```
 dotnet build PIN.sln                     # 0 errors expected
+dotnet test PIN.sln                      # all green before leaving the desk
 WebHostManager                           # ports 4400-4411 / 44300-44311
 MatrixServer                             # UDP 25000
 GameServer                               # UDP 25001
 ```
 
-Watch the GameServer log throughout. Two things are silent failures worth grepping for after any
+Remember to watch the GameServer log throughout. Two things are silent failures worth grepping for after any
 session:
 
 - `HandlePacket Caught`: a controller handler threw and was swallowed
@@ -98,8 +99,9 @@ Added in the current working tree: [DamageFalloff](../UdpHosts/GameServer/System
 wired into `ProjectileSim.FireProjectile`, printed by `/dbg_weapon`. See
 [layer 6](Architecture/06-combat-and-damage.md).
 
-The curve maths is already covered offline, so these checks are only about whether the model matches
-the client and whether the SDB values make it fire at all.
+The curve maths is already covered offline by `DamageFalloffTests` in
+[Tests/GameServer.Tests](../Tests/GameServer.Tests), so these checks are only about whether the model
+matches the client and whether the SDB values make it fire at all.
 
 ### [ ] R1: Read the resolved curve for a few weapons (blocks R2-R4)
 

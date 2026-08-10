@@ -7,7 +7,8 @@ PIN is split into two areas:
 A layered walkthrough of the codebase, from processes and networking up through abilities and
 combat, lives in the [Architecture Guide](Architecture/README.md).
 
-Checks that need a running client are queued in [In-Game Tests](In-Game-Tests.md).
+Checks that need a running client are queued in [In-Game Tests](In-Game-Tests.md). What can be
+checked without one lives in [Tests/GameServer.Tests](../Tests/GameServer.Tests).
 
 ## UdpHosts
 

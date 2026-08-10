@@ -1,6 +1,4 @@
-using System;
 using System.Numerics;
-using Serilog;
 
 namespace GameServer.Systems.PRNG;
 
@@ -9,38 +7,7 @@ namespace GameServer.Systems.PRNG;
 /// </summary>
 public static partial class PRNG
 {
-    private static readonly ILogger _logger = Log.ForContext(typeof(PRNG));
-
     private static readonly float _slMinSpreadVariance = 0.699999988079f; // 0x3f333333
-
-    public static void TestSpread()
-    {
-        Vector3 final = new Vector3(-997.872070f, -57.570068f, 39.467823f);
-        Vector3 dir = new Vector3(-0.997563f, -0.057552f, 0.039456f);
-        Vector3 aim = new Vector3(-0.9987106323242188f, -0.03268186002969742f, 0.03884787857532501f);
-        float speed = 1000f;
-        uint time = 32404587;
-        float spreadPct = 3.025f;
-        byte slotIndex = 2;
-        byte round = 0;
-
-        Vector3 aimForward = aim;
-        Vector3 aimRight = Vector3.Normalize(Vector3.Cross(aimForward, Vector3.UnitZ));
-        Vector3 aimUp = Vector3.Normalize(Vector3.Cross(aimRight, aimForward));
-        Vector3 lastSpreadDirection = Vector3.Zero;
-        uint lastSpreadTime = time;
-        Spread(time, slotIndex, round, aimForward, aimRight, aimUp, spreadPct, lastSpreadDirection, lastSpreadTime, out Vector3 result);
-        result = Vector3.Normalize(result);
-
-        Vector3 finalResult = new Vector3(aim.X, aim.Y, aim.Z) + (result * speed);
-        _logger.Debug("RES Generated ({X}, {Y}, {Z})", result.X, result.Y, result.Z);
-        _logger.Debug("RES Expected ({X}, {Y}, {Z})", dir.X, dir.Y, dir.Z);
-
-        _logger.Debug("FIN Generated ({X}, {Y}, {Z})", finalResult.X, finalResult.Y, finalResult.Z);
-        _logger.Debug("FIN Expected ({X}, {Y}, {Z})", final.X, final.Y, final.Z);
-
-        throw new Exception("Check");
-    }
 
     public static uint Trace(uint time, byte bullet)
     {

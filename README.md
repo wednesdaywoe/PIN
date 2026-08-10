@@ -54,7 +54,7 @@ PlayIntroMovie = false
 ### Limitations
 
 - Projectiles are hitscan only, with no travel time, gravity or bounce
-- Damage ignores shields and damage type resistances
+- Damage ignores damage type resistances, and shield values are placeholders
 - Most of the UI doesn't work properly
 - Most abilities are not fully working
 - Vehicles only have physics if a player is driving it (client-side)
@@ -67,7 +67,7 @@ PlayIntroMovie = false
 1. Install Visual Studio or JetBrains Rider
    - Include the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) component or install it separately
 2. Recursive clone the repository `git clone --recurse-submodules https://github.com/themeldingwars/PIN.git`
-3. Build the solution
+3. Build the solution, and run `dotnet test PIN.sln` for the offline test suite
 4. Edit the `GameServer.dll.config` produced by the build in `UdpHosts\GameServer\bin\Release\net10.0` to ensure that `StaticDBPath` is correct.
 5. Trust self-signed development certificates by running `dotnet dev-certs https --trust`
 6. Start multiple targets at once

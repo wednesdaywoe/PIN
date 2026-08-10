@@ -37,7 +37,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 {
     public const byte MaxMapMarkerCount = 64;
     private readonly MapMarkerState[] _mapMarkers = new MapMarkerState[MaxMapMarkerCount];
-    private float _shieldRechargeRemainder;
+    private readonly ShieldRecharge _shieldRecharge = new();
 
     public CharacterEntity(IShard shard, ulong eid, CharacterEntity owner = null)
         : base(shard, eid, owner)
@@ -1500,14 +1500,11 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     {
         if (!IsAlive || ShieldRechargePerSec <= 0 || CurrentShields >= MaxShields.Value || currentTime < LastDamagedTime + (ulong)ShieldRechargeDelayMs)
         {
-            _shieldRechargeRemainder = 0f;
+            _shieldRecharge.Reset();
             return;
         }
 
-        // The rate is per second and ticks are a lot shorter than that, so the leftover fraction has to carry
-        var restored = _shieldRechargeRemainder + (ShieldRechargePerSec * elapsedSeconds);
-        var points = (int)restored;
-        _shieldRechargeRemainder = restored - points;
+        var points = _shieldRecharge.Accumulate(ShieldRechargePerSec, elapsedSeconds);
 
         if (points > 0)
         {

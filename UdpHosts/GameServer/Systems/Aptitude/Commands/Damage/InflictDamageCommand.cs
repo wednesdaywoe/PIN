@@ -105,11 +105,7 @@ public class InflictDamageCommand : Command, ICommand
                     continue;
                 }
 
-                float scale = 1f;
-                if (Params.Falloff == 1 && distance > Params.Pointblankrange && splashRange > Params.Pointblankrange)
-                {
-                    scale = 1f - ((distance - Params.Pointblankrange) / (splashRange - Params.Pointblankrange));
-                }
+                var scale = Params.Falloff == 1 ? SplashFalloff.Scale(distance, splashRange, Params.Pointblankrange) : 1f;
 
                 ApplyDamage(splashTarget, attacker, context, damage * scale, damageType);
             }
