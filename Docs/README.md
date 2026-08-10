@@ -4,6 +4,11 @@ PIN is split into two areas:
 - [UdpHosts](#udphosts)
 - [WebHosts](#webhosts)
 
+A layered walkthrough of the codebase, from processes and networking up through abilities and
+combat, lives in the [Architecture Guide](Architecture/README.md).
+
+Checks that need a running client are queued in [In-Game Tests](In-Game-Tests.md).
+
 ## UdpHosts
 
 As the name suggests these are the server hosts that talk via UDP to the client.

@@ -49,10 +49,12 @@ PlayIntroMovie = false
 - Switch between battleframes with preconfigured loadouts
 - Customize character appearance in NewYou (RIN.WebAPI)
 - Call down vehicles and some deployables
+- Hitscan weapon fire with hit registration, faction based hostility, damage and death
 
 ### Limitations
 
-- There is no combat, projectile or damage simulation
+- Projectiles are hitscan only, with no travel time, gravity or bounce
+- Damage ignores shields and damage type resistances
 - Most of the UI doesn't work properly
 - Most abilities are not fully working
 - Vehicles only have physics if a player is driving it (client-side)

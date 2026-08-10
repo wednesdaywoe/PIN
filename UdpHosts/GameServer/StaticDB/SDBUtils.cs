@@ -6,6 +6,7 @@ using System.Linq;
 using System.Numerics;
 using AeroMessages.GSS.V66.Character;
 using Data;
+using Enums;
 using Records.dbcharacter;
 using Records.dbitems;
 using Records.vcs;
@@ -15,9 +16,37 @@ public class SDBUtils
 {
     private static readonly ILogger _logger = Log.ForContext<SDBInterface>();
 
+    private static readonly Lazy<(Dictionary<(uint Observer, uint Other), sbyte> Stances, bool Signed)> _factionStances = new(BuildFactionStances);
+
     public static Vector3 Vector3FromFauFau(FauFau.Util.CommmonDataTypes.Vector3 input)
     {
         return new Vector3(input.x, input.y, input.z);
+    }
+
+    /// <summary>
+    ///     Resolves the stance <paramref name="observer"/> holds towards <paramref name="other"/> from
+    ///     dbcharacter::FactionRelations, falling back to the observing faction's DefaultStance and
+    ///     finally to neutral when neither is known.
+    /// </summary>
+    public static HostilityStance GetFactionStance(uint observer, uint other)
+    {
+        var table = _factionStances.Value;
+
+        // If the stance column turns out not to be a signed scale then reading it as one could mark hostile
+        // factions friendly and block damage that should land. Fall back to neutral until the encoding is
+        // confirmed. Same faction and same team still protect each other in HostilityRules.
+        if (!table.Signed)
+        {
+            return HostilityStance.Neutral;
+        }
+
+        if (table.Stances.TryGetValue((observer, other), out var stance))
+        {
+            return ToStance(stance);
+        }
+
+        var faction = SDBInterface.GetFaction(observer);
+        return faction != null ? ToStance(faction.DefaultStance) : HostilityStance.Neutral;
     }
 
     public static Dictionary<byte, CharCreateLoadoutSlots> GetDefaultLoadoutSlots(uint loadoutId)
@@ -513,6 +542,68 @@ public class SDBUtils
     private static ushort WeaponTemplateModifier(ushort baseValue, short? modifierValue, float? multiplierValue = 1)
     {
         return (ushort)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
+    /// <summary>
+    ///     Maps a raw dbcharacter stance value onto <see cref="HostilityStance"/>.
+    ///     The column is signed while its neighbours (HostilityBidirectional and so on) aren't, so it's read
+    ///     as a scale centred on neutral: negative is hostile, positive is friendly. That hasn't been confirmed
+    ///     against a real clientdb yet. BuildFactionStances logs the values actually present, so the mapping
+    ///     can be checked in one line of server output.
+    /// </summary>
+    private static HostilityStance ToStance(sbyte value)
+    {
+        return value switch
+        {
+            < 0 => HostilityStance.Hostile,
+            > 0 => HostilityStance.Friendly,
+            _ => HostilityStance.Neutral
+        };
+    }
+
+    private static (Dictionary<(uint Observer, uint Other), sbyte> Stances, bool Signed) BuildFactionStances()
+    {
+        var relations = SDBInterface.GetFactionRelations();
+        var result = new Dictionary<(uint Observer, uint Other), sbyte>();
+
+        if (relations == null)
+        {
+            _logger.Warning("No faction relations loaded, every faction will be treated as neutral");
+            return (result, false);
+        }
+
+        foreach (var relation in relations)
+        {
+            result[(relation.FactionA, relation.FactionB)] = relation.HostilityStance;
+        }
+
+        // A bidirectional relation implies the mirrored pair, but never overrides one the table states outright
+        foreach (var relation in relations)
+        {
+            if (relation.HostilityBidirectional == 1)
+            {
+                result.TryAdd((relation.FactionB, relation.FactionA), relation.HostilityStance);
+            }
+        }
+
+        var stanceValues = relations.Select(relation => relation.HostilityStance).Distinct().OrderBy(value => value).ToList();
+        var defaultStances = SDBInterface.GetFactions().Select(faction => faction.DefaultStance).Distinct().OrderBy(value => value).ToList();
+        var signed = stanceValues.Exists(value => value < 0);
+
+        _logger.Information(
+            "Loaded {Pairs} faction stance pairs from {Rows} relations. Stance values in use: {Stances}. Faction default stances in use: {Defaults}",
+            result.Count,
+            relations.Count,
+            stanceValues,
+            defaultStances);
+
+        if (!signed)
+        {
+            _logger.Warning(
+                "Faction stances hold no negative values so they are not the signed scale ToStance assumes. Cross faction hostility is disabled until ToStance is corrected for the values above");
+        }
+
+        return (result, signed);
     }
 
     private static float WeaponTemplateModifier(float baseValue, float? modifierValue, float? multiplierValue = 1)

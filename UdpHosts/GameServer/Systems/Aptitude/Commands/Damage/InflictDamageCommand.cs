@@ -4,6 +4,7 @@ using GameServer.Entities.Character;
 using GameServer.Enums;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
+using GameServer.Systems.Hostility;
 
 namespace GameServer.Systems.Aptitude.Commands.Damage;
 
@@ -130,8 +131,7 @@ public class InflictDamageCommand : Command, ICommand
             return;
         }
 
-        // TODO: Use hostility rules once implemented; for now players can not damage other players
-        if (attacker is { IsPlayerControlled: true } && character.IsPlayerControlled)
+        if (!HostilityRules.CanDamage(attacker, character))
         {
             return;
         }

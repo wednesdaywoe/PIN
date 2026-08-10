@@ -1,6 +1,7 @@
 using System.Text;
 using GameServer.Entities.Character;
 using GameServer.StaticDB;
+using GameServer.Systems.ProjectileSim;
 
 namespace GameServer.Systems.Admin.Commands;
 
@@ -84,12 +85,11 @@ public class DebugWeaponTemplateServerCommand : ServerCommand
         stringBuilder.AppendLine($"MsChargeUpMin: {info.Weapon.MsChargeUpMin}");
         stringBuilder.AppendLine($"MsOverchargeDelay: {info.Weapon.MsOverchargeDelay}");
 
-        /*
         stringBuilder.AppendLine($"----- Damage");
         stringBuilder.AppendLine($"MinDamage: {info.Weapon.MinDamage}");
         stringBuilder.AppendLine($"DamagePerRound: {info.Weapon.DamagePerRound}");
         stringBuilder.AppendLine($"HeadshotMult: {info.Weapon.HeadshotMult}");
-        */
+        AppendDamageFalloff(stringBuilder, character, info.Weapon);
 
         stringBuilder.AppendLine($"----- ?");
         stringBuilder.AppendLine($"MsReturn: {info.Weapon.MsReturn}");
@@ -130,5 +130,41 @@ public class DebugWeaponTemplateServerCommand : ServerCommand
 
         context.SourcePlayer.SendDebugLog(message);
         SourceFeedback($"Printing weapon info to console", context);
+    }
+
+    /// <summary>
+    ///     Prints the range decay inputs, the curve resolved from them, and samples along it. The model is
+    ///     still a guess, so this is the cheapest way to check it: compare the samples against real damage
+    ///     numbers at those distances.
+    /// </summary>
+    private static void AppendDamageFalloff(StringBuilder stringBuilder, CharacterEntity character, WeaponTemplateResult weapon)
+    {
+        var ammo = SDBInterface.GetAmmo(weapon.AmmoId);
+        var baseDamage = character.GetEffectiveWeaponDamage(weapon);
+
+        stringBuilder.AppendLine($"Effective damage per round: {baseDamage}");
+
+        if (ammo == null)
+        {
+            stringBuilder.AppendLine($"Ammo {weapon.AmmoId} not found, no range decay");
+            return;
+        }
+
+        stringBuilder.AppendLine($"Ammo DamageDecay: {ammo.DamageDecay}, DamageDecayRangefrac: {ammo.DamageDecayRangefrac}, MinDamageFrac: {ammo.MinDamageFrac}");
+
+        var falloff = DamageFalloff.Resolve(baseDamage, weapon, ammo);
+        if (!falloff.Enabled)
+        {
+            stringBuilder.AppendLine("Range decay: disabled, full damage at every range");
+            return;
+        }
+
+        stringBuilder.AppendLine($"Range decay: full to {falloff.FullDamageRange}m, down to {falloff.MinDamage} at {falloff.MaxRange}m");
+
+        foreach (var fraction in new[] { 0f, 0.25f, 0.5f, 0.75f, 1f, 1.25f })
+        {
+            var distance = falloff.MaxRange * fraction;
+            stringBuilder.AppendLine($"  {distance:0.#}m: {falloff.DamageAt(distance):0.##}");
+        }
     }
 }
