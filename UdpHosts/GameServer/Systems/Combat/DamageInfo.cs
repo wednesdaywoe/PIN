@@ -1,3 +1,4 @@
+using System;
 using AeroMessages.GSS.V66;
 using GameServer.Entities.Character;
 
@@ -33,4 +34,11 @@ public readonly record struct DamageInfo
     ///     How the client should draw the hit, which today is only whether it crit.
     /// </summary>
     public DamageResponseFlags Flags { get; init; }
+
+    /// <summary>
+    ///     <see cref="Amount"/> as whole points. Health pools are integers, so every
+    ///     <see cref="IDamageable"/> rounds at the same moment and in the same direction, and a hit that
+    ///     rounds away to nothing is one every target agrees to ignore.
+    /// </summary>
+    public int Points => (int)MathF.Round(Amount);
 }

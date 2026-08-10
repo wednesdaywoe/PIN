@@ -27,11 +27,16 @@ Consequences worth knowing:
 | `CreateKineticEntity(CharacterEntity)` | On login, after the loadout is applied so the pose asset is known |
 | `CreateKineticEntity(BaseEntity)` | For entities with a `Collision` component, using `HitboxCollisionId` |
 | `UpdateEntity(entity)` | Whenever position/orientation changed and the body must follow |
-| `RemoveEntity(entity)` | On despawn |
+| `HasBody(entity)` | Before removing an arbitrary entity, since most types never had a body |
+| `RemoveEntity(entity)` | On despawn, from `EntityManager.OnRemovedEntity` |
 
 Three parallel maps keep the association: `_entityIdToBody`, `_bodyToEntityId`,
 `_entityIdToAssetKey`. Shapes are cached per `AssetCompoundKey` (asset id + offset + scale) so
 identical characters share one compound shape.
+
+Removal is driven from `EntityManager.OnRemovedEntity`, so a body's lifetime matches its entity's.
+It has to be: a body left behind after the entity is gone still stops raycasts, but no longer
+resolves to anything, so every shot into it silently becomes a miss against an invisible wall.
 
 ## Raycasts
 

@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using AeroMessages.Common;
 using AeroMessages.GSS.V66;
@@ -5,11 +6,18 @@ using AeroMessages.GSS.V66.Deployable.View;
 using GameServer.Entities.Character;
 using GameServer.Entities.Turret;
 using GameServer.Systems.Aptitude;
+using GameServer.Systems.Combat;
 
 namespace GameServer.Entities.Deployable;
 
-public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget
+public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget, IDamageable
 {
+    /// <summary>
+    ///     How long a destroyed deployable hangs around before it's removed. Long enough for the client to
+    ///     render the health bar hitting zero, short enough that a wreck isn't left standing.
+    /// </summary>
+    private const uint DestroyedLifetimeMs = 2_000;
+
     // TODO: Add Deployable Hardpoint support
     public DeployableEntity(IShard shard, ulong eid, uint type, uint abilitySrcId, CharacterEntity owner = null)
         : base(shard, eid, owner)
@@ -34,9 +42,21 @@ public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget
     public uint AbilitySrcId { get; set; }
     public uint GibVisualsID { get; set; }
     public float Scale { get; set; }
-    public int MaxHealth { get; set; }
+    public int MaxHealth { get; private set; }
+    public int CurrentHealth { get; private set; }
+
+    public bool Destroyed { get; private set; }
+
+    public bool IsAlive => !Destroyed;
+
     public uint PoweredOnAbility { get; set; }
     public uint PoweredOffAbility { get; set; }
+
+    /// <summary>
+    ///     dbcharacter::Deployable DeathAbilityid, run when this is destroyed. Whatever the game wanted a
+    ///     wrecked deployable to do (gibs, an explosion, dropping loot) lives in that ability rather than here.
+    /// </summary>
+    public uint DeathAbility { get; set; }
 
     public ushort StatusEffectsChangeTime_0 { get; set; }
     public ushort StatusEffectsChangeTime_1 { get; set; }
@@ -151,6 +171,86 @@ public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget
     {
         HostilityInfo = newValue;
         Deployable_ObserverView.HostilityInfoProp = HostilityInfo;
+    }
+
+    /// <summary>
+    ///     Sets the pool this deployable can lose. A deployable whose SDB record carries no health keeps a
+    ///     maximum of zero, which <see cref="TakeDamage"/> reads as indestructible; that's the behaviour
+    ///     every deployable had before any of this, so a missing column costs nothing.
+    /// </summary>
+    public void SetMaxHealth(int newValue, bool resetCurrent)
+    {
+        MaxHealth = Math.Max(0, newValue);
+        Deployable_ObserverView.MaxHealthProp = MaxHealth;
+
+        SetCurrentHealth(resetCurrent ? MaxHealth : Math.Min(MaxHealth, CurrentHealth));
+    }
+
+    public void SetCurrentHealth(int newValue)
+    {
+        CurrentHealth = Math.Clamp(newValue, 0, MaxHealth);
+        Deployable_ObserverView.CurrentHealthPctProp = Vitals.HealthPercent(CurrentHealth, MaxHealth);
+    }
+
+    public void TakeDamage(DamageInfo damage)
+    {
+        // Nothing to lose means nothing to hurt, so a deployable the SDB gave no health survives anything
+        if (!IsAlive || MaxHealth <= 0)
+        {
+            return;
+        }
+
+        var amount = damage.Points;
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        SetCurrentHealth(CurrentHealth - amount);
+
+        Logger.Debug(
+            "Deployable {Type} took {Amount} damage from {Attacker}, {Health} of {MaxHealth} health left",
+            Type,
+            amount,
+            damage.Attacker,
+            CurrentHealth,
+            MaxHealth);
+
+        DamageEvents.SendDealtHit(damage, DamageEvents.Describe(this, damage, amount));
+
+        if (CurrentHealth <= 0)
+        {
+            Destroy();
+        }
+    }
+
+    /// <summary>
+    ///     A destroyed deployable stops being damageable immediately, runs its <see cref="DeathAbility"/>, and
+    ///     is removed a moment later so the client has time to see the health bar reach zero. Its turret goes
+    ///     with it, since a turret is scoped through its parent and would otherwise be left pointing at
+    ///     nothing.
+    /// </summary>
+    public void Destroy()
+    {
+        if (Destroyed)
+        {
+            return;
+        }
+
+        Destroyed = true;
+
+        if (Turret != null)
+        {
+            Turret.SetControllingPlayer(null);
+            Shard.EntityMan.Remove(Turret);
+        }
+
+        if (DeathAbility != 0)
+        {
+            Shard.Abilities.HandleActivateAbility(Shard, this, DeathAbility);
+        }
+
+        Shard.EntityMan.SetRemainingLifetime(this, DestroyedLifetimeMs);
     }
 
     public override bool IsInteractable()

@@ -20,7 +20,7 @@ WeaponSim.OnFireWeaponProjectile                Systems/WeaponSim/WeaponSim.cs
 ProjectileSim.FireProjectile                    Systems/ProjectileSim/ProjectileSim.cs
   ├─ TryResolveHit(...)                         shared with FireAbilityProjectile
   │   ├─ PhysicsEngine.ProjectileRayCast(origin, direction, source, trace)   hitscan, 500m
-  │   ├─ resolve hit body → entity; bail unless it's a different CharacterEntity
+  │   ├─ resolve hit body → entity; bail unless it's a different, living IDamageable
   │   └─ HostilityRules.CanDamage(shooter, target)
   ├─ damage = DamageFalloff.DamageAt(distance) * hit.DamageMod (* HeadshotMult)
   └─ target.TakeDamage(new DamageInfo { ... })
@@ -77,17 +77,40 @@ game is only whether this is the right shape.
 ## Applying damage
 
 Anything that wants to hurt something builds a
-[DamageInfo](../../UdpHosts/GameServer/Systems/Combat/DamageInfo.cs) and hands it to
-`CharacterEntity.TakeDamage`. Callers cover what the attacker's side knows about, meaning range decay,
-hit location and splash falloff, and stop there. Mitigation lives in `TakeDamage` and nowhere else,
-which is what stops shields and the resistance tables from having to be written once per call site.
+[DamageInfo](../../UdpHosts/GameServer/Systems/Combat/DamageInfo.cs) and hands it to an
+[IDamageable](../../UdpHosts/GameServer/Systems/Combat/IDamageable.cs). Callers cover what the
+attacker's side knows about, meaning range decay, hit location and splash falloff, and stop there.
+Mitigation lives in `TakeDamage` and nowhere else, which is what stops shields and the resistance
+tables from having to be written once per call site.
 
 `DamageInfo` carries the pre-mitigation amount as a float, the attacker, the damage type and the
-response flags. Rounding to whole points happens inside `TakeDamage` once the target's side is done
-with it.
+response flags. `DamageInfo.Points` is that amount as whole points; every implementation rounds
+through it so a hit worth 0.4 is ignored by all of them or by none.
+
+`IDamageable` is what makes an entity type shootable. Three types implement it:
+
+| Type | Vitals | Death |
+|------|--------|-------|
+| `CharacterEntity` | Health and shields, `Alive` plus a `CharacterState` the client animates | `Die`, then respawn or a 30s corpse |
+| `DeployableEntity` | Health from `Deployable.StartHitpoints`, replicated as a percentage | `Destroy`: runs `DeathAbilityid`, takes its turret with it, removed after 2s |
+| `VehicleEntity` | Health from `VehicleInfo.MaxHitPoints`, replicated as points | `Destroy`: ejects occupants, runs `DeathAbility`, removed after 2s |
+
+Anything else in a raycast's way is scenery as far as damage is concerned, and a shot that lands on
+it is a miss. Turrets are the notable absence: `Turret_ObserverView` carries no health field at all,
+so the client doesn't model them as damageable either, and they have no collision body to be shot in
+the first place. A turret dies with the deployable or vehicle it's bolted to.
+
+The shared parts are small on purpose. `DamageEvents` builds the `DamageHitStruct` and sends the
+attacker its damage number, which is the same for every target type; `Vitals.HealthPercent` is the
+percentage conversion the health bars want. Everything else, meaning what a health pool is and what
+dying means, belongs to the implementation.
+
+Both destruction paths run the death ability the SDB names rather than inventing an effect. Whatever
+Firefall wanted a wrecked deployable to do lives in that ability.
 
 `CharacterEntity.TakeDamage(DamageInfo)`
-([CharacterEntity.cs](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs)):
+([CharacterEntity.cs](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs)) is the most
+involved of the three:
 
 1. Ignore if the target isn't alive or the amount rounds away to nothing.
 2. Shields absorb up to whatever is left of them and the rest carries into health.
@@ -104,7 +127,9 @@ the nearest uncaptured outpost, sends `ForcedMovement` + `Respawned`, and rewrit
 controller state in two passes.
 
 `TakeDamage` is the single funnel. Anything that wants to hurt something should call it rather than
-touching health, so hit events, death and respawn all stay consistent.
+touching health, so hit events, death and respawn all stay consistent. Nothing outside an entity's own
+`TakeDamage` should ever look at what kind of thing it is damaging; both damage paths resolve their
+target to an `IDamageable` and stop there.
 
 ### Shields
 
@@ -197,7 +222,8 @@ These are known-missing rather than accidental, and are the natural next pieces 
 | Range decay curve unconfirmed, and ability projectiles have no falloff at all | `DamageFalloff.Resolve`, `ProjectileSim.FireAbilityProjectile` |
 | Shield capacity and recharge numbers are invented placeholders, and nothing reads `Battleframe.BaseShields` | `HardcodedCharacterData`, `CharacterEntity.InitFields` |
 | Damage type vs. `DamageResponse` resistance tables are loaded but unused in the damage calculation | `SDBInterface.GetDamageResponse*` |
-| Only `CharacterEntity` can take damage; deployables, turrets and vehicles cannot | `InflictDamageCommand.ApplyDamage`, `ProjectileSim` |
+| Deployable and vehicle health numbers are a first read of the SDB (`StartHitpoints`, `MaxHitPoints`) and neither destruction path has been seen in game | `DeployableEntity.Destroy`, `VehicleEntity.Destroy` |
+| Turrets have neither health nor a collision body, so they can't be shot; they die with their parent | `TurretEntity` |
 | `Usedmgdealt` has nowhere to read from; dealt damage isn't recorded on the context | `InflictDamageCommand` |
 | 13 `ModifyDamageBy*` commands are stubs in `Todo/` | `Commands/Damage/Todo/` |
 | Deaths aren't wired into AI or encounters; NPC corpses just despawn on a timer | `CharacterEntity.Die` |

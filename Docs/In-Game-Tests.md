@@ -154,6 +154,74 @@ Pass: long-range damage rises with the buff rather than decaying back to the unb
 
 ---
 
+## Damage to deployables and vehicles
+
+Added in the current working tree: [IDamageable](../UdpHosts/GameServer/Systems/Combat/IDamageable.cs),
+implemented by `CharacterEntity`, `DeployableEntity` and `VehicleEntity`. See
+[layer 6](Architecture/06-combat-and-damage.md).
+
+Everything about the funnel is covered offline. What isn't, and what these are for, is whether the
+health numbers read off the SDB are the right columns and whether the client accepts health updates
+on entity types that have never sent one.
+
+### [ ] V1: Deployables have health at all (blocks V2-V4)
+
+`/spawn_deployable` something with an obvious model, then watch the log while it spawns.
+
+- Pass: no `Deployable {typeId} has no StartHitpoints` line, and shooting it prints
+  `Deployable {Type} took {Amount} damage`.
+- Fail: the warning appears for everything. `StartHitpoints` isn't the health column; check the record
+  in [MinimalSDB](../Tools/MinimalSDB) dump mode against `StandardHealth` and the scaling table before
+  changing `SpawnDeployable`.
+
+### [ ] V2: A deployable's health bar moves
+
+Shoot a deployable and watch the client, not just the log.
+
+Pass: the bar drops. This is the first time anything has written `CurrentHealthPct` on a deployable,
+so a bar that doesn't move means the client wants something else changed alongside it, or wants a
+keyframe rather than a delta.
+
+### [ ] V3: Destroying a deployable
+
+Shoot one until the log says its health reached zero.
+
+Pass: the death ability fires, the deployable disappears about 2s later, its turret goes with it, and
+shots stop registering against it as soon as it dies. Watch for a turret left floating, which means
+the `Remove(Turret)` in `Destroy` didn't take.
+
+### [ ] V4: A destroyed deployable doesn't leave an invisible wall
+
+Destroy one, wait for it to disappear, then shoot through where it was.
+
+Pass: shots hit whatever is behind it. This is what the `Physics.RemoveEntity` call in
+`EntityManager.OnRemovedEntity` is for, and the same check applies to an NPC corpse after its 30s
+despawn, which had the same problem before this change.
+
+### [ ] V5: Vehicle damage and wrecking
+
+`/spawn_vehicle`, shoot it, then shoot it until it's destroyed. Needs a second person, or an occupied
+vehicle you can shoot from outside, to see the ejection.
+
+Pass: health drops on the client, occupants are ejected on destruction with camera and movement
+control returned to them, the death ability runs, and the vehicle disappears. Ejection is the risky
+part; a player left attached to a removed entity is the failure to watch for.
+
+### [ ] V6: Friendly deployables are still safe
+
+Shoot your own deployable, and one belonging to your faction.
+
+Pass: no damage. Deployables get their faction in `SpawnDeployable`, so this is really a check that
+they were given the right one, since `HostilityRules` itself is covered offline.
+
+### [ ] V7: Splash reaches deployables and vehicles
+
+Set one off next to both.
+
+Pass: both take splash damage, and neither takes it twice from one execution.
+
+---
+
 ## Carried over from the damage work
 
 These landed in commits `9768cf4`, `31f0ff3`, `4a8075e` but predate the pause, so their in-game

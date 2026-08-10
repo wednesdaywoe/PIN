@@ -213,6 +213,15 @@ public partial class PhysicsEngine
         }
     }
 
+    /// <summary>
+    ///     Whether this entity has a body in the simulation. Most entity types don't, so anything cleaning up
+    ///     after an arbitrary entity should ask before calling <see cref="RemoveEntity"/>, which warns.
+    /// </summary>
+    public bool HasBody(IEntity entity)
+    {
+        return _entityIdToBody.ContainsKey(entity.EntityId);
+    }
+
     public void RemoveEntity(IEntity entity)
     {
         if (!_entityIdToBody.ContainsKey(entity.EntityId))

@@ -65,13 +65,23 @@ public class InflictDamageCommand : Command, ICommand
             return true;
         }
 
-        var damaged = new HashSet<IAptitudeTarget>();
+        // Keyed by entity id because a direct target and a splash target arrive as different interfaces
+        var damaged = new HashSet<ulong>();
 
         foreach (IAptitudeTarget target in context.Targets)
         {
-            if (damaged.Add(target))
+            if (!damaged.Add(target.EntityId))
             {
-                ApplyDamage(target, attacker, context, damage, damageType);
+                continue;
+            }
+
+            if (target is IDamageable damageable)
+            {
+                ApplyDamage(damageable, attacker, context, damage, damageType);
+            }
+            else
+            {
+                Logger.Debug("{Command} {CommandId} can not damage {Target}, which has no health", nameof(InflictDamageCommand), Params.Id, target);
             }
         }
 
@@ -93,14 +103,14 @@ public class InflictDamageCommand : Command, ICommand
 
             foreach (var pair in context.Shard.Entities)
             {
-                // Non-characters can not take damage yet, and splash never hits whoever set it off
-                if (pair.Value is not CharacterEntity splashTarget || splashTarget == attacker || ReferenceEquals(pair.Value, context.Self))
+                // Splash never hits whoever set it off
+                if (pair.Value is not IDamageable splashTarget || !splashTarget.IsAlive || ReferenceEquals(splashTarget, attacker))
                 {
                     continue;
                 }
 
                 var distance = Vector3.Distance(origin, splashTarget.Position);
-                if (distance > splashRange || !damaged.Add(splashTarget))
+                if (distance > splashRange || !damaged.Add(splashTarget.EntityId))
                 {
                     continue;
                 }
@@ -114,26 +124,20 @@ public class InflictDamageCommand : Command, ICommand
         return true;
     }
 
-    private void ApplyDamage(IAptitudeTarget target, CharacterEntity attacker, Context context, float damage, byte damageType)
+    private void ApplyDamage(IDamageable target, CharacterEntity attacker, Context context, float damage, byte damageType)
     {
-        if (target is not CharacterEntity character)
-        {
-            Logger.Debug("{Command} {CommandId} can not damage non-character target {Target} yet", nameof(InflictDamageCommand), Params.Id, target);
-            return;
-        }
-
         // Prevent players from killing themselves with their own abilties
-        if (character == attacker || ReferenceEquals(target, context.Self))
+        if (ReferenceEquals(target, attacker) || target.EntityId == context.Self?.EntityId)
         {
             return;
         }
 
-        if (!HostilityRules.CanDamage(attacker, character))
+        if (!target.IsAlive || !HostilityRules.CanDamage(attacker, target))
         {
             return;
         }
 
-        character.TakeDamage(new DamageInfo
+        target.TakeDamage(new DamageInfo
         {
             Amount = damage,
             Attacker = attacker,

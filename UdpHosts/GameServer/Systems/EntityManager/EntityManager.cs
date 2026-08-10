@@ -184,6 +184,17 @@ public class EntityManager
             deployableEntity.Scoping = new ScopingComponent() { Range = deployableInfo.ScopeRange };
         }
 
+        // StartHitpoints is the only per-deployable health column that looks like points rather than a scaling
+        // input. Leaving it at zero when the record has none makes the deployable indestructible, which is
+        // what every deployable was before it could be damaged at all.
+        deployableEntity.SetMaxHealth(deployableInfo.StartHitpoints, true);
+        deployableEntity.DeathAbility = deployableInfo.DeathAbilityid;
+
+        if (deployableInfo.StartHitpoints <= 0)
+        {
+            _logger.Debug("Deployable {typeId} has no StartHitpoints, it will not be damageable", typeId);
+        }
+
         if (deployableInfo.CollisionId == 0)
         {
             _logger.Warning("Deployable {typeId} info has no collision id, what do?", typeId);
@@ -1757,6 +1768,13 @@ public class EntityManager
         foreach (var client in _scopedPlayersByEntity[entity.EntityId])
         {
             ScopeOut(client, entity);
+        }
+
+        // Without this the collision body outlives the entity and leaves something invisible for shots to
+        // stop against, which is how a despawned corpse or a destroyed deployable becomes a wall
+        if (_shard.Physics.HasBody(entity))
+        {
+            _shard.Physics.RemoveEntity(entity);
         }
     }
 

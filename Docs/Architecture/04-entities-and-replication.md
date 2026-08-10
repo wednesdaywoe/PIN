@@ -105,5 +105,7 @@ is how a system broadcasts an event to exactly the right audience.
    attach components, then `Add(entity)`.
 4. Handle it in `ScopeIn` / `ScopeOut`. These are explicit per-type `if (entity is …)` chains, so
    a new type that isn't added there will be invisible to clients.
-5. If it should collide or be shootable, create a physics body; see
-   [layer 7](07-physics-and-world.md).
+5. If it should collide, create a physics body; see [layer 7](07-physics-and-world.md).
+6. If it should be shootable, implement `IDamageable` as well. A body alone only makes it something
+   shots stop against; the interface is what makes them count. See
+   [layer 6](06-combat-and-damage.md#applying-damage).

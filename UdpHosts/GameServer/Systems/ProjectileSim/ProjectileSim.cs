@@ -95,10 +95,10 @@ public class ProjectileSim
     }
 
     /// <summary>
-    ///     Traces a shot and reports back the character it landed on, if it landed on one the shooter is
-    ///     allowed to hurt. Everything past this point differs between a weapon and an ability.
+    ///     Traces a shot and reports back what it landed on, if that's something the shooter is allowed to
+    ///     hurt. Everything past this point differs between a weapon and an ability.
     /// </summary>
-    private bool TryResolveHit(CharacterEntity shooter, Vector3 origin, Vector3 direction, uint trace, out ProjectileHitResult hit, out CharacterEntity target)
+    private bool TryResolveHit(CharacterEntity shooter, Vector3 origin, Vector3 direction, uint trace, out ProjectileHitResult hit, out IDamageable target)
     {
         target = null;
         hit = _shard.Physics.ProjectileRayCast(origin, direction, shooter, trace);
@@ -108,17 +108,18 @@ public class ProjectileSim
             return false;
         }
 
-        if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not CharacterEntity character || character == shooter)
+        // Plenty of things have collision without being able to bleed, and a shot into one of those is a miss
+        if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not IDamageable damageable || ReferenceEquals(damageable, shooter))
         {
             return false;
         }
 
-        if (!HostilityRules.CanDamage(shooter, character))
+        if (!damageable.IsAlive || !HostilityRules.CanDamage(shooter, damageable))
         {
             return false;
         }
 
-        target = character;
+        target = damageable;
         return true;
     }
 }

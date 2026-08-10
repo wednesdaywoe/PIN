@@ -50,6 +50,7 @@ PlayIntroMovie = false
 - Customize character appearance in NewYou (RIN.WebAPI)
 - Call down vehicles and some deployables
 - Hitscan weapon fire with hit registration, faction based hostility, damage and death
+- Deployables and vehicles can be damaged and destroyed
 
 ### Limitations
 

@@ -22,7 +22,6 @@ using GameServer.Systems.Encounters;
 using GameServer.Test;
 using GrpcGameServerAPIClient;
 using Serilog;
-using DealtHitEvent = AeroMessages.GSS.V66.Character.Event.DealtHit;
 using GibVisuals = AeroMessages.GSS.V66.Character.GibVisuals;
 using KilledEvent = AeroMessages.GSS.V66.Character.Event.Killed;
 using LoadoutVisualType = AeroMessages.GSS.V66.Character.LoadoutConfig_Visual.LoadoutVisualType;
@@ -33,7 +32,7 @@ namespace GameServer.Entities.Character;
 /// <summary>
 /// Base Character
 /// </summary>
-public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarget
+public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarget, IDamageable
 {
     public const byte MaxMapMarkerCount = 64;
     private readonly MapMarkerState[] _mapMarkers = new MapMarkerState[MaxMapMarkerCount];
@@ -1398,9 +1397,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public void SetCurrentHealth(int newValue)
     {
         CurrentHealth = Math.Min(Math.Max(0, newValue), MaxHealth.Value);
-        byte pct = MaxHealth.Value > 0 ? (byte)(((float)CurrentHealth / MaxHealth.Value) * 100) : (byte)0;
 
-        Character_ObserverView?.CurrentHealthPctProp = pct;
+        Character_ObserverView?.CurrentHealthPctProp = Vitals.HealthPercent(CurrentHealth, MaxHealth.Value);
         Character_BaseController?.CurrentHealthProp = CurrentHealth;
     }
 
@@ -1421,7 +1419,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             return;
         }
 
-        var amount = (int)MathF.Round(damage.Amount);
+        var amount = damage.Points;
         if (amount <= 0)
         {
             return;
@@ -1451,26 +1449,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             CurrentShields,
             CurrentHealth);
 
-        var damageData = new DamageHitStruct
-        {
-            Target = AeroEntityId,
-            HaveDealer = (byte)(damage.Attacker != null ? 1 : 0),
-            Dealer = damage.Attacker?.AeroEntityId ?? default,
-            DamageValue = amount,
-            DamageType = damage.DamageType,
-        };
-
-        if (damage.Attacker is { IsPlayerControlled: true })
-        {
-            var dealtHit = new DealtHitEvent
-            {
-                HaveDamage = 1,
-                DamageData = damageData,
-                RepeatHitIdx = 0,
-                DamageFlags = damage.Flags,
-            };
-            damage.Attacker.Player.NetChannels[ChannelType.ReliableGss].SendMessage(dealtHit, damage.Attacker.EntityId);
-        }
+        var damageData = DamageEvents.Describe(this, damage, amount);
+        DamageEvents.SendDealtHit(damage, damageData);
 
         if (IsPlayerControlled)
         {

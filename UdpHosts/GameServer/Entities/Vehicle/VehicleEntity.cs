@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -12,6 +13,7 @@ using GameServer.Entities.Character;
 using GameServer.Entities.Turret;
 using GameServer.StaticDB;
 using GameServer.Systems.Aptitude;
+using GameServer.Systems.Combat;
 
 namespace GameServer.Entities.Vehicle;
 
@@ -43,8 +45,14 @@ public enum AttachmentRole : byte
     Turret = 4
 }
 
-public sealed class VehicleEntity : BaseAptitudeEntity, IAptitudeTarget
+public sealed class VehicleEntity : BaseAptitudeEntity, IAptitudeTarget, IDamageable
 {
+    /// <summary>
+    ///     How long a wreck lingers before it's removed, matching the deployable case: long enough for the
+    ///     client to see the health reach zero.
+    /// </summary>
+    private const uint DestroyedLifetimeMs = 2_000;
+
     public VehicleEntity(IShard shard, ulong eid, CharacterEntity owner = null)
         : base(shard, eid, owner)
     {
@@ -130,6 +138,11 @@ public sealed class VehicleEntity : BaseAptitudeEntity, IAptitudeTarget
 
     public uint CurrentHealth { get; set; }
     public uint MaxHealth { get; set; }
+
+    public bool Destroyed { get; private set; }
+
+    public bool IsAlive => !Destroyed;
+
     public uint CurrentShields { get; set; }
     public uint MaxShields { get; set; }
     public uint CurrentResources { get; set; }
@@ -374,6 +387,84 @@ public sealed class VehicleEntity : BaseAptitudeEntity, IAptitudeTarget
     {
         EffectsFlags = newValue;
         Vehicle_ObserverView.EffectsFlagsProp = EffectsFlags;
+    }
+
+    public void SetCurrentHealth(uint newValue)
+    {
+        CurrentHealth = Math.Min(newValue, MaxHealth);
+        Vehicle_ObserverView.CurrentHealthProp = CurrentHealth;
+        if (Vehicle_BaseController != null)
+        {
+            Vehicle_BaseController.CurrentHealthProp = CurrentHealth;
+        }
+    }
+
+    public void TakeDamage(DamageInfo damage)
+    {
+        // A vehicle whose record gave it no hit points can't be wrecked, same as a deployable without health
+        if (!IsAlive || MaxHealth == 0)
+        {
+            return;
+        }
+
+        var amount = damage.Points;
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        SetCurrentHealth(CurrentHealth > (uint)amount ? CurrentHealth - (uint)amount : 0);
+
+        Logger.Debug(
+            "Vehicle {Vehicle} took {Amount} damage from {Attacker}, {Health} of {MaxHealth} health left",
+            EntityId,
+            amount,
+            damage.Attacker,
+            CurrentHealth,
+            MaxHealth);
+
+        DamageEvents.SendDealtHit(damage, DamageEvents.Describe(this, damage, amount));
+
+        if (CurrentHealth == 0)
+        {
+            Destroy();
+        }
+    }
+
+    /// <summary>
+    ///     Wrecks the vehicle. Occupants are turfed out first so nobody is left riding something that is about
+    ///     to stop existing, then <see cref="DeathAbility"/> runs, which is where the record puts whatever a
+    ///     destroyed vehicle is meant to do. It's removed shortly after, once the client has had time to see
+    ///     the health reach zero.
+    /// </summary>
+    public void Destroy()
+    {
+        if (Destroyed)
+        {
+            return;
+        }
+
+        Destroyed = true;
+
+        foreach (var character in Occupants.Values.Select(seat => seat.Occupant).OfType<CharacterEntity>().ToArray())
+        {
+            RemoveOccupant(character);
+        }
+
+        foreach (var turret in Turrets)
+        {
+            turret.SetControllingPlayer(null);
+            Shard.EntityMan.Remove(turret);
+        }
+
+        Turrets.Clear();
+
+        if (DeathAbility != 0)
+        {
+            Shard.Abilities.HandleActivateAbility(Shard, this, DeathAbility);
+        }
+
+        Shard.EntityMan.SetRemainingLifetime(this, DestroyedLifetimeMs);
     }
 
     public override void SetStatusEffect(byte index, ushort time, StatusEffectData data)
