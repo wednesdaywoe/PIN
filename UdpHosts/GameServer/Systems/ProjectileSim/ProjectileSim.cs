@@ -1,9 +1,10 @@
-using System;
 using System.Numerics;
 using AeroMessages.GSS.V66;
 using GameServer.Entities.Character;
+using GameServer.Physics;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.dbitems;
+using GameServer.Systems.Combat;
 using GameServer.Systems.Hostility;
 using Serilog;
 
@@ -22,18 +23,7 @@ public class ProjectileSim
 
     public void FireProjectile(CharacterEntity entity, uint trace, Vector3 origin, Vector3 direction, Ammo ammo, WeaponTemplateResult weapon)
     {
-        var hit = _shard.Physics.ProjectileRayCast(origin, direction, entity, trace);
-        if (hit == null)
-        {
-            return;
-        }
-
-        if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not CharacterEntity target || target == entity)
-        {
-            return;
-        }
-
-        if (!HostilityRules.CanDamage(entity, target))
+        if (!TryResolveHit(entity, origin, direction, trace, out var hit, out var target))
         {
             return;
         }
@@ -62,14 +52,13 @@ public class ProjectileSim
             damage *= weapon.HeadshotMult;
         }
 
-        var damageFlags = (DamageResponseFlags)0;
-        if (hit.Headshot || hit.Crit)
+        target.TakeDamage(new DamageInfo
         {
-            damageFlags |= DamageResponseFlags.Critical;
-        }
-
-        var damageType = entity.WeaponDamageTypeOverride ?? ammo.Damagetype;
-        target.TakeDamage((int)MathF.Round(damage), entity, damageType, damageFlags);
+            Amount = damage,
+            Attacker = entity,
+            DamageType = entity.WeaponDamageTypeOverride ?? ammo.Damagetype,
+            Flags = ResolveFlags(hit),
+        });
     }
 
     /// <summary>
@@ -80,29 +69,18 @@ public class ProjectileSim
     /// </summary>
     public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage)
     {
-        var hit = _shard.Physics.ProjectileRayCast(origin, direction, shooter, 0);
-        if (hit == null)
+        if (!TryResolveHit(shooter, origin, direction, 0, out var hit, out var target))
         {
             return;
         }
 
-        if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not CharacterEntity target || target == shooter)
+        target.TakeDamage(new DamageInfo
         {
-            return;
-        }
-
-        if (!HostilityRules.CanDamage(shooter, target))
-        {
-            return;
-        }
-
-        var damageFlags = (DamageResponseFlags)0;
-        if (hit.Headshot || hit.Crit)
-        {
-            damageFlags |= DamageResponseFlags.Critical;
-        }
-
-        target.TakeDamage((int)MathF.Round(damage * hit.DamageMod), shooter, ammo.Damagetype, damageFlags);
+            Amount = damage * hit.DamageMod,
+            Attacker = shooter,
+            DamageType = ammo.Damagetype,
+            Flags = ResolveFlags(hit),
+        });
     }
 
     /*
@@ -110,4 +88,37 @@ public class ProjectileSim
     {
     }
     */
+
+    private static DamageResponseFlags ResolveFlags(ProjectileHitResult hit)
+    {
+        return hit.Headshot || hit.Crit ? DamageResponseFlags.Critical : 0;
+    }
+
+    /// <summary>
+    ///     Traces a shot and reports back the character it landed on, if it landed on one the shooter is
+    ///     allowed to hurt. Everything past this point differs between a weapon and an ability.
+    /// </summary>
+    private bool TryResolveHit(CharacterEntity shooter, Vector3 origin, Vector3 direction, uint trace, out ProjectileHitResult hit, out CharacterEntity target)
+    {
+        target = null;
+        hit = _shard.Physics.ProjectileRayCast(origin, direction, shooter, trace);
+
+        if (hit == null)
+        {
+            return false;
+        }
+
+        if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not CharacterEntity character || character == shooter)
+        {
+            return false;
+        }
+
+        if (!HostilityRules.CanDamage(shooter, character))
+        {
+            return false;
+        }
+
+        target = character;
+        return true;
+    }
 }

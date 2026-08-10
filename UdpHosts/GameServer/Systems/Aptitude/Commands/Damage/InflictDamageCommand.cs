@@ -4,6 +4,7 @@ using GameServer.Entities.Character;
 using GameServer.Enums;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
+using GameServer.Systems.Combat;
 using GameServer.Systems.Hostility;
 
 namespace GameServer.Systems.Aptitude.Commands.Damage;
@@ -136,12 +137,11 @@ public class InflictDamageCommand : Command, ICommand
             return;
         }
 
-        var amount = (int)System.MathF.Round(damage);
-        if (amount <= 0)
+        character.TakeDamage(new DamageInfo
         {
-            return;
-        }
-
-        character.TakeDamage(amount, attacker, damageType, 0);
+            Amount = damage,
+            Attacker = attacker,
+            DamageType = damageType,
+        });
     }
 }

@@ -12,6 +12,7 @@ using GameServer.Physics;
 using GameServer.Systems.Admin;
 using GameServer.Systems.Aptitude;
 using GameServer.Systems.Chat;
+using GameServer.Systems.Combat;
 using GameServer.Systems.Encounters;
 using GameServer.Systems.EntityManager;
 using GameServer.Systems.MovementRelay;
@@ -26,6 +27,8 @@ namespace GameServer;
 public class Shard : IShard
 {
     private const double _networkTickRate = 1.0 / 20.0;
+
+    private readonly ShieldSim _shieldSim;
 
     private long _startTime;
     private double _lastNetTick;
@@ -52,6 +55,7 @@ public class Shard : IShard
         EncounterMan = new EncounterManager(this);
         WeaponSim = new WeaponSim(this);
         ProjectileSim = new ProjectileSim(this);
+        _shieldSim = new ShieldSim(this);
         Chat = new ChatService(this, EventBus);
         Admin = new AdminService(this);
         EntityRefMap = new ConcurrentDictionary<ushort, Tuple<IEntity, Enums.GSS.Controllers>>();
@@ -107,6 +111,7 @@ public class Shard : IShard
         EncounterMan.Tick(deltaTime, currentTime, ct);
         Abilities.Tick(deltaTime, currentTime, ct);
         WeaponSim.Tick(deltaTime, currentTime, ct);
+        _shieldSim.Tick(deltaTime, currentTime, ct);
         EventBus.Flush();
 
         return true;

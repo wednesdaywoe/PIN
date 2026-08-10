@@ -187,7 +187,7 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         baseController.RespawnTimesProp = new RespawnTimesData(); // Shake it up
         baseController.RespawnTimesProp = null; // It's dirt
         CharacterEntity.SetMaxHealth(HardcodedCharacterData.MaxHealth, true); // Also updates the entity fields, not just the controller props
-        baseController.CurrentShieldsProp = 0;
+        CharacterEntity.SetMaxShields(HardcodedCharacterData.MaxShields, true); // Was writing the prop straight, which left the entity thinking it still had no shields
         baseController.ZoneUnlocksProp = 0xFFFFFFFFFFFFFFFFUL;
         baseController.RegionUnlocksProp = 0xFFFFFFFFFFFFFFFFUL;
         baseController.PersonalFactionStanceProp = new PersonalFactionStanceData

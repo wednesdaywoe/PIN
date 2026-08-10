@@ -18,11 +18,12 @@ WeaponSim.OnFireWeaponProjectile                Systems/WeaponSim/WeaponSim.cs
   └─ per round: PRNG.Spread(...) → ProjectileSim.FireProjectile(...)
 
 ProjectileSim.FireProjectile                    Systems/ProjectileSim/ProjectileSim.cs
-  ├─ PhysicsEngine.ProjectileRayCast(origin, direction, source, trace)   hitscan, 500m
-  ├─ resolve hit body → entity; bail unless it's a different CharacterEntity
-  ├─ HostilityRules.CanDamage(shooter, target)
+  ├─ TryResolveHit(...)                         shared with FireAbilityProjectile
+  │   ├─ PhysicsEngine.ProjectileRayCast(origin, direction, source, trace)   hitscan, 500m
+  │   ├─ resolve hit body → entity; bail unless it's a different CharacterEntity
+  │   └─ HostilityRules.CanDamage(shooter, target)
   ├─ damage = DamageFalloff.DamageAt(distance) * hit.DamageMod (* HeadshotMult)
-  └─ target.TakeDamage(amount, attacker, damageType, flags)
+  └─ target.TakeDamage(new DamageInfo { ... })
 ```
 
 Projectiles are hitscan. There's no travel time, gravity, or projectile entity, even though `Ammo`
@@ -69,14 +70,26 @@ against real client damage numbers without firing a shot.
 
 ## Applying damage
 
-`CharacterEntity.TakeDamage(amount, attacker, damageType, damageFlags)`
+Anything that wants to hurt something builds a
+[DamageInfo](../../UdpHosts/GameServer/Systems/Combat/DamageInfo.cs) and hands it to
+`CharacterEntity.TakeDamage`. Callers cover what the attacker's side knows about, meaning range decay,
+hit location and splash falloff, and stop there. Mitigation lives in `TakeDamage` and nowhere else,
+which is what stops shields and the resistance tables from having to be written once per call site.
+
+`DamageInfo` carries the pre-mitigation amount as a float, the attacker, the damage type and the
+response flags. Rounding to whole points happens inside `TakeDamage` once the target's side is done
+with it.
+
+`CharacterEntity.TakeDamage(DamageInfo)`
 ([CharacterEntity.cs](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs)):
 
-1. Ignore if `amount <= 0` or the target isn't alive.
-2. `SetCurrentHealth(CurrentHealth - amount)`.
-3. Build a `DamageHitStruct` and send `DealtHitEvent` to the attacker (if player-controlled) and
-   `TookHitEvent` to the target (if player-controlled).
-4. If health hits zero, `Die(killer)`.
+1. Ignore if the target isn't alive or the amount rounds away to nothing.
+2. Shields absorb up to whatever is left of them and the rest carries into health.
+3. Restart the shield recharge delay, whether the shield took any of it or not.
+4. Build a `DamageHitStruct` and send `DealtHitEvent` to the attacker (if player-controlled) and
+   `TookHitEvent` to the target (if player-controlled). Both report the whole hit rather than the
+   part that reached health.
+5. If health hits zero, `Die(killer)`.
 
 `Die` sets `Alive = false`, sets character state `Dead`, broadcasts `KilledEvent` via
 `EntityMan.SendToScoped`, and for NPCs only schedules despawn after 30s via
@@ -86,6 +99,22 @@ controller state in two passes.
 
 `TakeDamage` is the single funnel. Anything that wants to hurt something should call it rather than
 touching health, so hit events, death and respawn all stay consistent.
+
+### Shields
+
+[ShieldSim](../../UdpHosts/GameServer/Systems/Combat/ShieldSim.cs) refills shields on a 100ms tick,
+once `ShieldRechargeDelayMs` has gone by without a hit landing. At a low rate a tick is worth a
+fraction of a point, so `CharacterEntity.RechargeShields` carries the remainder between ticks instead
+of truncating it away and never regenerating anything.
+
+Max shields and both recharge numbers are placeholders in `HardcodedCharacterData`, next to the
+hardcoded max health. `dbitems::Battleframe` carries `base_shields` and the
+recharge pair per frame, but whether those columns shipped with live values hasn't been confirmed;
+[MinimalSDB](../../Tools/MinimalSDB) in `dump` mode answers that before any of it gets tuned. Monsters
+are given zero shields, so the guess only lands on players and NPC damage behaves exactly as it did.
+
+`MaxShields` and `CurrentShields` only exist on `BaseController`, which means a player sees their own
+shield bar and nobody else's. Health has a percentage on `ObserverView`; shields have no equivalent.
 
 ## Ability damage
 
@@ -153,13 +182,12 @@ These are known-missing rather than accidental, and are the natural next pieces 
 |-----|-------|
 | Faction stance encoding unconfirmed, and reputation-derived stance (`GetFactionReputations`) is unused | `SDBUtils.ToStance` |
 | Range decay curve unconfirmed, and ability projectiles have no falloff at all | `DamageFalloff.Resolve`, `ProjectileSim.FireAbilityProjectile` |
-| Shields are never consumed: `TakeDamage` only subtracts health, though `SetCurrentShields` exists and max shields is currently forced to 0 | `CharacterEntity.TakeDamage` |
+| Shield capacity and recharge numbers are invented placeholders, and nothing reads `Battleframe.BaseShields` | `HardcodedCharacterData`, `CharacterEntity.InitFields` |
 | Damage type vs. `DamageResponse` resistance tables are loaded but unused in the damage calculation | `SDBInterface.GetDamageResponse*` |
 | Only `CharacterEntity` can take damage; deployables, turrets and vehicles cannot | `InflictDamageCommand.ApplyDamage`, `ProjectileSim` |
 | `Usedmgdealt` has nowhere to read from; dealt damage isn't recorded on the context | `InflictDamageCommand` |
 | 13 `ModifyDamageBy*` commands are stubs in `Todo/` | `Commands/Damage/Todo/` |
 | Deaths aren't wired into AI or encounters; NPC corpses just despawn on a timer | `CharacterEntity.Die` |
-| `FireProjectile` and `FireAbilityProjectile` duplicate hit resolution and flag logic | `ProjectileSim` |
 | The aptitude hostility commands are all stubs, so nothing can change an entity's faction at runtime | `Commands/Hostility/Todo/`, `Commands/Target/Todo/TargetHostilesCommand` and friends |
 
 ## Useful debug hooks

@@ -15,6 +15,14 @@ public static class HardcodedCharacterData
     public static byte EffectiveLevel = 45;
     public static int MaxHealth = 19192;
     public static int MonsterMaxHealth = 2500;
+
+    // Placeholders until a dump of the client db says whether dbitems::Battleframe shipped base_shields and
+    // the recharge pair with live values. These are invented numbers that make the shield layer observable,
+    // not tuned ones. Monsters stay shieldless so the guess only lands on players.
+    public static int MaxShields = 4800;
+    public static int MonsterMaxShields = 0;
+    public static int ShieldRechargePerSec = 960;
+    public static int ShieldRechargeDelayMs = 5000;
     public static int GeneratedLoadoutCounter = 20001;
     public static HashSet<uint> HostileFactionIds = [2, 3, 5, 6, 7, 8, 17, 22, 42, 43, 45, 46, 47, 48];
 

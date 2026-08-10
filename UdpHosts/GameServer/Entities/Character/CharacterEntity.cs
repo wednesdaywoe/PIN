@@ -17,6 +17,7 @@ using GameServer.StaticDB.Records.dbcharacter;
 using GameServer.StaticDB.Records.dbitems;
 using GameServer.StaticDB.Records.dbvisualrecords;
 using GameServer.Systems.Aptitude;
+using GameServer.Systems.Combat;
 using GameServer.Systems.Encounters;
 using GameServer.Test;
 using GrpcGameServerAPIClient;
@@ -36,6 +37,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 {
     public const byte MaxMapMarkerCount = 64;
     private readonly MapMarkerState[] _mapMarkers = new MapMarkerState[MaxMapMarkerCount];
+    private float _shieldRechargeRemainder;
 
     public CharacterEntity(IShard shard, ulong eid, CharacterEntity owner = null)
         : base(shard, eid, owner)
@@ -130,6 +132,9 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public MaxVital MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
     public int CurrentShields { get; private set; }
+    public int ShieldRechargePerSec { get; set; }
+    public int ShieldRechargeDelayMs { get; set; }
+    public ulong LastDamagedTime { get; private set; }
     public GibVisuals GibVisualsInfo { get; set; }
     public ProcessDelayData ProcessDelay { get; set; }
     public EmoteData Emote { get; set; }
@@ -337,6 +342,10 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         // TODO: Derive from monsterInfo.ScalingTableId (dbcharacter::MonsterScaling) once that table is loaded
         SetMaxHealth(HardcodedCharacterData.MonsterMaxHealth, true);
+
+        // Monsters stay shieldless until dbcharacter::Monster gives them a real number, so the placeholder
+        // player shields in InitFields don't leak onto every NPC
+        SetMaxShields(HardcodedCharacterData.MonsterMaxShields, true);
 
         ApplyLoadout(loadout);
 
@@ -1401,35 +1410,66 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         Character_BaseController?.CurrentShieldsProp = CurrentShields;
     }
 
-    public void TakeDamage(int amount, CharacterEntity attacker, byte damageType, DamageResponseFlags damageFlags)
+    /// <summary>
+    ///     The one place damage is applied. Callers hand over what they worked out from the attacker's side
+    ///     and everything the target gets a say in, mitigation included, happens here.
+    /// </summary>
+    public void TakeDamage(DamageInfo damage)
     {
-        if (amount <= 0 || !IsAlive)
+        if (!IsAlive)
         {
             return;
         }
 
-        SetCurrentHealth(CurrentHealth - amount);
-        Logger.Debug("{Target} took {Amount} damage from {Attacker}, {Health} health left", this, amount, attacker, CurrentHealth);
+        var amount = (int)MathF.Round(damage.Amount);
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        // Shields soak the hit until they break and the rest of it carries into health
+        var absorbed = Math.Min(CurrentShields, amount);
+        if (absorbed > 0)
+        {
+            SetCurrentShields(CurrentShields - absorbed);
+        }
+
+        if (amount > absorbed)
+        {
+            SetCurrentHealth(CurrentHealth - (amount - absorbed));
+        }
+
+        // Landing a hit restarts the recharge wait whether the shield took any of it or not
+        LastDamagedTime = Shard.CurrentTimeLong;
+
+        Logger.Debug(
+            "{Target} took {Amount} damage from {Attacker}, {Absorbed} of it on shields, {Shields} shields and {Health} health left",
+            this,
+            amount,
+            damage.Attacker,
+            absorbed,
+            CurrentShields,
+            CurrentHealth);
 
         var damageData = new DamageHitStruct
         {
             Target = AeroEntityId,
-            HaveDealer = (byte)(attacker != null ? 1 : 0),
-            Dealer = attacker?.AeroEntityId ?? default,
+            HaveDealer = (byte)(damage.Attacker != null ? 1 : 0),
+            Dealer = damage.Attacker?.AeroEntityId ?? default,
             DamageValue = amount,
-            DamageType = damageType,
+            DamageType = damage.DamageType,
         };
 
-        if (attacker is { IsPlayerControlled: true })
+        if (damage.Attacker is { IsPlayerControlled: true })
         {
             var dealtHit = new DealtHitEvent
             {
                 HaveDamage = 1,
                 DamageData = damageData,
                 RepeatHitIdx = 0,
-                DamageFlags = damageFlags,
+                DamageFlags = damage.Flags,
             };
-            attacker.Player.NetChannels[ChannelType.ReliableGss].SendMessage(dealtHit, attacker.EntityId);
+            damage.Attacker.Player.NetChannels[ChannelType.ReliableGss].SendMessage(dealtHit, damage.Attacker.EntityId);
         }
 
         if (IsPlayerControlled)
@@ -1439,7 +1479,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
                 HaveDamage = 1,
                 DamageData = damageData,
                 RepeatHitIdx = 0,
-                DamageFlags = damageFlags,
+                DamageFlags = damage.Flags,
                 ShortTime = Shard.CurrentShortTime,
                 Unk2 = 0,
             };
@@ -1448,7 +1488,30 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         if (CurrentHealth <= 0)
         {
-            Die(attacker);
+            Die(damage.Attacker);
+        }
+    }
+
+    /// <summary>
+    ///     Puts back <paramref name="elapsedSeconds"/> worth of shield once the recharge delay has run out.
+    ///     Driven by <see cref="ShieldSim"/>.
+    /// </summary>
+    public void RechargeShields(ulong currentTime, float elapsedSeconds)
+    {
+        if (!IsAlive || ShieldRechargePerSec <= 0 || CurrentShields >= MaxShields.Value || currentTime < LastDamagedTime + (ulong)ShieldRechargeDelayMs)
+        {
+            _shieldRechargeRemainder = 0f;
+            return;
+        }
+
+        // The rate is per second and ticks are a lot shorter than that, so the leftover fraction has to carry
+        var restored = _shieldRechargeRemainder + (ShieldRechargePerSec * elapsedSeconds);
+        var points = (int)restored;
+        _shieldRechargeRemainder = restored - points;
+
+        if (points > 0)
+        {
+            SetCurrentShields(CurrentShields + points);
         }
     }
 
@@ -1490,8 +1553,10 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         StaticInfo = new StaticInfoData();
         CharacterState = new CharacterStateData { State = CharacterStateData.CharacterStatus.Living, Time = Shard.CurrentTime };
         HostilityInfo = new HostilityInfoData { Flags = 0 | HostilityInfoData.HostilityFlags.Faction, FactionId = 1 };
-        SetMaxShields(0, true);
-        SetMaxHealth(19192, true);
+        SetMaxShields(HardcodedCharacterData.MaxShields, true);
+        SetMaxHealth(HardcodedCharacterData.MaxHealth, true);
+        ShieldRechargePerSec = HardcodedCharacterData.ShieldRechargePerSec;
+        ShieldRechargeDelayMs = HardcodedCharacterData.ShieldRechargeDelayMs;
         GibVisualsInfo = new GibVisuals { Id = 0, Time = Shard.CurrentTime };
         ProcessDelay = new ProcessDelayData { Unk1 = 30721, Unk2 = 236 };
         Emote = new EmoteData { Id = 0, Time = 0 };
