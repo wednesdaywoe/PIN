@@ -10,6 +10,8 @@ combat, lives in the [Architecture Guide](Architecture/README.md).
 Checks that need a running client are queued in [In-Game Tests](In-Game-Tests.md). What can be
 checked without one lives in [Tests/GameServer.Tests](../Tests/GameServer.Tests).
 
+What's missing and the order it's being fixed in is in the [Roadmap](../ROADMAP.md).
+
 ## UdpHosts
 
 As the name suggests these are the server hosts that talk via UDP to the client.
