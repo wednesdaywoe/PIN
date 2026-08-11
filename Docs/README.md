@@ -7,7 +7,10 @@ PIN is split into two areas:
 A layered walkthrough of the codebase, from processes and networking up through abilities and
 combat, lives in the [Architecture Guide](Architecture/README.md).
 
-Checks that need a running client are queued in [In-Game Tests](In-Game-Tests.md). What can be
+What the game itself was — the client build PIN targets, and what survives of Firefall's own
+documentation — lives in the [Wiki](Wiki/README.md).
+
+Checks that need a running client are queued in [In-Game Tests](In-Game-Tests/README.md). What can be
 checked without one lives in [Tests/GameServer.Tests](../Tests/GameServer.Tests).
 
 What's missing and the order it's being fixed in is in the [Roadmap](../ROADMAP.md).

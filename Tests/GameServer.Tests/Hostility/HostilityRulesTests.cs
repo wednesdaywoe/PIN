@@ -7,8 +7,8 @@ namespace GameServer.Tests.Hostility;
 /// <summary>
 ///     The rules that decide who may hurt whom, minus the faction relations table. Anything involving two
 ///     different factions resolves through SDBUtils.GetFactionStance and so needs a real clientdb; that half
-///     is H1-H7 in Docs/In-Game-Tests.md. What's left here is every path that answers before the table is
-///     consulted, which includes the two that protect players from each other.
+///     is H1-H7 in Docs/In-Game-Tests/Hostility.md. What's left here is every path that answers
+///     before the table is consulted, which includes the two that protect players from each other.
 /// </summary>
 public class HostilityRulesTests
 {

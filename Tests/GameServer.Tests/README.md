@@ -23,7 +23,7 @@ writing the test, and is worth doing when the calculation is subtle rather than 
 Several of the models they cover are reverse-engineering guesses: the range decay curve, the splash
 curve, the faction stance encoding. A test pins what the code was meant to do. Whether that matches
 what Firefall actually did is a question only the client can answer, and those checks live in
-[Docs/In-Game-Tests.md](../../Docs/In-Game-Tests.md).
+[Docs/In-Game-Tests](../../Docs/In-Game-Tests/README.md).
 
 The split is worth keeping deliberate. When an in-game check fails, the tests are what tell you the
 model is wrong rather than the implementation of it.

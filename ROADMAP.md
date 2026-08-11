@@ -4,7 +4,7 @@ Where the server is going, in dependency order. The destination here is a vertic
 
 For what the code does today, read [Architecture Guide](Docs/Architecture/README.md). This
 document only covers what's missing and what order to fix it in. Checks that need a running client
-go in [In-Game Tests](Docs/In-Game-Tests.md) as work lands.
+go in [In-Game Tests](Docs/In-Game-Tests/README.md) as work lands.
 
 ## The destination
 
@@ -59,7 +59,7 @@ data has to be invented rather than recovered.
 
 Three combat numbers are guesses that a real client answers in an afternoon: the faction stance
 encoding, the range decay curve, and whether `Battleframe` shipped live shield values. All three
-are already queued in [In-Game Tests](Docs/In-Game-Tests.md), and all three degrade safely when
+are already queued in [In-Game Tests](Docs/In-Game-Tests/README.md), and all three degrade safely when
 wrong.
 
 It goes first because everything below tunes against these. Building AI that fights the player is
@@ -335,7 +335,7 @@ a lossy link, which makes verification the expensive part.
 ## Keeping this current
 
 A milestone is done when its exit criterion has been seen in game, not when the code compiles.
-Move the check into [In-Game Tests](Docs/In-Game-Tests.md) as the work lands and record the result
+Move the check into [In-Game Tests](Docs/In-Game-Tests/README.md) as the work lands and record the result
 there. When a milestone turns out to be two milestones, split it here rather than quietly widening
 it, and when something on the "not on the path" list becomes necessary, move it up with the reason
 it changed.

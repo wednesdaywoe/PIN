@@ -234,7 +234,7 @@ These are known-missing rather than accidental, and are the natural next pieces 
 - `target`, `cleartarget`, `npc`, `applyeffect`, `listeffects`, `removeeffect`, `cflags`,
   `dbg_weapon`, `hostility`, all in
   [Systems/Admin/Commands](../../UdpHosts/GameServer/Systems/Admin/Commands), and typed into the
-  Admin chat channel without a leading slash. [In-Game Tests](../In-Game-Tests.md) lists the monster
-  type ids worth spawning and the faction each one carries.
+  Admin chat channel without a leading slash. [In-Game Tests](../In-Game-Tests/Session-Setup.md)
+  lists the monster type ids worth spawning and the faction each one carries.
 - `DebugProjectileHitCallbacks` streams projectile spawn/impact/timeout to the debug pipe
 - Every ability log line carries an `ExecutionId`; filter on it to see one activation end to end

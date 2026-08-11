@@ -86,7 +86,7 @@ The solution builds and analysers run on macOS/Linux with no Firefall installati
 the server needs `clientdb.sd2`; compiling doesn't.
 
 Anything that lands without a client behind it goes in the queue at
-[Docs/In-Game-Tests.md](../In-Game-Tests.md) rather than being assumed working.
+[Docs/In-Game-Tests](../In-Game-Tests/README.md) rather than being assumed working.
 
 ```
 git submodule update --init --recursive     # AeroMessages, BepuPhysics2, Bitter

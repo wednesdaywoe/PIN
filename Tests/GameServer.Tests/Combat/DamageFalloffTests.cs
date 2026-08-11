@@ -7,8 +7,9 @@ namespace GameServer.Tests.Combat;
 
 /// <summary>
 ///     Pins the range decay model in <see cref="DamageFalloff"/>. Whether the model matches the client is
-///     an in-game question (R1-R5 in Docs/In-Game-Tests.md); these only hold it to what it means to do,
-///     including the promise that a wrong guess degrades to no decay rather than to weaker weapons.
+///     an in-game question (R1-R5 in Docs/In-Game-Tests/Damage-Decay.md); these only hold it to what
+///     it means to do, including the promise that a wrong guess degrades to no decay rather than to
+///     weaker weapons.
 /// </summary>
 public class DamageFalloffTests
 {

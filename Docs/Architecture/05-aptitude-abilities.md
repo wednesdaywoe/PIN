@@ -86,7 +86,7 @@ never been shown to be load-bearing. Keep it as a cheap invariant, not as a diag
 for effects applied outside a chain, and sends `Stacks` in `Stack` where it used to send 0. Both
 fields exist so the client can match an effect it predicted itself against the one the server
 replicates, and getting that match wrong is the leading explanation for Charge's stuck camera
-(D5d/D5e in [In-Game-Tests](../In-Game-Tests.md)).
+(D5d/D5e in [In-Game-Tests](../In-Game-Tests/Charge-Camera.md)).
 
 Echoing `InitTime` was tried and reverted twice before, on the grounds that it's the client's clock
 and shard time is something else. That was wrong. `Shard.CurrentTime` is unix epoch milliseconds

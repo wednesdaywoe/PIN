@@ -5,7 +5,7 @@ namespace GameServer.Tests.Combat;
 
 /// <summary>
 ///     Pins the splash curve InflictDamageCommand applies. Same caveat as the range decay curve: this says
-///     the code does what we meant, not that the client agrees (D3 in Docs/In-Game-Tests.md).
+///     the code does what we meant, not that the client agrees (D3 in Docs/In-Game-Tests/Damage-Loop.md).
 /// </summary>
 public class SplashFalloffTests
 {
