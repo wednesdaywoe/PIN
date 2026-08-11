@@ -171,6 +171,12 @@ public class StaticDBLoader : ISDBLoader
         .ToDictionary(row => row.SdbId);
     }
 
+    public Dictionary<uint, Certificate> LoadCertificate()
+    {
+        return LoadStaticDB<Certificate>("dbitems::Certificate")
+        .ToDictionary(row => row.Id);
+    }
+
     public Dictionary<uint, Battleframe> LoadBattleframe()
     {
         return LoadStaticDB<Battleframe>("dbitems::Battleframe")

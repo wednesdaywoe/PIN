@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using WebHost.ClientApi.Accounts.Models;
 using WebHost.ClientApi.Characters.Models;
 
@@ -11,6 +12,20 @@ namespace WebHost.ClientApi.Accounts;
 public class AccountsController : ControllerBase
 {
     private static ConcurrentDictionary<uint, GarageSlots> _garageSlots;
+
+    private readonly IConfiguration _configuration;
+
+    public AccountsController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    // The client only shows the console / dev UI when the login response says the
+    // account is a dev (is_dev) AND the player typed a @red5.test-style account name
+    // (the client's own IsDevAccount check). This flag supplies the server half; it
+    // is false by default, so a normal login is unaffected. Toggle it in appsettings
+    // (reloads live) to run the dev-mode experiment.
+    private bool DevMode => _configuration.GetValue<bool>("DevMode");
 
     [Route("api/v2/accounts")]
     [HttpPost]
@@ -27,7 +42,7 @@ public class AccountsController : ControllerBase
                {
                    AccountId = 0x1122334455667788,
                    CanLogin = true,
-                   IsDev = false,
+                   IsDev = DevMode,
                    SteamAuthPrompt = false,
                    SkipPrecursor = false,
                    CaisStatus = new CaisStatus { Duration = 0, ExpiresAt = 0, State = "disabled" },
@@ -42,7 +57,7 @@ public class AccountsController : ControllerBase
     [HttpGet]
     public object CurrentStatus()
     {
-        return new CurrentStatus { IsActive = true, CanLogin = true, IsDev = false, IsBanned = false };
+        return new CurrentStatus { IsActive = true, CanLogin = true, IsDev = DevMode, IsBanned = false };
     }
 
     [Route("api/v2/accounts/change_language")]

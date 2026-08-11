@@ -220,7 +220,10 @@ public class ArmiesController : ControllerBase
         return armyApplications;
     }
 
+    // The client requests ranks at .../ranks (webframe) as well as .../members/ranks;
+    // serve the same data at both so the shorter path does not 404 into a nil handler.
     [Route("api/v3/armies/{armyId}/members/ranks")]
+    [Route("api/v3/armies/{armyId}/ranks")]
     [HttpGet]
     public object GetArmyRanks(string armyId)
     {

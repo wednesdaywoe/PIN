@@ -37,16 +37,6 @@ public class CharacterInventory
 
     public void LoadHardcodedInventory()
     {
-        foreach (uint item in HardcodedCharacterData.FallbackInventoryItems)
-        {
-            CreateItem(item);
-        }
-
-        foreach ((uint resource, uint quantity) in HardcodedCharacterData.FallbackInventoryResources)
-        {
-            AddResource(resource, quantity);
-        }
-
         foreach (var data in HardcodedCharacterData.TempHardcodedLoadouts)
         {
             HardcodedCharacterData.GenerateLoadoutAndItems(this, data);
@@ -56,6 +46,14 @@ public class CharacterInventory
         {
             HardcodedCharacterData.GenerateCharCreateLoadoutAndItems(this, createId, chassisId);
         }
+    }
+
+    public IEnumerable<uint> GetOwnedChassisIds()
+    {
+        return _loadouts.Values
+            .Where(loadout => loadout.LoadoutType == "battleframe")
+            .Select(loadout => loadout.ChassisID)
+            .Distinct();
     }
 
     public int GetLoadoutIdForChassis(uint chassisId)

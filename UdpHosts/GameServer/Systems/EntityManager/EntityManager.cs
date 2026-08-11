@@ -1139,37 +1139,63 @@ public class EntityManager
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(combatController, entity.EntityId, player.PlayerId);
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(effectsController, entity.EntityId, player.PlayerId);
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(missionController, entity.EntityId, player.PlayerId);
+                    // Progression and unlocks cover every owned frame, not just the equipped one, and must
+                    // be addressed to the character entity - SendMessage's entityId defaults to 0, which the
+                    // client drops, leaving every frame at level 1 and every certificate locked.
+                    uint[] ownedChassisIds = [.. player.Inventory.GetOwnedChassisIds()];
                     player.NetChannels[ChannelType.ReliableGss].SendMessage(new EliteLevels_InitAllFrames()
                     {
                         CurrentFrame_Id = character.CurrentLoadout.ChassisID,
-                        Frames = [
-                            new ()
+                        Frames = [.. ownedChassisIds.Select(chassisId =>
+                            new EliteFrameInfoAll()
                             {
-                                ChassisId_1 = character.CurrentLoadout.ChassisID,
-                                ChassisId_2 = character.CurrentLoadout.ChassisID,
+                                ChassisId_1 = chassisId,
+                                ChassisId_2 = chassisId,
                                 EliteRank = 0,
                                 EliteXP = 0,
                                 ElitePoints = 0,
                                 AvailableUpgrades = [],
                                 PreviousUpgrades = []
-                            },
-                        ]
+                            })]
                     },
                     entity.EntityId);
                     player.NetChannels[ChannelType.ReliableGss].SendMessage(new CharacterLoaded(), entity.EntityId);
                     player.NetChannels[ChannelType.ReliableGss].SendMessage(new ProgressionXPRefresh()
                     {
-                        Frames = [
-                            new ()
+                        Frames = [.. ownedChassisIds.Select(chassisId =>
+                            new ProgressionFrameInfo()
                             {
-                                ChassisID = character.CurrentLoadout.ChassisID,
+                                ChassisID = chassisId,
                                 XpValue1 = 0,
                                 XpValue2 = 0,
                                 CurrentLevel = HardcodedCharacterData.Level,
                                 Unk = 0,
-                            },
-                        ]
-                    });
+                            })]
+                    },
+                    entity.EntityId);
+
+                    // The garage checks RootItem.ClassCertId / ItemCertificateRequirements client-side and
+                    // refuses to slot modules whose certificate the character lacks, so grant all of them.
+                    // AddEntries is a byte-counted array, hence the chunking.
+                    uint[] certificateIds = [.. SDBInterface.GetAllCertificates().Keys.Order()];
+                    const int CertChunkSize = 200;
+                    for (int offset = 0; offset < certificateIds.Length; offset += CertChunkSize)
+                    {
+                        player.NetChannels[ChannelType.ReliableGss].SendMessage(new UnlocksUpdate()
+                        {
+                            ClearExistingData = offset == 0 ? (sbyte)1 : (sbyte)0,
+                            Groups = [
+                                new ()
+                                {
+                                    Key = "certificate",
+                                    AddEntries = [.. certificateIds.Skip(offset).Take(CertChunkSize).Select(certId =>
+                                        new UnlockGroupEntry() { UnlockId = certId })],
+                                    RemEntries = []
+                                },
+                            ]
+                        },
+                        entity.EntityId);
+                    }
                 }
             }
 
