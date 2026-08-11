@@ -12,13 +12,14 @@ namespace WebHost.ClientApi.Controllers;
 [ApiController]
 public class StubsController : ControllerBase
 {
-    // Looking-for-party list (Dashboard squad builder). SquadBuilderAPI.lua assigns the
-    // response straight into result.data for the list widget to iterate.
+    // Looking-for-party list (Dashboard squad builder). OnListReceivedHelper reads
+    // data.total_count and iterates data.results, so this must be an object with those
+    // fields - a bare array makes it iterate a nil and throw.
     [Route("api/v3/squad_builder/lfp")]
     [HttpGet]
     public object SquadBuilderLfp()
     {
-        return Array.Empty<object>();
+        return new { TotalCount = 0, Results = Array.Empty<object>() };
     }
 
     // Player's market sell listings. Market.lua does `g_Listings = args` then loops with
