@@ -9,17 +9,23 @@ public class CapabilityRepository : ICapabilityRepository
     {
         return await Task.FromResult(new HostInformation
                                      {
-                                         FrontendHost = "https://localhost:44399",
-                                         StoreHost = "https://localhost:44399",
-                                         ChatServer = "https://localhost:44307",
-                                         ReplayHost = $"https://localhost:44399/{environment}-{build}",
-                                         WebHost = "https://localhost:44399",
-                                         MarketHost = "https://localhost:44399",
-                                         IngameHost = "https://localhost:44303",
-                                         ClientapiHost = "https://localhost:44302",
-                                         WebAssetHost = "https://localhost:44399",
-                                         WebAccountsHost = "https://localhost:44399",
-                                         RhsigscanHost = "https://localhost:44399"
+                                         // Plain HTTP on purpose. Wine's WinHTTP deadlocks its own critical
+                                         // section during the concurrent TLS handshakes the client fires at
+                                         // world entry, which hangs the process. Every port here is the HTTP
+                                         // twin of the HTTPS one in config/appsettings.json (443xx -> 4x xx).
+                                         // The client refuses a non-HTTPS oracle URL unless FirefallClient.exe
+                                         // is patched at 0x4950af (74 -> EB); see Docs/Http-Only-Setup.md.
+                                         FrontendHost = "http://localhost:4499",
+                                         StoreHost = "http://localhost:4499",
+                                         ChatServer = "http://localhost:4407",
+                                         ReplayHost = $"http://localhost:4499/{environment}-{build}",
+                                         WebHost = "http://localhost:4499",
+                                         MarketHost = "http://localhost:4499",
+                                         IngameHost = "http://localhost:4403",
+                                         ClientapiHost = "http://localhost:4402",
+                                         WebAssetHost = "http://localhost:4499",
+                                         WebAccountsHost = "http://localhost:4499",
+                                         RhsigscanHost = "http://localhost:4499"
                                      });
     }
 
