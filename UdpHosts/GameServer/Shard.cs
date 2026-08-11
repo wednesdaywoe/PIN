@@ -126,6 +126,12 @@ public class Shard : IShard
                 EntityMan.Remove(player.CharacterId);
             }
 
+            // Removing the character only clears that one entity's scope set. The player is also a member of the
+            // scope set of every other entity it had scoped in, and nothing else ever takes it back out, so without
+            // this the next client to connect enters a zone whose entities still list the previous, dead connection
+            // among their viewers.
+            EntityMan.RemovePlayerFromAllScopes(player);
+
             Clients.Remove(player.SocketId);
             return true;
         }

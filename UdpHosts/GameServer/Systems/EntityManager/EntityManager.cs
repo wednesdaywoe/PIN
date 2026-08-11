@@ -565,6 +565,20 @@ public class EntityManager
         }
     }
 
+    /// <summary>
+    ///     Drops a player from every entity's scope set. <see cref="Remove(ulong)"/> only clears the set belonging to
+    ///     the entity being removed, so a disconnecting player is left sitting in the set of every other entity it had
+    ///     scoped in -- a whole zone's worth of references that otherwise outlive the connection for the life of the
+    ///     process.
+    /// </summary>
+    public void RemovePlayerFromAllScopes(INetworkPlayer player)
+    {
+        foreach (var scopedPlayers in _scopedPlayersByEntity.Values)
+        {
+            scopedPlayers.Remove(player);
+        }
+    }
+
     public void KeyframeRequest(INetworkClient client, IPlayer player, IEntity entity, Enums.GSS.Controllers typecode, uint clientChecksum)
     {
         switch (entity)
@@ -1752,10 +1766,13 @@ public class EntityManager
         if (shouldFlush)
         {
             view.SerializeChangesToMemory(out var update);
-            foreach (var client in _scopedPlayersByEntity[entityId])
+
+            // CanReceiveGSS rather than Status on its own: Status is never moved off Playing when a client goes
+            // away, only NetClientStatus becomes Disconnecting, so testing Status here kept writing view updates
+            // to connections that had already closed. SendToScoped below always had this right.
+            foreach (var client in GetScopedPlayers(entityId))
             {
-                bool shouldSend = client.Status.Equals(IPlayer.PlayerStatus.Playing) || client.Status.Equals(IPlayer.PlayerStatus.Loading);
-                if (shouldSend)
+                if (client.CanReceiveGSS)
                 {
                     client.NetChannels[channel].SendChanges(view, entityId, update);
                 }
@@ -1767,13 +1784,24 @@ public class EntityManager
     where TNormal : class, IAero
     {
         var entityId = entity.EntityId;
-        foreach (var client in _scopedPlayersByEntity[entityId])
+        foreach (var client in GetScopedPlayers(entityId))
         {
             if (client.CanReceiveGSS)
             {
                 client.NetChannels[ChannelType.UnreliableGss].SendMessage(message, entityId);
             }
         }
+    }
+
+    /// <summary>
+    ///     Snapshot of the players scoped to an entity. Iterating the live set is not safe: ScopeIn and ScopeOut
+    ///     mutate it, ScopeOut from inside <see cref="OnRemovedEntity"/>'s own loop, and MigrateOut mutates it from
+    ///     the network thread while the shard tick reads it. A missing key is normal rather than an error -- it just
+    ///     means nothing ever scoped that entity.
+    /// </summary>
+    private INetworkPlayer[] GetScopedPlayers(ulong entityId)
+    {
+        return _scopedPlayersByEntity.TryGetValue(entityId, out var players) ? players.ToArray() : [];
     }
 
     private void OnAddedEntity(IEntity entity)
@@ -1791,7 +1819,7 @@ public class EntityManager
 
     private void OnRemovedEntity(IEntity entity)
     {
-        foreach (var client in _scopedPlayersByEntity[entity.EntityId])
+        foreach (var client in GetScopedPlayers(entity.EntityId))
         {
             ScopeOut(client, entity);
         }
