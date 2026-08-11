@@ -130,7 +130,6 @@ public class AbilitySystem
 
         if (effectState.MaxStacksExceeded)
         {
-
             // warning until re-application semantics are understood
             _logger.Warning("DoApplyEffect dropped effect {EffectId} on {Target}: already active at max stacks", effectId, target);
             return;

@@ -1088,6 +1088,19 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         // CombatView
         Character_CombatView.GetType().GetProperty($"StatusEffectsChangeTime_{index}Prop").SetValue(Character_CombatView, time, null);
         Character_CombatView.GetType().GetProperty($"StatusEffects_{index}Prop").SetValue(Character_CombatView, data, null);
+
+        // LocalEffectsController: 64 owner-private slots PIN has never written. The client's own
+        // Aptitude log shows it predicts an effect at keypress and then rejects the replicated copy
+        // as "too many stacks", so the replicated one never binds to anything. This is the only
+        // owner-only effect channel in the protocol, which makes it the likely place the real server
+        // told a client which of its predictions are live. Testing that (D5h).
+        if (Character_LocalEffectsController != null)
+        {
+            Character_LocalEffectsController.GetType().GetProperty($"LocalStatusEffects_{index}Prop").SetValue(
+                Character_LocalEffectsController,
+                new LocalEffectsData { Entity = data.Initiator, Effect = data.Id, Time = data.Time },
+                null);
+        }
     }
 
     public override void ClearStatusEffect(byte index, ushort time, uint debugEffectId)
@@ -1108,6 +1121,12 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         // CombatView
         Character_CombatView.GetType().GetProperty($"StatusEffectsChangeTime_{index}Prop").SetValue(Character_CombatView, time, null);
         Character_CombatView.GetType().GetProperty($"StatusEffects_{index}Prop").SetValue(Character_CombatView, null, null);
+
+        // LocalEffectsController, see SetStatusEffect above
+        if (Character_LocalEffectsController != null)
+        {
+            Character_LocalEffectsController.GetType().GetProperty($"LocalStatusEffects_{index}Prop").SetValue(Character_LocalEffectsController, null, null);
+        }
     }
 
     public void SetAttachedTo(AttachedToData newValue, IEntity entity, uint pose, Vector3 poseOffset)

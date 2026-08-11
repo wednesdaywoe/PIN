@@ -79,19 +79,18 @@ public abstract class BaseAptitudeEntity : BaseEntity, IAptitudeTarget
 
         ActiveEffects[firstFreeIndex] = state;
 
+        // Stack sends the real stack count because PIN was hardcoding 0 while EffectState tracked it,
+        // which would show stacking effects as empty. It is NOT a fix for anything: D5e tried it
+        // against Charge's stuck camera alongside Time and neither moved it, so don't read it as one.
+        // Time stays on shard clock. Echoing Context.InitTime has now been tried three times and
+        // never worked, and it names when the ability started rather than when the effect applied.
         var time = NextStatusEffectChangeTime(unchecked((ushort)state.Time));
-
-        // A predicted apply already exists client-side, stamped with the activation time the
-        // client sent and one stack. The netfield data has to look like that instance or the
-        // client keeps both: the clear then only tears down the server's copy and whatever the
-        // predicted chain took (camera, aim lock) leaks. Echo the activation time when the
-        // apply came from one, and send the real stack count instead of the default 0.
         var data = new StatusEffectData
         {
             Id = state.Effect.Id,
             Stack = state.Stacks,
             Initiator = state.Context.Initiator.AeroEntityId,
-            Time = state.Context.InitTime != 0 ? state.Context.InitTime : state.Time,
+            Time = state.Time,
             MoreDataFlag = 0
         };
         var index = state.Index;

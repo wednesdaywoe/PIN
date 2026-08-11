@@ -20,7 +20,7 @@ public class HostilityServerCommand : ServerCommand
 
         if (target == null)
         {
-            SourceFeedback("No target, use /target or aim at something", context);
+            SourceFeedback("No target, use target or aim at something", context);
             return;
         }
 

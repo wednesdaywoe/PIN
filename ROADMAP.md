@@ -69,7 +69,7 @@ shields are invented.
 | Work | Where |
 |------|-------|
 | Answer H1, fix `ToStance` for the values logged, delete the cross-faction guard | [SDBUtils](UdpHosts/GameServer/StaticDB/SDBUtils.cs), test queue H1-H6 |
-| Check the decay curve against real client damage numbers with `/dbg_weapon` | [DamageFalloff.cs](UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs) |
+| Check the decay curve against real client damage numbers with `dbg_weapon` | [DamageFalloff.cs](UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs) |
 | Dump `dbitems::Battleframe` and find out whether `base_shields` and the recharge pair hold live values | [Tools/MinimalSDB](Tools/MinimalSDB) in `dump` mode |
 | Replace the placeholders with whatever the dump says, or record that they're invented on purpose | [HardcodedCharacterData.cs](UdpHosts/GameServer/Data/HardcodedCharacterData.cs) |
 
@@ -124,7 +124,7 @@ anything died, which is what M5 and M7 both need.
 | Death notification other systems can subscribe to | `CharacterEntity.Die`, [EventBus](UdpHosts/GameServer/Systems/SystemEvents) |
 | Spawn groups worth fighting, replacing the hardcoded debug row of monsters | [EntityManager.cs](UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs) around line 360 |
 
-Exit: `/spawncharacter` a hostile monster, walk into its range, and it turns, closes, shoots, and
+Exit: spawn a hostile monster with `npc`, walk into its range, and it turns, closes, shoots, and
 kills you. Kill it instead and it dies, drops nothing yet, and despawns.
 
 This is the biggest milestone on the list and the one most likely to split further once started.

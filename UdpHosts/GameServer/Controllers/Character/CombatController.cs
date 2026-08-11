@@ -138,30 +138,14 @@ public class CombatController : Base
         {
             var character = player.CharacterEntity;
             var activationTime = query.Time;
-            if (character.IsPlayerControlled)
-            {
-                var message = new AbilityActivated
-                {
-                    ActivatedAbilityId = abilityId,
-                    ActivatedTime = activationTime,
-                    AbilityCooldownsData = new AbilityCooldownsData
-                    {
-                        ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                        ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                        Unk = 0,
-                        GlobalCooldown_Activated_Time = activationTime,
-                        GlobalCooldown_ReadyAgain_Time = activationTime + 300,
-                    }
-                };
-                _logger.ForContext<AbilitySystem>()
-                       .Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
-                character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
-            }
 
             var initiator = character as IAptitudeTarget;
             var shard = player.CharacterEntity.Shard;
             var targets = new AptitudeTargets();
             shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, targets);
+
+            // Same ordering as ActivateAbility: confirm after the chain, not before it.
+            SendAbilityActivated(character, abilityId, activationTime);
         }
     }
 
@@ -253,25 +237,6 @@ public class CombatController : Base
         if (abilityId != 0)
         {
             var activationTime = activateAbility.Time;
-            if (character.IsPlayerControlled)
-            {
-                var message = new AbilityActivated
-                {
-                    ActivatedAbilityId = abilityId,
-                    ActivatedTime = activationTime,
-                    AbilityCooldownsData = new AbilityCooldownsData
-                    {
-                        ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                        ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                        Unk = 0,
-                        GlobalCooldown_Activated_Time = activationTime,
-                        GlobalCooldown_ReadyAgain_Time = activationTime + 300,
-                    }
-                };
-                _logger.ForContext<AbilitySystem>()
-                       .Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
-                character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
-            }
 
             var initiator = character as IAptitudeTarget;
             var shard = player.CharacterEntity.Shard;
@@ -291,6 +256,8 @@ public class CombatController : Base
             .ToArray();
 
             shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, new AptitudeTargets(targets));
+
+            SendAbilityActivated(character, abilityId, activationTime);
         }
     }
 
@@ -333,5 +300,40 @@ public class CombatController : Base
                 shard.Abilities.DoRemoveEffect(activeEffect);
             }
         }
+    }
+
+    // Sent after the chain runs, because the chain's InstantActivation command sits last in SDB and
+    // that's where the confirmation belongs. We used to send it the moment the packet arrived, ahead
+    // of every effect netfield the chain applies.
+    //
+    // This did NOT fix Charge's stuck camera (D5b in Docs/In-Game-Tests.md), so don't read it as a
+    // cure for anything. It's kept only because it matches the order SDB describes.
+    //
+    // Belongs in InstantActivationCommand once the cooldown groups are worked out; that command has
+    // the original send commented out and reads GlobalCooldown from its def, where this hardcodes it.
+    private void SendAbilityActivated(CharacterEntity character, uint abilityId, uint activationTime)
+    {
+        if (!character.IsPlayerControlled)
+        {
+            return;
+        }
+
+        var message = new AbilityActivated
+        {
+            ActivatedAbilityId = abilityId,
+            ActivatedTime = activationTime,
+            AbilityCooldownsData = new AbilityCooldownsData
+            {
+                ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
+                ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
+                Unk = 0,
+                GlobalCooldown_Activated_Time = activationTime,
+                GlobalCooldown_ReadyAgain_Time = activationTime + 300,
+            }
+        };
+
+        _logger.ForContext<AbilitySystem>()
+               .Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
+        character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
     }
 }

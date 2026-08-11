@@ -68,7 +68,7 @@ combines them hasn't been confirmed. All of the guess lives in `DamageFalloff.Re
 returns a disabled curve whenever the numbers don't describe a sensible falloff (no range, decay
 starting at or past max range, a floor at or above full damage, `DamageDecay` unset). Being wrong
 therefore leaves damage as it was before decay existed rather than quietly weakening every weapon.
-`/dbg_weapon` prints the inputs, the resolved curve and samples along it, so it can be checked
+`dbg_weapon` prints the inputs, the resolved curve and samples along it, so it can be checked
 against real client damage numbers without firing a shot.
 
 `DamageFalloffTests` covers the shape and every path into a disabled curve, so what's left for the
@@ -205,7 +205,7 @@ cross-faction hostility and warns, so a wrong guess degrades to same-faction pro
 than silently blocking damage that should land. Confirm against the log, fix `ToStance`, delete the
 guard.
 
-In game, `/hostility` (alias `/stance`) prints both sides' faction and team, the stance each way,
+In game, `hostility` (alias `stance`) prints both sides' faction and team, the stance each way,
 and whether damage is allowed.
 
 `HostilityRulesTests` covers every path that answers before the faction table is consulted, which
@@ -231,8 +231,10 @@ These are known-missing rather than accidental, and are the natural next pieces 
 
 ## Useful debug hooks
 
-- `/target`, `/cleartarget`, `/spawncharacter`, `/effect`, `/listeffects`, `/removeeffect`,
-  `/setcombatflags`, `/dbg_weapon`, `/hostility`, all in
-  [Systems/Admin/Commands](../../UdpHosts/GameServer/Systems/Admin/Commands)
+- `target`, `cleartarget`, `npc`, `applyeffect`, `listeffects`, `removeeffect`, `cflags`,
+  `dbg_weapon`, `hostility`, all in
+  [Systems/Admin/Commands](../../UdpHosts/GameServer/Systems/Admin/Commands), and typed into the
+  Admin chat channel without a leading slash. [In-Game Tests](../In-Game-Tests.md) lists the monster
+  type ids worth spawning and the faction each one carries.
 - `DebugProjectileHitCallbacks` streams projectile spawn/impact/timeout to the debug pipe
 - Every ability log line carries an `ExecutionId`; filter on it to see one activation end to end

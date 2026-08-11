@@ -76,15 +76,26 @@ chain never expires on its own.
 
 `AddEffect`/`ClearEffect` call `Shard.EntityMan.FlushChanges` immediately rather than waiting for
 the periodic flush, and stamp the netfield with a strictly-increasing 16-bit change time
-(`NextStatusEffectChangeTime`). The client dedupes on that field, so two changes to the same slot
-in the same millisecond means it drops the second one. That's what the Charge camera lock was: the
-remove-then-reapply chain reused a slot within a millisecond, the client ignored the follow-up, and
-the aim lock never released. Watch for it whenever a chain removes an effect and immediately
-applies another.
+(`NextStatusEffectChangeTime`). A chain that clears a slot and refills it inside one millisecond
+would otherwise repeat the change time, and a client treating that field as a sequence number would
+drop the second transition, so the stamp is kept strictly increasing per entity. This was written
+believing it explained the Charge camera lock; it did not fix it, and the ordering it guarantees has
+never been shown to be load-bearing. Keep it as a cheap invariant, not as a diagnosis.
 
-`AddEffect` also echoes `Context.InitTime` (the client's activation time) into the netfield rather
-than server time, because the client has already locally predicted the apply and will keep two
-copies if they don't match.
+`AddEffect` stamps the netfield `Time` with `Context.InitTime`, falling back to `Shard.CurrentTime`
+for effects applied outside a chain, and sends `Stacks` in `Stack` where it used to send 0. Both
+fields exist so the client can match an effect it predicted itself against the one the server
+replicates, and getting that match wrong is the leading explanation for Charge's stuck camera
+(D5d/D5e in [In-Game-Tests](../In-Game-Tests.md)).
+
+Echoing `InitTime` was tried and reverted twice before, on the grounds that it's the client's clock
+and shard time is something else. That was wrong. `Shard.CurrentTime` is unix epoch milliseconds
+truncated to uint32, which is the same clock the client stamps activations with, and the "~23000"
+that looked like a mismatch was a `CurrentShortTime`, the low 16 bits, held up against a full uint.
+The real caveat is different and still stands: an effect applied later in a chain inherits the
+activation time rather than its own, because `ImpactApplyEffectCommand` copies `InitTime` down. For a
+client reconciling a whole predicted activation that's arguably what it wants, but it hasn't been
+shown.
 
 ## The command library
 
@@ -120,13 +131,28 @@ If the command's definition table isn't in SDB, it lives in
 [StaticDB/CustomData](../../UdpHosts/GameServer/StaticDB/CustomData) as JSON and is read through
 `CustomDBInterface` instead of `SDBInterface`; see [layer 8](08-static-data.md).
 
+### Server-environment commands run on invented parameters
+
+`clientdb.sd2` ships the client's own command tables. An `env=server` command appears in a chain by
+id and type with no parameters at all, because the client was never given them. Every `aptgss_`
+command is in that state, so its behaviour is whatever someone hand-authored in `CustomData`.
+
+Most of it isn't authored. `agsImpactRemoveEffectCommandDef.json` has 3812 entries and 3797 carry
+nothing but an id and a comment, which means they parse, execute, and remove nothing. The 15 filled-in
+ones were reconstructed from captures a bug at a time, and say so: Charge's is commented "guess based
+on captures". This is worth knowing before concluding that a chain does what it looks like it does. A
+removal that never happens looks identical in the log to a chain that had no removal in it.
+
+Charge's own windup is an example. Effect 15252's apply chain ends with `aptgss_impactremeffectcmd_ire`
+1593257, which is one of the blanks, so nobody knows what the real server removed there.
+
 ## Entry points
 
 | Entry point | Trigger |
 |-------------|---------|
 | `HandleActivateAbility` | Client `ActivateAbility` via `Character/CombatController` |
 | `HandleLocalProximityAbilitySuccess` | Client reports a proximity command fired |
-| `DoApplyEffect` / `DoRemoveEffect` | Chains applying effects to targets; also admin `/effect` commands |
+| `DoApplyEffect` / `DoRemoveEffect` | Chains applying effects to targets; also the `applyeffect` / `removeeffect` admin commands |
 | `AbilitySystem.Tick` | Duration and update chains |
 
 Calldown requests (vehicles, deployables, thumpers) are a two-phase handshake: the client sends a

@@ -35,9 +35,13 @@ If the command modifies state that must be undone when its effect ends, register
 
 [Systems/Admin/Commands](../../UdpHosts/GameServer/Systems/Admin/Commands). Subclass `ServerCommand`,
 add `[ServerCommand(description, usage, "name", "alias")]`, override `Execute`. `AdminService`
-discovers it by reflection at construction; `/help` lists it automatically. `context.Target` is
-whatever the player last `/target`ed, which makes these the cheapest way to test a system on a
-specific entity.
+discovers it by reflection at construction; `help` lists it automatically. `context.Target` is
+whatever the player last picked with `target`, which makes these the cheapest way to test a system
+on a specific entity.
+
+Commands are typed into the in-game Admin chat channel as a bare word, with no leading slash: the
+client eats `/`-prefixed input as its own commands, so `AdminService` never sees it. That is also
+why the server's own chat commands use a `\` prefix instead.
 
 ### …a new entity type
 
@@ -68,8 +72,8 @@ enough to show what a worthwhile extraction looks like.
 | Owner sees a change, others don't (or vice versa) | A `Set*` that writes the controller but not the view, or the reverse |
 | Entity invisible to clients | Missing from `ScopeIn`, or `Scoping`/scope range wrong |
 | Shots pass through things | Body never created, or the hit collidable isn't kinematic / isn't in `_bodyToEntityId` |
-| Shots register but deal no damage | Hostility; run `/hostility` on the target, see [layer 6](06-combat-and-damage.md) |
-| Damage is lower than expected | Range decay; `/dbg_weapon` prints the resolved curve and samples it |
+| Shots register but deal no damage | Hostility; run `hostility` on the target, see [layer 6](06-combat-and-damage.md) |
+| Damage is lower than expected | Range decay; `dbg_weapon` prints the resolved curve and samples it |
 | Null reference deep in a command | An SDB `Get*` returned `null` for a missing id |
 | Client requests an endpoint we lack | Watch the `WebHost.CatchAll` log |
 
