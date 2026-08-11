@@ -1,6 +1,7 @@
 # MinimalSDB
 
-Two things you can do to a `clientdb.sd2`: shrink it, or find out what's actually in it.
+Three things you can do to a `clientdb.sd2`: shrink it, find out what's actually in it, or check
+that its references still point at anything.
 
 Both modes read `config.json` from the working directory or next to the binary. Copy
 `config.example.json` and point `input` at the real client db.
@@ -57,3 +58,42 @@ type resistance and the range decay inputs. Override it in `config.json`:
 
 An empty column list prints row count and a column type histogram, which is enough to tell whether
 a table is worth pursuing.
+
+## joins
+
+```
+MinimalSDB joins
+```
+
+`dump` says a table has rows. It does not say those rows still point at anything. Firefall was
+rebuilt twice and migrated its items each time, so a system can look intact by row count and be
+unusable in practice because half its foreign keys were orphaned. That difference decides whether
+reviving a feature is implementation work or content work, and it is worth knowing before the
+implementation work starts.
+
+Each join reports how many references resolve, how many are null, and the distinct ids that point
+at nothing:
+
+```
+dbitems::Blueprint_Items.item_type  ->  dbitems::RootItem.sdb_id
+  25823/25881 resolve (99.78%), 0 null, 58 orphaned
+    52 distinct orphan id(s): 75428, 77361, 77362, ...
+```
+
+The default set checks the crafting graph, which is the worked example — v1.6 switched crafting
+off, and whether it can be switched back on comes down to whether 9,228 blueprints still reference
+items that exist. Override it in `config.json`:
+
+```json
+"joins": [
+  { "from": "dbitems::Blueprint_Items.item_type", "to": "dbitems::RootItem.sdb_id" },
+  { "from": "dbitems::Blueprint_Items.blueprint_id", "to": "dbitems::Blueprints.id", "zeroIsNull": false }
+]
+```
+
+`from` and `to` are `db::Table.column` — the table name carries its own `::`, so the column is
+whatever follows the last `.`. `zeroIsNull` defaults to true, which treats 0 as "no reference"
+rather than a broken one; set it false where 0 is a real key and a zero should be reported.
+
+Orphaned rows are a finding, not a tool failure — the exit code is 0. A table or column name that
+doesn't exist is an error, and exits 7.

@@ -9,9 +9,9 @@ using FauFau.Formats;
 
 var mode = args.Length > 0 ? args[0].ToLowerInvariant() : "prune";
 
-if (mode is not ("prune" or "dump"))
+if (mode is not ("prune" or "dump" or "joins"))
 {
-    Console.Error.WriteLine($"Error: unknown mode '{args[0]}'. Expected 'prune' (default) or 'dump'.");
+    Console.Error.WriteLine($"Error: unknown mode '{args[0]}'. Expected 'prune' (default), 'dump' or 'joins'.");
     return 6;
 }
 
@@ -58,6 +58,11 @@ sdb.Read(input);
 if (mode == "dump")
 {
     return Dump(sdb, json);
+}
+
+if (mode == "joins")
+{
+    return Joins(sdb, json);
 }
 
 var requiredTableIds = new HashSet<uint>();
@@ -188,6 +193,153 @@ void DumpTable(StaticDB db, string tableName, string[] columnNames, int sampleRo
     }
 
     Console.WriteLine();
+}
+
+// Row counts say a table shipped. They don't say its foreign keys still point at anything. A system
+// that survived a migration on paper can be unusable in practice if half its references were orphaned,
+// and that difference decides whether reviving it is implementation work or content work.
+int Joins(StaticDB db, JsonElement cfg)
+{
+    Console.WriteLine($"  patch {db.Patch}, built {db.Timestamp:u}, flags {db.Flags}, {db.Tables.Count} tables");
+    Console.WriteLine();
+
+    var joins = DefaultJoins();
+
+    if (cfg.TryGetProperty("joins", out var configured) && configured.ValueKind == JsonValueKind.Array)
+    {
+        joins = configured.EnumerateArray()
+            .Select(j => (
+                From: j.TryGetProperty("from", out var f) ? f.GetString() : null,
+                To: j.TryGetProperty("to", out var t) ? t.GetString() : null,
+                ZeroIsNull: !j.TryGetProperty("zeroIsNull", out var z) || z.ValueKind != JsonValueKind.False))
+            .Where(j => !string.IsNullOrEmpty(j.From) && !string.IsNullOrEmpty(j.To))
+            .ToList();
+    }
+
+    var unresolved = 0;
+
+    foreach (var (from, to, zeroIsNull) in joins)
+    {
+        if (!CheckJoin(db, from, to, zeroIsNull))
+        {
+            unresolved++;
+        }
+    }
+
+    // Orphaned rows are a finding, not a tool failure. Only a name that doesn't exist is an error.
+    return unresolved == 0 ? 0 : 7;
+}
+
+bool CheckJoin(StaticDB db, string from, string to, bool zeroIsNull)
+{
+    Console.WriteLine($"{from}  ->  {to}");
+
+    if (!TryReadColumn(db, from, out var foreignKeys, out var fromError))
+    {
+        Console.WriteLine($"  {fromError}");
+        Console.WriteLine();
+        return false;
+    }
+
+    if (!TryReadColumn(db, to, out var primaryKeys, out var toError))
+    {
+        Console.WriteLine($"  {toError}");
+        Console.WriteLine();
+        return false;
+    }
+
+    var keys = new HashSet<ulong>(primaryKeys);
+    int nulls = 0, resolved = 0;
+    var orphans = new List<ulong>();
+
+    foreach (var value in foreignKeys)
+    {
+        if (zeroIsNull && value == 0)
+        {
+            nulls++;
+        }
+        else if (keys.Contains(value))
+        {
+            resolved++;
+        }
+        else
+        {
+            orphans.Add(value);
+        }
+    }
+
+    int considered = foreignKeys.Count - nulls;
+    double percent = considered == 0 ? 100d : 100d * resolved / considered;
+
+    Console.WriteLine($"  {resolved}/{considered} resolve ({percent:F2}%), {nulls} null, {orphans.Count} orphaned");
+
+    if (orphans.Count > 0)
+    {
+        var distinct = orphans.Distinct().ToList();
+        var shown = string.Join(", ", distinct.Take(10));
+        Console.WriteLine($"    {distinct.Count} distinct orphan id(s): {shown}{(distinct.Count > 10 ? ", ..." : string.Empty)}");
+    }
+
+    Console.WriteLine();
+    return true;
+}
+
+// Takes "dbitems::Blueprint_Items.blueprint_id" -- the table name carries its own '::', so the column
+// is whatever follows the last '.'.
+bool TryReadColumn(StaticDB db, string spec, out List<ulong> values, out string error)
+{
+    values = null;
+    int dot = spec.LastIndexOf('.');
+
+    if (dot <= 0 || dot == spec.Length - 1)
+    {
+        error = $"MALFORMED: expected 'db::Table.column', got '{spec}'";
+        return false;
+    }
+
+    var tableName = spec[..dot];
+    var columnName = spec[(dot + 1)..];
+    int idx = db.GetIndexByName(tableName);
+
+    if (idx == -1)
+    {
+        error = $"ABSENT: no table named '{tableName}'";
+        return false;
+    }
+
+    var table = db.Tables[idx];
+    int col = table.GetColumnIndexByName(columnName);
+
+    if (col == -1)
+    {
+        error = $"MISSING: '{tableName}' has no column '{columnName}' (names are stored as hashes, so check the spelling against the record class)";
+        return false;
+    }
+
+    values = new List<ulong>(table.Rows.Count);
+
+    foreach (var row in table.Rows)
+    {
+        var value = row[col];
+        values.Add(value == null ? 0UL : Convert.ToUInt64(value));
+    }
+
+    error = null;
+    return true;
+}
+
+// Crafting is the worked example: v1.6 switched it off, and the question that decides whether it can be
+// switched back on is whether 9,228 blueprints still point at items that exist. Override from config.json.
+List<(string From, string To, bool ZeroIsNull)> DefaultJoins()
+{
+    return
+    [
+        ("dbitems::Blueprint_Items.blueprint_id", "dbitems::Blueprints.id", false),
+        ("dbitems::Blueprint_Items.item_type", "dbitems::RootItem.sdb_id", true),
+        ("dbitems::Blueprints.main_output_item_id", "dbitems::RootItem.sdb_id", true),
+        ("dbitems::Blueprints.head_blueprint_id", "dbitems::Blueprints.id", true),
+        ("dbitems::Blueprints.research_blueprint_id", "dbitems::Blueprints.id", true),
+    ];
 }
 
 // Column names use the same snake_case the loader derives from record property names, so these line up

@@ -3,5 +3,9 @@
   "output": "C:\\Program Files\\Steam\\steamapps\\common\\Firefall\\system\\db\\clientdb_minimal.sd2",
   "dump": {
     "sampleRows": 3
-  }
+  },
+  "joins": [
+    { "from": "dbitems::Blueprint_Items.blueprint_id", "to": "dbitems::Blueprints.id", "zeroIsNull": false },
+    { "from": "dbitems::Blueprint_Items.item_type", "to": "dbitems::RootItem.sdb_id" }
+  ]
 }
