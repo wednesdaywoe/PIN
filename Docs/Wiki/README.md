@@ -1,0 +1,32 @@
+# Wiki
+
+Game knowledge, as opposed to code knowledge. The [Architecture Guide](../Architecture/README.md)
+covers how PIN works; this covers what Firefall *was*, so that features can be built to match the
+game instead of to match a guess.
+
+Firefall's servers went down in 2017 and its documentation went with them. What is left is a client
+that still runs, three packet captures, two half-abandoned Fandom wikis, and the Wayback Machine.
+None of it agrees with itself, because the game was rebuilt twice and most of the writing happened
+before either rebuild.
+
+Start here:
+
+- [Client Version](Client-Version.md) — build 1962, v1.7, May 2016. What we target and why the
+  distinction bites.
+- [Patch History](Patch-History.md) — 87 archived patches, 1409 to 1946, and the two gaps between
+  them and us. Use it to date any other source.
+- [Thumping and Crafting](Thumping-And-Crafting.md) — v1.6 switched crafting off and it never came
+  back, but all 9,228 recipes are still in the client DB. What it would take to turn it back on.
+- [Weapon Handling](Weapon-Handling.md) — recoil and bloom are decided client-side from the
+  client's own SDB. Where the numbers live, and the Bio Rifle worked through end to end.
+- [Sources](Sources.md) — what survives, how much of it, and which build each source describes.
+
+## Method
+
+The client's own data is the source of truth. `clientdb.sd2` is 32 MB of build-1962 tables and it
+cannot be out of date; a 2013 wiki article about the same weapon can be, and usually is. So pages
+here are built from the SDB and the captures first, with community prose filling in intent,
+history and feel.
+
+Everything carries a build stamp. An unstamped claim is a rumour, and rumours about a game that
+was rebuilt twice are how a server ends up implementing the wrong decade.
