@@ -60,16 +60,27 @@ full round so a weapon buff carries the floor up with it rather than decaying a 
 to its unbuffed minimum.
 
 Decay applies to the weapon's damage per round; `hit.DamageMod` and `HeadshotMult` scale what's
-left. Ability projectiles skip it entirely, since their damage comes from the command and there's no
-weapon template to take a `Range` from.
+left, and the single rounding to an integer happens after all of it — confirmed in game, since
+rounding the body number before multiplying gives headshots that are a point or two off what the
+client shows. Ability projectiles skip decay entirely, since their damage comes from the command and
+there's no weapon template to take a `Range` from.
 
-Like the faction stance encoding, the curve is a guess. The fields exist but the way the client
-combines them hasn't been confirmed. All of the guess lives in `DamageFalloff.Resolve`, which
-returns a disabled curve whenever the numbers don't describe a sensible falloff (no range, decay
-starting at or past max range, a floor at or above full damage, `DamageDecay` unset). Being wrong
-therefore leaves damage as it was before decay existed rather than quietly weakening every weapon.
-`dbg_weapon` prints the inputs, the resolved curve and samples along it, so it can be checked
-against real client damage numbers without firing a shot.
+Confirmed in game on 2026-08-11 (test queue R1/R2). The BioTech Needler Shotgun resolves to full
+damage out to 7m falling to 17.5 at 70m, which is `Range × DamageDecayRangefrac` and
+`DamagePerRound × MinDamageFrac` exactly, and 80 logged shots land on the interpolation between
+them. The reading that mattered was `DamageDecayRangefrac` as *where decay starts* — the other one
+would have had a shotgun holding full damage for 63 of its 70 metres.
+
+The client never gets a chance to disagree: the floating damage number is `DealtHit.DamageValue`,
+which is the amount the server already applied. What that leaves unverified is not the anchors but
+the shape between them — `Resolve` interpolates linearly and the live server may not have. See R4
+for why that isn't queued.
+
+`DamageFalloff.Resolve` returns a disabled curve whenever the numbers don't describe a sensible falloff (no range, decay
+starting at or past max range, a floor at or above full damage, `DamageDecay` unset), so a weapon
+it can't read keeps the damage it had before decay existed rather than being quietly weakened.
+`dbg_weapon` prints the inputs, the resolved curve and samples along it; with `--loglevel debug`
+every shot past the full damage range also logs the curve it was evaluated against.
 
 `DamageFalloffTests` covers the shape and every path into a disabled curve, so what's left for the
 game is only whether this is the right shape.
@@ -197,13 +208,14 @@ damage and always allowed.
 Because every player character is faction 1, players still can't damage each other. That now falls
 out of the faction rule instead of an explicit player-vs-player check.
 
-The stance encoding is an assumption. `FactionRelations.HostilityStance` is a signed byte and
-`SDBUtils.ToStance` reads it as a scale centred on neutral, negative hostile and positive friendly.
-That hasn't been checked against a real `clientdb.sd2`. `BuildFactionStances` logs the distinct
-stance and `Faction.DefaultStance` values it finds at startup, and if none are negative it disables
-cross-faction hostility and warns, so a wrong guess degrades to same-faction protection only rather
-than silently blocking damage that should land. Confirm against the log, fix `ToStance`, delete the
-guard.
+`FactionRelations.HostilityStance` is a signed byte and `SDBUtils.ToStance` reads it as a scale
+centred on neutral, negative hostile and positive friendly. That was an assumption until 2026-08-11,
+when a faction 1 versus faction 2 pair resolved to Hostile in game (test queue H1/H2) — which can
+only happen if a negative read through. The fallback that forced every cross-faction pair to Neutral
+while the encoding was in doubt is gone. `BuildFactionStances` still logs the distinct stance and
+`Faction.DefaultStance` values it finds, and still warns when none are negative; that warning now
+means the stances that follow are suspect rather than suppressed, since it can only fire on a db
+that isn't the one the mapping was confirmed against.
 
 In game, `hostility` (alias `stance`) prints both sides' faction and team, the stance each way,
 and whether damage is allowed.
@@ -218,9 +230,9 @@ These are known-missing rather than accidental, and are the natural next pieces 
 
 | Gap | Where |
 |-----|-------|
-| Faction stance encoding unconfirmed, and reputation-derived stance (`GetFactionReputations`) is unused | `SDBUtils.ToStance` |
-| Range decay curve unconfirmed, and ability projectiles have no falloff at all | `DamageFalloff.Resolve`, `ProjectileSim.FireAbilityProjectile` |
-| Shield capacity and recharge numbers are invented placeholders, and nothing reads `Battleframe.BaseShields` | `HardcodedCharacterData`, `CharacterEntity.InitFields` |
+| Reputation-derived stance (`GetFactionReputations`) is unused. The stance encoding itself is confirmed | `SDBUtils.GetFactionStance` |
+| Ability projectiles have no falloff at all. The weapon curve itself is confirmed against the server, but not yet against the client's own expectation | `DamageFalloff.Resolve`, `ProjectileSim.FireAbilityProjectile` |
+| Shield pool is a deliberate divergence: retail shipped `Battleframe.BaseShields` as 0 on 1671 of 1676 frames, so PIN keeping one is a choice. The recharge pair is the shipped 150/sec and 10000ms | `HardcodedCharacterData`, `CharacterEntity.InitFields` |
 | Damage type vs. `DamageResponse` resistance tables are loaded but unused in the damage calculation | `SDBInterface.GetDamageResponse*` |
 | Deployable and vehicle health numbers are a first read of the SDB (`StartHitpoints`, `MaxHitPoints`) and neither destruction path has been seen in game | `DeployableEntity.Destroy`, `VehicleEntity.Destroy` |
 | Turrets have neither health nor a collision body, so they can't be shot; they die with their parent | `TurretEntity` |

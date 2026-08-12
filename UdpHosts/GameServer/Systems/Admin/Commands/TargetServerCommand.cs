@@ -71,7 +71,11 @@ public class TargetServerCommand : ServerCommand
         else
         {
             context.Service.SetTarget(context.SourcePlayer, target);
-            SourceFeedback($"Setting target to {target.AeroEntityId}", context);
+
+            // The distance doubles as a rangefinder, which the client gives you no way to read. Aim at
+            // something and type `target` to find out how far away it is — that is what any range test
+            // needs and otherwise has to reconstruct from HitHandler afterwards.
+            SourceFeedback($"Setting target to {target.AeroEntityId} at {Vector3.Distance(character.Position, target.Position):0.#}m", context);
         }
     }
 }

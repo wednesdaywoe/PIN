@@ -8,20 +8,35 @@ Added in the current working tree:
 `SDBUtils.GetFactionStance`, `hostility`. See
 [layer 6](../Architecture/06-combat-and-damage.md).
 
-## [ ] H1: Confirm the faction stance encoding (blocks H2-H6)
+## [x] H1: Confirm the faction stance encoding (blocks H2-H6)
 
 The highest-value check here; everything else in this section depends on it. Verifies that the
 server's loader reads `hostility_stance` as the signed scale `SDBUtils.ToStance` assumes.
 
 1. Start the GameServer against a real `clientdb.sd2`.
-2. Fire one shot at anything, which is what first builds the stance table.
-3. Back at the source machine:
+2. `npc 1196` — spawns a Chosen Fiend, faction 2, at your feet
+3. `target`, then `hostility`
+
+   **It has to be a cross-faction pair, and "fire one shot at anything" is not enough.** The table
+   is a `Lazy<>` built on the first call to `SDBUtils.GetFactionStance`, and
+   [HostilityRules.GetStance](../../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs#L26-L38)
+   returns early — before reaching it — whenever the two entities share a team or a faction. Every
+   player character is faction 1, so shooting scenery, another player, or nothing at all never
+   builds the table and the grep below comes back empty with the server working correctly. Any
+   cross-faction call does it; `hostility` is the cheapest because it needs no shot, and it's the
+   same two commands as H2.
+
+4. Back at the source machine:
 
 ```
 grep -a -A3 "faction stance pairs" ~/Games/PIN/logs/GameServer.log
 ```
 
 Record the `Stance values in use` and `Faction default stances in use` lists.
+
+An empty grep means step 3 didn't reach a cross-faction pair — check that the `npc` actually spawned
+and that `target` picked it up, then run `hostility` again. It does not mean the load failed; a
+genuine load failure logs `No faction relations loaded` at startup instead.
 
 - Pass: the stance list contains negative values → `SDBUtils.ToStance` reads the column correctly
   as a signed scale, nothing to change.
@@ -33,6 +48,18 @@ Expect a pass: reading `dbcharacter::FactionRelations` straight out of the retai
 gives `hostility_stance` values across all 89 rows of -2, -1, 0, 1 and 2, and `dbcharacter::Faction`
 carries `default_stance` of -1, 0 and 1. Both are signed scales, which is what `ToStance` assumes.
 What the run still has to confirm is that the server's loader reads the same column the same way.
+
+**Passed 2026-08-11, off H2 rather than the grep above.** `GetFactionStance` returns `Neutral`
+unconditionally when the column isn't signed, so H2 printing `Stance Hostile` for a faction 1 versus
+faction 2 pair can only happen when the loader read a negative value — which is the whole question.
+The stance lists were never captured, because the session that answered it predates the corrected
+step 3 and the log has since been truncated. Grep them off the next session if the exact values are
+ever wanted; nothing depends on them now.
+
+The consequence: `ToStance` needed no change, and the `!Signed` fallback in
+[SDBUtils.GetFactionStance](../../UdpHosts/GameServer/StaticDB/SDBUtils.cs) — which forced every
+cross-faction pair to Neutral while the encoding was in doubt — has been removed. The warning that
+fires when the values aren't signed stays, as the tripwire for a db that doesn't look like retail.
 
 ## [x] H2: `hostility` against a hostile NPC
 

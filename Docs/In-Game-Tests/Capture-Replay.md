@@ -14,6 +14,14 @@ git clone --depth 1 https://github.com/themeldingwars/Documentation.git ~/Games/
 gunzip -k "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng.gz"
 ```
 
+Only the one file is ever used, and it is 19 MB of the clone, so this does the same job:
+
+```
+mkdir -p ~/Games/PIN/captures/Captures && cd ~/Games/PIN/captures/Captures
+curl -sLO "https://raw.githubusercontent.com/themeldingwars/Documentation/master/Captures/2016-11-15%20-%20Gameplay.pcapng.gz"
+gunzip -k "2016-11-15 - Gameplay.pcapng.gz"
+```
+
 **Use the 2016 capture.** AeroMessages describes V66 and only that recording is from the same era:
 99.8% of its 406,890 GSS messages resolve to a definition and all but 239 deserialize with exact
 byte consumption. The 2014 (build 1802) and 2015 (build 1869) recordings frame perfectly but their
@@ -44,9 +52,36 @@ or whether [HardcodedCharacterData](../../UdpHosts/GameServer/Data/HardcodedChar
 inventing them. `Character_BaseController` carries `CurrentShields` and `MaxShields` next to
 `CurrentHealth` and `MaxHealth`, so the live server's answer is in the third query above. Across
 the 36 messages that carry those fields for the player entity, `CurrentShields` and `MaxShields`
-are 0 every time, while `MaxHealth` reads 19192. That is one session on one battleframe, so it is
-evidence and not proof — it does not separate "this build didn't use shields" from "this character
-had no shield-bearing frame equipped". Worth reading against a second capture before acting on it.
+are 0 every time, while `MaxHealth` reads 19192. That is one session on one battleframe, so on its
+own it did not separate "this build didn't use shields" from "this character had no shield-bearing
+frame equipped".
+
+**Settled, 2026-08-11: the build didn't use shields.** The second capture that would have
+disambiguated it isn't usable — 2014 and 2015 have drifted message ids, per the warning above — so
+the answer came from the db instead, which is what M1 asked for anyway:
+
+```
+cp Tools/MinimalSDB/config.example.json Tools/MinimalSDB/config.json   # point "input" at the retail clientdb.sd2
+cd Tools/MinimalSDB && dotnet run --project . -- dump
+```
+
+Against retail `prod-1962` (built 2016-05-05), `dbitems::Battleframe` has 1676 rows and
+`base_shields` is non-zero on **5** of them. Scaling can't rescue that, since it multiplies and
+anything times zero is zero, so the capture's live 0 is the frames and not the loadout. The recharge
+pair is the surprise: `shield_recharge_per_sec` (779 rows, typically 150, max 450) and
+`shield_recharge_delay_ms` (778 rows, typically 10000) are broadly populated. Tuned recharge sitting
+next to a zeroed pool is what a mechanic looks like after it was switched off and its other columns
+were left where they lay.
+
+`base_health` in the same table reads ~1000 against the capture's live 19192, which confirms it as a
+pre-scaling base. Worth remembering before anything tries to source health from it directly; the
+scaling that closes that gap isn't implemented.
+
+What [HardcodedCharacterData](../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs) does with
+this: the recharge pair now uses the shipped 150/10000, and the pool stays non-zero at 3000 — a
+value that at least occurs in the table — as a deliberate divergence, so the absorb-with-overflow
+path in `TakeDamage` stays observable. Setting it to 0 matches retail exactly and is a one-line
+change if faithfulness beats observability later.
 
 **Real damage numbers.** `TookHit` (controller 5, message 105) carries a `DamageHitStruct` with
 `DamageValue` and `DamageType` per hit, 466 of them in the 2016 session. Those are live-server

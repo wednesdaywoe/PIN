@@ -68,17 +68,23 @@ shields are invented.
 
 | Work | Where |
 |------|-------|
-| Answer H1, fix `ToStance` for the values logged, delete the cross-faction guard | [SDBUtils](UdpHosts/GameServer/StaticDB/SDBUtils.cs), test queue H1-H6 |
-| Check the decay curve against real client damage numbers with `dbg_weapon` | [DamageFalloff.cs](UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs) |
-| Dump `dbitems::Battleframe` and find out whether `base_shields` and the recharge pair hold live values | [Tools/MinimalSDB](Tools/MinimalSDB) in `dump` mode |
-| Replace the placeholders with whatever the dump says, or record that they're invented on purpose | [HardcodedCharacterData.cs](UdpHosts/GameServer/Data/HardcodedCharacterData.cs) |
+| ~~Answer H1~~ **done 2026-08-11** — the column is the signed scale `ToStance` assumed, so it needed no fix and the cross-faction guard is deleted | [SDBUtils](UdpHosts/GameServer/StaticDB/SDBUtils.cs), test queue H1-H2 |
+| ~~Answer R1~~ **done 2026-08-11** — the BioTech Needler Shotgun resolves to full damage to 7m and 17.5 at 70m, exactly `Range × DamageDecayRangefrac` and `DamagePerRound × MinDamageFrac`, and R2 measured the curve landing on real shots | [DamageFalloff.cs](UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs), test queue R1-R2 |
+| ~~Dump `dbitems::Battleframe`~~ **done 2026-08-11** — 5 of 1676 rows carry a non-zero `base_shields`, so build 1962 had no shields; the recharge pair is real at 150/sec and 10000ms | [Capture Replay](Docs/In-Game-Tests/Capture-Replay.md) has the numbers |
+| ~~Replace the placeholders~~ **done** — recharge pair now the shipped values, pool kept non-zero as a divergence that's written down | [HardcodedCharacterData.cs](UdpHosts/GameServer/Data/HardcodedCharacterData.cs) |
 
-Exit: no combat number in the server is an unconfirmed guess, or the ones that remain are written
-down as deliberate.
+**M1 is done, 2026-08-11.** All three questions answered in one afternoon at the client, and none of
+them needed the model rewritten: the stance column is the signed scale, the decay curve reads its
+columns the way `Resolve` assumed, and shields were never live in build 1962. The one number still
+knowingly wrong is the shield pool, kept non-zero on purpose and written down as such in
+[HardcodedCharacterData.cs](UdpHosts/GameServer/Data/HardcodedCharacterData.cs).
 
-Size is small and it's nearly all client time rather than code. The risk is that a stance encoding
-that isn't a signed scale means rewriting `ToStance` against whatever the log shows, which is still
-one method.
+Exit met: no combat number in the server is an unconfirmed guess, and the one that remains is
+written down as deliberate.
+
+What's left in the R series is agreement rather than confirmation — R4 asks whether the *client*
+computes the same falloff the server does, which can't invalidate the model, only reveal a second
+one. It doesn't hold M2 up.
 
 ---
 

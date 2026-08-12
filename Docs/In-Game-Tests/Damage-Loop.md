@@ -18,7 +18,7 @@ D5 was the fourth entry in this batch; it grew into an investigation of its own 
 Pass: projectile hits damage characters, death fires, respawn puts the player at the nearest
 uncaptured outpost and movement input is accepted again afterwards.
 
-## [ ] D2: Headshot and crit
+## [x] D2: Headshot and crit
 
 1. `npc 1196`
 2. Land one body shot and one headshot on it

@@ -13,16 +13,24 @@ public static class HardcodedCharacterData
     public static int SelectedLoadout = 184538131;
     public static byte Level = 45;
     public static byte EffectiveLevel = 45;
+
+    // 19192 is what the 2016 capture's player entity reported, so this one is a reading rather than a guess.
+    // Don't "fix" it from dbitems::Battleframe.base_health, which is ~1000 — that column is the pre-scaling
+    // base, and the level and attribute scaling that turns it into 19192 isn't implemented.
     public static int MaxHealth = 19192;
     public static int MonsterMaxHealth = 2500;
 
-    // Placeholders until a dump of the client db says whether dbitems::Battleframe shipped base_shields and
-    // the recharge pair with live values. These are invented numbers that make the shield layer observable,
-    // not tuned ones. Monsters stay shieldless so the guess only lands on players.
-    public static int MaxShields = 4800;
+    // The dump happened (MinimalSDB dump, prod-1962): build 1962 had no shields. base_shields is non-zero on
+    // 5 of 1676 Battleframe rows, and the 2016 capture agrees — MaxShields reads 0 across every
+    // Character_BaseController message for the player. So the pool below is a deliberate divergence kept
+    // because the absorb-with-overflow path in TakeDamage is worth being able to see; 3000 at least appears
+    // in the table, unlike the 4800 it replaces. Set it to 0 to match retail exactly.
+    // The recharge pair is not invented: 150/sec and 10000ms are the values ~780 rows actually shipped with.
+    // Monsters stay shieldless so the divergence only lands on players.
+    public static int MaxShields = 3000;
     public static int MonsterMaxShields = 0;
-    public static int ShieldRechargePerSec = 960;
-    public static int ShieldRechargeDelayMs = 5000;
+    public static int ShieldRechargePerSec = 150;
+    public static int ShieldRechargeDelayMs = 10000;
     public static int GeneratedLoadoutCounter = 20001;
     public static HashSet<uint> HostileFactionIds = [2, 3, 5, 6, 7, 8, 17, 22, 42, 43, 45, 46, 47, 48];
 

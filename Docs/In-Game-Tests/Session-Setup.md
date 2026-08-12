@@ -47,7 +47,7 @@ the client keeps `/`-prefixed input for itself, so anything starting with `/` ne
 | `deployable <deployableTypeId> [<x> <y> <z>]` | `spawn_deployable` | |
 | `vehicle <vehicleTypeId> [<x> <y> <z>]` | `spawn_vehicle` | |
 | `carryable <carryableTypeId> [<x> <y> <z>]` | `spawn_carryable` | |
-| `target [entityId/name]` | — | no argument ray-casts from your aim; `target me` or `target self` targets you |
+| `target [entityId/name]` | — | no argument ray-casts from your aim; `target me` or `target self` targets you; prints the distance, so it doubles as a rangefinder |
 | `clear` | `cleartarget`, `targetclear`, `untarget`, `removetarget`, `remtarget`, `deletetarget`, `deltarget` | clears the command target |
 | `hostility` | `stance` | stance both ways against the current target |
 | `dbg_weapon` | — | weapon template, ammo and the resolved decay curve |
