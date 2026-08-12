@@ -10,7 +10,7 @@ public class CreateItemServerCommand : ServerCommand
 {
     public override void Execute(string[] parameters, ServerCommandContext context)
     {
-        if (context.SourcePlayer == null && context.SourcePlayer.Inventory == null)
+        if (context.SourcePlayer?.Inventory == null)
         {
             SourceFeedback("Need a player inventory", context);
             return;
@@ -32,20 +32,14 @@ public class CreateItemServerCommand : ServerCommand
 
         uint quantity = 1;
         bool isResource = ((ItemFlags)itemInfo.Flags).HasFlag(ItemFlags.Resource);
-        if (isResource)
+        if (isResource && parameters.Length > 1)
         {
-            if (parameters.Length > 1)
-            {
-                quantity = Math.Max(1, ParseUIntParameter(parameters[1]));
-            }
-
-            context.SourcePlayer.Inventory.AddResource(typeId, quantity);
-        }
-        else
-        {
-            context.SourcePlayer.Inventory.CreateItem(typeId);
+            quantity = Math.Max(1, ParseUIntParameter(parameters[1]));
         }
 
+        // The live server announced the pickup first and only then sent the inventory it produced —
+        // in the 2016 capture the SimulateLootPickup for item 82337 lands two sequence numbers ahead
+        // of the InventoryUpdate that adds it. PIN had the two the other way around.
         var msg = new SimulateLootPickup()
         {
             Item = new()
@@ -57,5 +51,23 @@ public class CreateItemServerCommand : ServerCommand
         };
         context.SourcePlayer.NetChannels[ChannelType.ReliableGss]
                    .SendMessage(msg, context.SourcePlayer.CharacterEntity.EntityId);
+
+        if (isResource)
+        {
+            context.SourcePlayer.Inventory.AddResource(typeId, quantity);
+        }
+        else
+        {
+            context.SourcePlayer.Inventory.CreateItem(typeId);
+        }
+
+        // The toast fires off SimulateLootPickup alone, so seeing it says nothing about whether the
+        // item landed. Log what was actually added; dbg_inventory prints the standing contents.
+        Logger.Information(
+            "createitem {TypeId} as {Kind}, item type {ItemType}, x{Quantity}",
+            typeId,
+            isResource ? "resource" : "item",
+            (ItemType)itemInfo.Type,
+            quantity);
     }
 }

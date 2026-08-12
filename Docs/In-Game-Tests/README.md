@@ -32,6 +32,12 @@ feature it exercises; start a new file when a feature arrives that none of these
   server sent, not about what PIN does with it. Those can be read off a 2016 recording instead of
   waiting for a trip to the game machine.
 
+## Blocks most of the queue
+
+- [Inventory Delivery](Inventory.md) — **I1–I2**. `createitem` shows a pickup toast and delivers
+  nothing, which gates every entry that has to spawn an item — all of P0–P6. The R series escaped it
+  by using the Biotech frame's default weapon instead.
+
 ## Combat
 
 - [Hostility](Hostility.md) — **H1–H7**. Faction stances, who may damage whom, and splash

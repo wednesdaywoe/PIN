@@ -57,6 +57,7 @@ the client keeps `/`-prefixed input for itself, so anything starting with `/` ne
 | `listeffects` | `list_effects`, `apt_status`, `apt_list` | |
 | `cancelfm <commandId>` | — | cancel a ForcedMovement by command id |
 | `createitem <typeId>` | `create_item`, `giveitem`, `give_item` | second argument is quantity, resources only |
+| `dbg_inventory [resend]` | `dbg_inv` | prints the server's items and resources; `resend` pushes the full inventory again |
 | `tp <x> <y> <z>` | `teleport` | z is up |
 | `pflags` | `pflag`, `float` | toggles `cheat_float`; this is how you get to a measured distance |
 | `cflags [value]` | `cflag` | sets CombatFlags |

@@ -48,6 +48,20 @@ public class CharacterInventory
         }
     }
 
+    /// <summary>
+    ///     Everything the server thinks the player is carrying, so a command can print it and settle
+    ///     whether a missing item never got created or was created and never shown.
+    /// </summary>
+    public IEnumerable<Item> GetItems()
+    {
+        return _items.Values;
+    }
+
+    public IEnumerable<Resource> GetResources()
+    {
+        return _resources.Values;
+    }
+
     public IEnumerable<uint> GetOwnedChassisIds()
     {
         return _loadouts.Values
@@ -119,7 +133,12 @@ public class CharacterInventory
             Unk1 = 0,
             Unk3 = 0,
             Unk4 = 0,
-            Unk5 = 0,
+
+            // Every item sampled out of the 2016 capture carries 1 here and nothing else — full
+            // updates and partial ones, every item type, equipped and not. It was the only field
+            // in the struct where PIN wrote a value the live server never sent, which makes it the
+            // first suspect for an item the client accepts and then never lists.
+            Unk5 = 1,
             Unk6 = [],
             Unk7 = 0,
         };
@@ -273,7 +292,10 @@ public class CharacterInventory
             ItemsPart3 = [],
             Resources = [],
             Loadouts = [],
-            Unk = 1,
+
+            // 0 on a partial update and 1 on a full one, which is the split every InventoryUpdate
+            // in the 2016 capture follows. PIN was sending 1 on both.
+            Unk = 0,
             SecondItems = [],
             SecondResources = []
         };
@@ -303,7 +325,7 @@ public class CharacterInventory
                 resource
             ],
             Loadouts = [],
-            Unk = 1,
+            Unk = 0, // Partial update, see SendItemUpdate
             SecondItems = [],
             SecondResources = []
         };
@@ -345,7 +367,7 @@ public class CharacterInventory
             ItemsPart3 = [],
             Resources = [],
             Loadouts = [.. _loadouts.Values],
-            Unk = 1,
+            Unk = 0, // Partial update, see SendItemUpdate
             SecondItems = [],
             SecondResources = []
         };

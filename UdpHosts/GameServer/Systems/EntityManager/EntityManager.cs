@@ -1153,6 +1153,7 @@ public class EntityManager
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(combatController, entity.EntityId, player.PlayerId);
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(effectsController, entity.EntityId, player.PlayerId);
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(missionController, entity.EntityId, player.PlayerId);
+
                     // Progression and unlocks cover every owned frame, not just the equipped one, and must
                     // be addressed to the character entity - SendMessage's entityId defaults to 0, which the
                     // client drops, leaving every frame at level 1 and every certificate locked.

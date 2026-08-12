@@ -83,6 +83,34 @@ value that at least occurs in the table — as a deliberate divergence, so the a
 path in `TakeDamage` stays observable. Setting it to 0 matches retail exactly and is a one-line
 change if faithfulness beats observability later.
 
+**What an item pickup looks like on the wire.** Used on 2026-08-11 to diff PIN's `InventoryUpdate`
+against a real one after `createitem` produced a pickup toast and no item — see
+[Inventory Delivery](Inventory.md) for the conclusions and what got ruled out.
+
+```
+dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \
+    --controller 2 --message 129 --direction s2c --dump 200
+
+dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \
+    --controller 2 --message 132 --direction s2c --dump 500
+```
+
+The session opens with one full `InventoryUpdate` (`ClearExistingData = 1`, 255+ items, 21858
+bytes) and then sends 199 partials. The reference case is a player looting item 82337: message 132
+`SimulateLootPickup` at seq 55934, then message 129 at seq 55936 carrying exactly one item, 37
+bytes on the wire.
+
+```
+000100 A1410100 FDD4035C68295846 02 630B2A58 01 0000 0000 0000 01 00 0000 00 0000000000
+```
+
+Reading it back through the struct: `ClearExistingData = 0`, one item — `Unk1 = 0`,
+`SdbId = 82337`, `GUID = 0x465829685C03D4FD` (low byte `0xFD`, the item type code),
+`SubInventory = 2`, `TimestampEpoch = 1479150435`, `DynamicFlags = 1`, `Durability = 0`,
+`Unk3 = Unk4 = 0`, **`Unk5 = 1`**, no `Unk6`, `Unk7 = 0`, no `Modules` — then empty resources and
+loadouts, **`Unk = 0`**, and two empty second arrays. That is the message any single-item add in
+PIN should be able to be laid next to.
+
 **Real damage numbers.** `TookHit` (controller 5, message 105) carries a `DamageHitStruct` with
 `DamageValue` and `DamageType` per hit, 466 of them in the 2016 session. Those are live-server
 damage numbers, which is what R4 in [Damage Decay](Damage-Decay.md) needs to check the decay curve

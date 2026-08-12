@@ -158,6 +158,10 @@ the inventory now holds only each frame's chassis and default-slot items generat
 The server-side fix for everything above, awaiting its first login. Everything in P1–P6 depends on
 this entry passing.
 
+> **Run [I1](Inventory.md) first.** Step 4 below and every `createitem` in P1–P6 depend on a created
+> item reaching the client, and on 2026-08-11 one didn't. If I1 fails, a module that won't slot
+> here says nothing about certificates.
+
 1. Restart the servers (`~/Games/PIN/start-pin.sh` — the new `GameServer.dll` is already deployed),
    log in
 2. Inventory check: the bag/gear clutter is gone; only per-frame default gear remains
