@@ -11,11 +11,6 @@ bring back and what we are deliberately not.
 
 ## What this settles
 
-**The client database stays pristine.** Weapon handling, recoil and bloom are read client-side out
-of `clientdb.sd2` and never transmitted — see [Weapon Handling](Wiki/Weapon-Handling.md). Restoring
-*systems* needs none of that touched, so the shipped DB stays the reference copy that every finding
-here is verified against. The Bio Rifle keeps its 1962 bloom.
-
 **Crafting needs a surface, not the original surface.** v1.6 deleted the crafting panel and the
 client cannot be rebuilt, but nothing requires the replacement to look like what was removed.
 Repurposing the surviving `Tinkering` panel, or authoring a minimal one in Lua, are both legitimate
