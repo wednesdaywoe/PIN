@@ -589,9 +589,12 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
                 poseTypeRecord = SDBInterface.GetPoseType(battleframeRecord.PosetypeId);
                 battleframeVisualGroupRecords = SDBInterface.GetBattleframeVisuals(battleframeRecord.VisualGroup);
 
-                // Find the appropriate visual record
-                byte retries = 3;
-                do
+                // Find the appropriate visual record, strictest rule first, and stop at the first rule that
+                // matches. The loop used to end on battleframeVisualRecord, which is not assigned until after
+                // it, so the condition was always true: every pass ran, the loosest rule overwrote whatever the
+                // exact match had found, and the "pick first result" pass never ran at all because retries had
+                // already hit 0. The warning below fired on almost every loadout as a result.
+                for (int retries = 3; retries >= 0 && battleframeVisualGroupRecord == null; retries--)
                 {
                     foreach (var record in battleframeVisualGroupRecords)
                     {
@@ -634,10 +637,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
                             break;
                         }
                     }
-
-                    retries--;
                 }
-                while (battleframeVisualRecord == null && retries > 0);
 
                 battleframeVisualRecord = SDBInterface.GetVisualRecord(battleframeVisualGroupRecord.VisualrecId);
             }
