@@ -39,9 +39,15 @@ blocker instead of M2: an intermittent world-entry freeze that survived four rou
 debugging (T4–T8) before being localized to a lost wakeup in Wine's fsync path and closed with a
 launch-option workaround (T9, `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over four
 consecutive sessions — tracked as [CLIENT-1](gaps/client.md) pending further confirmation, per the
-commit's own "until proven otherwise"). With that infra blocker out of the way, M2 is next and
-unstarted: [AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs) is still an empty tick, the single
-largest gap between the server and a game. See [streams/m2-npc-combat.md](streams/m2-npc-combat.md).
+commit's own "until proven otherwise"). With that infra blocker out of the way, M2 is underway:
+perception and target selection (threat table, hostility + line-of-sight scoring) is code complete
+under [Systems/AI](../UdpHosts/GameServer/Systems/AI/), unit-tested, and driven from
+[AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick; death
+notification also now fires (`CharacterEntity.Die` publishes `CharacterDiedEvent`, nothing
+subscribes yet). Nothing moves or shoots yet, so there's nothing to see in game from either piece
+alone — locomotion is next. See [streams/m2-npc-combat.md](streams/m2-npc-combat.md). While waiting
+on client access, the first two cuts of **M3** also landed (code complete, not yet seen in game) —
+see [streams/m3-resource-payout.md](streams/m3-resource-payout.md).
 
 ---
 

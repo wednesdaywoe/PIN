@@ -341,8 +341,8 @@ public class Factory
                 return new TargetOwnerCommand(SDBInterface.GetTargetOwnerCommandDef(commandId));
             // case CommandType.RequireTookDamage:
             //     return new RequireTookDamageCommand(SDBInterface.GetRequireTookDamageCommandDef(commandId));
-            // case CommandType.ModifyOwnerResources:
-            //     return new ModifyOwnerResourcesCommand(CustomDBInterface.GetModifyOwnerResourcesCommandDef(commandId));
+            case CommandType.ModifyOwnerResources:
+                return new ModifyOwnerResourcesCommand(CustomDBInterface.GetModifyOwnerResourcesCommandDef(commandId));
             case CommandType.ModifyPermission:
                 return new ModifyPermissionCommand(CustomDBInterface.GetModifyPermissionCommandDef(commandId));
             case CommandType.RequirePermission:

@@ -107,3 +107,15 @@ fields the code itself flags with "ToDo: What are these?". `garage_slots` and
 `character_sheet.json` return a fixed frame (Firecat / Rhino) regardless of the actual character
 ([Prediction-Sweep.md:171-172](../In-Game-Tests/Prediction-Sweep.md)) — currently the leading
 suspect if [NET-19](network.md#net-19)'s P0 verification doesn't hold.
+
+<a id="data-10"></a>
+
+### DATA-10 — NPC perception/threat tuning is invented, not sourced from `dbmonster` [ ] open
+
+`dbmonster::Monster` carries `Behavior`/`BehaviorOffensive`/`BehaviorDefensive` name references but
+no numeric perception radius or aggro field, so
+[TargetSelection.cs](../../UdpHosts/GameServer/Systems/AI/TargetSelection.cs) picks its own
+detection range (40m) and threat gain/decay/engage-threshold constants rather than reading them off
+a def. Every monster currently notices, aggros and disengages identically regardless of type. Part
+of [M2](../streams/m2-npc-combat.md); revisit if the named behaviors turn out to carry this data
+somewhere PIN hasn't parsed yet.

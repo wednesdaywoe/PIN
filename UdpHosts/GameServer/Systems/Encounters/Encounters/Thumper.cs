@@ -2,11 +2,17 @@ using System.Collections.Generic;
 using GameServer.Entities;
 using GameServer.Entities.Thumper;
 using GameServer.Enums;
+using GameServer.StaticDB;
 
 namespace GameServer.Systems.Encounters.Encounters;
 
 public class Thumper : BaseEncounter, IInteractionHandler
 {
+    // Every beacon pays out the same grant regardless of node type until M4 tells them apart. 50329
+    // is the one ModifyOwnerResourcesCommandDef row with real values recovered from client ability
+    // data (200 crystite) — the other 144 are id-and-comment shells with nothing to pay out.
+    private const uint FlatCompletionGrantId = 50329;
+
     private static readonly uint _updateFrequency = ThumperState.THUMPING.CountdownTime() / 100;
     private readonly ThumperEntity _thumper;
     private ulong _lastUpdate;
@@ -79,6 +85,12 @@ public class Thumper : BaseEncounter, IInteractionHandler
         Shard.EncounterMan.StopUpdatingEncounter(this);
 
         Shard.EntityMan.Remove(_thumper);
+
+        var grant = CustomDBInterface.GetModifyOwnerResourcesCommandDef(FlatCompletionGrantId);
+        if (grant is { ResourceSdbId: not 0, Quantity: > 0 })
+        {
+            RewardWithResource(grant.ResourceSdbId, (uint)grant.Quantity);
+        }
 
         base.OnSuccess();
     }

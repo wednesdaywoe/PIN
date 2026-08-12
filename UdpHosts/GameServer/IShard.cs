@@ -11,6 +11,7 @@ using GameServer.Systems.Encounters;
 using GameServer.Systems.EntityManager;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
+using GameServer.Systems.SystemEvents;
 using GameServer.Systems.WeaponSim;
 using Serilog;
 using Shared.Udp;
@@ -26,6 +27,7 @@ public interface IShard : IPacketSender
     IDictionary<uint, IDictionary<uint, OutpostEntity>> Outposts { get; }
     PhysicsEngine Physics { get; }
     AIEngine AI { get; }
+    EventBus EventBus { get; }
     MovementRelay Movement { get; }
     EntityManager EntityMan { get; }
     EncounterManager EncounterMan { get; }

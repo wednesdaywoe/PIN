@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 1 of 9 closed
+[Full detail](gaps/data.md) — 1 of 10 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -50,6 +50,8 @@ baseline the next pass diffs against.
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)
 - [~] **DATA-9** — Two web endpoints return invented or hardcoded-stub character data
+- [ ] **DATA-10** — NPC perception range and threat gain/decay/engage tuning are invented, not read
+  from `dbmonster` (no such field exists there)
 
 ## Networking & Protocol — NET
 

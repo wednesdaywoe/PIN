@@ -45,3 +45,18 @@ with, updated in the UI without a relog.
 Small, and the cheapest reward on the list, which is most of why it's this early. Nothing in it is
 unknown, which is exactly why the unknowns were pushed into M4 instead of being allowed to hold
 this up.
+
+## What's landed
+
+**Cuts 1 and 2 — code complete, not yet seen in game.** The `ModifyOwnerResources` case in
+[Factory.cs](../../UdpHosts/GameServer/Systems/Aptitude/Factory.cs) is uncommented, and
+[Thumper.cs](../../UdpHosts/GameServer/Systems/Encounters/Encounters/Thumper.cs)'s `OnSuccess` now
+calls the already-existing (and previously unused) `BaseEncounter.RewardWithResource` with grant id
+50329 — the one `ModifyOwnerResourcesCommandDef` row with real values — on the natural
+LEAVING→success transition, not the early-interaction path. Every beacon pays the same 200 crystite
+regardless of node type, which is the "flat grant" this cut promised.
+
+Cut 3 (filling in the other 144 grant defs) needs the client's ability data to recover what each
+one is supposed to grant, the same way 50329 was recovered — that requires the retail `clientdb.sd2`
+and/or a live capture, neither of which this session has access to. Left for a session with client
+access; [DATA-5](../gaps/data.md#data-5) already tracks the size of this kind of gap.

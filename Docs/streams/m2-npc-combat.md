@@ -58,3 +58,31 @@ renders NPC movement is, so expect the locomotion pass to need several trips to 
 
 H5 in [Hostility](../In-Game-Tests/Hostility.md) is permanently blocked until this lands — it needs
 an NPC that actually decides to shoot.
+
+## What's landed
+
+**Perception and target selection — code complete, not yet seen in game.** New
+[Systems/AI](../../UdpHosts/GameServer/Systems/AI/) holds a per-NPC [ThreatTable.cs](../../UdpHosts/GameServer/Systems/AI/ThreatTable.cs)
+(decaying threat scores, unit-tested in isolation — see `Tests/GameServer.Tests/AI/ThreatTableTests.cs`)
+and [TargetSelection.cs](../../UdpHosts/GameServer/Systems/AI/TargetSelection.cs), which scores
+every hostile `CharacterEntity` in range and with line of sight (`HostilityRules.AreHostile` +
+`Physics.TargetRayCast`, the same idiom the `target` admin command already uses) into that table
+each tick and picks the highest-scoring live target once it crosses an engage threshold.
+[AIEngine.cs](../../UdpHosts/GameServer/AIEngine.cs) now takes the shard (matching every other
+system) and drives this for every non-player-controlled, alive `CharacterEntity`, exposing the
+result as `AIEngine.CurrentTargetOf(entityId)` for locomotion and attacking to read once they land.
+
+Detection range and the threat gain/decay/engage numbers are invented — `dbmonster` has no
+perception field to read them from — tracked as [DATA-10](../gaps/data.md#data-10). Nothing moves
+or shoots yet, so there's no in-game exit condition to check until locomotion or attacking lands;
+this piece's own correctness (does an NPC pick the right target through a wall, does threat decay
+sensibly) is what the unit tests cover.
+
+**Death notification — code complete, not yet seen in game.** `CharacterEntity.Die` now enqueues a
+`CharacterDiedEvent` (new in [Events.cs](../../UdpHosts/GameServer/Systems/SystemEvents/Events.cs))
+onto the `EventBus`, flushed once per tick like everything else that goes through it, rather than
+dispatched inline from inside whatever damage call happened to kill the character. `EventBus` had to
+be added to `IShard` for this — it previously only reached `ChatService`, which gets the concrete
+`EventBus` handed to it directly in `Shard`'s constructor, and `CharacterEntity` only ever holds the
+`IShard` interface. Nothing subscribes yet; M5 (kill XP) and M7 (encounter death routing) are what
+turn this from a broadcast with no listener into something that matters.

@@ -48,7 +48,7 @@ public class Shard : IShard
         Outposts = new ConcurrentDictionary<uint, IDictionary<uint, OutpostEntity>>();
         EventBus = new EventBus();
         Physics = new PhysicsEngine(EventBus, Settings.ZoneId, Settings.MapsPath, Settings.AssetDBPath, Settings.AssetsPath, Settings.LoadMapsCollision, new DebugProjectileHitCallbacks(this));
-        AI = new AIEngine();
+        AI = new AIEngine(this);
         Movement = new MovementRelay(this);
         Abilities = new AbilitySystem(this);
         EntityMan = new EntityManager(this);

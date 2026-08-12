@@ -19,6 +19,7 @@ using GameServer.StaticDB.Records.dbvisualrecords;
 using GameServer.Systems.Aptitude;
 using GameServer.Systems.Combat;
 using GameServer.Systems.Encounters;
+using GameServer.Systems.SystemEvents;
 using GameServer.Test;
 using GrpcGameServerAPIClient;
 using Serilog;
@@ -1526,9 +1527,11 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         };
         Shard.EntityMan.SendToScoped(this, killed);
 
+        Shard.EventBus.Enqueue(new CharacterDiedEvent(this, killer));
+
         if (!IsPlayerControlled)
         {
-            // Until death is hooked into AI/encounters, corpses just despawn after a while
+            // Nothing subscribes to CharacterDiedEvent yet, so corpses just despawn after a while
             Shard.EntityMan.SetRemainingLifetime(this, 30_000);
         }
     }
