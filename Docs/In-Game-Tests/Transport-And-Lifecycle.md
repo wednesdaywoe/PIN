@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Transport and Lifecycle (T1-T9)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Transport and Lifecycle
 
 Part of the [in-game test queue](README.md). Setup and admin commands: [Session Setup](Session-Setup.md).

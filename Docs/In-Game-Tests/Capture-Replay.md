@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: Answers Available Without a Client
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Answers Available Without a Client
 
 Part of the [in-game test queue](README.md).

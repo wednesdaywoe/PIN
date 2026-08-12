@@ -13,10 +13,14 @@ documentation — lives in the [Wiki](Wiki/README.md).
 Which of Firefall's systems are being brought back, and which deliberately aren't, is in
 [Restoration](Restoration.md).
 
-Checks that need a running client are queued in [In-Game Tests](In-Game-Tests/README.md). What can be
-checked without one lives in [Tests/GameServer.Tests](../Tests/GameServer.Tests).
+This project tracks its own state in three living docs, kept current session to session rather
+than written up after the fact:
 
-What's missing and the order it's being fixed in is in the [Roadmap](../ROADMAP.md).
+- [Progress ledger](PROGRESS.md) — what's missing and the order it's being fixed in
+- [Issue Register](ISSUE-REGISTER.md) — known defects and invented/hardcoded data, audited state
+- [Test Register](TEST-REGISTER.md) — what's been verified against a real client; the queue itself
+  is in [In-Game Tests](In-Game-Tests/README.md), what can be checked without one lives in
+  [Tests/GameServer.Tests](../Tests/GameServer.Tests)
 
 ## UdpHosts
 

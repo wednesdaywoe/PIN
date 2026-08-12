@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Client Logging (D5g)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Client Logging (D5g)
 
 Part of the [in-game test queue](README.md). Written during the

@@ -91,7 +91,7 @@ panels include `Garage`, `Inventory` and `Tinkering`, but nothing to craft on.
 
 Thumping is a server-side job. Data, protocol and UI are all present, so it is implementation
 work against a client that is still expecting it — the same shape as everything else in
-[the roadmap](../../ROADMAP.md).
+[the progress ledger](../PROGRESS.md).
 
 Crafting has one hard blocker, and it is the client, not the data. Nine thousand recipes are
 useless without a screen to pick them on, and that screen was deleted from a binary we cannot

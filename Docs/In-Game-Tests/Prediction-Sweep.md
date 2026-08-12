@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Prediction Reconciliation Sweep (P0-P6)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Prediction Reconciliation Sweep
 
 Part of the [in-game test queue](README.md). Setup and admin commands:

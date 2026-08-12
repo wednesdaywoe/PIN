@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Hostility Rules (H1-H7)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Hostility Rules
 
 Part of the [in-game test queue](README.md). Setup, admin commands and the monster type id table:

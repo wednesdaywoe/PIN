@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: Session Setup
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Session Setup
 
 What every entry in the [test queue](README.md) assumes is already done: a build deployed, the

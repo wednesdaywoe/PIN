@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Damage Loop (D1-D4)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Damage Loop
 
 Part of the [in-game test queue](README.md). Setup, admin commands and the monster type id table:

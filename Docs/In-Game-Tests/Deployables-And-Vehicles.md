@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Damage to Deployables and Vehicles (V1-V7)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Damage to Deployables and Vehicles
 
 Part of the [in-game test queue](README.md). Setup, admin commands and the deployable/vehicle type

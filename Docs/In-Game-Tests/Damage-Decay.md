@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Range Based Damage Decay (R1-R5)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Range Based Damage Decay
 
 Part of the [in-game test queue](README.md). Setup, admin commands and the monster type id table:

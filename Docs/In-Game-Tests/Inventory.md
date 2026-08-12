@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Inventory Delivery (I1-I2)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Inventory Delivery
 
 Part of the [in-game test queue](README.md). Setup, admin commands and the monster type id table:

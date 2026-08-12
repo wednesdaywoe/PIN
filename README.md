@@ -63,7 +63,8 @@ PlayIntroMovie = false
 - No Encounters
 - No PvP
 
-See the [Roadmap](ROADMAP.md) for which of these are being worked towards and in what order.
+See the [Progress ledger](Docs/PROGRESS.md) for which of these are being worked towards and in
+what order.
 
 ## Development
 

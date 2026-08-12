@@ -1,3 +1,11 @@
+---
+project: pin
+kind: test-stream
+title: "Charge Camera Lockup (D5, D5a-D5h)"
+relates:
+  - ../TEST-REGISTER.md
+---
+
 # Charge Camera Lockup (D5)
 
 Part of the [in-game test queue](README.md). Setup and admin commands:
