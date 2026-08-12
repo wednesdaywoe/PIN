@@ -36,10 +36,11 @@ That's the capture, from the receiving end, tagged on the `GSS` log channel. It 
 half of the contract we've been reconstructing by hand from PIN's own source. Expect a large log and
 keep the test session short.
 
-There may also be an ini route. `FirefallClient.exe` reads keys of the form `LogLevel-<channel>` for
-channels `GssMessages`, `MatrixMessages`, `FirefallCommands` and `FirefallEvents`, and the section
-name looks like `[Debug]`. That's inferred from string adjacency, not confirmed, but it's been added
-to `firefall.ini` (backup at `firefall.ini.bak`) since unknown ini keys are ignored either way.
+There is also an ini route, now confirmed by disassembly (done while chasing the
+[T6 thread-affinity lead](Transport-And-Lifecycle.md)): `FirefallClient.exe` reads keys of the form
+`LogLevel-<channel>` for channels `GssMessages`, `MatrixMessages`, `FirefallCommands` and
+`FirefallEvents` from section `[Debug]`, through the same `firefall.ini` config store that serves
+`[Config] OperatorHost`. The entries are in `firefall.ini` (backup at `firefall.ini.bak`).
 `FirefallCommands` and `FirefallEvents` have no cvar equivalent, so if the section name is right
 they're the only way to get at those.
 
@@ -183,3 +184,30 @@ Other cvars found in the same sweep, not yet used: `debug.logDamageDealtEvents` 
 `debug.logDamageTakenEvents` (log every damage event the local character deals or takes, a free check
 on the damage work), and the `debuglag.*` family, which draws a network diagnostic overlay including
 GSS receive counts and clock deltas.
+
+## Reading a freeze
+
+A frozen client window says nothing about the cause. It is what a fatal error looks like from the
+outside under Wine: whatever thread dies is usually holding a lock, everything else piles up behind
+it, and about 160 s later Wine's own assertion fires and starts `winedbg --auto`, which then faults
+in a loop until the log fills the disk. Every freeze looked at so far produced the same Proton log —
+`RtlpWaitForCriticalSection ... blocked by <tid>`, a `handle_syscall_fault code=c0000005
+addr=(nil) ip=00000000` storm, hundreds of MB — and had a different cause each time. The size of
+that log is a good freeze detector and a bad diagnosis.
+
+Read `console.log` instead. Its last lines are the actual error, and the very last one is usually
+cut off mid-word, because the process died inside the logger:
+
+```
+tr -d '\0' < "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log" | tail -40
+```
+
+**Copy it before relaunching.** The client archives the previous run as `<timestamp>_last_run.log`
+at startup, but only for runs that exited cleanly — every one of the 30 archived on this machine
+ends in `ShaderBuilder.Shutdown()`, and none of the known freezes is among them. Launching again
+destroys the only copy of the log you need. `~/Games/PIN/logs/freezes/` is where the kept ones go.
+
+Then line up the elapsed `mm:ss` stamps against the servers' wall clock using any request that
+appears in both — a `NETHTTP GET` line and the matching `WebHostManager.log` entry pin the offset in
+one step, and from there `GameServer.log` says what the server was doing at the moment the client
+died.

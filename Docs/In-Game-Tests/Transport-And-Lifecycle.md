@@ -4,13 +4,24 @@ Part of the [in-game test queue](README.md). Setup and admin commands: [Session 
 
 ## HTTP-only transport (blocks everything needing world entry)
 
-The client froze on world entry because Wine's WinHTTP deadlocks its own critical section during
-the concurrent TLS handshakes there. The fix takes TLS out entirely: every advertised URL is now
-plain HTTP, which needs a 1-byte patch to `FirefallClient.exe` removing its HTTPS-only check on
-the oracle URL. Background and undo steps: [Http-Only-Setup.md](../Http-Only-Setup.md).
+Every advertised URL is plain HTTP, which needs a 1-byte patch to `FirefallClient.exe` removing its
+HTTPS-only check on the oracle URL. Background and undo steps:
+[Http-Only-Setup.md](../Http-Only-Setup.md). Keep it: it is what made login work. It was also
+believed to be the world-entry freeze fix, and T4 disproved that — the freeze was a server bug, and
+the Wine WinHTTP warnings that pointed at TLS turn out to appear just as often on healthy runs.
 
 Run T1 and T2 before anything else in the queue — a client that can't reach the world can't run
 any other entry.
+
+**"The client froze" is not one bug.** T4 fixed one trigger (a server-side scope leak). The
+*remaining* freeze — the one that survived T4, T5 and T6 — was finally caught live in T7 and
+localised: the **main/render thread wedges inside a DXVK D3D9 call while holding the game lock
+`0459FA8C`**, and everything else (the `RtlpWaitForCriticalSection` timeouts, and in earlier runs the
+fault storm from the crash handler that follows) is downstream of that. The WinHTTP/TLS and
+thread-affinity theories are both dead. A frozen window is just how this client dies from any fatal
+stall under Wine: one thread stops holding a lock, the rest pile up behind it, and Wine prints the
+60 s timeout. Read `console.log` first, every time — see [Client Logging](Client-Logging.md) — but
+the live `/proc` read in T7 is what actually moved this.
 
 ### [x] T1: The servers hand out HTTP and nothing else
 
@@ -202,6 +213,206 @@ The Proton log for session 4 is the decisive part: **0 `RtlpWaitForCriticalSecti
 That kills option 38 as the cause and confirms the WinHTTP deadlock was a symptom of the server
 pumping view updates at a closed connection. The log is 2.2 MB instead of 270 MB, because 270 MB of
 it was the fault storm.
+
+That verdict stands, and it is narrower than it first read. It says the *second-session* freeze is
+gone. It does not say the client no longer freezes — see T5.
+
+### [x] T5: The battleframe station is not the trigger
+
+Ran 2026-08-11 22:04, **did not reproduce**, and the negative result is worth more than the test was.
+
+The 21:31 freeze was a **first** session on a **fresh** server, 86 s in-world — the shape T4 rules
+out. The Proton log was the usual useless one (266 MB, `RtlpWaitForCriticalSection` on the main
+thread, a `handle_syscall_fault` storm). `console.log` stopped here, mid-word, three lines after
+opening the battleframe station:
+
+```
+01:24 INFO  GUI   Issuing UI HTTP request to URL http://localhost:4402/api/v3/garage_slots/battleframes_for_sale
+01:26 ERROR GUI   Could not figure out size and format for texture '' (does it exist?).
+01:26 ERROR IOS
+```
+
+That reads like a smoking gun and is not one. Repeating it — deploy the station, open it, same
+chassis 75774, same visual record 11668 — produced the same three lines and then two more, and the
+client carried on for another two minutes and exited cleanly:
+
+```
+00:26 ERROR   GUI   Could not figure out size and format for texture '' (does it exist?).
+00:26 ERROR  IOSYS  Could not open file .r5tex for read: File not found.
+00:26 ERROR RENDER  LoadTexture(!) failed. File not found.
+```
+
+So the empty texture is **normal**. `BattleFrameTerminal.lua`'s `PaperdollInit()` calls
+`gPaperdollInst.GetTexture()` before the paperdoll has one, gets `""`, and the engine dutifully tries
+to open `"" + ".r5tex"`. It happens every time the station is opened, on healthy runs too. The crash
+run died in the middle of writing the second of those lines, which is why the log ends there and why
+the log lock went down with it — but the error burst is a coincidence of *where*, not *why*.
+
+**What the two runs do establish.**
+
+The signature is real, not background noise: the clean run's Proton log is 1.9 MB with **0**
+`RtlpWaitForCriticalSection` and **0** `handle_syscall_fault`, against 266 MB and 2.6 million faults
+for the freeze.
+
+And the freeze starts earlier than it looks. Anchoring the Proton clock to the client's on
+`ThreadIdealProcessor` / `Thread priority/affinity optimization turned ON` (both at client 00:18,
+Proton 630024.588), the first lock timeout at 630109.939 prints 60 s into a wait that began at
+**00:43** — 43 s before the main thread stopped at 01:26, while the client was still running at
+143 FPS and logging normally. Whatever goes wrong, it is not what the last log line is doing. The
+client logs nothing at all between 00:27 and 01:00.
+
+**Lead worth taking next, cheap.** At 00:18 the client logs `Thread priority/affinity optimization
+turned ON (main thread core 0, priority 1)` — a scheduling asymmetry that could produce exactly this
+kind of long one-sided lock wait under Proton. Run to ground in the exe as T6: the knobs turned out
+to be `firefall.ini` keys (not cvars, so the `settings.con` survival test suggested here first is
+moot), and "pinning the main thread" was a misreading of the log line — the real default behavior is
+in T6's table.
+
+This is a lead, not a diagnosis. Two theories have already died on this bug.
+
+### [x] T6: Soak with the thread scheduling "optimization" turned off
+
+**Ran 2026-08-11, four consecutive sessions. The theory is dead — the third to die.** The override
+loaded (all four runs, and the freeze run itself, logged `Thread priority/affinity optimization
+turned OFF` — confirmed in each `console.log` at ~00:01–00:16). The fourth session froze anyway,
+same Proton signature (`RtlpWaitForCriticalSection` on `0459FA8C`). Turning the eviction and the
+priority boost off changes nothing, so the scheduling asymmetry was never the cause. Keep the
+override in `firefall.ini` regardless — it's harmless and removes one variable — but stop pursuing
+it. The freeze that run was **caught live** and dissected; the real localization is in T7 below. The
+setup below is still the correct way to run and confirm the override.
+
+T5's closing lead, chased into the binary instead of guessed at. The 00:18 line comes from one
+function in `FirefallClient.exe` (va `0x709900`), and its knobs are **`firefall.ini` keys under
+`[Engine]`** — read through the same config object as `[Config] OperatorHost` (both call sites load
+`lea ecx,[ebx+0xa6c]`), and OperatorHost provably works from `firefall.ini`, so these keys are
+confirmed real, not string-adjacency guesses.
+
+What the disassembly says, and where T5's reading was wrong:
+
+| key                     | default | effect                                                              |
+| ----------------------- | ------- | ------------------------------------------------------------------- |
+| `setMainThreadAffinity` | false   | when true, pin the main thread to `mainThreadCore`                  |
+| `setBgThreadAffinity`   | true    | ban every background thread from `mainThreadCore` (mask `~(1<<n)`)  |
+| `mainThreadCore`        | 0       | the core in question; `-1` picks one at runtime                     |
+| `mainThreadPriority`    | 1       | `SetThreadPriority` on the main thread, clamped to [-15, 15]        |
+
+So by default the client does **not** pin its main thread. `ON (main thread core 0, priority 1)`
+means: every worker thread evicted from core 0, main thread raised to above-normal priority, main
+thread free to roam. The asymmetry is the eviction plus the priority boost. `OFF` prints only when
+both booleans are false.
+
+The override is live in
+`~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Firefall/firefall.ini`
+(2026-08-11; unknown keys are ignored, so it cannot break a run even if wrong):
+
+```ini
+[Engine]
+setMainThreadAffinity = false
+setBgThreadAffinity = false
+mainThreadPriority = 0
+```
+
+1. Start the servers (`~/Desktop/Firefall servers`, or `cd ~/Games/PIN && ./start-pin.sh`).
+2. Launch Firefall from Steam and log in.
+3. At the login screen, confirm the override engaged — this half of the test is deterministic and
+   takes one run:
+
+```bash
+grep "Thread priority/affinity" "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log"
+```
+
+Expected: `Thread priority/affinity optimization turned OFF`. If it still says `ON (...)`, the
+section or key casing is wrong — stop and fix that before spending any soak sessions, or the soak
+measures nothing.
+
+4. Then soak. The freeze is intermittent with no identified trigger, so this half is statistical:
+   play normal sessions — world entry, the battleframe station, the T4 second-session shape. One
+   freeze with `OFF` confirmed in that run's log kills the theory. Clean sessions only build
+   confidence; T4 needed four in a row before its fix was believed, use the same bar before drawing
+   any conclusion here. (This is exactly what happened: four sessions, `OFF` every time, froze on the
+   fourth — see the T6 header and T7.)
+5. If a freeze does happen, save the evidence before relaunching (the next start overwrites
+   `console.log`), following the existing naming in `~/Games/PIN/logs/freezes/`:
+
+```bash
+STAMP=$(date +%y%m%d-%H%M)
+CLIENTDIR="$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall"
+cp "$CLIENTDIR/console.log" ~/Games/PIN/logs/freezes/$STAMP-console.log
+cp ~/Games/PIN/logs/GameServer.log ~/Games/PIN/logs/freezes/$STAMP-GameServer.log
+tail -c 20000000 ~/.var/app/com.valvesoftware.Steam/steam-227700.log > ~/Games/PIN/logs/freezes/$STAMP-proton-tail.log
+```
+
+6. **Do not relaunch yet if the frozen window is still up.** A hung client is the best evidence
+   this bug produces — every past capture was a post-mortem log. See T7 for what to pull off the
+   live process (`/proc/<pid>/task`, the critical-section dump, the thread walk). The `260811-2237`
+   freeze was dissected this way.
+
+### [x] T7: The freeze is a DXVK/D3D9 stall on the main thread, not WinHTTP
+
+The T6 fourth-session freeze was caught **live** — the client left hung on screen instead of killed
+— and read out of `/proc` before relaunch. It relocates the bug entirely. Saved:
+`~/Games/PIN/logs/freezes/260811-2237-*` (`console.log`, `GameServer.log`, `proton-full.log`,
+`thread-analysis.txt`).
+
+**What the live process showed.** The critical section the Proton log always names, `0459FA8C`, is a
+real Win32 `RTL_CRITICAL_SECTION`. Its owner field settles the question the logs never could:
+
+```
+0x459fa8c:  DebugInfo=0xffffffff  LockCount=1  RecursionCount=1  OwningThread=0x164  Sem=0  Spin=0
+```
+
+`OwningThread = 0x164` is the **main thread**. It holds the lock, one waiter queued. And the main
+thread is itself parked — syscall 449 (`futex_waitv`, Wine's fsync path) — with an innermost call
+chain of `d3d9.dll+0x92c5f` ← `d3d9.dll+0x205a6e` ← … ← the game's main-frame function (returns to
+`FirefallClient.exe` va `0x703641`, right after its `call 0x70aba0`). That `d3d9.dll` is **DXVK
+v3.0.2** (the file exports `DxvkInst`; the process has live `dxvk-submit`/`dxvk-cs`/`dxvk-queue`
+threads). The single waiter, wine tid `0x278`, is a game worker blocked in `RtlpWaitForCriticalSection`
+trying to enter that same lock (`FirefallClient.exe` `0xbbe9f6` ← `0xbbd4db` ← `0x12c09e1`).
+
+So the shape is: **the main/render thread wedges inside a DXVK D3D9 call while holding a game lock; a
+worker piles up behind that lock; 60 s later Wine prints the timeout.** The critical-section message
+is a *downstream* symptom of a graphics-path stall, not a lock bug in the game.
+
+**This kills the WinHTTP theory outright.** This capture has **zero** `handle_syscall_fault` and
+**zero** `https` — the 266 MB / 2.6-million-fault storm from earlier captures was the post-freeze
+crash handler, not the cause. WinHTTP option-38 still logs 35 times, faulting on nothing. The freeze
+happens with the network path completely quiet. (See the superseded
+[client-crash memory note](../../MEMORY.md) for that trail.)
+
+**It correlates with heavy streaming.** In every T6 run `console.log` shows RAM climbing 320 MB →
+~1050 MB and FPS collapsing 143 → ~24 across the New Eden zone load, and the hang lands in that
+window. DXVK is doing resource work (VT tiles, zone assets) when the main thread stops.
+
+**The decisive next test — cheap, one variable.** Force Wine's own D3D9→D3D11/GL path instead of
+DXVK and soak again:
+
+- Steam → Firefall → Properties → Launch Options, add `PROTON_USE_WINED3D=1 %command%`.
+- If the freeze **vanishes**: it is DXVK-specific — then bisect DXVK (Proton-GE ships a given DXVK;
+  try stock Proton 9/10, or drop a newer/older `d3d9.dll` + `dxvk.conf` into the prefix, e.g.
+  `dxvk.maxFrameLatency = 1`, `d3d9.deferSurfaceCreation = True`).
+- If it **still freezes** on wined3d: the stall is the game's own render thread serialising on
+  `0459FA8C` under Wine's D3D scheduling, independent of DXVK — then the lever is the game's
+  renderer, not the driver (the `Offset renderer` path at EXE `0x70a4c0` /
+  `"Offset renderer requested application shutdown"` is the thing to read next).
+
+Either branch is progress, and this is the first test in the whole investigation aimed at the layer
+the evidence actually implicates. Run it the same way as T6 (four-session bar; save any freeze).
+
+Reproducing the live read, for next time a client hangs (don't kill it first):
+
+```bash
+PID=$(pgrep -f 'S:\\steamapps\\common\\Firefall.*FirefallClient.exe' | head -1)   # the wine-side pid
+# critical-section owner (address from the Proton log's RtlpWaitForCriticalSection line):
+gdb -q -p "$PID" -batch -ex 'x/6wx 0x0459FA8C'    # word[3] = OwningThread (wine tid)
+# thread states — a wedged main thread sits in futex syscall 449/240:
+for t in /proc/$PID/task/*; do echo "$(basename $t) $(cat $t/comm) $(cut -d' ' -f1 $t/syscall 2>/dev/null)"; done
+```
+
+Mapping a wine tid (like `0x164`) to a host thread and walking its PE stack is scripted in
+`thread-analysis.txt`'s companion work; the short version is: scan `/proc/$PID/mem` for the TEB
+whose self-pointer matches, take its `StackBase`/`StackLimit`, and resolve return addresses on that
+range against the PEB module list (`FirefallClient.exe` base `0x79890000` → subtract and add
+`0x400000` for the on-disk VA).
 
 ## Shutdown
 
