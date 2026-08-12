@@ -1,0 +1,913 @@
+// SdbDocs: turns clientdb.sd2 into browsable reference pages under Docs/Wiki/Reference.
+//
+// The wiki's method is that the client's own data is the source of truth (Docs/Wiki/README.md), but
+// a 32 MB binary nobody can read is not a source anybody can argue with. This renders the parts a
+// design discussion actually needs -- weapons, abilities and recipes -- into markdown, resolved
+// exactly the way the server resolves them so the pages and the running game cannot drift apart.
+//
+// Two things shape the output. First, it goes through SDBInterface and SDBUtils rather than reading
+// columns directly, so a weapon's numbers here are the numbers PIN sends; if a page disagrees with
+// the client, that is a server bug and worth finding. Second, it collapses tiers. 5,084 named weapon
+// items are 745 distinct weapons at different levels and qualities, and a page with one row per item
+// hides that instead of showing it, so rows are grouped and their spread is printed as a range.
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using FauFau.Formats;
+using GameServer.StaticDB;
+using GameServer.StaticDB.Records.apt;
+using GameServer.StaticDB.Records.dbcharacter;
+using GameServer.StaticDB.Records.dbitems;
+
+var cfgPath = new[] { Environment.CurrentDirectory, AppContext.BaseDirectory }
+    .Select(dir => Path.Combine(dir, "config.json"))
+    .FirstOrDefault(File.Exists);
+
+if (cfgPath == null)
+{
+    Console.Error.WriteLine("Error: config.json not found in current or base directory.");
+    return 1;
+}
+
+var cfg = JsonDocument.Parse(File.ReadAllText(cfgPath)).RootElement;
+string input = cfg.TryGetProperty("input", out var inp) ? inp.GetString() : null;
+
+if (string.IsNullOrEmpty(input) || !File.Exists(input))
+{
+    Console.Error.WriteLine($"Error: config 'input' missing or file not found: {input}");
+    return 2;
+}
+
+// Built as separate segments rather than one literal, so the separators come out right off Windows too.
+var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+var outDir = cfg.TryGetProperty("output", out var outP) && !string.IsNullOrWhiteSpace(outP.GetString())
+    ? outP.GetString()
+    : Path.Combine(repoRoot, "Docs", "Wiki", "Reference");
+
+Console.WriteLine($"SdbDocs: Reading SDB: {input}");
+var sdb = new StaticDB();
+sdb.Read(input);
+
+// dblocalization::LocalizedText is the one table needed here that the server never loads -- it has no
+// use for display strings -- so it is read straight off the raw db before SDBInterface takes over.
+var localized = ReadLocalizedText(sdb);
+Console.WriteLine($"  {localized.Count} English strings");
+
+if (localized.Count == 0)
+{
+    Console.Error.WriteLine(
+        "Error: no localized text. Point 'input' at the full clientdb.sd2 -- a pruned db has no dblocalization::LocalizedText and every name would come out blank.");
+    return 3;
+}
+
+Console.WriteLine("Initializing SDBInterface (the server's own loader)");
+SDBInterface.Init(sdb);
+
+// The table dictionaries are private statics on SDBInterface; a read-only tool has no business
+// widening the server's API for them, so it reflects them out instead. Same trick as EffectSweep.
+TDict Table<TDict>(string field) =>
+    (TDict)typeof(SDBInterface)
+        .GetField(field, BindingFlags.NonPublic | BindingFlags.Static)!
+        .GetValue(null)!;
+
+var rootItems = Table<Dictionary<uint, RootItem>>("_rootItem");
+var weapons = Table<Dictionary<uint, Weapons>>("_weapons");
+var weaponTemplates = Table<Dictionary<uint, WeaponTemplates>>("_weaponTemplates");
+var abilityModules = Table<Dictionary<uint, AbilityModule>>("_abilityModule");
+var abilityData = Table<Dictionary<uint, AbilityData>>("_abilityData");
+var attributeDefs = Table<Dictionary<uint, AttributeDefinition>>("_attributeDefinition");
+var attributeCategories = Table<Dictionary<uint, AttributeCategory>>("_attributeCategory");
+var attributeRanges = Table<Dictionary<KeyValuePair<uint, ushort>, AttributeRange>>("_attributeRange");
+var blueprints = Table<Dictionary<uint, Blueprints>>("_blueprints");
+var blueprintItems = Table<Dictionary<uint, List<Blueprint_Items>>>("_blueprintItems");
+var certificates = Table<Dictionary<uint, Certificate>>("_certificate");
+var damageTypes = Table<Dictionary<byte, DamageType>>("_damageType");
+
+// SDBInterface.GetItemAttributeRange scans all 159k entries per call, which is fine for one item and
+// not for every item, so the same index is built once here.
+var attributesByItem = new Dictionary<uint, List<AttributeRange>>();
+foreach (var (key, range) in attributeRanges)
+{
+    if (!attributesByItem.TryGetValue(key.Key, out var list))
+    {
+        attributesByItem[key.Key] = list = [];
+    }
+
+    list.Add(range);
+}
+
+Directory.CreateDirectory(outDir);
+Console.WriteLine($"Writing to {outDir}");
+
+var stamp = $"Generated by `Tools/SdbDocs` from a build-1962 `clientdb.sd2` (db patch {sdb.Patch}, built {sdb.Timestamp:yyyy-MM-dd}).";
+var counts = new List<(string File, string Rows, string What)>();
+
+WriteAttributes();
+WriteWeaponTemplates();
+WriteWeapons();
+WriteAbilities();
+WriteRecipes();
+WriteIndex();
+
+Console.WriteLine("Done.");
+return 0;
+
+// The legend for everything else. Every number on an item card is an attribute id, and the id means
+// nothing without this table -- "1119" is unreadable, "Recluse Specialty % Max Life" is a design note.
+void WriteAttributes()
+{
+    var used = new Dictionary<uint, int>();
+    foreach (var list in attributesByItem.Values)
+    {
+        foreach (var range in list)
+        {
+            used[range.AttributeId] = used.GetValueOrDefault(range.AttributeId) + 1;
+        }
+    }
+
+    var sb = new StringBuilder();
+    sb.AppendLine("# Attributes");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+    sb.AppendLine("Items do not store their stats. They store rows in `dbitems::AttributeRange` keyed by an");
+    sb.AppendLine("attribute id, and this is what those ids mean. Two names matter and they are not the same: the");
+    sb.AppendLine("internal name is what a Red 5 designer typed and often says what the number was *for*, while the");
+    sb.AppendLine("display name is what the client puts on the item card. `Crater Damage` displays as `Base Damage`,");
+    sb.AppendLine("and several unrelated internal attributes share that one display name.");
+    sb.AppendLine();
+    sb.AppendLine("`Inverse` means lower is better, so the client renders an increase as a downward stat.");
+    sb.AppendLine("`Items` counts how many items carry the attribute; a zero means the attribute shipped but nothing");
+    sb.AppendLine("uses it, which is the usual shape of a cut feature.");
+    sb.AppendLine();
+    sb.AppendLine("## Categories");
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::AttributeCategory`, {attributeCategories.Count} rows. Categories are what modules scale:");
+    sb.AppendLine("`ModuleEffectiveness` is the multiplier a module's contribution gets in that category.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Internal name", "Display name", "Scalar", "Module effectiveness"],
+        attributeCategories.Values.OrderBy(c => c.Id).Select(c => new[]
+        {
+            c.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(c.Name),
+            Loc(c.LocalizedNameId),
+            c.IsScalar != 0 ? "yes" : string.Empty,
+            Num(c.ModuleEffectiveness),
+        }));
+
+    sb.AppendLine();
+    sb.AppendLine("## Definitions");
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::AttributeDefinition`, {attributeDefs.Count} rows, {used.Count} of them used by at least one item.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Internal name", "Display name", "Category", "Inverse", "Items"],
+        attributeDefs.Values.OrderBy(a => a.Id).Select(a => new[]
+        {
+            a.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(a.Name),
+            Loc(a.LocalizedNameId),
+            CategoryName(a.AttributeCategory),
+            a.Inverse != 0 ? "yes" : string.Empty,
+            used.GetValueOrDefault(a.Id).ToString(CultureInfo.InvariantCulture),
+        }));
+
+    Save("Attributes.md", sb);
+    counts.Add(("Attributes.md", $"{attributeDefs.Count} definitions, {attributeCategories.Count} categories", "What every attribute id on an item card means. The legend for the other pages."));
+}
+
+// Templates are where weapon variety actually lives: 6,789 weapon items resolve to 187 distinct
+// templates. The handling table is the companion to Docs/Wiki/Weapon-Handling.md -- these are the
+// numbers the client reads to decide recoil and bloom, and the server never sends them.
+void WriteWeaponTemplates()
+{
+    var itemsPerTemplate = new Dictionary<uint, int>();
+    foreach (var weapon in weapons.Values)
+    {
+        itemsPerTemplate[weapon.WeaponTypeId] = itemsPerTemplate.GetValueOrDefault(weapon.WeaponTypeId) + 1;
+    }
+
+    var ordered = weaponTemplates.Values
+        .OrderByDescending(t => itemsPerTemplate.GetValueOrDefault(t.Id))
+        .ThenBy(t => t.Id)
+        .ToList();
+
+    var sb = new StringBuilder();
+    sb.AppendLine("# Weapon templates");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::WeaponTemplates`, {weaponTemplates.Count} rows, {itemsPerTemplate.Count} of them used by at least one weapon item.");
+    sb.AppendLine("A template is the weapon's behaviour; an item is a tuned instance of one. Every number below is the");
+    sb.AppendLine("template's own value, before `dbitems::WeaponTemplateModifiers` adjusts it per item -- see");
+    sb.AppendLine("[Weapons](Weapons.md) for the resolved per-weapon figures.");
+    sb.AppendLine();
+    sb.AppendLine("Template names are internal. They are useful and they are not documentation: template 12115 is");
+    sb.AppendLine("named \"David's Magic HMG\" and 255 shipping items use it. See");
+    sb.AppendLine("[Weapon Handling](../Weapon-Handling.md).");
+    sb.AppendLine();
+    sb.AppendLine("## Damage and range");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Name", "Items", "Fire type", "Damage/round", "Min damage", "Headshot x", "Range", "Targeting range", "Max targets"],
+        ordered.Select(t => new[]
+        {
+            t.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(t.Name),
+            itemsPerTemplate.GetValueOrDefault(t.Id).ToString(CultureInfo.InvariantCulture),
+            t.FireType.ToString(CultureInfo.InvariantCulture),
+            Num(t.DamagePerRound),
+            Num(t.MinDamage),
+            Num(t.HeadshotMult),
+            Num(t.Range),
+            Num(t.TargetingRange),
+            Num(t.MaxTargets),
+        }));
+
+    sb.AppendLine();
+    sb.AppendLine("## Ammo and timing");
+    sb.AppendLine();
+    sb.AppendLine("`ms/burst` is the gap between bursts, so it is the rate of fire. `Clip regen` is the ammo-less");
+    sb.AppendLine("recharge some energy weapons use instead of a reload.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Name", "Clip", "Max ammo", "Rounds/burst", "Ammo/burst", "ms/burst", "Burst ms", "Reload ms", "Clip regen ms", "Chargeup ms"],
+        ordered.Select(t => new[]
+        {
+            t.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(t.Name),
+            Num(t.BaseClipSize),
+            Num(t.MaxAmmo),
+            Num(t.RoundsPerBurst),
+            Num(t.AmmoPerBurst),
+            Num(t.MsPerBurst),
+            Num(t.MsBurstDuration),
+            Num(t.ReloadTime),
+            Num(t.ClipRegenMs),
+            Num(t.MsChargeup),
+        }));
+
+    sb.AppendLine();
+    sb.AppendLine("## Handling");
+    sb.AppendLine();
+    sb.AppendLine("Spread is the cone; rise and slide are the reticle climbing and drifting. All of it is computed");
+    sb.AppendLine("client-side from these fields, which is why retuning weapon feel would be a client edit and is");
+    sb.AppendLine("ruled out by [Restoration](../../Restoration.md).");
+    sb.AppendLine();
+    sb.AppendLine("`Jump spread` and `Run spread` are flat additions to the minimum cone while airborne or moving.");
+    sb.AppendLine("They are the fields that decide whether a weapon punishes a jetpack frame.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Name", "Start spread", "Min spread", "Max spread", "Spread/burst", "Jump spread", "Run spread", "Spread ramp ms", "Return ms", "Max rise", "Rise/burst", "Max slide", "Slide/burst", "Cam recoil", "Cam shake"],
+        ordered.Select(t => new[]
+        {
+            t.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(t.Name),
+            Num(t.StartingSpread),
+            Num(t.MinSpread),
+            Num(t.MaxSpread),
+            Num(t.SpreadPerBurst),
+            Num(t.JumpMinspreadAdd),
+            Num(t.RunMinspreadAdd),
+            Num(t.SpreadRampTime),
+            Num(t.MsSpreadReturn),
+            Num(t.MaxRise),
+            Num(t.RisePerBurst),
+            Num(t.MaxSlide),
+            Num(t.SlidePerBurst),
+            Num(t.CamRecoilBase),
+            Num(t.CamRecoilShake),
+        }));
+
+    Save("Weapon-Templates.md", sb);
+    counts.Add(("Weapon-Templates.md", $"{weaponTemplates.Count} templates", "Weapon behaviour before per-item tuning, including the client-side recoil and bloom curves."));
+}
+
+// One row per distinct weapon rather than per item row. The item rows are level and quality tiers of
+// the same weapon and there are seven times as many of them; printing each would bury the fact that
+// the game shipped 745 weapons, not 5,084.
+void WriteWeapons()
+{
+    var groups = new Dictionary<(string Name, uint Template), List<(Weapons Weapon, RootItem Item, WeaponTemplateResult Resolved)>>();
+    int unnamed = 0, unresolved = 0;
+
+    foreach (var weapon in weapons.Values)
+    {
+        var item = rootItems.GetValueOrDefault(weapon.Id);
+        var name = item != null ? Loc(item.NameId) : string.Empty;  // already cleaned
+
+        if (string.IsNullOrEmpty(name))
+        {
+            unnamed++;
+            continue;
+        }
+
+        var info = SDBUtils.GetDetailedWeaponInfo(weapon.Id);
+
+        if (info?.Main == null)
+        {
+            unresolved++;
+            continue;
+        }
+
+        var key = (name, weapon.WeaponTypeId);
+
+        if (!groups.TryGetValue(key, out var list))
+        {
+            groups[key] = list = [];
+        }
+
+        list.Add((weapon, item, info.Main));
+    }
+
+    bool IsNpc(string name) => name.StartsWith("NPC", StringComparison.OrdinalIgnoreCase);
+
+    var player = groups.Where(g => !IsNpc(g.Key.Name)).OrderBy(g => g.Key.Name, StringComparer.OrdinalIgnoreCase).ToList();
+    var npc = groups.Where(g => IsNpc(g.Key.Name)).OrderBy(g => g.Key.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+    string[] Row(KeyValuePair<(string Name, uint Template), List<(Weapons Weapon, RootItem Item, WeaponTemplateResult Resolved)>> group)
+    {
+        var rows = group.Value;
+        var template = weaponTemplates.GetValueOrDefault(group.Key.Template);
+        var types = rows
+            .Select(r => DamageTypeName(r.Resolved.AmmoId))
+            .Where(t => !string.IsNullOrEmpty(t))
+            .Distinct()
+            .OrderBy(t => t, StringComparer.OrdinalIgnoreCase);
+
+        return
+        [
+            Clean(group.Key.Name),
+            template != null ? $"{Clean(template.Name)} ({group.Key.Template})" : group.Key.Template.ToString(CultureInfo.InvariantCulture),
+            rows.Count.ToString(CultureInfo.InvariantCulture),
+            Spread(rows.Select(r => (double)r.Item.RequiredLevel)),
+            Spread(rows.Select(r => (double)r.Item.Quality)),
+            Spread(rows.Select(r => (double)r.Resolved.DamagePerRound)),
+            Spread(rows.Select(r => (double)r.Resolved.BaseClipSize)),
+            Spread(rows.Select(r => (double)r.Resolved.MsPerBurst)),
+            Spread(rows.Select(r => (double)r.Resolved.ReloadTime)),
+            Spread(rows.Select(r => (double)r.Resolved.Range)),
+            string.Join(", ", types),
+            rows.Min(r => r.Weapon.Id).ToString(CultureInfo.InvariantCulture),
+        ];
+    }
+
+    string[] headers =
+    [
+        "Weapon", "Template", "Items", "Level", "Quality", "Damage/round", "Clip", "ms/burst", "Reload ms", "Range", "Damage type", "First id",
+    ];
+
+    var sb = new StringBuilder();
+    sb.AppendLine("# Weapons");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::Weapons` holds {weapons.Count} rows. {unnamed} have no English name and are left out;");
+    sb.AppendLine($"{unresolved} more name a template that does not exist. The rest are level and quality tiers of far");
+    sb.AppendLine("fewer weapons, so rows are grouped by name and template and each column shows the range across the");
+    sb.AppendLine($"tiers in that group: **{player.Count} player weapons, {npc.Count} NPC weapons**.");
+    sb.AppendLine();
+    sb.AppendLine("Every figure is resolved through `SDBUtils.GetDetailedWeaponInfo`, the same call the server makes");
+    sb.AppendLine("when it equips a weapon, so it is the template value with that item's");
+    sb.AppendLine("`dbitems::WeaponTemplateModifiers` row applied as `(base + modifier) * multiplier`. A disagreement");
+    sb.AppendLine("between this page and the client is a server bug worth chasing.");
+    sb.AppendLine();
+    sb.AppendLine("Recoil and bloom are not here because they are not per-item in any way the server sees; they live");
+    sb.AppendLine("in [Weapon Templates](Weapon-Templates.md) and are read client-side.");
+    sb.AppendLine();
+    sb.AppendLine("NPC weapons are split out on the name prefix the data itself uses. They are the same table and the");
+    sb.AppendLine("same resolution; they simply are not obtainable.");
+    sb.AppendLine();
+    sb.AppendLine("## Damage types");
+    sb.AppendLine();
+    sb.AppendLine($"`dbcharacter::DamageType`, {damageTypes.Count} rows.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Internal name", "Display name"],
+        damageTypes.Values.OrderBy(d => d.Id).Select(d => new[]
+        {
+            d.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(d.Name),
+            Loc(d.LocalizedNameId),
+        }));
+
+    sb.AppendLine();
+    sb.AppendLine("## Player weapons");
+    sb.AppendLine();
+    WriteTable(sb, headers, player.Select(Row));
+
+    sb.AppendLine();
+    sb.AppendLine("## NPC weapons");
+    sb.AppendLine();
+    WriteTable(sb, headers, npc.Select(Row));
+
+    Save("Weapons.md", sb);
+    counts.Add(("Weapons.md", $"{player.Count} player, {npc.Count} NPC", "Every weapon with its resolved damage, clip, rate of fire and range, tiers collapsed to ranges."));
+}
+
+// Abilities are reached the same way the game reaches them: an ability module is the item you slot,
+// and it points at a chain in apt::AbilityData. The stats are the module's attribute rows, so the
+// card here is the card the client draws.
+void WriteAbilities()
+{
+    var byChain = new Dictionary<uint, List<(AbilityModule Module, RootItem Item)>>();
+    int unnamed = 0;
+
+    foreach (var module in abilityModules.Values)
+    {
+        var item = rootItems.GetValueOrDefault(module.Id);
+
+        if (item == null || string.IsNullOrEmpty(Loc(item.NameId)))
+        {
+            unnamed++;
+            continue;
+        }
+
+        if (!byChain.TryGetValue(module.AbilityChainId, out var list))
+        {
+            byChain[module.AbilityChainId] = list = [];
+        }
+
+        list.Add((module, item));
+    }
+
+    var entries = new List<(string Requires, string Name, bool Carded, string[] Cells)>();
+    int noAbility = 0;
+
+    // Sorted on the name that gets printed rather than the chain's own, which is blank often enough
+    // that sorting by it would scatter a third of the page.
+    foreach (var (chainId, modules) in byChain.OrderBy(g => DisplayName(g.Key, g.Value), StringComparer.OrdinalIgnoreCase))
+    {
+        var ability = abilityData.GetValueOrDefault(chainId);
+
+        if (ability == null)
+        {
+            noAbility++;
+            continue;
+        }
+
+        var name = DisplayName(chainId, modules);
+
+        // The attribute set is shared across a chain's modules; only the magnitudes differ by tier, so
+        // the card is one row per attribute with the tier spread printed as a range.
+        var stats = new Dictionary<uint, List<double>>();
+        foreach (var (module, _) in modules)
+        {
+            foreach (var range in attributesByItem.GetValueOrDefault(module.Id) ?? [])
+            {
+                if (!stats.TryGetValue(range.AttributeId, out var values))
+                {
+                    stats[range.AttributeId] = values = [];
+                }
+
+                values.Add(range.Base);
+            }
+        }
+
+        var card = stats
+            .OrderBy(s => s.Key)
+            .Select(s => $"{AttributeName(s.Key)} {Spread(s.Value)}")
+            .ToList();
+
+        var certs = modules
+            .Select(m => CertificateName(m.Item.ClassCertId))
+            .Where(c => !string.IsNullOrEmpty(c))
+            .Distinct()
+            .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var requires = string.Join(", ", certs);
+
+        entries.Add((
+            requires,
+            name,
+            card.Count > 0 || certs.Count > 0,
+            [
+                chainId.ToString(CultureInfo.InvariantCulture),
+                name,
+                requires,
+                modules.Count.ToString(CultureInfo.InvariantCulture),
+                Spread(modules.Select(m => (double)m.Item.RequiredLevel)),
+                Spread(modules.Select(m => (double)m.Module.PowerLevel)),
+                string.Join(" · ", card),
+                Loc(ability.LocalizedDescriptionId),
+            ]));
+    }
+
+    // An ability nobody can read stats off is not one a player ever saw a card for -- it is a visual
+    // effect hook, a token grant or an NPC behaviour wearing the same table. Both kinds are here,
+    // because filtering by guesswork is how a wiki ends up asserting something the data does not say,
+    // but they are separated so the few hundred real ones are not buried under the couple of thousand.
+    var carded = entries
+        .Where(e => e.Carded)
+        .OrderBy(e => e.Requires.Length == 0)
+        .ThenBy(e => e.Requires, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var bare = entries
+        .Where(e => !e.Carded)
+        .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var sb = new StringBuilder();
+    sb.AppendLine("# Abilities");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::AbilityModule` holds {abilityModules.Count} rows and {unnamed} of them have no English name.");
+    sb.AppendLine("A module is the item you slot; the ability it grants is a chain in `apt::AbilityData`, and several");
+    sb.AppendLine($"hundred modules can point at one chain. Grouping by chain gives **{entries.Count} abilities**");
+    sb.AppendLine($"({noAbility} chains referenced by a named module do not exist in `apt::AbilityData` and are left out).");
+    sb.AppendLine();
+    sb.AppendLine("`Stats` is the item card: each entry is an attribute from `dbitems::AttributeRange` with its base");
+    sb.AppendLine("value across the ability's modules. Where a range appears, that is the spread from the weakest");
+    sb.AppendLine("module to the strongest, which is the ability's whole progression in one cell -- `Base Damage");
+    sb.AppendLine("300 to 13322.8` is one ability at level 1 and at level 50. Attribute names come from");
+    sb.AppendLine("[Attributes](Attributes.md), display name where the client has one and internal name otherwise, and");
+    sb.AppendLine("the internal names are frequently more informative.");
+    sb.AppendLine();
+    sb.AppendLine("`Requires` is the certificate gating the modules, which is usually the battleframe. It is the only");
+    sb.AppendLine("frame attribution that survives: `dbitems::Battleframe` points at an ability group id whose table is");
+    sb.AppendLine("not in the client db, and table names are stored as hashes so it cannot be found by guessing.");
+    sb.AppendLine();
+    sb.AppendLine("Descriptions are the client's own strings and still carry its markup tokens.");
+    sb.AppendLine();
+    sb.AppendLine("## Abilities with a card");
+    sb.AppendLine();
+    sb.AppendLine($"{carded.Count} abilities whose modules carry stats or name a certificate -- everything a player");
+    sb.AppendLine("could read an item card for. Ordered by certificate so a frame's kit reads together, with the ones");
+    sb.AppendLine("that name no certificate after them.");
+    sb.AppendLine();
+
+    string[] headers = ["Chain", "Ability", "Requires", "Modules", "Level", "Power", "Stats", "Description"];
+    WriteTable(sb, headers, carded.Select(e => e.Cells));
+
+    sb.AppendLine();
+    sb.AppendLine("## The rest");
+    sb.AppendLine();
+    sb.AppendLine($"The other {bare.Count}. No stats and no certificate, which is the shape of a visual effect hook, a");
+    sb.AppendLine("token grant, an NPC behaviour or a designer's test rig -- they share the table with real abilities");
+    sb.AppendLine("and are not distinguishable from them by any flag, only by having nothing to show. Listed rather");
+    sb.AppendLine("than dropped, because deciding by guesswork which of these was never player-facing is how a wiki");
+    sb.AppendLine("ends up asserting what the data does not say.");
+    sb.AppendLine();
+
+    WriteTable(sb, ["Chain", "Ability", "Modules", "Level", "Power", "Description"], bare.Select(e => new[]
+    {
+        e.Cells[0], e.Cells[1], e.Cells[3], e.Cells[4], e.Cells[5], e.Cells[7],
+    }));
+
+    Save("Abilities.md", sb);
+    counts.Add(("Abilities.md", $"{carded.Count} with a card, {bare.Count} without", "Every ability with its item card, the certificate that gates it and its module progression."));
+}
+
+// Crafting was switched off in v1.6 and the recipes were left behind intact. This is that graph,
+// printed, because the restoration argument is about which of these loops to bring back.
+void WriteRecipes()
+{
+    var rows = new List<(byte Type, string[] Cells)>();
+    int noOutput = 0, noInputs = 0;
+
+    foreach (var blueprint in blueprints.Values.OrderBy(b => ItemName(b.MainOutputItemId), StringComparer.OrdinalIgnoreCase))
+    {
+        var output = ItemName(blueprint.MainOutputItemId);
+
+        if (string.IsNullOrEmpty(output))
+        {
+            noOutput++;
+            continue;
+        }
+
+        var parts = blueprintItems.GetValueOrDefault(blueprint.Id) ?? [];
+        var inputs = parts.Where(p => p.IsOutput == 0).ToList();
+
+        if (inputs.Count == 0)
+        {
+            noInputs++;
+        }
+
+        var outputQty = parts.FirstOrDefault(p => p.IsOutput != 0)?.RsrcQuantity ?? 0;
+        var ingredients = inputs
+            .OrderByDescending(i => i.RsrcQuantity)
+            .Select(i => $"{i.RsrcQuantity}x {(ItemName(i.ItemType) is { Length: > 0 } named ? named : $"item {i.ItemType}")}");
+
+        rows.Add((blueprint.BlueprintType,
+        [
+            blueprint.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(output),
+            outputQty.ToString(CultureInfo.InvariantCulture),
+            Duration(blueprint.BuildTimeSecs),
+            blueprint.MaxParallel.ToString(CultureInfo.InvariantCulture),
+            blueprint.ResearchBlueprintId != 0 ? blueprint.ResearchBlueprintId.ToString(CultureInfo.InvariantCulture) : string.Empty,
+            string.Join(", ", ingredients),
+        ]));
+    }
+
+    var sb = new StringBuilder();
+    sb.AppendLine("# Recipes");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::Blueprints` holds {blueprints.Count} rows and `dbitems::Blueprint_Items` holds their");
+    sb.AppendLine($"ingredients. {rows.Count} blueprints name an item that still exists and are listed here;");
+    sb.AppendLine($"{noOutput} point at an output with no English name. {noInputs} of the listed ones have no");
+    sb.AppendLine("ingredient rows at all.");
+    sb.AppendLine();
+    sb.AppendLine("v1.6 switched crafting off in January 2016 and it never came back, so none of this is reachable in");
+    sb.AppendLine("the client PIN targets. The data survived the migration intact -- see");
+    sb.AppendLine("[Thumping and Crafting](../Thumping-And-Crafting.md) for what turning it back on would take, and");
+    sb.AppendLine("[Restoration](../../Restoration.md) for why a curated subset of these is a complete answer rather");
+    sb.AppendLine("than a compromise.");
+    sb.AppendLine();
+    sb.AppendLine("`Research` is the blueprint that has to be researched first, where there is one. Blueprint types are");
+    sb.AppendLine("the raw `blueprint_type` values; what each one meant is not recorded anywhere that survives, so they");
+    sb.AppendLine("are grouped rather than named.");
+    sb.AppendLine();
+
+    string[] headers = ["Id", "Output", "Qty", "Build time", "Parallel", "Research", "Ingredients"];
+
+    foreach (var group in rows.GroupBy(r => r.Type).OrderByDescending(g => g.Count()))
+    {
+        sb.AppendLine($"## Blueprint type {group.Key}");
+        sb.AppendLine();
+        sb.AppendLine($"{group.Count()} recipes.");
+        sb.AppendLine();
+        WriteTable(sb, headers, group.Select(r => r.Cells));
+        sb.AppendLine();
+    }
+
+    Save("Recipes.md", sb);
+    counts.Add(("Recipes.md", $"{rows.Count} recipes", "The crafting graph v1.6 switched off, with outputs, ingredients and build times."));
+}
+
+void WriteIndex()
+{
+    var sb = new StringBuilder();
+    sb.AppendLine("# Reference");
+    sb.AppendLine();
+    sb.AppendLine("Generated tables. Do not edit these by hand -- they are rebuilt from `clientdb.sd2` by");
+    sb.AppendLine("`Tools/SdbDocs` and any edit is lost on the next run. Prose about what the numbers *mean* belongs in");
+    sb.AppendLine("the [Wiki](../README.md) pages that link here.");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Page", "Size", "What it is"],
+        counts.Select(c => new[] { $"[{c.File.Replace(".md", string.Empty, StringComparison.Ordinal)}]({c.File})", c.Rows, c.What }));
+
+    sb.AppendLine();
+    sb.AppendLine("## Reading these");
+    sb.AppendLine();
+    sb.AppendLine("**Row counts are not variety.** Firefall generated its gear in level and quality tiers, so the same");
+    sb.AppendLine("weapon appears dozens of times with different numbers. These pages group those rows and print the");
+    sb.AppendLine("spread as `40 to 1200`, which is the progression rather than a range of different things. Where a");
+    sb.AppendLine("page drops rows it says how many and why, at the top.");
+    sb.AppendLine();
+    sb.AppendLine("**Names are three different things.** An English display name comes from");
+    sb.AppendLine("`dblocalization::LocalizedText` and is what a player saw. An internal name is what a designer typed");
+    sb.AppendLine("and is often more honest about intent. A missing name means neither shipped, which usually means the");
+    sb.AppendLine("row was never player-facing. Internal names are evidence, not documentation: template 12115 is");
+    sb.AppendLine("called \"David's Magic HMG\" and it is in 255 shipping items.");
+    sb.AppendLine();
+    sb.AppendLine("**This is build 1962 and only build 1962.** Firefall was rebuilt at v1.0 and again at v1.6, so a");
+    sb.AppendLine("2013 wiki article describing the same weapon is describing a different weapon. See");
+    sb.AppendLine("[Client Version](../Client-Version.md).");
+    sb.AppendLine();
+    sb.AppendLine("## Regenerating");
+    sb.AppendLine();
+    sb.AppendLine("Point `Tools/SdbDocs/config.json` at a full `clientdb.sd2` and run it:");
+    sb.AppendLine();
+    sb.AppendLine("```");
+    sb.AppendLine("cd Tools/SdbDocs");
+    sb.AppendLine("cp config.example.json config.json    # then edit \"input\"");
+    sb.AppendLine("dotnet run");
+    sb.AppendLine("```");
+    sb.AppendLine();
+    sb.AppendLine("It has to be the full client database, not one `MinimalSDB prune` produced: the pruned copy drops");
+    sb.AppendLine("`dblocalization::LocalizedText` and every name would come out blank. Output goes to this directory");
+    sb.AppendLine("unless `output` is set.");
+    sb.AppendLine();
+
+    Save("README.md", sb);
+}
+
+Dictionary<uint, string> ReadLocalizedText(StaticDB db)
+{
+    var result = new Dictionary<uint, string>();
+    int index = db.GetIndexByName("dblocalization::LocalizedText");
+
+    if (index == -1)
+    {
+        return result;
+    }
+
+    var table = db.Tables[index];
+    int idColumn = table.GetColumnIndexByName("id");
+    int englishColumn = table.GetColumnIndexByName("english");
+
+    if (idColumn == -1 || englishColumn == -1)
+    {
+        return result;
+    }
+
+    foreach (var row in table.Rows)
+    {
+        if (row[idColumn] == null || row[englishColumn] is not string text)
+        {
+            continue;
+        }
+
+        var id = Convert.ToUInt32(row[idColumn], CultureInfo.InvariantCulture);
+        text = text.Trim('\0', ' ');
+
+        if (id != 0 && text.Length > 0)
+        {
+            result.TryAdd(id, text);
+        }
+    }
+
+    return result;
+}
+
+string Loc(uint id) => Clean(localized.GetValueOrDefault(id, string.Empty));
+
+string ItemName(uint sdbId)
+{
+    var item = rootItems.GetValueOrDefault(sdbId);
+    return item != null ? Loc(item.NameId) : string.Empty;
+}
+
+string AbilityName(uint chainId)
+{
+    var ability = abilityData.GetValueOrDefault(chainId);
+    return ability != null ? Loc(ability.LocalizedNameId) : string.Empty;
+}
+
+// An ability chain usually carries its own name; where it does not, the module that grants it does.
+string DisplayName(uint chainId, List<(AbilityModule Module, RootItem Item)> modules)
+{
+    var name = AbilityName(chainId);
+    return !string.IsNullOrEmpty(name) ? name : Loc(modules[0].Item.NameId);
+}
+
+string AttributeName(uint id)
+{
+    var definition = attributeDefs.GetValueOrDefault(id);
+
+    if (definition == null)
+    {
+        return $"attribute {id}";
+    }
+
+    var display = Loc(definition.LocalizedNameId);
+    return Clean(!string.IsNullOrEmpty(display) ? display : definition.Name);
+}
+
+string CategoryName(uint id)
+{
+    var category = attributeCategories.GetValueOrDefault(id);
+
+    if (category == null)
+    {
+        return string.Empty;
+    }
+
+    var display = Loc(category.LocalizedNameId);
+    return Clean(!string.IsNullOrEmpty(display) ? display : category.Name);
+}
+
+string CertificateName(uint id)
+{
+    var certificate = certificates.GetValueOrDefault(id);
+    return certificate != null ? Clean(Loc(certificate.LocalizedNameId)) : string.Empty;
+}
+
+string DamageTypeName(ushort ammoId)
+{
+    var ammo = SDBInterface.GetAmmo(ammoId);
+
+    if (ammo == null)
+    {
+        return string.Empty;
+    }
+
+    var type = damageTypes.GetValueOrDefault(ammo.Damagetype);
+
+    if (type == null)
+    {
+        return string.Empty;
+    }
+
+    var display = Loc(type.LocalizedNameId);
+    return Clean(!string.IsNullOrEmpty(display) ? display : type.Name);
+}
+
+// Tiers of one thing read as a progression, so they collapse to "40 to 1200" rather than 40 rows.
+// Spelled out rather than hyphenated because plenty of these values are negative and "-120--48" is
+// not a range anybody can read.
+string Spread(IEnumerable<double> values)
+{
+    var list = values.ToList();
+
+    if (list.Count == 0)
+    {
+        return string.Empty;
+    }
+
+    double min = list.Min(), max = list.Max();
+    return Math.Abs(max - min) < 0.00001 ? Num(min) : $"{Num(min)} to {Num(max)}";
+}
+
+string Duration(uint seconds)
+{
+    if (seconds == 0)
+    {
+        return "instant";
+    }
+
+    if (seconds < 60)
+    {
+        return $"{seconds}s";
+    }
+
+    if (seconds < 3600)
+    {
+        return seconds % 60 == 0 ? $"{seconds / 60}m" : $"{seconds / 60}m {seconds % 60}s";
+    }
+
+    return seconds % 3600 == 0 ? $"{seconds / 3600}h" : $"{seconds / 3600}h {(seconds % 3600) / 60}m";
+}
+
+void Save(string fileName, StringBuilder content)
+{
+    var path = Path.Combine(outDir, fileName);
+    File.WriteAllText(path, content.ToString());
+    Console.WriteLine($"  {fileName,-24} {new FileInfo(path).Length / 1024,6} KB");
+}
+
+static void WriteTable(StringBuilder sb, string[] headers, IEnumerable<string[]> rows)
+{
+    sb.Append("| ").Append(string.Join(" | ", headers)).AppendLine(" |");
+    sb.Append('|').Append(string.Join("|", headers.Select(_ => "---"))).AppendLine("|");
+
+    foreach (var row in rows)
+    {
+        sb.Append("| ").Append(string.Join(" | ", row.Select(c => c.Length == 0 ? " " : c))).AppendLine(" |");
+    }
+}
+
+// SDB strings are null-padded, and display strings additionally carry the client's inline
+// formatting codes -- an item name is stored as \x01Bio Needler III\x11, where the control bytes are
+// the markup that colours it by quality. Those bytes are dropped: quality is already its own column,
+// and left in they corrupt both the table they land in and any sort that uses the name as a key.
+static string Clean(string value)
+{
+    if (string.IsNullOrEmpty(value))
+    {
+        return string.Empty;
+    }
+
+    var sb = new StringBuilder(value.Length);
+
+    foreach (var c in value)
+    {
+        if (c == '|')
+        {
+            sb.Append("\\|");
+        }
+        else if (char.IsControl(c) || (c >= '\u0080' && c <= '\u009f'))
+        {
+            // Newlines included: a cell is one line, so they become the space they were separating.
+            sb.Append(' ');
+        }
+        else
+        {
+            sb.Append(c);
+        }
+    }
+
+    return sb.ToString().Trim();
+}
+
+static string Num(double value) => value.ToString("0.####", CultureInfo.InvariantCulture);

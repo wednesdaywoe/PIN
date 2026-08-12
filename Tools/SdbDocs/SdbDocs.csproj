@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\UdpHosts\GameServer\GameServer.csproj"/>
+        <ProjectReference Include="..\..\Lib\Bitter\Bitter\Bitter.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="config.example.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+
+        <None Include="config.json" Condition="Exists('config.json')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <Target Name="FallbackConfigToOutput" AfterTargets="CopyFilesToOutputDirectory">
+        <Copy SourceFiles="config.example.json"
+              DestinationFiles="$(TargetDir)config.json"
+              Condition="!Exists('$(TargetDir)config.json')" />
+    </Target>
+</Project>

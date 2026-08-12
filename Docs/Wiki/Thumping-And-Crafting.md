@@ -120,6 +120,9 @@ Yes. The v1.6 item migration did not orphan the blueprint graph. Joined against
 The recipe graph is perfectly self-consistent and item references are 99.78% intact. Fifty-eight
 dangling ingredient ids out of twenty-six thousand is noise.
 
+The 5,763 whose output still has a name are listed with their ingredients and build times in
+[Reference/Recipes](Reference/Recipes.md).
+
 **5,052 blueprints (54.7%) have both a resolvable output and a resolvable ingredient** — recipes
 that would work today if something asked for them.
 
