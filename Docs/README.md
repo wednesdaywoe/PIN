@@ -10,6 +10,9 @@ combat, lives in the [Architecture Guide](Architecture/README.md).
 What the game itself was — the client build PIN targets, and what survives of Firefall's own
 documentation — lives in the [Wiki](Wiki/README.md).
 
+Which of Firefall's systems are being brought back, and which deliberately aren't, is in
+[Restoration](Restoration.md).
+
 Checks that need a running client are queued in [In-Game Tests](In-Game-Tests/README.md). What can be
 checked without one lives in [Tests/GameServer.Tests](../Tests/GameServer.Tests).
 
