@@ -115,5 +115,27 @@ curl -s "http://localhost:4400/check?environment=production&build=1973" | grep -
 Every URL in both responses should read `http://`. If any still says `https://`, the old
 DLL is still loaded — the servers were not restarted.
 
-Then launch the client and enter the world. The freeze is gone if you reach the world with
-no hang; `ss -tnp | grep 443` should show no TLS connections from the client during entry.
+Then launch the client and enter the world. This transport fix is what lets the client *reach*
+the world (an HTTPS 307 the client won't follow otherwise); confirm it with
+`ss -tnp | grep 443`, which should show no TLS connections from the client during entry.
+
+HTTP-only lowers the odds of the world-entry freeze but does not fix it — that is a separate Wine
+sync bug. For a freeze-free client you also need the launch options below.
+
+## Client launch options
+
+The world-entry freeze is a lost futex wakeup in Wine's `fsync` critical-section path (a render
+thread parks on an already-free heap lock while holding a game lock; a web-UI worker then piles up
+on it). It is driver-independent and intermittent. Forcing Wine's sync through the wineserver
+instead of the raw futex path removes it — verified over four consecutive freeze-free sessions
+(In-Game-Tests → Transport-And-Lifecycle T7–T9).
+
+In Steam → Firefall → Properties → **Launch Options**, set exactly:
+
+```
+PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%
+```
+
+Use **DXVK** (the default — do not set `PROTON_USE_WINED3D`; wined3d was only a diagnostic and is
+slower). fsync/esync off costs a little sync throughput but is the fix; the only alternative is a
+Proton build whose fsync carries the wakeup fix.

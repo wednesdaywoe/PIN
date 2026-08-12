@@ -14,14 +14,22 @@ Run T1 and T2 before anything else in the queue — a client that can't reach th
 any other entry.
 
 **"The client froze" is not one bug.** T4 fixed one trigger (a server-side scope leak). The
-*remaining* freeze — the one that survived T4, T5 and T6 — was finally caught live in T7 and
-localised: the **main/render thread wedges inside a DXVK D3D9 call while holding the game lock
-`0459FA8C`**, and everything else (the `RtlpWaitForCriticalSection` timeouts, and in earlier runs the
-fault storm from the crash handler that follows) is downstream of that. The WinHTTP/TLS and
-thread-affinity theories are both dead. A frozen window is just how this client dies from any fatal
-stall under Wine: one thread stops holding a lock, the rest pile up behind it, and Wine prints the
-60 s timeout. Read `console.log` first, every time — see [Client Logging](Client-Logging.md) — but
-the live `/proc` read in T7 is what actually moved this.
+*remaining* freeze — the one that survived T4, T5 and T6 — was caught live twice and localised, and
+each live read moved it. T7 (a DXVK run) put it on the **render thread, holding a game lock, wedged in
+the D3D present path**. T8 (a wined3d run) then swapped DXVK out entirely and it **froze identically**,
+which exonerates the GPU driver and pushes the wedge one layer down: the render thread is parked in
+**`RtlEnterCriticalSection` on the CRT/NT heap lock**, reached from a D3D texture upload
+(`wined3d_device_context_update_sub_resource` → `msvcr120` heap → `RtlAllocateHeap`), while it holds
+the game lock (`0459FA8C` in T7, `044BFA8C` in T8 — a heap-allocated lock, address shifts per run). An
+Awesomium **web-UI worker** piles up on that game lock when a social/squad panel opens, and 60 s later
+Wine prints the `RtlpWaitForCriticalSection` timeout. The heap lock in that alloc chain reads **free**,
+so the shape is a **lost wakeup in Wine's fsync**, not a held-lock deadlock — which is exactly why it
+survives DXVK→wined3d. The WinHTTP/TLS and thread-affinity theories are both dead; everything
+downstream (the timeouts, the crash-handler fault storm in old captures) follows from the parked render
+thread. Read `console.log` first, every time — see [Client Logging](Client-Logging.md) — but the live
+`/proc` reads in T7/T8 are what actually moved this. **T9 closed it:** forcing that fsync path off
+(`PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, DXVK) gave four consecutive freeze-free sessions — the
+predicted result of a lost wakeup, and now the required client launch config.
 
 ### [x] T1: The servers hand out HTTP and nothing else
 
@@ -347,7 +355,13 @@ tail -c 20000000 ~/.var/app/com.valvesoftware.Steam/steam-227700.log > ~/Games/P
    live process (`/proc/<pid>/task`, the critical-section dump, the thread walk). The `260811-2237`
    freeze was dissected this way.
 
-### [x] T7: The freeze is a DXVK/D3D9 stall on the main thread, not WinHTTP
+### [x] T7: The freeze is a render-thread stall holding the game lock, not WinHTTP (DXVK capture)
+
+> **Superseded in part by T8.** This capture localised the freeze to the render thread holding the
+> game lock while parked in the D3D9 path, and killed the WinHTTP theory — both still stand. Its
+> *conclusion* that DXVK is the culprit did **not**: T8 reproduced the identical freeze on wined3d.
+> Read this for the method and the "not WinHTTP" proof; read T8 for where the wedge actually is.
+
 
 The T6 fourth-session freeze was caught **live** — the client left hung on screen instead of killed
 — and read out of `/proc` before relaunch. It relocates the bug entirely. Saved:
@@ -383,20 +397,10 @@ happens with the network path completely quiet. (See the superseded
 ~1050 MB and FPS collapsing 143 → ~24 across the New Eden zone load, and the hang lands in that
 window. DXVK is doing resource work (VT tiles, zone assets) when the main thread stops.
 
-**The decisive next test — cheap, one variable.** Force Wine's own D3D9→D3D11/GL path instead of
-DXVK and soak again:
-
-- Steam → Firefall → Properties → Launch Options, add `PROTON_USE_WINED3D=1 %command%`.
-- If the freeze **vanishes**: it is DXVK-specific — then bisect DXVK (Proton-GE ships a given DXVK;
-  try stock Proton 9/10, or drop a newer/older `d3d9.dll` + `dxvk.conf` into the prefix, e.g.
-  `dxvk.maxFrameLatency = 1`, `d3d9.deferSurfaceCreation = True`).
-- If it **still freezes** on wined3d: the stall is the game's own render thread serialising on
-  `0459FA8C` under Wine's D3D scheduling, independent of DXVK — then the lever is the game's
-  renderer, not the driver (the `Offset renderer` path at EXE `0x70a4c0` /
-  `"Offset renderer requested application shutdown"` is the thing to read next).
-
-Either branch is progress, and this is the first test in the whole investigation aimed at the layer
-the evidence actually implicates. Run it the same way as T6 (four-session bar; save any freeze).
+**The decisive next test — cheap, one variable** (executed; result in **T8**). Force Wine's own D3D9
+path instead of DXVK and soak again: Steam → Firefall → Properties → Launch Options,
+`PROTON_USE_WINED3D=1 %command%`. It **still froze** (first run), which is the "independent of DXVK"
+branch — the lever is not the driver. See T8.
 
 Reproducing the live read, for next time a client hangs (don't kill it first):
 
@@ -411,8 +415,112 @@ for t in /proc/$PID/task/*; do echo "$(basename $t) $(cat $t/comm) $(cut -d' ' -
 Mapping a wine tid (like `0x164`) to a host thread and walking its PE stack is scripted in
 `thread-analysis.txt`'s companion work; the short version is: scan `/proc/$PID/mem` for the TEB
 whose self-pointer matches, take its `StackBase`/`StackLimit`, and resolve return addresses on that
-range against the PEB module list (`FirefallClient.exe` base `0x79890000` → subtract and add
-`0x400000` for the on-disk VA).
+range against the PEB module list (module bases are per-run ASLR — read them from
+`/proc/$PID/maps`, which shows each `.dll`/`.exe` at its load address; `FirefallClient.exe` was
+`0x79890000` in T7 and `0x79770000` in T8. For the on-disk VA, subtract the base and add `0x400000`).
+The T8 walker (TEB scan → ebp chain → raw call-return scan → symbol resolution via `winedump -j
+export`) is saved next to that run's logs as `walk.py`.
+
+### [x] T8: The freeze reproduces on wined3d — it is a heap-lock stall, not DXVK
+
+`PROTON_USE_WINED3D=1` from T7, first run: **froze**. The loaded `d3d9.dll` this run was Wine's own
+(`GE-Proton11-5/.../wine/i386-windows/d3d9.dll` + `wined3d.dll`, a live `wined3d_cs` thread, zero
+DXVK threads — confirmed in `/proc/$PID/maps` and the env `PROTON_USE_WINED3D=1`). Swapping the
+entire GPU driver out changed nothing, so **DXVK is exonerated** and the T7 "DXVK stall" conclusion is
+dead. Saved: `~/Games/PIN/logs/freezes/260812-wined3d/` (`console.log`, `critsec-timeouts.txt`,
+`stackwalk.txt`, `walk.py`).
+
+**Same signature, one layer deeper.** The Proton log timed out on `044BFA8C` (heap-allocated lock,
+different address than T7's `0459FA8C` — same *shape*):
+
+```
+044bfa8c:  DebugInfo=0xffffffff  LockCount=1  RecursionCount=1  OwningThread=0x178   ← the render thread
+Proton log:  RtlpWaitForCriticalSection section 044BFA8C … timed out in thread 024c, blocked by 0178
+```
+
+Walking owner `0x178`'s live stack (`/proc/$PID/mem`, innermost → outermost) resolves to:
+
+```
+RtlEnterCriticalSection+0x19         ← parked here, on the CRT/NT heap lock
+ ← msvcr120 heap (RtlAllocateHeap+0x20 / RtlFreeHeap+0x19)
+ ← wined3d_device_context_update_sub_resource+0x3ac      ← a texture / VT-tile upload
+ ← d3d9  (IDirect3DDevice9 present/update, internal)
+```
+
+So the render thread, uploading a texture subresource during streaming, called the CRT allocator and
+never came back out of `RtlEnterCriticalSection` — while holding game lock `044BFA8C`. The one waiter,
+wine tid `0x24c`, is an **Awesomium** (web-UI) worker blocked entering that same game lock;
+`console.log` cuts off mid-line at `00:19 RAM:1445MB FPS:5` in a burst of UI HTTP calls
+(`squad_builder/lfp`, `garage_slots`, `armies/members`) — i.e. a **social/squad panel opening** is
+what made the UI contend with the render thread for `044BFA8C`.
+
+**Lost wakeup, not deadlock.** The heap `CRITICAL_SECTION` in that alloc chain (`0x00150078`,
+`DebugInfo` → ntdll data) reads **free** (`LockCount=0xffffffff`, `Owner=0`), yet `0x178` sleeps in
+`RtlEnterCriticalSection` on it. A waiter parked on a free lock is the fingerprint of a **lost futex
+wakeup in Wine's fsync** critical-section path — which also explains why it is driver-independent
+(fsync sits below both DXVK and wined3d) and intermittent (it is a race).
+
+**The decisive next test — cheap, one variable.** Take fsync/esync out of the picture (revert to DXVK
+first; it is exonerated and faster). Steam → Firefall → Properties → Launch Options:
+
+```
+PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%
+```
+
+- If the freeze **vanishes**: confirmed fsync lost-wakeup — ship with fsync/esync off, or move to a
+  Proton whose fsync has the fix. Done.
+- If it **still freezes**: it is a real lock-ordering problem in the game on `044BFA8C` (render thread
+  holds it across a present-time allocation; the UI worker needs it) — then the lever is reducing that
+  hold, e.g. cutting UI-triggered churn while streaming, not the driver or the sync layer.
+
+Run it the same way as T6 (four-session bar; save any freeze, don't kill a live hang — walk it first).
+
+**How the freeze ends, and a better artifact.** The T8 client sat frozen ~5 min, then a single thread
+took a `SIGSEGV` and the OS crash handler (ABRT) auto-saved a full core to
+`/var/spool/abrt/ccpp-*-<pid>/`. That core says the death is a **double fault inside Wine's ntdll**:
+the guest hit an access violation (`0xC0000005`, a near-null **read of `0x1fba`** at win32
+`ntdll.dll+0x4773b`, an internal fn), and Wine faulted *delivering* it — near-null **read of `0x14c0`**
+in unix `ntdll.so setup_raise_exception+0xb1`. One thread crashed; the other 207 were parked (130 in
+`futex`, 77 in a restarting syscall) — i.e. the whole process was wedged, confirming the hang
+independently. This is the process's *death*, downstream of the *freeze*, and it's not proven to share
+a root cause — but every terminal event is inside ntdll (sync + exception delivery), the exact layer
+`PROTON_NO_FSYNC/ESYNC` swaps out. Practical upshot: **ABRT captures a full core for every
+freeze-crash** — a better artifact than a live `/proc` read. Read just the notes cheaply without
+inflating 500 MB: `zstd -dc coredump.zst | head -c 120M > core.head; eu-readelf -n core.head` (ELF
+notes are at the start; the first `PRSTATUS` is the crashing thread, `SIGINFO` has the fault address).
+Full detail: `~/Games/PIN/logs/freezes/260812-wined3d/CRASH-SUMMARY.md`.
+
+### [x] T9: Disabling Wine fsync/esync fixes the freeze — confirmed lost-wakeup
+
+The decisive test from T8, run. Config: reverted to DXVK (exonerated in T8, and faster), fsync and
+esync forced off. Steam → Firefall → Properties → Launch Options — the *only* change from the config
+that reliably froze:
+
+```
+PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%
+```
+
+Then soak, exercising the correlated trigger (open the social/squad panel during streaming, which is
+what made the UI worker contend for the render thread's lock in T8).
+
+**Result — passed 2026-08-12: four consecutive sessions, zero freezes.** The freeze had been hitting
+within 1–4 runs (T6 froze on the 4th, T7 and T8 on the 1st), so four clean in a row clears the
+four-session bar against that rate.
+
+Why this one counts where WinHTTP (T5), thread affinity (T6), and DXVK (T7) did not: it is not
+"changed something, got lucky." T8 localised the render thread parked in `RtlEnterCriticalSection` on
+a **free** heap lock — the fingerprint of a lost futex wakeup — and predicted that taking Wine's fsync
+path out would fix it. It did, on the first config tried. Prediction plus the bar is much stronger
+evidence than either alone.
+
+This is an intermittent race, so "four clean" is strong evidence, not a mathematical proof — but the
+mechanism is identified and the fix is mechanistically correct: fsync sits below both DXVK and
+wined3d, which is exactly why the freeze was driver-independent (T7/T8) and intermittent.
+
+**Shipping config:** `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%` on DXVK is now the required
+client launch line — see [Http-Only-Setup.md](../Http-Only-Setup.md#client-launch-options). The
+alternative fix, if the small fsync speed cost ever matters, is a Proton whose fsync carries the
+wakeup fix; that is not worth chasing while this holds.
 
 ## Shutdown
 
