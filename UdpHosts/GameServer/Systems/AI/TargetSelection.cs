@@ -11,25 +11,53 @@ namespace GameServer.Systems.AI;
 /// </summary>
 public static class TargetSelection
 {
+    /// <summary>How close something has to be before an NPC starts building threat on it.</summary>
     public const float PerceptionRange = 40f;
+
+    /// <summary>
+    ///     How far it has to get before the NPC forgets it entirely. Deliberately wider than
+    ///     <see cref="PerceptionRange"/>: with one radius doing both jobs an NPC drops and re-acquires
+    ///     its target every time you shuffle across the boundary.
+    ///
+    ///     Without this, engagement was bounded by the *weapon's* reach instead — 180m for a Chosen
+    ///     Grunt Rifle against a 40m perception radius — so an NPC that noticed you at 40m kept firing
+    ///     until you left draw distance, which is what N4 caught.
+    /// </summary>
+    public const float LeashRange = 60f;
+
     private const float ThreatGainPerSecond = 20f;
     private const float ThreatDecayPerSecond = 8f;
     private const float EngageThreshold = 10f;
-    private const float TargetAimHeight = 1.5f;
 
-    public static void Tick(IShard shard, CharacterEntity npc, AIState state, double deltaTime)
+    /// <summary>
+    ///     Ceiling on banked threat. Sets how long an NPC stays interested once it loses sight of a
+    ///     target without that target leaving the leash: from the cap, (60 - 10) / 8 is 6.25 seconds of
+    ///     decay to fall back under <see cref="EngageThreshold"/>.
+    /// </summary>
+    private const float MaxThreat = 60f;
+
+    public static void Tick(IShard shard, CharacterEntity npc, AIState state, float elapsedSeconds)
     {
-        state.Threat.Decay((float)(ThreatDecayPerSecond * deltaTime));
+        state.Threat.Decay(ThreatDecayPerSecond * elapsedSeconds);
 
-        var gain = (float)(ThreatGainPerSecond * deltaTime);
+        var gain = ThreatGainPerSecond * elapsedSeconds;
         foreach (var entity in shard.Entities.Values)
         {
-            if (entity is not CharacterEntity candidate || candidate == npc || !IsVisibleHostile(shard, npc, candidate))
+            if (entity is not CharacterEntity candidate || candidate == npc)
             {
                 continue;
             }
 
-            state.Threat.AddThreat(candidate.EntityId, gain);
+            if (Vector3.DistanceSquared(npc.Position, candidate.Position) > LeashRange * LeashRange)
+            {
+                state.Threat.Forget(candidate.EntityId);
+                continue;
+            }
+
+            if (IsVisibleHostile(shard, npc, candidate))
+            {
+                state.Threat.AddThreat(candidate.EntityId, gain, MaxThreat);
+            }
         }
 
         state.CurrentTargetId = PickTarget(shard, npc, state.Threat);
@@ -62,23 +90,11 @@ public static class TargetSelection
             return false;
         }
 
-        var toCandidate = candidate.Position - npc.Position;
-        var distance = toCandidate.Length();
-        if (distance <= 0f || distance > PerceptionRange)
+        if (!Sightline.TrySolve(npc, candidate, out var shot) || shot.Separation > PerceptionRange)
         {
             return false;
         }
 
-        var origin = npc.GetProjectileOrigin(toCandidate / distance);
-        var targetPoint = candidate.Position + new Vector3(0f, 0f, TargetAimHeight);
-        var toTarget = targetPoint - origin;
-        var rayLength = toTarget.Length();
-        if (rayLength <= 0f)
-        {
-            return true;
-        }
-
-        var (hit, _, hitEntityId) = shard.Physics.TargetRayCast(origin, toTarget / rayLength, npc, rayLength);
-        return !hit || hitEntityId == candidate.EntityId;
+        return Sightline.IsClear(shard, npc, candidate, shot);
     }
 }

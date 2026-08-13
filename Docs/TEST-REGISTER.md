@@ -19,6 +19,18 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**NPC Combat is complete, 7 of 7, and it paid for itself several times over.** N1–N7 ran on
+2026-08-12 and four of them failed first time. N2 and N6 failing *differently* — one monster with no
+range, another doing no damage — exposed [DATA-11](ISSUE-REGISTER.md), a zero multiplier read
+literally that had stripped the range off 269 weapons and the damage off 220 in every weapon the
+server had ever resolved, player weapons included. N4 caught NPCs that never disengaged. N3 caught
+the entry itself being wrong: with `LoadMapsCollision` off there is no world geometry server-side, so
+every raycast PIN makes sees an empty world with a few entities in it. A crash in the tail of the
+same session log closed [NET-21](ISSUE-REGISTER.md). None of that was visible from the screen.
+
+[M2](streams/m2-npc-combat.md)'s exit condition is met bar locomotion. Everything below this line
+predates this session and is unchanged.
+
 **Transport is clear; the queue is otherwise untouched since the M1 client sessions.** The
 2026-08-11/12 sessions were entirely about T7–T9 — closing the world-entry freeze — so
 Transport-And-Lifecycle is the only stream that moved. Damage-Decay and Hostility passed most of
@@ -51,8 +63,12 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Combat
 
-- [~] [Hostility](In-Game-Tests/Hostility.md) — 5 of 7 passing. H5 is permanently blocked until
-  [M2](PROGRESS.md) gives NPCs something to decide with
+- [x] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 7 of 7 passing. Monsters notice you, turn, take
+  cover into account, shoot, hurt you, disengage when you leave, and die cleanly mid-burst. Four
+  entries failed on the first sitting and produced [DATA-11](ISSUE-REGISTER.md), a real AI defect
+  (N4), and one entry that was wrong about what the server can see (N3)
+- [~] [Hostility](In-Game-Tests/Hostility.md) — 6 of 7 passing. H5 passed once NPCs could attack,
+  confirming `CanDamage` with a monster as the attacker. Only H7 is left and it needs two clients
 - [~] [Damage Decay](In-Game-Tests/Damage-Decay.md) — 4 of 5 passing. The curve's shape between
   its two confirmed anchor points is deliberately left unqueued
 - [ ] [Deployables and Vehicles](In-Game-Tests/Deployables-And-Vehicles.md) — 0 of 7 passing, not

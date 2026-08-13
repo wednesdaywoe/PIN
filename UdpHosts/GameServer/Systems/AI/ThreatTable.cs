@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,14 +13,30 @@ public sealed class ThreatTable
 {
     private readonly Dictionary<ulong, float> _threatByEntity = new();
 
-    public void AddThreat(ulong entityId, float amount)
+    /// <summary>
+    ///     Adds threat, up to <paramref name="maxThreat"/>. The cap is what bounds how long an NPC stays
+    ///     interested: uncapped, a target that stood in front of one for a minute banked enough score
+    ///     that it took minutes of decay to fall back under the engage threshold, so the NPC never
+    ///     really let go and re-engaged the instant that target came back into reach.
+    /// </summary>
+    public void AddThreat(ulong entityId, float amount, float maxThreat)
     {
         if (amount <= 0f)
         {
             return;
         }
 
-        _threatByEntity[entityId] = _threatByEntity.GetValueOrDefault(entityId) + amount;
+        var updated = _threatByEntity.GetValueOrDefault(entityId) + amount;
+        _threatByEntity[entityId] = maxThreat > 0f ? MathF.Min(updated, maxThreat) : updated;
+    }
+
+    /// <summary>
+    ///     Drops an entity from the table outright, for when it stops being this NPC's problem however
+    ///     much threat it built up earlier — walking out past the leash, most of the time.
+    /// </summary>
+    public void Forget(ulong entityId)
+    {
+        _threatByEntity.Remove(entityId);
     }
 
     public void Decay(float amount)

@@ -35,7 +35,7 @@ activate from the server today, which is how `Thumper` drives its own state mach
 doesn't: `WeaponSim.OnFireWeaponProjectile` is driven by a client fire message and `PRNG.Spread`
 seeds off the client's time, so an NPC needs either a synthesised seed or a direct call into
 `ProjectileSim.FireProjectile`. Prefer abilities where `dbmonster` names one, since that's what the
-data was built for.
+data was built for. — *`dbmonster` names none; see below.*
 
 Then wire death to something. `CharacterEntity.Die` broadcasts `KilledEvent` and schedules an NPC
 despawn 30 seconds later, and that's the whole of it. Nothing else in the server learns that
@@ -57,11 +57,12 @@ Target selection and attacking are testable offline as pure functions; nothing a
 renders NPC movement is, so expect the locomotion pass to need several trips to the game machine.
 
 H5 in [Hostility](../In-Game-Tests/Hostility.md) is permanently blocked until this lands — it needs
-an NPC that actually decides to shoot.
+an NPC that actually decides to shoot. — *unblocked by the attack pass; run it with
+[N2](../In-Game-Tests/NPC-Combat.md).*
 
 ## What's landed
 
-**Perception and target selection — code complete, not yet seen in game.** New
+**Perception and target selection — confirmed in game.** New
 [Systems/AI](../../UdpHosts/GameServer/Systems/AI/) holds a per-NPC [ThreatTable.cs](../../UdpHosts/GameServer/Systems/AI/ThreatTable.cs)
 (decaying threat scores, unit-tested in isolation — see `Tests/GameServer.Tests/AI/ThreatTableTests.cs`)
 and [TargetSelection.cs](../../UdpHosts/GameServer/Systems/AI/TargetSelection.cs), which scores
@@ -73,10 +74,58 @@ system) and drives this for every non-player-controlled, alive `CharacterEntity`
 result as `AIEngine.CurrentTargetOf(entityId)` for locomotion and attacking to read once they land.
 
 Detection range and the threat gain/decay/engage numbers are invented — `dbmonster` has no
-perception field to read them from — tracked as [DATA-10](../gaps/data.md#data-10). Nothing moves
-or shoots yet, so there's no in-game exit condition to check until locomotion or attacking lands;
-this piece's own correctness (does an NPC pick the right target through a wall, does threat decay
-sensibly) is what the unit tests cover.
+perception field to read them from — tracked as [DATA-10](../gaps/data.md#data-10). The aim geometry
+and line-of-sight check it shares with the attack pass now live in
+[Sightline.cs](../../UdpHosts/GameServer/Systems/AI/Sightline.cs), because the two have to agree:
+selection deliberately holds a target through a moment of broken sight, so the shot is what has to
+look again.
+
+**Attacking — confirmed in game.** An NPC with a target now faces it and shoots it.
+[NpcCombat.cs](../../UdpHosts/GameServer/Systems/AI/NpcCombat.cs) runs after target selection each
+tick: it aims, sets body yaw, re-checks range and line of sight, and pushes rounds through the same
+`WeaponSim.OnFireWeaponProjectile` a client fire message lands in, so an NPC's shots spread, fall off
+with range, crit and respect `CanDamage` on exactly the player's code. The `PRNG.Spread` seeding
+problem turned out not to be one — the seed is just a timestamp, and `Shard.CurrentTime` is as good a
+one as the client's.
+
+Abilities were meant to be the preferred path here. They can't be: `dbcharacter::Monster` has no
+ability column at all, only `Weapon1Id`/`Weapon2Id` and the *names* of behaviour trees PIN doesn't
+load (`Behavior`, `BehaviorOffensive`, `BehaviorDefensive`). Weapons are what the data actually
+offers, and `LoadMonster` already slots both of them.
+
+Two things the server had never needed an opinion about, because a player's client decides them:
+
+- **Burst cadence.** [AttackWindow.cs](../../UdpHosts/GameServer/Systems/AI/AttackWindow.cs) resolves
+  `MsPerBurst`, `MsBurstDuration` and `RoundsPerBurst` into a range and a rhythm. Pure and unit-tested,
+  and **N5 confirmed in game on 2026-08-12** that the rhythm reads as a weapon firing. The tests pin
+  the reading; N5 pins that the reading is plausible. Whether it matches Firefall's exact cadence is
+  still a capture question.
+- **Which way a body faces.** `Facing.Towards` builds a yaw quaternion from the aim direction. That
+  the stored orientation is the *inverse* of the world rotation was never in doubt (both
+  `GetProjectileOrigin` and the physics engine invert it); that local forward is +X was a guess, and
+  **N1 confirmed it in game on 2026-08-12**. Settled, and the only place in the server that turns a
+  direction into an orientation.
+
+Ammo, clips and reloading aren't modelled — an NPC fires forever. Nothing paces sub-shots faster than
+the AI tick, so a burst can't stack several rounds onto one timestamp and fire them all down the same
+line.
+
+Also found by building this, and the more consequential bug of the two:
+[DATA-11](../gaps/data.md#data-11). Weapon resolution multiplied by a `WeaponTemplateModifiers`
+multiplier of 0 instead of reading it as "unset", which zeroed the range of 269 weapons and the
+damage of 220 — player and NPC alike. It had been live in every weapon the server ever resolved. No
+player ever tripped it, because a player only ever fires what they chose to equip; it took an NPC
+picking its weapon out of `dbmonster` to land on the broken rows. The first two NPC test entries
+failed in two different ways because of it, neither of them looking like a data bug: N2's monster
+aimed and never fired (rifle with 0 reach), N6's fired with full muzzle VFX into a target that never
+lost health (rounds worth 0 damage).
+
+Fixed along the way: `AIEngine.Tick` was reading the shard's `deltaTime` as seconds when it's the raw
+loop delta in milliseconds, on a loop that spins as fast as the thread allows. Threat gain and decay
+were therefore roughly a thousand times too fast and every visible hostile crossed the engage
+threshold on its first tick, while the raycasts ran thousands of times a second per NPC. It now
+follows the same shape as `ShieldSim` and `WeaponSim`: its own 50ms clock, elapsed seconds derived
+from the wall clock. That interval is also the finest grain an NPC's rate of fire can be paced at.
 
 **Death notification — code complete, not yet seen in game.** `CharacterEntity.Die` now enqueues a
 `CharacterDiedEvent` (new in [Events.cs](../../UdpHosts/GameServer/Systems/SystemEvents/Events.cs))
@@ -86,3 +135,42 @@ be added to `IShard` for this — it previously only reached `ChatService`, whic
 `EventBus` handed to it directly in `Shard`'s constructor, and `CharacterEntity` only ever holds the
 `IShard` interface. Nothing subscribes yet; M5 (kill XP) and M7 (encounter death routing) are what
 turn this from a broadcast with no listener into something that matters.
+
+## What the client sessions found
+
+[NPC Combat](../In-Game-Tests/NPC-Combat.md) N1–N7, all passing as of 2026-08-12. An NPC notices you,
+turns to face you, respects cover, opens fire, damages you, disengages when you leave, and dies
+mid-burst without leaving a corpse stuck firing. Perception, target selection and the attack pass are
+confirmed against a real client rather than code-complete.
+
+Four of the seven failed first time and only one was the AI's fault. The single largest find had
+nothing to do with M2 at all — [DATA-11](../gaps/data.md#data-11), below — and a crash in the tail of
+one session log closed [NET-21](../gaps/network.md#net-21). The other two:
+
+**N4 found a real defect, now fixed and re-run green.** Engagement was bounded by the weapon's reach rather than
+by perception — a Chosen Grunt Rifle carries 180m against a 40m perception radius — and threat had no
+ceiling, so a target that stood in front of an NPC for a minute banked several hundred points and
+took minutes of decay to fall under the engage threshold. The two compounded into an NPC that
+engaged at 40m and then shot you until you left draw distance. `TargetSelection` now forgets anything
+past a 60m leash and caps threat at 60, which decays back under the threshold in 6.25 seconds. The
+leash is deliberately wider than perception so a target loitering on the boundary doesn't get dropped
+and re-acquired every tick.
+
+**N3 couldn't run and the entry was at fault; it passes now.** `LoadMapsCollision` is `false`, so the server holds no
+terrain and no buildings, only entity colliders — there is no cover to break line of sight with, and
+the shots that appeared to pass through scenery were passing through nothing. Re-run against a
+deployable with a real collision id (395, the Battleframe Station) instead of world geometry, and it
+passes. Worth remembering well beyond this test: every server-side raycast in PIN, including every
+shot a player fires, currently sees an empty world with a few entities floating in it.
+
+## What's left
+
+Locomotion, and the spawn groups. With attacking in, the milestone's exit condition is met except for
+"closes" — a monster notices you, turns, and kills you where it stands, but won't follow you out of
+its own weapon range.
+
+That ordering was deliberate. Perception had no in-game exit condition of its own, and attacking gave
+it one without needing anything to move: [NPC Combat](../In-Game-Tests/NPC-Combat.md) N1–N7 check
+perception, facing, line of sight, disengagement and firing in a single sitting. Locomotion is the
+piece that needs several trips to the game machine, and it's worth starting it with a target
+selection that's already been seen picking the right thing.

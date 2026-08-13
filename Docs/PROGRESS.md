@@ -131,6 +131,14 @@ Out of scope because the slice closes without them:
   correct
 - **Turret damageability** — `Turret_ObserverView` has no health field, so the client doesn't
   model turrets as shootable either; fixing it means protocol work for a small payoff
+- **Environmental damage — melding and drowning** — both were near-instant death in retail and
+  neither does anything now, which reads in-game as an invulnerable character. `MeldingBubbleEntity`
+  is position and radius only, with no proximity check behind it, and `dbvisualrecords::WaterDesc`
+  parses `DrowningPercent` and `DrowningCharStatusEffectId` that nothing reads. There is no periodic
+  or environmental damage source in the server at all — every `TakeDamage` call today comes from a
+  projectile or an `InflictDamage` aptitude command. Noticed while running
+  [H5](In-Game-Tests/Hostility.md); nothing in the slice needs it, and the melding wall being
+  harmless is a smaller problem than the melding wall being missing
 - **Army, mail, market, chat beyond what exists** — social systems, none gate a session
 - **Crafting and blueprints** — spending resources needs `RequireResource` and
   `RequireResourceFromTarget`, both stubs, plus `Blueprint_Resources` which nothing reads;

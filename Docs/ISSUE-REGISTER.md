@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 1 of 10 closed
+[Full detail](gaps/data.md) — 2 of 11 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -52,10 +52,13 @@ baseline the next pass diffs against.
 - [~] **DATA-9** — Two web endpoints return invented or hardcoded-stub character data
 - [ ] **DATA-10** — NPC perception range and threat gain/decay/engage tuning are invented, not read
   from `dbmonster` (no such field exists there)
+- [x] **DATA-11** — A zero in a `WeaponTemplateModifiers` multiplier column was read literally and
+  annihilated the stat, resolving 269 weapons to no range and 220 to no damage; found by
+  [N2/N6](In-Game-Tests/NPC-Combat.md), fixed 2026-08-12
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 0 of 20 closed
+[Full detail](gaps/network.md) — 1 of 21 closed
 
 - [ ] **NET-1** — No retransmit queue; "reliable" only acks, never resends (scheduled as M8)
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
@@ -81,6 +84,9 @@ baseline the next pass diffs against.
 - [~] **NET-18** — `createitem`'s wire-format fix unverified against the original delivery symptom
 - [~] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) await confirmation
 - [~] **NET-20** — The 47-effect Prediction Sweep is almost entirely unverified
+- [x] **NET-21** — An encounter throwing from `Tick` killed the whole shard thread; the Coral Forest
+  thumper did it every session via a null participant, a set mutated mid-iteration, and no isolation
+  around the update loop. Fixed 2026-08-12, verified headless
 
 ## Client & Environment — CLIENT
 

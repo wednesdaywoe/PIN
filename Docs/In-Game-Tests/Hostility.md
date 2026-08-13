@@ -102,18 +102,35 @@ Pass: health drops, headshots read higher than body shots, the kill registers, a
 despawns about 30s later. If shots register but health never moves, H1 failed and the stance mapping
 is inverted.
 
-## [-] H5: NPC damage to the player still lands
+## [x] H5: NPC damage to the player still lands
 
 1. `npc 1196`
 2. Stand in front of it and wait
 
 Pass: player health drops and the hit shows client-side.
 
-Not runnable yet, and won't be until M2. [AIEngine](../../UdpHosts/GameServer/AIEngine.cs) is ticked
-every frame from `Shard.Tick` with an empty body, so nothing picks a target or pulls a trigger on an
-NPC's behalf. A spawned monster stands still and soaks fire. Confirmed 2026-08-10. Re-run this the
-moment an NPC can attack, since it's the only check that exercises `CanDamage` with a monster as the
-attacker rather than the target.
+Unblocked as of the M2 attack pass, having sat `[-]` since 2026-08-10 on an empty `AIEngine.Tick`
+that meant a spawned monster stood still and soaked fire. An NPC now picks a target and fires a
+weapon at it. Run alongside [N2](NPC-Combat.md), which is the same scenario looked at from the other
+side: N2 asks whether the attack pass works, this asks whether `CanDamage` holds up with a monster as
+the attacker rather than the target, which nothing else checks.
+
+**Passed 2026-08-12.** `CanDamage` holds with the monster as attacker, and the log shows the hits
+landing one at a time — `Fallback took 1 damage from CharacterEntity (...), 1 of it on shields, 2642
+shields and 19192 health left`, then 2641, then 2640.
+
+**The character looked invulnerable and isn't.** Standing in front of a Chosen Fiend, nothing
+visible happens, and the arithmetic is why: its rifle does 1 damage a round at about 11 dps, against
+3000 shields ([DATA-1](../gaps/data.md#data-1)'s stand-in) and 19192 health. That is roughly four
+and a half minutes to strip the shields and half an hour to finish the job. Use `2342` (125 a hit)
+if the point is to watch something die.
+
+Walking into a melding wall or deep water doing nothing is a different thing entirely, and not a
+damage-routing failure: **there is no environmental damage in the server at all.**
+`MeldingBubbleEntity` carries a position and a radius and nothing that hurts anyone,
+`dbvisualrecords::WaterDesc` parses `DrowningPercent` and `DrowningCharStatusEffectId` that nothing
+reads, and every `TakeDamage` call in the codebase comes from a projectile or an `InflictDamage`
+aptitude command. Recorded under [Deferred](../PROGRESS.md#deferred).
 
 ## [x] H6: Same-faction NPCs no longer hurt each other
 

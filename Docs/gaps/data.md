@@ -119,3 +119,58 @@ detection range (40m) and threat gain/decay/engage-threshold constants rather th
 a def. Every monster currently notices, aggros and disengages identically regardless of type. Part
 of [M2](../streams/m2-npc-combat.md); revisit if the named behaviors turn out to carry this data
 somewhere PIN hasn't parsed yet.
+
+The attack pass adds more invented numbers of the same kind, all in the same two files:
+
+| Number | Where | What it decides |
+|--------|-------|-----------------|
+| 40m perception | `TargetSelection` | how close before an NPC notices you |
+| 60m leash | `TargetSelection` | how far before it forgets you |
+| 60 threat cap | `TargetSelection` | how long it stays interested after losing sight (6.25s) |
+| 20/8/10 gain, decay, engage | `TargetSelection` | how fast it aggros and disengages |
+| 250ms burst floor | `AttackWindow` | slowest cycle a template with no `MsPerBurst` may fire at |
+
+The leash and the cap were added after [N4](../In-Game-Tests/NPC-Combat.md) ran, and are worth
+separating from the rest: they are invented numbers, but they exist to fix a genuine defect rather
+than to fill a hole in the data. Without them engagement was bounded by the weapon's reach instead of
+perception — 180m against a 40m radius — and threat was uncapped, so an NPC that had watched a target
+for a minute needed minutes of decay to let go. It never disengaged in practice.
+
+None of these are confirmed against anything. N4 checks that disengagement behaves like a radius, not
+that 60m is the radius Firefall used.
+
+<a id="data-11"></a>
+
+### DATA-11 — A zero multiplier in `WeaponTemplateModifiers` was read literally [x] fixed 2026-08-12
+
+A weapon item's numbers are its template's, adjusted by its own `dbitems::WeaponTemplateModifiers`
+row as `(base + modifier) * multiplier`. The data populates *one* of those two columns per stat and
+leaves the other at `0` — the format zero-fills, so a `0` multiplier means "this row doesn't set
+one". PIN multiplied by it.
+
+Three real rows, which is what made the pattern legible:
+
+| Weapon | column pair | value / mult | PIN resolved | should be |
+|--------|-------------|--------------|--------------|-----------|
+| Chosen Grunt Rifle 85953 | `range` | 80 / **0** | **0** | 180 |
+| Accord Famas 76108 | `damage_per_round` | 35 / **0** | **0** | 65 |
+| Accord Guard Rifle 137167 | `damage_per_round` | 0 / 5 | 230 | 230 |
+
+Across the table that zeroed the range of 269 weapons and the damage of 220, player and NPC alike —
+66 of 191 NPC weapons had no range and 54 no damage. `WeaponTemplateModifier` now treats a zero
+multiplier as absent, in all six overloads: the first fix only covered the `float` one, which left
+every int-typed stat (`DamagePerRound` among them) still reading zero.
+
+Two things are worth taking from how this was found. It had been live in every weapon the server
+ever resolved and no test caught it, because the resolution was only ever exercised through a player
+firing a weapon that happened to have a non-zero multiplier. It took an NPC — which picks its weapon
+from `dbmonster` rather than from what a player chose to equip — to land on the broken rows. And it
+presented as two unrelated bugs: [N2](../In-Game-Tests/NPC-Combat.md) looked like broken AI (a
+monster that aims and never fires, because its rifle's reach was 0) while N6 looked like broken
+damage routing (a monster firing with full muzzle VFX into a target that never lost health, because
+its rounds did 0). One zero, two symptoms, neither of them where the bug was.
+
+`Tests/GameServer.Tests/Weapons/WeaponTemplateModifierTests.cs` pins the rule using these rows.
+Regenerate [the weapon reference](../Wiki/Reference/Weapons.md) with `Tools/SdbDocs` after touching
+resolution — it renders through `GetDetailedWeaponInfo`, so it shows what the server would send, and
+it is where the 269 and 220 counts came from.

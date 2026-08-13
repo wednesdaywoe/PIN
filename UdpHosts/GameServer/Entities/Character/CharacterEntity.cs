@@ -864,6 +864,18 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         RefreshMovementView();
     }
 
+    /// <summary>
+    ///     Points a character at something, aim vector and body yaw together. Players send both in one
+    ///     pose message and land in <see cref="SetPoseData"/>; an NPC has no client to send them, and
+    ///     setting them one at a time would push two movement updates per turn.
+    /// </summary>
+    public void SetAim(Vector3 newDirection, Quaternion newOrientation)
+    {
+        AimDirection = newDirection;
+        Orientation = newOrientation;
+        RefreshMovementView();
+    }
+
     public void SetCharacterState(CharacterStateData.CharacterStatus characterStatus, uint time)
     {
         CharacterState = new CharacterStateData
@@ -1273,6 +1285,22 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         }
 
         return weaponAttributes;
+    }
+
+    /// <summary>
+    ///     The sdb id of whatever is in the selected weapon slot, or 0 if nothing is. Cheap, unlike
+    ///     <see cref="GetActiveWeaponDetails"/>, which resolves templates and attribute ranges out of
+    ///     several tables — this is the part to compare against when all you need to know is whether the
+    ///     weapon changed.
+    /// </summary>
+    public uint GetActiveWeaponId()
+    {
+        return WeaponIndex.Index switch
+        {
+            2 => CurrentLoadout?.SlottedItems.GetValueOrDefault(LoadoutSlotType.Secondary) ?? 0,
+            1 => CurrentLoadout?.SlottedItems.GetValueOrDefault(LoadoutSlotType.Primary) ?? 0,
+            _ => 0,
+        };
     }
 
     // TODO: cache this
