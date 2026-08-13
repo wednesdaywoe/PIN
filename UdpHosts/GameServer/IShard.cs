@@ -12,6 +12,7 @@ using GameServer.Systems.EntityManager;
 using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
+using GameServer.Systems.Spawning;
 using GameServer.Systems.SystemEvents;
 using GameServer.Systems.WeaponSim;
 using Serilog;
@@ -32,6 +33,7 @@ public interface IShard : IPacketSender
     MovementRelay Movement { get; }
     EntityManager EntityMan { get; }
     EncounterManager EncounterMan { get; }
+    SpawnGroupSim Spawns { get; }
     AbilitySystem Abilities { get; }
     ProjectileSim ProjectileSim { get; }
     WeaponSim WeaponSim { get; }

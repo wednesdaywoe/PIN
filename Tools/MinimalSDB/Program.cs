@@ -9,9 +9,9 @@ using FauFau.Formats;
 
 var mode = args.Length > 0 ? args[0].ToLowerInvariant() : "prune";
 
-if (mode is not ("prune" or "dump" or "joins"))
+if (mode is not ("prune" or "dump" or "joins" or "find"))
 {
-    Console.Error.WriteLine($"Error: unknown mode '{args[0]}'. Expected 'prune' (default), 'dump' or 'joins'.");
+    Console.Error.WriteLine($"Error: unknown mode '{args[0]}'. Expected 'prune' (default), 'dump', 'joins' or 'find'.");
     return 6;
 }
 
@@ -39,7 +39,7 @@ if (string.IsNullOrEmpty(input) || (mode == "prune" && string.IsNullOrEmpty(outp
 var loaderPath = Path.GetFullPath(Path.Combine(
     AppContext.BaseDirectory, "..", "..", "..", "..", "..", "UdpHosts", "GameServer", "StaticDB", "Loaders", "StaticDBLoader.cs"));
 
-if (mode == "prune" && !File.Exists(loaderPath))
+if (mode is "prune" or "find" && !File.Exists(loaderPath))
 {
     Console.Error.WriteLine("Error: Missing loader file.");
     return 3;
@@ -63,6 +63,11 @@ if (mode == "dump")
 if (mode == "joins")
 {
     return Joins(sdb, json);
+}
+
+if (mode == "find")
+{
+    return Find(sdb, json, loaderPath, args.Skip(1).ToArray());
 }
 
 var requiredTableIds = new HashSet<uint>();
@@ -326,6 +331,110 @@ bool TryReadColumn(StaticDB db, string spec, out List<ulong> values, out string 
 
     error = null;
     return true;
+}
+
+// Table and column names live in the file as hashes, so nothing can list them and a table you can't
+// name is a table you can't ask for. Content is the way in: if you know a string the data would have
+// to contain, every string column in the file can be read without knowing what any of them are called.
+// This is how DATA-10 established that retail's behaviour parameters sit on dbcharacter::Monster and
+// nowhere else, which is a negative result no amount of guessing at names could have produced.
+int Find(StaticDB db, JsonElement cfg, string loaderFile, string[] extraArgs)
+{
+    var needles = extraArgs.Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+    var samples = 3;
+
+    if (cfg.TryGetProperty("find", out var findCfg) && findCfg.ValueKind == JsonValueKind.Object)
+    {
+        if (findCfg.TryGetProperty("samples", out var s) && s.TryGetInt32(out var configured))
+        {
+            samples = Math.Max(0, configured);
+        }
+
+        if (needles.Count == 0 && findCfg.TryGetProperty("needles", out var configuredNeedles) && configuredNeedles.ValueKind == JsonValueKind.Array)
+        {
+            needles = configuredNeedles.EnumerateArray().Select(v => v.GetString()).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
+        }
+    }
+
+    if (needles.Count == 0)
+    {
+        Console.Error.WriteLine("Error: find needs something to look for. Pass it on the command line (MinimalSDB find combatDist) or set 'find.needles' in config.json.");
+        return 8;
+    }
+
+    var namesById = LoaderTableNames(db, loaderFile);
+    Console.WriteLine($"  patch {db.Patch}, built {db.Timestamp:u}, flags {db.Flags}, {db.Tables.Count} tables, {namesById.Count} of them named by the loader");
+    Console.WriteLine($"  looking for: {string.Join(", ", needles.Select(n => $"\"{n}\""))}");
+    Console.WriteLine();
+
+    var hits = 0;
+
+    foreach (var table in db.Tables)
+    {
+        for (int col = 0; col < table.Columns.Count; col++)
+        {
+            if (table.Columns[col].Type != StaticDB.DBType.String)
+            {
+                continue;
+            }
+
+            var matched = table.Rows
+                .Select(r => (r[col] as string)?.Replace("\0", string.Empty))
+                .Where(v => !string.IsNullOrEmpty(v) && needles.Any(n => v.Contains(n, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            if (matched.Count == 0)
+            {
+                continue;
+            }
+
+            hits++;
+            var name = namesById.TryGetValue(table.Id, out var known) ? known : $"UNMAPPED (table id {table.Id})";
+            Console.WriteLine($"{name}");
+            Console.WriteLine($"  {table.Rows.Count} rows, {table.Columns.Count} columns; col {col} matches {matched.Count} row(s), {matched.Distinct().Count()} distinct");
+
+            foreach (var value in matched.Distinct().Take(samples))
+            {
+                Console.WriteLine($"    {(value.Length > 160 ? value[..160] + " ..." : value)}");
+            }
+
+            Console.WriteLine();
+        }
+    }
+
+    if (hits == 0)
+    {
+        // Worth saying plainly. A needle that appears nowhere is usually the answer to "did this ship
+        // to the client at all", and reading silence as a tool failure gets that answer thrown away.
+        Console.WriteLine("No string column in the file contains any of those. Nothing matched, which is a result: whatever holds them didn't ship in this db.");
+    }
+
+    return 0;
+}
+
+// The loader is the only place table names are written down, so it doubles as the file's name list.
+// Hashing each one back to a table id turns "which of these 575 tables does PIN read" into a lookup.
+Dictionary<uint, string> LoaderTableNames(StaticDB db, string loaderFile)
+{
+    var namesById = new Dictionary<uint, string>();
+    var regex = TableNameRegex();
+
+    foreach (var line in File.ReadLines(loaderFile))
+    {
+        var match = regex.Match(line);
+        if (!match.Success)
+        {
+            continue;
+        }
+
+        int idx = db.GetIndexByName(match.Groups[1].Value);
+        if (idx != -1)
+        {
+            namesById[db.Tables[idx].Id] = match.Groups[1].Value;
+        }
+    }
+
+    return namesById;
 }
 
 // Crafting is the worked example: v1.6 switched it off, and the question that decides whether it can be

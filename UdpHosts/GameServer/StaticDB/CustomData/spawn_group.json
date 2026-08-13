@@ -1,0 +1,47 @@
+[
+	{
+		"id": 1,
+		"zone_id": 448,
+		"name": "Station Approach",
+		"anchor": { "x": 185.7, "y": 247.1, "z": 491.87 },
+		"radius": 6,
+		"respawn_delay_ms": 60000,
+		"members": [
+			{ "monster_type_id": 2342, "count": 3 }
+		]
+	},
+	{
+		"id": 2,
+		"zone_id": 448,
+		"name": "North Terrace",
+		"anchor": { "x": 178.3, "y": 268.4, "z": 491.87 },
+		"radius": 5,
+		"respawn_delay_ms": 90000,
+		"members": [
+			{ "monster_type_id": 1196, "count": 2 }
+		]
+	},
+	{
+		"id": 3,
+		"zone_id": 448,
+		"name": "South Shelf",
+		"anchor": { "x": 179.3, "y": 224.7, "z": 495.68 },
+		"radius": 5,
+		"respawn_delay_ms": 90000,
+		"members": [
+			{ "monster_type_id": 528, "count": 2 }
+		]
+	},
+	{
+		"id": 4,
+		"zone_id": 448,
+		"name": "Valley Floor",
+		"anchor": { "x": 155.8, "y": 119.9, "z": 413.39 },
+		"radius": 12,
+		"respawn_delay_ms": 120000,
+		"members": [
+			{ "monster_type_id": 2342, "count": 4 },
+			{ "monster_type_id": 1196, "count": 2 }
+		]
+	}
+]

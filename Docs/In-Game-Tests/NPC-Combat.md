@@ -1,7 +1,7 @@
 ---
 project: pin
 kind: test-stream
-title: "NPC Combat (N1-N13)"
+title: "NPC Combat (N1-N16)"
 relates:
   - ../TEST-REGISTER.md
 ---
@@ -14,7 +14,9 @@ Part of the [in-game test queue](README.md). Setup, admin commands and the monst
 The check on everything [M2](../streams/m2-npc-combat.md) has built. N1–N7 cover a monster that
 stands still and fights — it notices, turns, and shoots — N8–N12 cover the locomotion pass that
 landed after them, which is the half that decides where it stands in the first place, and N13 checks
-that any of it is drawn on the client at all.
+that any of it is drawn on the client at all. N14–N16 cover the spawn groups, and they are the ones
+the milestone closes on: N1 to N13 all ran against a monster the tester put there by hand, which is
+not the same claim as the zone having monsters in it.
 
 **N1–N7 pass as of 2026-08-12**, across two sittings. Both model guesses that half of the stream
 existed to check came out right — local forward is +X (N1), and the burst timing read off the
@@ -462,3 +464,111 @@ same so an NPC never sends a pose it hasn't decided on.
 direction recomputed each tick from live positions, so shots have always been resolved against where
 you actually are. A monster that looks like it is firing wide can still be hitting you, which is
 exactly how this survived N2, N5 and N6.
+
+## [ ] N14: The zone has monsters in it before you type anything
+
+The milestone's exit condition, and the only entry here that forbids the `npc` command. Everything
+N1 to N13 checked was checked against a monster put in front of the tester by hand. This asks
+whether [spawn_group.json](../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) puts
+them there on its own.
+
+Zone 448 ships four groups and thirteen monsters. The one this entry walks to is Station Approach:
+three Aranha (2342) scattered around (185.7, 247.1, 491.87), roughly 15m east of the Battleframe
+Station.
+
+1. Start the server and log in to zone 448 as usual ([Session Setup](Session-Setup.md)). Type no
+   admin command until step 4.
+2. `grep -a "spawn group" ~/Games/PIN/logs/GameServer.log`
+3. `grep -acE "Spawn group .+: monster [0-9]+ as" ~/Games/PIN/logs/GameServer.log`
+4. `invuln on`
+5. `tp 178 247 492`
+6. Face east and walk toward (185.7, 247.1).
+
+Pass: step 2 prints `Loaded 4 spawn group(s) for zone 448, 13 monster(s)`, step 3 prints `13`, and
+three Aranha are standing near the anchor with their feet on the ground. They notice you, close, and
+attack without anything being spawned.
+
+The heights are the part most likely to be wrong, and they are wrong in a specific way worth
+recording rather than just failing. Every anchor is copied off a real object in zone 448, so its Z
+is a height something sat at, but nothing checked that the ground is at that height a few metres
+away ([DATA-15](../gaps/data.md#data-15)). If a monster floats or is buried, note by how much and at
+which anchor; that number is the correction, and it goes straight into the JSON.
+
+Fail, nothing spawns and step 2 prints nothing: the loader never ran. `SpawnGroupSim.Load` is called
+from `EntityManager.SpawnZoneEntities`, so check the zone is 448 and that
+`StaticDB/CustomData/spawn_group.json` reached the deploy directory.
+
+Fail, step 2 prints a smaller count than 13: a member named a monster id the SDB doesn't have, which
+logs its own warning line. `grep -a "isn't in the SDB" ~/Games/PIN/logs/GameServer.log`
+
+Fail, they stand there and ignore you: this is not a spawn group defect. Faction and perception are
+N1 and N4, both passing, so suspect the monsters loaded without a weapon before suspecting the AI.
+
+Fail, all three stand in the same spot: `SpawnScatter` was bypassed or the radius read as 0, which
+`SpawnScatterTests` covers offline and should have caught first.
+
+## [ ] N15: A killed spawn comes back where it was
+
+A group that empties permanently is a debug row with extra steps. This is what makes the zone a
+place rather than a one-time delivery.
+
+Station Approach respawns 60s after a place falls empty, and a corpse holds its place for the 30s
+`CharacterEntity.Die` gives it, so the whole cycle is about 90s from the kill.
+
+1. `invuln on`
+2. `tp 178 247 492`
+3. Kill exactly one of the three Aranha. Note the wall-clock time.
+4. Stay where you are and watch the spot it died on.
+5. After two minutes:
+   `grep -a "Spawn group Station Approach" ~/Games/PIN/logs/GameServer.log | tail -5`
+
+Pass: the log shows a `... is gone, respawning in 60000ms` line about 30s after the kill, then a
+`... monster 2342 as <new id> at <X, Y, Z>` line about 60s after that, carrying the same position as
+the original spawn line for that slot. A new Aranha is standing there, and the other two were never
+disturbed.
+
+Watch the position in the two spawn lines rather than trusting the one on screen. A slot that
+respawns at a drifted position means the placement is being recomputed from something that moved
+instead of read off the slot, and that only becomes obvious after several cycles.
+
+Fail, it never comes back: the slot is still holding an entity id that was never removed. Corpse
+despawn is `EntityManager`'s lifetime tracker, so check the corpse actually disappeared before
+blaming the spawn group.
+
+Fail, it comes back instantly: the delay is being measured from the wrong time, or `RespawnDelayMs`
+deserialised to 0, which `SpawnGroupContentTests` asserts against offline.
+
+Fail, two come back for one kill: a slot is being filled twice, which would mean `EntityId` is not
+being recorded after the spawn.
+
+## [ ] N16: The valley pack can kill you
+
+"Worth fighting" was the word in the milestone, and three Aranha next to the station is not it. The
+Valley Floor group is six monsters at (155.8, 119.9, 413.39), about 130m from the station and about
+80m below it: four Aranha (2342) and two Chosen Fiend (1196), spread over a 12m radius so they
+arrive as a group rather than in single file.
+
+Run this with invulnerability off. The entry is partly about whether the fight resolves at all and
+partly about whether it is survivable, and neither reads correctly if nothing can hurt you.
+
+1. `invuln off`
+2. `tp 158 132 414`
+3. Fight the group, or die to it.
+4. `grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -20`
+
+Pass: all six engage, the two Chosen open fire from range while the Aranha close to contact, and the
+fight goes one way or the other without anything standing still. Six NPCs on one target is also the
+first time the "nothing separates them" limitation from the locomotion pass gets looked at
+deliberately: they will converge on the same spot and stand in each other, and that is expected, not
+a failure. Record how bad it looks.
+
+Fail, the pack is at a different height than you are: same anchor-Z question as N14, on the one
+anchor taken from the valley floor rather than the station shelf.
+
+Fail, they trickle in one at a time: perception is a 40m radius against a 12m spread, so they should
+all acquire within a second of each other. Staggered arrival is a speed difference (a Chosen Fiend
+runs at 6 m/s, an Aranha at 11) and is correct.
+
+Fail, the fight is trivially easy or instantly lethal: not a spawn group defect, and worth reading
+against [DATA-6](../gaps/data.md#data-6) (monster health is a hardcoded placeholder) and
+[DATA-14](../gaps/data.md#data-14) before touching the pack size.

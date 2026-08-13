@@ -32,8 +32,8 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M2: NPCs that fight back — three of five pieces in, and two of them confirmed against a real
-client.** Perception and target selection, the attack pass and death notification are all built
+**M2: NPCs that fight back — four of five pieces in, three of them confirmed against a real
+client, and the fifth waiting on one sitting.** Perception and target selection, the attack pass and death notification are all built
 under [Systems/AI](../UdpHosts/GameServer/Systems/AI/) and driven from
 [AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick.
 [N1–N7](In-Game-Tests/NPC-Combat.md) ran on 2026-08-12 and all pass: an NPC notices you, turns to
@@ -64,13 +64,35 @@ behalf, so monsters teleported whenever a keyframe happened to correct the clien
 queue to close.** A monster notices you, turns, runs the ground down, stops where its own weapon can
 reach, shoots, tracks you while it fires, and walks home when it loses you.
 
-**That leaves the spawn groups as the only piece of M2 with no code at all**, and the milestone can't
-close without them: its exit condition is a monster worth fighting, not a monster spawned by an admin
-command. Two findings from the closing sitting are recorded rather than fixed —
+**The spawn groups are built, and they're the last piece of M2.** Zone 448 now comes with thirteen
+monsters in four groups of its own, described in
+[spawn_group.json](../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) and kept populated
+by [SpawnGroupSim](../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), which refills a place
+about 90 seconds after the thing standing in it dies. The dead faction-test row in
+`TempSpawnTestEntities` came out with it. None of that has been seen in game:
+[N14–N16](In-Game-Tests/NPC-Combat.md) are the entries, and N14 is the milestone's exit condition
+and the only one in the stream that forbids the `npc` command. The heights are what that sitting is
+most likely to correct, since the server holds no terrain and every anchor's Z is borrowed from a
+real object nearby ([DATA-15](ISSUE-REGISTER.md)).
+
+Where the placements come from is the part worth knowing: nowhere. Retail's spawn tables were
+server-side, and the client's own `system/maps/448.zone` holds terrain, melding perimeters and
+cinematic paths but not one monster. That makes the groups PIN's own content, unlike the melding and
+deployable data next to them, which is recovered.
+
+Two findings from the closing sitting are recorded rather than fixed —
 [CLIENT-3](ISSUE-REGISTER.md), a creature model that renders 90° off the orientation it is sent, and
-[DATA-10](ISSUE-REGISTER.md) gaining a lead worth more than the entry it came from: retail's own
-standoff distances are sitting in the shipped behaviour strings as `combatDist=`, in a table PIN
-doesn't map yet. See [streams/m2-npc-combat.md](streams/m2-npc-combat.md).
+a lead out of [DATA-10](ISSUE-REGISTER.md) that turned into **a research pass, run 2026-08-13, with
+a bigger answer than the entry that prompted it.** Retail's standoff distances do sit in the shipped
+behaviour strings as `combatDist=`, and they sit on `dbcharacter::Monster` itself: 2100 of its 3109
+rows carry their parameters inline, not the 451 the entry assumed. The instance table behind the
+other 695 does not exist to be found. Searching the string content of all 575 tables turns up
+behaviour text in exactly three columns of one table and nowhere else, and this db was built with
+the client flag, so those rows went to a server database PIN can't get. The same strings also carry
+`perceptionDist`, which never exceeds 25m anywhere in the file against PIN's flat 40m, and
+`triggerPullTime`/`fireRestDuration` on 301 monsters, which is the pause
+[DATA-14](ISSUE-REGISTER.md) says is missing. `MinimalSDB find` reproduces all of it. See
+[streams/m2-npc-combat.md](streams/m2-npc-combat.md).
 
 Two things landed alongside the milestone. **Environmental damage** went in on 2026-08-12 — deep
 water and melding walls both kill now, through
@@ -97,7 +119,7 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] `Battleframe` shield data confirmed absent from build 1962
 - [x] Placeholders replaced with shipped values, remaining divergence written down
 
-[Full detail](streams/m2-npc-combat.md) — 3 of 5 done
+[Full detail](streams/m2-npc-combat.md) — 3 of 5 done, 2 in progress
 
 - [x] Threat table, target selection, line of sight (N1, N4, N7)
 - [x] Leashed steering and ground clamping (N8–N13). No terrain to clamp to, so height comes off the
@@ -106,7 +128,8 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
   (N2, N3, N5, N6)
 - [~] Death notification other systems can subscribe to — published, nothing subscribes yet, so
   nothing in game shows it
-- [ ] Spawn groups worth fighting, replacing the hardcoded debug row
+- [~] Spawn groups worth fighting, replacing the hardcoded debug row — four groups and thirteen
+  monsters in zone 448, respawning; code complete, N14–N16 not yet run
 
 [Full detail](streams/m3-resource-payout.md) — 0 of 3 done
 

@@ -19,10 +19,15 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**NPC Combat is complete, 13 of 13, as of 2026-08-13 — the first stream in the queue to close.** A
-monster now notices you, turns, runs the ground down, stops where its own weapon can reach, shoots,
-tracks you while it fires, gives up and walks home. That is [M2](PROGRESS.md)'s exit condition seen
-in game.
+**NPC Combat went 13 of 13 on 2026-08-13 and then reopened at 13 of 16.** A monster now notices you,
+turns, runs the ground down, stops where its own weapon can reach, shoots, tracks you while it
+fires, gives up and walks home, all confirmed in game.
+
+What every one of those thirteen entries has in common is that the tester spawned the monster.
+[M2](PROGRESS.md)'s exit condition is a monster worth fighting, not a monster spawned by an admin
+command, so the spawn groups landing added **N14 to N16** and the stream is the frontier again
+rather than the first one closed. N14 is the exit condition and the only entry in the queue that
+forbids the `npc` command.
 
 It took two sittings that day. The first was called on one defect: monsters teleported, having
 neither walked nor slid. The cause was replication, not steering — `Character_MovementView` is
@@ -47,10 +52,13 @@ melee Aranha. It renders about 90° off the player it is attacking, and a side-b
 Chosen in the same spot pinned that on the creature model rather than on anything the server sends
 ([CLIENT-3](ISSUE-REGISTER.md)) — cosmetic, since shots are aimed from live positions. And chasing
 "4m looks too far for a claw" turned up `combatDist=` inside the shipped behaviour strings, which is
-retail's own standoff distance for most of what [DATA-10](ISSUE-REGISTER.md) currently invents. PIN
-can't reach that table yet; it is now the highest-value thing left in the SDB for M2.
+retail's own standoff distance for most of what [DATA-10](ISSUE-REGISTER.md) currently invents. The
+research pass that came out of it settled the question: those strings are on `dbcharacter::Monster`
+and 2100 of its 3109 rows carry them, and the instance table behind the rest was never in the client
+db to be found. It also turned up `perceptionDist`, which caps at 25m against PIN's 40m.
 
-Re-run from **N8**, the milestone's exit condition. **N9** is still the entry most likely to come
+Superseded by the sitting that closed N8–N13; kept because the reasoning still applies. Re-run from
+**N8**, the milestone's exit condition. **N9** is still the entry most likely to come
 back with something: the movement state that drives the run animation (`0x2004`) is derived from two
 enums, has never been seen on the wire, and sits on a packing [NET-12](ISSUE-REGISTER.md) already
 flags — and now finally gets drawn. **N12** looks at whether an NPC stays on the ground, which it has
@@ -119,11 +127,14 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Combat
 
-- [x] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 13 of 13 passing. Monsters notice you, turn, close
-  the ground, stop where their weapon can reach, shoot, hurt you, track you while firing, give up and
-  walk home, and die cleanly mid-burst. It took four sittings and produced
-  [DATA-11](ISSUE-REGISTER.md), [NET-22](ISSUE-REGISTER.md), a real AI defect (N4), one entry that was
-  wrong about what the server can see (N3), and [CLIENT-3](ISSUE-REGISTER.md)
+- [~] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 13 of 16 passing, and the stream reopened rather
+  than closed. Monsters notice you, turn, close the ground, stop where their weapon can reach, shoot,
+  hurt you, track you while firing, give up and walk home, and die cleanly mid-burst. It took four
+  sittings and produced [DATA-11](ISSUE-REGISTER.md), [NET-22](ISSUE-REGISTER.md), a real AI defect
+  (N4), one entry that was wrong about what the server can see (N3), and
+  [CLIENT-3](ISSUE-REGISTER.md). N14–N16 were added when the spawn groups landed: every one of the
+  first thirteen ran against a monster the tester put there by hand, which is not the claim the
+  milestone needs
 - [~] [Hostility](In-Game-Tests/Hostility.md) — 6 of 7 passing. H5 passed once NPCs could attack,
   confirming `CanDamage` with a monster as the attacker. Only H7 is left and it needs two clients
 - [~] [Damage Decay](In-Game-Tests/Damage-Decay.md) — 4 of 5 passing. The curve's shape between

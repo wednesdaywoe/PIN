@@ -18,6 +18,7 @@ using GameServer.Systems.EntityManager;
 using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
+using GameServer.Systems.Spawning;
 using GameServer.Systems.SystemEvents;
 using GameServer.Systems.WeaponSim;
 using Shared.Common;
@@ -54,6 +55,7 @@ public class Shard : IShard
         Abilities = new AbilitySystem(this);
         EntityMan = new EntityManager(this);
         EncounterMan = new EncounterManager(this);
+        Spawns = new SpawnGroupSim(this);
         WeaponSim = new WeaponSim(this);
         ProjectileSim = new ProjectileSim(this);
         _shieldSim = new ShieldSim(this);
@@ -74,6 +76,7 @@ public class Shard : IShard
     public MovementRelay Movement { get; }
     public EntityManager EntityMan { get; }
     public EncounterManager EncounterMan { get; }
+    public SpawnGroupSim Spawns { get; }
     public AbilitySystem Abilities { get; }
     public ProjectileSim ProjectileSim { get; }
     public WeaponSim WeaponSim { get; }
@@ -111,6 +114,10 @@ public class Shard : IShard
         AI.Tick(deltaTime, currentTime, ct);
         Physics.Tick(deltaTime, currentTime, ct);
         EntityMan.Tick(deltaTime, currentTime, ct);
+
+        // After EntityMan, so a corpse whose lifetime ran out this tick is already gone from Entities
+        // and its place reads as empty on the same pass that removed it.
+        Spawns.Tick(deltaTime, currentTime, ct);
         EncounterMan.Tick(deltaTime, currentTime, ct);
         Abilities.Tick(deltaTime, currentTime, ct);
         WeaponSim.Tick(deltaTime, currentTime, ct);

@@ -47,7 +47,7 @@ anything died, which is what M5 and M7 both need.
 | Leashed steering and ground clamping | same, plus `CharacterEntity.SetPosition` |
 | Server-side attack entry point | [WeaponSim](../../UdpHosts/GameServer/Systems/WeaponSim), [ProjectileSim](../../UdpHosts/GameServer/Systems/ProjectileSim), `AbilitySystem.HandleActivateAbility` |
 | Death notification other systems can subscribe to | `CharacterEntity.Die`, [EventBus](../../UdpHosts/GameServer/Systems/SystemEvents) |
-| Spawn groups worth fighting, replacing the hardcoded debug row of monsters | [EntityManager.cs](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs) around line 360 |
+| Spawn groups worth fighting, replacing the hardcoded debug row of monsters | new, under [Systems/Spawning](../../UdpHosts/GameServer/Systems/Spawning/), loaded from `EntityManager.SpawnZoneEntities` |
 
 Exit: spawn a hostile monster with `npc`, walk into its range, and it turns, closes, shoots, and
 kills you. Kill it instead and it dies, drops nothing yet, and despawns.
@@ -74,7 +74,10 @@ system) and drives this for every non-player-controlled, alive `CharacterEntity`
 result as `AIEngine.CurrentTargetOf(entityId)` for locomotion and attacking to read once they land.
 
 Detection range and the threat gain/decay/engage numbers are invented — `dbmonster` has no
-perception field to read them from — tracked as [DATA-10](../gaps/data.md#data-10). The aim geometry
+perception field to read them from — tracked as [DATA-10](../gaps/data.md#data-10), where a research
+pass on 2026-08-13 established that retail's numbers ship inline on two thirds of the monster table,
+that the instance rows behind the rest never reached the client, and that PIN's 40m perception is
+wider than any `perceptionDist` in the file. The aim geometry
 and line-of-sight check it shares with the attack pass now live in
 [Sightline.cs](../../UdpHosts/GameServer/Systems/AI/Sightline.cs), because the two have to agree:
 selection deliberately holds a target through a moment of broken sight, so the shot is what has to
@@ -212,15 +215,47 @@ deployable with a real collision id (395, the Battleframe Station) instead of wo
 passes. Worth remembering well beyond this test: every server-side raycast in PIN, including every
 shot a player fires, currently sees an empty world with a few entities floating in it.
 
+**Spawn groups — code complete, not yet seen in game.** Zone 448 comes with thirteen monsters in
+four groups, described in
+[spawn_group.json](../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) and kept
+populated by [SpawnGroupSim](../../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), which
+loads alongside the other world content in `EntityManager.SpawnZoneEntities` and runs its own 1s
+clock. A group is an anchor, a radius, a list of monster types and counts, and a respawn delay; a
+member's place counts as empty once its entity is gone from the shard, so a kill costs the corpse's
+fixed 30 seconds plus the delay. That keeps spawning off `CharacterDiedEvent`, which M5 and M7 are
+the ones that want. The dead faction-test row in `TempSpawnTestEntities` is gone with it; it only
+ever ran with a literal flipped in source, and `npc <id> <x> <y> <z>` does the same job without a
+rebuild.
+
+Retail's placements aren't recoverable, and it's worth being precise about that because the
+neighbouring content files are. `melding.json` matches perimeter names in the client's own
+`system/maps/448.zone`, because the client has to draw a melding wall. Nothing has to draw a
+spawner: the zone file holds terrain, melding perimeters and cinematic paths, and no monster
+placements at all. Retail's spawn tables were server-side, which is also why
+`ActivateSpawnTableCommandDef` and `UpdateSpawnTableCommandDef` are two of
+[DATA-5](../gaps/data.md#data-5)'s empty stubs. So the four groups are PIN's own content
+([DATA-15](../gaps/data.md#data-15)), which the [restoration charter](../Restoration.md) allows.
+
+The one part that isn't a free choice is height. The server holds no terrain, so a Z typed by hand
+is a monster in the air or under the ground, and every anchor is therefore copied off a shipped
+object in zone 448.
+[SpawnScatter](../../UdpHosts/GameServer/Systems/Spawning/SpawnScatter.cs) spreads members over the
+anchor's disc without ever moving one in Z, on a fixed golden-angle layout so a group lays out the
+same every run and a logged position can be matched against one on screen. It's pure and
+unit-tested, and there's a second test that reads the shipped JSON back through the loader, because
+a misspelt key deserialises to a default rather than failing and would otherwise cost a client
+session to find.
+
 ## What's left
 
-The spawn groups, and getting locomotion in front of a client.
+Getting the spawn groups in front of a client. [N14 to N16](../In-Game-Tests/NPC-Combat.md) are the
+entries: that the zone has monsters in it before anyone types a command, that a killed one comes
+back where it was, and that the valley pack is a fight rather than a delivery. N14 is the
+milestone's exit condition and the only entry in the stream that forbids the `npc` command.
 
-Every line of the milestone's exit condition now has code behind it — a hostile monster notices you,
-turns, closes, shoots, and kills you — but the closing half has only been seen as arithmetic.
-[N8–N12](../In-Game-Tests/NPC-Combat.md) are the entries that decide whether it landed: that it
-arrives and stops, that it looks like running rather than sliding, that a short-ranged monster comes
-further in, that it leashes home, and that it stays on the ground when you don't.
+The height guesses are what that sitting is most likely to correct. Anchors sit at heights real
+objects sit at, but nothing has checked that the ground is still there a few metres out, so a
+monster floating or buried is the expected class of failure and the observed offset is the fix.
 
 The ordering across the whole milestone was deliberate. Perception had no in-game exit condition of
 its own, and attacking gave it one without needing anything to move, which is why N1–N7 could check

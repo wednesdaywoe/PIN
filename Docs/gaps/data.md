@@ -110,15 +110,14 @@ suspect if [NET-19](network.md#net-19)'s P0 verification doesn't hold.
 
 <a id="data-10"></a>
 
-### DATA-10 — NPC perception/threat tuning is invented, not sourced from `dbmonster` [ ] open
+### DATA-10 — NPC perception/threat tuning is invented; retail's own numbers ship for a third of the table [ ] open
 
 `dbmonster::Monster` carries `Behavior`/`BehaviorOffensive`/`BehaviorDefensive` name references but
 no numeric perception radius or aggro field, so
 [TargetSelection.cs](../../UdpHosts/GameServer/Systems/AI/TargetSelection.cs) picks its own
 detection range (40m) and threat gain/decay/engage-threshold constants rather than reading them off
 a def. Every monster currently notices, aggros and disengages identically regardless of type. Part
-of [M2](../streams/m2-npc-combat.md); revisit if the named behaviors turn out to carry this data
-somewhere PIN hasn't parsed yet.
+of [M2](../streams/m2-npc-combat.md).
 
 The attack and locomotion passes add more invented numbers of the same kind:
 
@@ -147,12 +146,59 @@ Arch_MedRangedHumanoid_Attack(triggerPullTime=1500,fireRestDuration=1000)
 So retail set standoff per behavior — 4m for a full-body melee, 30m for move-then-fire — along with
 `am1MaxDist`, `am1NavToDist`, facing and turn radius. That is most of this table, shipped.
 
-The catch is that the three monsters the test queue uses (1196, 528, 2342) all have **empty**
-behavior strings and a populated `BehaviorInstanceId` (274, 140, 317) instead; 2658 of 3109 rows are
-the same shape. The instance table is not one of the 575 PIN maps — the SDB stores tables by numeric
-id with no names, so finding it means identifying the table by its column shape. Until then the
-constants above stand. This is now the single highest-value thing that could be read out of the SDB
-for M2, and it is a research pass in its own right rather than a lookup.
+#### The research pass, 2026-08-13: there is no instance table to find
+
+The entry above assumed the strings were reachable for every monster once someone identified the
+table behind `BehaviorInstanceId`. That was the wrong shape of problem. Searching the string content
+of all 575 tables (`MinimalSDB find combatDist`, and again for `Arch_`) returns
+`dbcharacter::Monster` and nothing else, on three columns: `behavior`, `behavior_offensive`,
+`behavior_defensive`. No other table in the file holds a behavior name, and no integer column
+anywhere holds a hash of one, which is what a name-keyed instance table would look like once its own
+column names were stripped. The header says this db was built with the `Client` flag. Behaviour
+trees ran on the server, so the instance rows went to a database PIN doesn't have and can't get.
+
+Two counts in the paragraph above were also wrong, and the corrected ones change what the work is:
+
+| Shape | Rows |
+|-------|------|
+| carries at least one behaviour string | 2100 |
+| carries only a `BehaviorInstanceId` | 695 |
+| carries both | 62 |
+| carries neither | 314 |
+
+So two thirds of the table shipped its parameters inline. What it did not ship is a way to reach the
+other third, and the three monsters the test queue uses (1196, 528, 2342) are all in that third,
+along with 281. That is the whole reason this looked unreachable: every monster anyone had spawned
+by hand was one of the ones with nothing to read.
+
+Parsing the strings that did ship yields, per monster:
+
+| Parameter | Monsters | Values | The constant it would replace |
+|-----------|----------|--------|-------------------------------|
+| `combatDist` | 108 | 0.5 to 50, 22 distinct | 12m standoff |
+| `preferredMinCombatDist` | 42 | 3.5 to 120, 7 distinct | 12m standoff |
+| `perceptionDist` | 67 | 4, 5, 6, 8, 10, 15, 25 | 40m perception |
+| `maxDistFromSpawn` | 13 | 30 and 45 | 50m chase leash |
+| `am1MaxDist` / `am1MinDist` | 23 / 14 | 5 to 150 / 0 to 10 | nothing yet; ability ranges |
+| `wideTurnRadius` | 8 | 3, 5, 10 | nothing yet; NPCs turn instantly |
+| `triggerPullTime` | 301 | 100 to 10000 | nothing yet; see [DATA-14](#data-14) |
+| `fireRestDuration` | 251 | 0 to 9000 | nothing yet; see [DATA-14](#data-14) |
+
+150 monsters carry a standoff distance of one kind or the other.
+
+The perception row is the finding worth acting on independently of the rest. Retail's widest
+`perceptionDist` in the whole file is 25m and its most common values are 10 and 15, against PIN's
+flat 40m. Every NPC in the game currently notices you from at least 1.6 times as far as the furthest-
+seeing monster retail shipped, and from four times as far as the most common one. `maxDistFromSpawn`
+says the same about the chase leash, at 30 to 45 against PIN's 50.
+
+None of that is a lookup PIN can just wire up, because a parser has to exist first and 959 rows would
+still fall through it. What the numbers do settle is what the fallbacks should be: a default taken
+from the distribution of what shipped is defensible in a way that 40m is not.
+
+`triggerPullTime` and `fireRestDuration` are the two most widely populated parameters in the whole
+set, and they describe exactly the pause [DATA-14](#data-14) says is missing from NPC cadence. That
+is a second lead out of the same strings and it covers 301 monsters, not 150.
 
 The leash and the cap were added after [N4](../In-Game-Tests/NPC-Combat.md) ran, and are worth
 separating from the rest: they are invented numbers, but they exist to fix a genuine defect rather
@@ -169,9 +215,11 @@ Only 124 need a stand-in, and even that is the table's own most common value (6 
 guess. What this does mean is that reading -1 as a speed would have every one of them walking
 backwards, which is [DATA-11](#data-11) again with a different sentinel.
 
-None of the invented numbers are confirmed against anything. N4 checks that disengagement behaves
-like a radius, not that 60m is the radius Firefall used, and [N8 and
-N11](../In-Game-Tests/NPC-Combat.md) will check the same way for the standoff and the chase leash.
+None of the invented numbers are confirmed against anything, and [N1 to
+N13](../In-Game-Tests/NPC-Combat.md) passing doesn't change that. Those entries check that
+disengagement behaves like a radius, that a monster stops short and that it walks home. They can't
+check that 60m, 12m and 50m are the numbers Firefall used, and the table above now says two of the
+three aren't.
 
 <a id="data-11"></a>
 
@@ -290,3 +338,44 @@ Nothing needs this to close the slice, and the fix is a clip counter plus a relo
 `NpcCombat`, not new data. Recorded because the numbers are live and wrong today, and because
 [Session Setup](../In-Game-Tests/Session-Setup.md) now recommends monsters by dps, which is a
 recommendation this defect can poison.
+
+<a id="data-15"></a>
+
+### DATA-15 — Spawn group placements are PIN's own content, not retail's [ ] open, by necessity
+
+[spawn_group.json](../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) says where zone
+448's standing monsters are, what they are and how fast they come back. Every one of those decisions
+is PIN's. Retail kept placements in server-side spawn tables, and the two server-side aptitude
+commands that drove them, `ActivateSpawnTableCommandDef` and `UpdateSpawnTableCommandDef`, are both
+in the empty-stub pile [DATA-5](#data-5) counts.
+
+It is worth being clear about how thoroughly this one is unrecoverable, because the neighbouring
+files are not. `deployable.json`, `melding.json` and `outpost.json` are all recovered content:
+melding perimeters carry the same names the client's own `system/maps/448.zone` uses, because the
+client has to draw them. Nothing has to draw a spawner. The zone file holds terrain, melding
+perimeters, cinematic camera paths and dropship scripting, and no monster placements at all, which
+is the same wall [DATA-10](#data-10) hit from the other side.
+
+So the four groups are authored, and the [restoration charter](../Restoration.md) is what makes that
+acceptable rather than a shortfall: the goal is the loop working on 1962, not a survey of where
+Red 5 put things.
+
+What is still worth writing down is which parts are guesses and which aren't:
+
+- **Anchors are real positions.** Each group's anchor is copied off a shipped object in zone 448,
+  so its height is a height something actually sat at. That matters more than it sounds, because the
+  server holds no terrain to sample and any Z typed by hand is a monster in the air or under the
+  ground. [SpawnScatter](../../UdpHosts/GameServer/Systems/Spawning/SpawnScatter.cs) never moves a
+  member in Z for the same reason, and the radii are small so that spreading in X and Y stays on
+  ground the anchor vouches for.
+- **Which monsters are chosen** is a test-queue decision, not a content one. 1196, 528 and 2342 are
+  the three [N1 to N13](../In-Game-Tests/NPC-Combat.md) ran against, so they are the three known to
+  resolve a working weapon and read as hostile to faction 1.
+- **Respawn delays (60 to 120s) and pack sizes (2 to 6) are invented outright.** Nothing anywhere
+  suggests what retail used.
+
+The delay is also measured from the corpse despawning rather than from the kill, which adds
+`CharacterEntity.Die`'s fixed 30s to all of them. That is an implementation choice in
+[SpawnGroupSim](../../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), made to keep spawning
+off `CharacterDiedEvent` while M5 and M7 are the ones that want it, and it is worth remembering
+before anyone tunes the numbers by feel.

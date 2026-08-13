@@ -14,7 +14,14 @@ its own content, so the client's data is the source of truth and most "add conte
 
 Custom data covers two cases: server-only command definitions that were never in the client DB
 (`aptgss_*.json`, where the `ags*` prefix marks server-side aptitude commands), and hand-authored
-world content (`outpost.json`, `deployable.json`, `melding.json`, `lgv_race.json`).
+world content (`outpost.json`, `deployable.json`, `melding.json`, `lgv_race.json`,
+`spawn_group.json`).
+
+Those world files differ in where they came from, which matters when you're deciding how much to
+trust one. Most are recovered: melding perimeters carry the same names the client's own
+`system/maps/448.zone` uses. `spawn_group.json` is not. Retail's monster placements lived in
+server-side spawn tables and appear in neither the client db nor the zone file, so its contents are
+PIN's own ([DATA-15](../gaps/data.md#data-15)).
 
 Both are static classes initialised once in the `GameServer` constructor before any client can
 connect, which is why they're reachable from anywhere without injection.

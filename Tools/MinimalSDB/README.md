@@ -1,7 +1,7 @@
 # MinimalSDB
 
-Three things you can do to a `clientdb.sd2`: shrink it, find out what's actually in it, or check
-that its references still point at anything.
+Four things you can do to a `clientdb.sd2`: shrink it, find out what's actually in it, search it for
+a string, or check that its references still point at anything.
 
 Both modes read `config.json` from the working directory or next to the binary. Copy
 `config.example.json` and point `input` at the real client db.
@@ -58,6 +58,43 @@ type resistance and the range decay inputs. Override it in `config.json`:
 
 An empty column list prints row count and a column type histogram, which is enough to tell whether
 a table is worth pursuing.
+
+## find
+
+```
+MinimalSDB find combatDist
+```
+
+`dump` can only ask about a table you can already name, and names aren't in the file. `find` goes
+the other way: it reads every string column of all 575 tables and reports the ones containing a
+substring you know the data must have. That's the only way into a table nobody has identified yet.
+
+Each hit prints the table (by loader name where PIN maps it, by numeric id where it doesn't), its
+size, the matching column, how many rows matched, and a few distinct values:
+
+```
+dbcharacter::Monster
+  3109 rows, 68 columns; col 43 matches 76 row(s), 44 distinct
+    Arch_FullbodyMelee_Attack(combatDist=2,makesWideTurns=true,wideTurnRadius=5)
+```
+
+Several needles at once, either on the command line or from `config.json`:
+
+```json
+"find": {
+  "samples": 3,
+  "needles": ["combatDist", "perceptionDist"]
+}
+```
+
+Matching is case-insensitive substring, and the exit code is 0 whether or not anything matched. **No
+match is a result, not a failure.** It says the string never shipped in this db, which is often the
+question worth asking: [DATA-10](../../Docs/gaps/data.md#data-10) established that Firefall's NPC
+behaviour parameters live on `dbcharacter::Monster` and nowhere else by searching for `Arch_` and
+getting exactly one table back. No amount of guessing at table names could have produced that.
+
+The header line is worth reading here too. It reports how many of the file's tables the loader names
+(239 of 575 today), which bounds how much of the file `dump` and `joins` can even reach.
 
 ## joins
 

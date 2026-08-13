@@ -902,6 +902,13 @@ public class CustomDBLoader
                .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
     }
 
+    public Dictionary<uint, Dictionary<uint, SpawnGroup>> LoadSpawnGroup()
+    {
+        return LoadJSON<SpawnGroup>("./StaticDB/CustomData/spawn_group.json")
+               .GroupBy(row => row.ZoneId)
+               .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
+    }
+
     public Dictionary<uint, Dictionary<uint, LgvRaceDef>> LoadLgvRace()
     {
         return LoadJSON<LgvRaceDef>("./StaticDB/CustomData/lgv_race.json")

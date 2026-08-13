@@ -361,24 +361,12 @@ public class EntityManager
         // Checkerboard, Harvester/Crash Down
         if (_shard.ZoneId == 12 || _shard.ZoneId == 1003)
         {
-            bool vehicleTest = true;
-            bool factionTest = false;
-            if (vehicleTest)
-            {
-                var owner = SpawnCharacter(2312, new Vector3(1.5f, 3f, 0f));
-                SpawnVehicle(116, new Vector3(-1.5f, 3f, 0f), Quaternion.Identity, owner, false);
-                SpawnVehicle(201, new Vector3(-5.5f, 9f, 0f), Quaternion.Identity, owner, false);
-            }
-
-            if (factionTest)
-            {
-                SpawnCharacter(290, new Vector3(1.5f, 15f, 0f)); // Accord Assault (1)
-                SpawnCharacter(1196, new Vector3(3.5f, 15f, 0f)); // Chosen Fiend (2)
-                SpawnCharacter(528, new Vector3(5.5f, 15f, 0f)); // Melded Aranha (6)
-                SpawnCharacter(2342, new Vector3(7.5f, 15f, 0f)); // Aranha (7)
-                SpawnCharacter(2407, new Vector3(9.5f, 15f, 0f)); // Tanken Saboteur (17)
-                SpawnCharacter(1304, new Vector3(11.5f, 15f, 0f)); // Black Hills Bandit (22)
-            }
+            // The row of one-monster-per-faction that used to sit here is gone. It only ever ran with a
+            // literal flipped in source, and `npc <id> <x> <y> <z>` puts any of those six in front of you
+            // without a rebuild. Monsters that are part of the world now come from spawn_group.json.
+            var owner = SpawnCharacter(2312, new Vector3(1.5f, 3f, 0f));
+            SpawnVehicle(116, new Vector3(-1.5f, 3f, 0f), Quaternion.Identity, owner, false);
+            SpawnVehicle(201, new Vector3(-5.5f, 9f, 0f), Quaternion.Identity, owner, false);
         }
     }
 
@@ -413,6 +401,9 @@ public class EntityManager
             var outpost = entry.Value;
             SpawnOutpost(outpost);
         }
+
+        // Monsters. Owned by SpawnGroupSim from here on, because it also has to put them back.
+        _shard.Spawns.Load(zoneId);
 
         // Testing
         TempSpawnTestEntities();

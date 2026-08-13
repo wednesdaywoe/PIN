@@ -28,6 +28,7 @@ loop:
       AI.Tick()             perception, target selection, NPC weapon fire, >= 50ms apart
       Physics.Tick()        accumulator, steps Bepu at 50ms
       EntityMan.Tick()      zone spawn, scope in/out, change flush, lifetimes
+      Spawns.Tick()         refills emptied spawn group places, >= 1000ms apart
       EncounterMan.Tick()
       Abilities.Tick()      duration/update chains, >= 20ms apart
       WeaponSim.Tick()      spread recovery, >= 50ms apart

@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 2 of 14 closed
+[Full detail](gaps/data.md) — 2 of 15 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -50,8 +50,10 @@ baseline the next pass diffs against.
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)
 - [~] **DATA-9** — Two web endpoints return invented or hardcoded-stub character data
-- [ ] **DATA-10** — NPC perception range and threat gain/decay/engage tuning are invented, not read
-  from `dbmonster` (no such field exists there)
+- [ ] **DATA-10** — NPC perception, standoff and leash tuning are invented. Researched 2026-08-13:
+  retail's numbers ship inline on 2100 of 3109 `dbmonster` rows, the instance table behind the other
+  695 never shipped to the client at all, and PIN's 40m perception is wider than every
+  `perceptionDist` in the file
 - [x] **DATA-11** — A zero in a `WeaponTemplateModifiers` multiplier column was read literally and
   annihilated the stat, resolving 269 weapons to no range and 220 to no damage; found by
   [N2/N6](In-Game-Tests/NPC-Combat.md), fixed 2026-08-12
@@ -62,6 +64,9 @@ baseline the next pass diffs against.
   confirmed zone 448 uses at least two of them
 - [ ] **DATA-14** — No ammo or reload model, so an NPC weapon with a small clip fires continuously
   and its damage comes out inflated — monster 281's sniper reads 2000 dps against a real ~450
+- [ ] **DATA-15** — Zone 448's spawn group placements, pack sizes and respawn delays are PIN's own
+  content; retail's spawn tables were server-side and nothing in the client db or the zone file
+  holds a monster placement. Open by necessity, not pending work
 
 ## Networking & Protocol — NET
 
