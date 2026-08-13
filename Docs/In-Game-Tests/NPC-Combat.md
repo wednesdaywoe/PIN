@@ -77,14 +77,15 @@ written.
 Pass: the NPC opens fire, the damage lines name the monster as the attacker, and hits show
 client-side. Shields absorb first, exactly as they do from any other source.
 
-**Read this off the log, not the health bar.** The Chosen's rifle does 1 damage a round, twice every
-175ms — about 11 dps, which is the real shipped number and not a bug. Against the 3000-shield
-stand-in from [DATA-1](../gaps/data.md#data-1) that's four and a half minutes before health moves at
-all, and continuous fire keeps resetting the recharge delay so the bar just sits there. A working
-attack pass and a broken one look identical on screen; the `damage from` lines are the difference.
-Of the four hostile ids in [Session Setup](Session-Setup.md), 1304 carries the same 1-damage rifle,
-528 does 39 dps but only reaches 5m, and 2342 does 125 a hit every 3.35s at 50m — that last one is
-the fastest way to watch a health bar actually move.
+**Read this off the log, not the health bar.** The Chosen's rifle does 1 damage a round, and the
+template asks for two rounds every 175ms. `AttackWindow`'s 250ms floor slows that to **8 rounds a
+second, so 8 dps** — counted straight off a 2026-08-12 log, which runs exactly 8 `damage from` lines
+per second for 190 lines. (The template rate would be 11.4; the floor is why it isn't. Both numbers
+are real, 8 is the one that lands.) Against the 3000-shield stand-in from
+[DATA-1](../gaps/data.md#data-1) that's six minutes before health moves at all, and continuous fire
+keeps resetting the recharge delay so the bar just sits there. A working attack pass and a broken one
+look identical on screen; the `damage from` lines are the difference. See
+[Session Setup](Session-Setup.md) for what to spawn instead when the point is to watch something die.
 
 If it opens fire and nothing lands, the shot is going out but missing — check whether the rounds are
 leaving from a sensible place by re-reading N1's facing result first, since the muzzle position is

@@ -110,6 +110,13 @@ Ammo, clips and reloading aren't modelled — an NPC fires forever. Nothing pace
 the AI tick, so a burst can't stack several rounds onto one timestamp and fire them all down the same
 line.
 
+That turns out to be more than a fairness problem, recorded later as
+[DATA-14](../gaps/data.md#data-14): for a weapon whose cycle is shorter than its reload, the missing
+pause *is* most of its real cadence. Monster 281's sniper carries a one-round clip and a second-long
+reload, so PIN fires it four times a second and it does 2000 dps where retail's was about 450. The
+error is invisible on the sustained-fire weapons the test queue has used and enormous on the one-shot
+ones, which are exactly the ids someone reaches for when a fight is taking too long.
+
 Also found by building this, and the more consequential bug of the two:
 [DATA-11](../gaps/data.md#data-11). Weapon resolution multiplied by a `WeaponTemplateModifiers`
 multiplier of 0 instead of reading it as "unset", which zeroed the range of 269 weapons and the

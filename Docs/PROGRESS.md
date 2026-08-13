@@ -32,22 +32,41 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M2: NPCs that fight back.** M1 closed 2026-08-11 — all three combat-model questions (faction
-stance encoding, range decay curve, whether shields shipped live) answered at the client in one
-afternoon, none of them needing the model rewritten. The sessions since then chased a client-side
-blocker instead of M2: an intermittent world-entry freeze that survived four rounds of live
-debugging (T4–T8) before being localized to a lost wakeup in Wine's fsync path and closed with a
-launch-option workaround (T9, `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over four
-consecutive sessions — tracked as [CLIENT-1](gaps/client.md) pending further confirmation, per the
-commit's own "until proven otherwise"). With that infra blocker out of the way, M2 is underway:
-perception and target selection (threat table, hostility + line-of-sight scoring) is code complete
-under [Systems/AI](../UdpHosts/GameServer/Systems/AI/), unit-tested, and driven from
-[AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick; death
-notification also now fires (`CharacterEntity.Die` publishes `CharacterDiedEvent`, nothing
-subscribes yet). Nothing moves or shoots yet, so there's nothing to see in game from either piece
-alone — locomotion is next. See [streams/m2-npc-combat.md](streams/m2-npc-combat.md). While waiting
-on client access, the first two cuts of **M3** also landed (code complete, not yet seen in game) —
-see [streams/m3-resource-payout.md](streams/m3-resource-payout.md).
+**M2: NPCs that fight back — three of five pieces in, and two of them confirmed against a real
+client.** Perception and target selection, the attack pass and death notification are all built
+under [Systems/AI](../UdpHosts/GameServer/Systems/AI/) and driven from
+[AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick.
+[N1–N7](In-Game-Tests/NPC-Combat.md) ran on 2026-08-12 and all pass: an NPC notices you, turns to
+face you, respects cover, opens fire, damages you, disengages when you leave, and dies mid-burst
+without leaving a corpse stuck firing. Death notification is the exception, and only because it has
+nothing to show — `CharacterEntity.Die` publishes `CharacterDiedEvent` onto the `EventBus` and
+nothing subscribes yet; M5 and M7 are what give it a listener.
+
+Building it paid for itself twice over. [DATA-11](ISSUE-REGISTER.md) — a `WeaponTemplateModifiers`
+multiplier of 0 read literally instead of as "unset" — had been zeroing the range of 269 weapons and
+the damage of 220 in every weapon the server ever resolved, player and NPC alike, and surfaced only
+because an NPC picks its weapon out of `dbmonster` rather than choosing one that works. A crash in
+the tail of one session log closed [NET-21](ISSUE-REGISTER.md).
+
+**What's left in M2 is locomotion and the spawn groups.** The exit condition is met except for
+"closes": a monster notices you and kills you where it stands, but won't follow you out of its own
+weapon range. Locomotion is the piece that needs several trips to the game machine, and it's worth
+starting with a target selection that has already been seen picking the right thing. See
+[streams/m2-npc-combat.md](streams/m2-npc-combat.md).
+
+Two things landed alongside the milestone. **Environmental damage** went in on 2026-08-12 — deep
+water and melding walls both kill now, through
+[HazardSim](../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs) — and permanent player
+invulnerability came out with it, replaced by an `invuln` command. [E1, E2 and
+E6](In-Game-Tests/Environment.md) passed the same night: drowning reproduces retail effect 789's
+compounding curve tick for tick in the log, and `invuln` suppresses the damage while the hazard
+reading keeps running. The three melding entries have not run, and E3 — which side of a perimeter is
+the lethal one — gates the rest of them. Earlier, while waiting on client access, the first two cuts
+of **M3** landed (code complete, not yet seen in game) — see
+[streams/m3-resource-payout.md](streams/m3-resource-payout.md).
+
+Sessions are still launched with the `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1` workaround for the
+world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmation).
 
 ---
 
@@ -60,12 +79,14 @@ see [streams/m3-resource-payout.md](streams/m3-resource-payout.md).
 - [x] `Battleframe` shield data confirmed absent from build 1962
 - [x] Placeholders replaced with shipped values, remaining divergence written down
 
-[Full detail](streams/m2-npc-combat.md) — 0 of 5 done
+[Full detail](streams/m2-npc-combat.md) — 2 of 5 done
 
-- [ ] Threat table, target selection, line of sight
+- [x] Threat table, target selection, line of sight (N1, N4, N7)
 - [ ] Leashed steering and ground clamping
-- [ ] Server-side attack entry point (abilities preferred, weapon fire as fallback)
-- [ ] Death notification other systems can subscribe to
+- [x] Server-side attack entry point — weapon fire, since `dbmonster` names no abilities to prefer
+  (N2, N3, N5, N6)
+- [~] Death notification other systems can subscribe to — published, nothing subscribes yet, so
+  nothing in game shows it
 - [ ] Spawn groups worth fighting, replacing the hardcoded debug row
 
 [Full detail](streams/m3-resource-payout.md) — 0 of 3 done

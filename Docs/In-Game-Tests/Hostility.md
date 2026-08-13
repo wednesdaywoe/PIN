@@ -120,10 +120,11 @@ landing one at a time — `Fallback took 1 damage from CharacterEntity (...), 1 
 shields and 19192 health left`, then 2641, then 2640.
 
 **The character looked invulnerable and isn't.** Standing in front of a Chosen Fiend, nothing
-visible happens, and the arithmetic is why: its rifle does 1 damage a round at about 11 dps, against
-3000 shields ([DATA-1](../gaps/data.md#data-1)'s stand-in) and 19192 health. That is roughly four
-and a half minutes to strip the shields and half an hour to finish the job. Use `2342` (125 a hit)
-if the point is to watch something die.
+visible happens, and the arithmetic is why: its rifle does 1 damage a round at 8 rounds a second —
+8 dps, measured off the log — against 3000 shields ([DATA-1](../gaps/data.md#data-1)'s stand-in) and
+19192 health. That is six minutes to strip the shields and three quarters of an hour to finish the
+job. See [Session Setup](Session-Setup.md) for what to spawn when the point is to watch something
+die.
 
 Walking into a melding wall or deep water doing nothing was a different thing entirely, and not a
 damage-routing failure: at the time **there was no environmental damage in the server at all** —

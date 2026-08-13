@@ -228,3 +228,31 @@ reason. What it costs is that if 448 has any non-standard water, it currently be
 
 `HazardSim` logs each distinct nibble the first time it sees one, which is what a real mapping would
 have to be built from; [E1](../In-Game-Tests/Environment.md) is the entry that collects them.
+
+<a id="data-14"></a>
+
+### DATA-14 — No ammo or reload model, so small-clip NPC weapons fire at an inflated rate [ ] open
+
+[AttackWindow](../../UdpHosts/GameServer/Systems/AI/AttackWindow.cs) paces an NPC from `MsPerBurst`,
+`MsBurstDuration` and `RoundsPerBurst` and stops there. `BaseClipSize`, `ReloadTime` and
+`ReloadPenalty` are resolved onto the same `WeaponTemplateResult` and read by nothing, so an NPC
+never runs a clip dry and never pauses to reload.
+
+"An NPC fires forever" was recorded when the attack pass landed and read as a fairness problem. It
+isn't only that. For any weapon whose cycle is shorter than its reload, the missing pause is most of
+the weapon's real cadence, and dropping it multiplies its damage output:
+
+| Monster | Weapon | dmg/round | clip | reload | PIN | retail, with the reload |
+|---------|--------|-----------|------|--------|-----|-------------------------|
+| 281 Chosen Sniper | 77049 NPC Charge Sniper Rifle | 500 | 1 | 1000ms | 4 shots/sec, 2000 dps | ~1 shot/sec, ~450 dps |
+| 1375 Chosen Gatling Gunner | 87382 Heavy Laser MG | 20 | 500 | 2000ms | 80 dps | ~80 dps, barely affected |
+
+The error scales with how small the clip is, so it is invisible on the sustained-fire weapons the
+test queue has used so far — 1196 carries 54 rounds, 2342 carries 9600 — and enormous on the
+one-shot ones. That is the trap: the ids most tempting to reach for when a fight needs to be shorter
+are exactly the ids whose numbers are made up.
+
+Nothing needs this to close the slice, and the fix is a clip counter plus a reload gate in
+`NpcCombat`, not new data. Recorded because the numbers are live and wrong today, and because
+[Session Setup](../In-Game-Tests/Session-Setup.md) now recommends monsters by dps, which is a
+recommendation this defect can poison.

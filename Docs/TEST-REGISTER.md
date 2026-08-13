@@ -19,15 +19,23 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**Environmental damage is queued and unrun — E1–E7, and E3 gates the rest.** Deep water and melding
-walls can now kill you, which closes the "my character is invulnerable" reading that came out of
-[H5](In-Game-Tests/Hostility.md). Drowning is read from real data on both sides: the client reports
-its own submersion and the rates come out of status effects 787 and 789. The melding is not — where
-the wall is comes from the control points the client draws, but which side of it is lethal is
-inferred from their winding, and the damage rate is invented ([DATA-12](ISSUE-REGISTER.md),
-[DATA-13](ISSUE-REGISTER.md)). **E3 is the entry that has to run first**, because a backwards reading
-would make the safe world lethal; it is written to run with `invuln` on so it costs nothing to be
-wrong.
+**Environmental damage: the water half passes, the melding half hasn't run.** E1, E2 and E6 went
+green on 2026-08-12. Drowning reproduces effect 789's compounding curve tick for tick in the log, and
+`invuln` suppresses damage while the hazard reading keeps running, which is what makes the melding
+entries safe to attempt. Between them they closed the "my character is invulnerable" reading from
+[H5](In-Game-Tests/Hostility.md).
+
+E1 also found what it was watching for: **zone 448 uses at least two water descriptions**, not one,
+so [DATA-13](ISSUE-REGISTER.md)'s assumption is load-bearing rather than theoretical.
+
+**E3 is what's left and it gates E4.** Where a melding wall is comes from the control points the
+client draws, but which side of it is lethal is inferred from their winding, and the damage rate is
+invented ([DATA-12](ISSUE-REGISTER.md)). A backwards reading would make the safe world lethal. Run it
+with `invuln` on.
+
+The same session produced [DATA-14](ISSUE-REGISTER.md) off a side question about why a spawned
+monster wasn't hurting anyone: 1196 really does 8 dps, and the ids that hit harder are mostly ones
+whose damage PIN inflates because it doesn't model reloading.
 
 **NPC Combat is complete, 7 of 7, and it paid for itself several times over.** N1–N7 ran on
 2026-08-12 and four of them failed first time. N2 and N6 failing *differently* — one monster with no
@@ -86,10 +94,11 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   by running V6
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
-- [ ] [Environmental Damage](In-Game-Tests/Environment.md) — 0 of 7 passing, not yet run. Drowning
-  and melding walls, the first damage in the server that doesn't come from something pulling a
-  trigger. E3 confirms which side of a melding perimeter is the lethal one and should be run before
-  E4; E1 is also where the water coordinates for E2 come from, since the server holds no water map
+- [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and
+  matches retail's own curve; `invuln` suppresses damage without stopping the hazard reading. The
+  three melding entries are untouched, and E3 — which side of a perimeter is the lethal one — has to
+  run before E4. E5 is half-evidenced: the damage stopped on surfacing, but the second dive of that
+  session ran with `invuln` on, so the ramp reset was never seen
 
 ## Client prediction
 

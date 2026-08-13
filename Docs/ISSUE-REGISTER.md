@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 2 of 13 closed
+[Full detail](gaps/data.md) — 2 of 14 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -58,7 +58,10 @@ baseline the next pass diffs against.
 - [ ] **DATA-12** — Melding wall damage rate is invented; no melding-wall effect survives in the
   client db to read one from, unlike drowning's 787/789
 - [ ] **DATA-13** — The water description nibble indexes per-zone map data the server doesn't have,
-  so every body of water is read as the standard row 10001
+  so every body of water is read as the standard row 10001; [E1](In-Game-Tests/Environment.md)
+  confirmed zone 448 uses at least two of them
+- [ ] **DATA-14** — No ammo or reload model, so an NPC weapon with a small clip fires continuously
+  and its damage comes out inflated — monster 281's sniper reads 2000 dps against a real ~450
 
 ## Networking & Protocol — NET
 

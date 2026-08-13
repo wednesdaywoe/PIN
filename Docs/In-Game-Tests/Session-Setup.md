@@ -40,7 +40,7 @@ Every login is the same character. `NetworkPlayer.Init` asks the RIN for charact
 nothing answers, and it falls back to `HardcodedCharacterData.FallbackData` — so the fallback isn't a
 fallback in practice, it's the character.
 
-It is female as of 2026-08-13. Gender alone does most of that: `ApplyLoadout` picks the frame's
+It is female as of 2026-08-12. Gender alone does most of that: `ApplyLoadout` picks the frame's
 visual record out of `dbitems::BattleframeVisuals` by matching the row's gender char, so the body
 model follows the field. Everything hanging off the body doesn't, and was changed with it — head
 10002 is `sex = M` in `dbcharacter::Head`, voice set 1000 is `sex = 0`, and head accessories 10089
@@ -114,6 +114,32 @@ choice for a hostility check and a fine one for a damage check.
 | 356 | Aero | 1, accord | Friendly, same faction as the player |
 | 2407 | Tanken Saboteur | 17, Tanken | Neutral, no relation row |
 | 2312 | unnamed, owns the debug vehicles | 17, Tanken | Neutral, no relation row |
+
+### How hard they actually hit
+
+Resolved through `SDBUtils.GetDetailedWeaponInfo` and `AttackWindow` on each monster's `Weapon1Id`,
+so this is what PIN will really fire, not what the template asks for. A player has 3000 shields and
+19192 health — 22192 to chew through — which is why the default picks feel like nothing.
+
+| Type id | Monster | Damage / round | Rounds / burst | Burst | Reach | dps | Time to kill a player |
+|---------|---------|---------------|----------------|-------|-------|-----|-----------------------|
+| 1196 | Chosen Fiend | 1 | 2 | 250ms | 180m | 8 | 46 min |
+| 1304 | Black Hills Bandit | 1 | 2 | 250ms | 180m | 8 | 46 min |
+| 2342 | Aranha | 125 | 1 | 3350ms | 50m | 37 | 10 min |
+| 528 | Melded Aranha | 49 | 1 | 1280ms | 5m | 38 | 10 min |
+| 1375 | Chosen Gatling Gunner | 20 | 1 | 250ms | 230m | 80 | 4.6 min |
+| 2407 | Tanken Saboteur | 232 | 1 | 2500ms | 150m | 93 | 4 min — but Neutral, so it won't start |
+
+**1196's 8 dps is the real shipped number**, measured off a 2026-08-12 log at exactly 8
+`damage from` lines a second. Firefall's monsters weren't meant to kill a level 45 frame alone;
+spawn several, or use `1375`, which is the hardest-hitting id here that is both hostile and ranged.
+
+**Don't reach past that for something faster without checking its clip.** PIN doesn't model ammo or
+reloading, so a weapon that shipped with a one-round clip fires continuously instead of once per
+reload, and its damage comes out wildly inflated — [DATA-14](../gaps/data.md#data-14). Monster 281
+(Chosen Sniper) is the clean example: 500 damage a round, `clip = 1`, `reload = 1000ms`, so retail
+gave it about 450 dps and PIN gives it 2000. It will kill you in eleven seconds, and none of that is
+a real number. Prefer ids with a large clip — 1375 carries 500 rounds, 2342 carries 9600.
 
 Any of the four Hostile ids work for a check that needs a hostile target. For a wider pick, the
 factions hostile to players are 2 chosen, 5 monster, 6 melding, 7 gaea, 8 bandit, 22 Black Hills

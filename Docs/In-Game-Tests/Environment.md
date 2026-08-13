@@ -58,7 +58,10 @@ Two commands do most of the work here. Both are new:
 | `hazard` | `env` | prints your water level, the nearest melding wall, its distance, and which side you're on |
 | `invuln [on\|off]` | `god` | no argument toggles; applies to the current target if there is one, otherwise to you |
 
-## [ ] E1: The client's water level reaches the server
+**E1, E2 and E6 passed on the first sitting, 2026-08-12.** The melding half (E3, E4, E7) has not run
+yet, so nothing about the side convention is confirmed. E5 is half-evidenced — see the note there.
+
+## [x] E1: The client's water level reaches the server
 
 The reading everything about drowning rests on. Cheap, and worth doing first because it needs no
 damage to land.
@@ -84,7 +87,25 @@ read as row 10001 — drown at 0.735 of your height, die at 1.0. The 2016 captur
 nibble 0. If a different one turns up in play, that log line is what a real mapping would be built
 from.
 
-## [ ] E2: Deep water drowns you
+**Passed 2026-08-12, and it found the thing it was watching for.** The level tracks wading and the
+whole 0–15 range is live; the readings in that session ran 9, 13 and 15. More usefully, **two
+description nibbles turned up in zone 448, not one**:
+
+```
+[23:02:18 DBG] Water description nibble 0 seen for the first time; every nibble is read as WaterDesc 10001
+[23:04:52 DBG] Water description nibble 2 seen for the first time; every nibble is read as WaterDesc 10001
+```
+
+So the zone has at least two water bodies with different descriptions, and the assumption in
+[DATA-13](../gaps/data.md#data-13) is doing real work rather than covering a case that never
+happens. If nibble 2 indexes the six rows in id order it would be row 10003, which starts drowning
+at 0.0845 and killing at 0.328 — knee deep. That is a guess about the indexing and not a reason to
+act, but it is the reason not to resolve the nibble on a hunch. Nobody drowned in the shallows,
+which is the assumption behaving correctly, not evidence that the water was ordinary.
+
+The position wasn't recorded, so E2 still has no fixed coordinates.
+
+## [x] E2: Deep water drowns you
 
 1. `invuln off`
 2. Swim out to where you are in over your head, from the position E1 found
@@ -100,10 +121,26 @@ Two rates, both from retail:
   effect 787. About 58 seconds through 3000 shields and 19192 health, so this is slow enough to swim
   out of on purpose, which is the point of it.
 - **Dying** (fully submerged, level 15 of 15) is 2% every 500ms and the rate is multiplied by 1.05
-  after every tick — effect 789. That accelerates to about 14 seconds. Whether the client will
-  actually report level 15 rather than stopping at 14 is unconfirmed; if `hazard` never shows 15 in
-  water you clearly cannot breathe in, say so here, because it means the top of the scale isn't
-  reachable and `dying_percent` of 1.0 needs re-reading.
+  after every tick — effect 789. That accelerates to about 14 seconds.
+
+**Passed 2026-08-12, and the compounding is visible in the log a tick at a time:**
+
+```
+[23:04:57 DBG] Fallback water hazard None -> Dying at depth 1.00 (level 15/15)
+[23:05:00 DBG] Fallback took 514 damage from null, 389 of it on shields, 0 shields and 19067 health left
+[23:05:00 DBG] Fallback took 540 damage from null, 0 of it on shields, 0 shields and 18527 health left
+[23:05:01 DBG] Fallback took 567 damage from null, ...
+                          ... 595, 625, 656, 689, 724, 760, 798, 838, 880 ...
+[23:05:06 DBG] Fallback water hazard Dying -> None at depth 0.60 (level 9/15)
+```
+
+Every step is exactly ×1.05 of the last and they land 500ms apart, which is effect 789's curve
+reproduced. Eighteen ticks took 3000 shields and 7800 health in about nine seconds; a couple more and
+it would have been a kill. Both thresholds behaved: a later dive read `None -> Drowning` at level 13
+and `Drowning -> Dying` at 15.
+
+**Level 15 is reachable**, which the entry used to hedge on — `dying_percent` of 1.0 is a threshold
+the client can actually reach, so the top of the scale needs no re-reading.
 
 ## [ ] E3: The melded side of a wall is the melded side
 
@@ -177,7 +214,12 @@ The same check applies to water, and matters more there because drowning's `Dyin
 surface, breathe, go under again, and the first tick of the second dive should hurt exactly as much
 as the first tick of the first one.
 
-## [ ] E6: `invuln` actually stops everything
+**Half-evidenced by the 2026-08-12 run and still open.** Surfacing stopped the damage inside one
+tick — `Dying -> None at depth 0.60` with no further `damage from null` — but the second dive that
+session happened with `invuln` on, so nothing was taken and the ramp reset was never observed. Redo
+the second dive without it.
+
+## [x] E6: `invuln` actually stops everything
 
 Not just a convenience — it is what makes E3 runnable, so it has to be trustworthy.
 
@@ -189,6 +231,15 @@ Not just a convenience — it is what makes E3 runnable, so it has to be trustwo
 Pass: no health or shield movement at all while it is on, the `entered the melding` line still
 appears (the reading keeps running, only the damage is suppressed), and everything resumes the
 moment it is off.
+
+**Passed 2026-08-12, against water rather than the melding.** `Fallback invulnerability ON` at
+23:05:18, then a dive at 23:05:24 that logged `None -> Drowning` at level 13 and `Drowning -> Dying`
+at 15 with not one `damage from null` line behind it. That is the clause that matters: the hazard
+reading keeps running under `invuln`, only the damage stops, which is what makes E3 safe to run.
+
+Two clauses of this entry are still unevidenced — the melding, because none of the melding entries
+have run, and the NPC half, because the monster in that session was shot before `invuln` went on.
+Neither changes the conclusion but neither has been seen.
 
 ## [ ] E7: NPCs are unaffected, on purpose
 
