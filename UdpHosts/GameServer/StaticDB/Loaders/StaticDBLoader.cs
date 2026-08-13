@@ -1410,6 +1410,32 @@ public class StaticDBLoader : ISDBLoader
             .ToDictionary(row => row.Id);
     }
 
+    public Dictionary<uint, LootTable> LoadLootTable()
+    {
+        return LoadStaticDB<LootTable>("dbitems::LootTable")
+            .ToDictionary(row => row.Id);
+    }
+
+    public Dictionary<uint, List<LootTableItemDist>> LoadLootTableItemDist()
+    {
+        return LoadStaticDB<LootTableItemDist>("dbitems::LootTableItemDist")
+            .GroupBy(row => (uint)row.LootTableId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+    }
+
+    public Dictionary<uint, List<LootTableSubTableDist>> LoadLootTableSubTableDist()
+    {
+        return LoadStaticDB<LootTableSubTableDist>("dbitems::LootTableSubTableDist")
+            .GroupBy(row => (uint)row.LootTableId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+    }
+
+    public Dictionary<uint, ResourceItem> LoadResourceItem()
+    {
+        return LoadStaticDB<ResourceItem>("dbitems::ResourceItem")
+            .ToDictionary(row => row.Id);
+    }
+
     public Dictionary<uint, ZoneRecord> LoadZoneRecord()
     {
         return LoadStaticDB<ZoneRecord>("dbzonemetadata::ZoneRecord")

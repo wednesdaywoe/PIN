@@ -511,3 +511,36 @@ The delay is also measured from the corpse despawning rather than from the kill,
 [SpawnGroupSim](../../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), made to keep spawning
 off `CharacterDiedEvent` while M5 and M7 are the ones that want it, and it is worth remembering
 before anyone tunes the numbers by feel.
+
+<a id="data-16"></a>
+
+### DATA-16 — `roll_mode` is unmapped, so PIN's loot-drop rates are inferred [ ] open
+
+`dbitems::LootTable.roll_mode` decides how a table's entries combine, carries six distinct values
+across 2472 rows, and nothing documents any of them. The client is the only thing that ever
+interpreted the column, and it interpreted it in compiled code.
+
+[LootRoller](../../UdpHosts/GameServer/Systems/Loot/LootRoller.cs) implements two readings, both
+inferred from the arithmetic of the tables themselves rather than from anything that shipped:
+
+- **Mode 2 rolls every entry independently.** "CORE NPC Kill Loot 2 (Small)" carries two subtables at
+  100 and one at 8. Nothing but three separate chances makes sense of that.
+- **Everything else picks at most one entry, weighted.** "Small Crystite Drops (2-20)" is mode 0 and
+  its four rows are 80/10/5/5, summing to exactly 100 — a distribution over one result. Where weights
+  sum below 100 the remainder is nothing, which is how mode 3's "Creature Kill - Small Equipment
+  Drop" (5/4/3/2/1) stays rare.
+
+Modes 1, 4 and 5 fall into the weighted branch untested, because nothing reachable from a zone 448
+monster uses one.
+
+The second guess is the probability scale. Every table on the kill path uses small percentages, and
+the reading is percent. The column reaches 10000 in `LootTableSubTableDist` and 9638 in
+`LootTableItemDist`, so at least one table somewhere is in basis points and will roll at a hundredth
+of its intended rate here.
+
+**What this costs is drop rates, not correctness.** A wrong reading pays too often or too rarely; it
+does not pay the wrong thing, because quantities and item ids come off the rows directly.
+[LootRollerTests](../../Tests/GameServer.Tests/Loot/LootRollerTests.cs) pins the reading so a change
+to it is deliberate, and [K2](../In-Game-Tests/Kill-Rewards.md) — twenty kills counted against an
+expected quarter — is the only measurement available in game. Unlike [DATA-10](#data-10), there is no
+shipped string to recover the answer from: the semantics were never data.

@@ -65,6 +65,10 @@ public interface ISDBLoader
     Dictionary<uint, Blueprints> LoadBlueprints();
     Dictionary<uint, List<Blueprint_Items>> LoadBlueprintItems();
     Dictionary<uint, List<BattleframeVisuals>> LoadBattleframeVisuals();
+    Dictionary<uint, LootTable> LoadLootTable();
+    Dictionary<uint, List<LootTableItemDist>> LoadLootTableItemDist();
+    Dictionary<uint, List<LootTableSubTableDist>> LoadLootTableSubTableDist();
+    Dictionary<uint, ResourceItem> LoadResourceItem();
 
     // dbzonemetadata
     Dictionary<uint, ZoneRecord> LoadZoneRecord();

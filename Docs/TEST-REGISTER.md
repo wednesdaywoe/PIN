@@ -19,6 +19,14 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**[Kill Rewards](In-Game-Tests/Kill-Rewards.md) is the queue's newest stream and nothing in it has
+run.** M5 changed shape the day it started — crystite instead of XP — and the reward figures come
+out of `dbitems::LootTable`, which shipped complete and which PIN had never loaded. The thing to
+carry into the session is the rate: table 25 is reached a quarter of the time, so **three kills in
+four pay nothing and that is correct**. An entry judged on two kills will report a defect that isn't
+there. K2 exists because PIN's reading of `roll_mode` is inferred rather than known, and twenty
+kills is the only measurement anyone can take of it.
+
 **[Resource Payout](In-Game-Tests/Resource-Payout.md) went 3 of 5 on the day it was written,
 2026-08-13, and closed [M3](PROGRESS.md).** A thumper called down at a player's feet ran its full
 cycle and paid 200 crystite, logged as `paying 200 of resource 10 to 1 participant(s)`. Every one of
@@ -217,6 +225,11 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Resources
 
+- [ ] [Kill Rewards](In-Game-Tests/Kill-Rewards.md) — 0 of 5, written 2026-08-13, none run. The
+  check on [M5](PROGRESS.md), which is now crystite rather than XP. **Read the rate before running
+  any of it**: a small creature pays about one kill in four, so a dry kill is the expected case and
+  no entry can be judged on one. K2 is the only check that exists on PIN's reading of `roll_mode`,
+  which is inferred from the tables' arithmetic and nothing else
 - [~] [Resource Payout](In-Game-Tests/Resource-Payout.md) — 3 of 5 passing, all on 2026-08-13.
   **G2 is [M3](PROGRESS.md)'s exit condition and it passed**: a thumper ran its cycle and paid 200
   crystite to one participant. G1 proved a resource count climbs on screen as partial updates

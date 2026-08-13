@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 2 of 15 closed
+[Full detail](gaps/data.md) — 2 of 16 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -71,6 +71,9 @@ baseline the next pass diffs against.
 - [ ] **DATA-15** — Zone 448's spawn group placements, pack sizes and respawn delays are PIN's own
   content; retail's spawn tables were server-side and nothing in the client db or the zone file
   holds a monster placement. Open by necessity, not pending work
+- [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
+  is inferred from the tables' own arithmetic; costs drop rates, not correctness, and
+  [K2](In-Game-Tests/Kill-Rewards.md) is the only measurement available
 
 ## Networking & Protocol — NET
 

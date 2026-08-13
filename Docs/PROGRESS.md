@@ -24,13 +24,42 @@ M1 confirm the combat models                        done
       ├─> M3 resources come out of the ground       done
       │    ├─> M4 where you thump matters           <- open, unblocked
       │    └─> M7 an encounter that plays
-      └─> M5 killing something pays                 <- open, unblocked
+      └─> M5 killing something pays                 <- built, unverified in game
 
 M6 persistence across sessions   wants M3 and M5 landed, so there's something worth saving
 M8 session stability             independent, but "playable" isn't honest without it
 ```
 
 ## Current frontier
+
+**M5 is built and has never been seen in game, and it is not the milestone that was written down.**
+It was XP first, loot second. It is now crystite and no XP at all (decision 2026-08-13,
+user-chosen). Levelling is inert in PIN — level is a hardcoded 45 and power comes entirely from the
+loadout — and the intent is to keep the beta's level-less model rather than build the progression
+system XP would need. The data agreed independently: `dbcharacter::Monster.xp_resource_id` is
+non-zero on 2 of 3109 rows and `xpreward_type` on 12, so nobody ever finished wiring XP to monsters
+either.
+
+**What replaced it is shipped data rather than a constant, which is the part worth knowing.**
+`dbitems::LootTable` carries 2472 rows and `LootTableItemDist` 34159, none of it loaded by PIN until
+now, and the first six tables are named "CORE NPC Kill Loot 1..6 (Tiny/Small/Medium/Large/Giant/
+Boss)". Zone 448's monsters resolve end to end: 528 and 1196 each reach "CORE NPC Kill Loot 2
+(Small) - Crystite/Powerups Subtable" at 100%, that reaches "Small Crystite Drops (2-20)" at 25%,
+and that pays 2–20 crystite across four weighted bands. **So three kills in four pay nothing**, and
+that is retail's rate rather than a bug — the single most important thing to carry into
+[K1–K5](In-Game-Tests/Kill-Rewards.md), because an entry judged on two kills reports a defect that
+isn't there.
+
+`CharacterDiedEvent` finally has a subscriber, its first since M2 landed. What is deliberately not
+built is the item half: the same tables roll powerups and equipment on the same kill, both are items
+rather than resources, and delivering one means answering the drop protocol that
+[I1](In-Game-Tests/Inventory.md) is stuck on. They are rolled, logged and dropped. That is the cut
+M3 made, applied again.
+
+**The one guess is `roll_mode`.** Six values in the column, no documentation, and the client was its
+only reader; PIN implements two readings inferred from the tables' own arithmetic. `LootRollerTests`
+pins the reading offline and cannot say whether it is right — K2, twenty kills counted, is the only
+measurement available.
 
 **M3: resources come out of the ground is done, closed 2026-08-13 by
 [G2](In-Game-Tests/Resource-Payout.md).** A thumper called down at a player's feet ran its full
@@ -66,12 +95,15 @@ reward works; the aptitude route to it is untested.
 is the flat grant this cut promised rather than a defect. Partial yield wants a figure `SetProgress`
 already keeps and nothing reads, which is M4.
 
-The next frontier is a choice between **M4, where you thump matters** and **M5, killing something
-pays**. Both are unblocked as of today and neither depends on the other. M5 is the older debt — M2
-has been publishing `CharacterDiedEvent` to nobody since it landed — and its XP half is small and
-known-shaped, while its loot half is a protocol question that could be a day or a milestone. M4 is
-the one with no ground truth to check against: the client only ever learned deposit positions by
-scanning, so nothing shipped with them and the distribution has to be invented.
+That choice was between **M4, where you thump matters** and **M5, killing something pays**, and M5
+went first as the older debt. What was expected to be the risky half of it — the loot protocol —
+turned out to be separable from the payout entirely, so M5's resource half landed in a day and its
+item half is still the same open protocol question it was.
+
+**M4 is the remaining frontier and it is the one with no ground truth to check against**: the client
+only ever learned deposit positions by scanning, so nothing shipped with them and the distribution
+has to be invented. It is now also the only unbuilt thing between here and a loop that closes,
+pending K1 confirming M5 in game.
 
 Two log lines went in to make any of this readable: what `RewardWithResource` paid and **to how many
 participants**, and every thumper state change. Both earned their place immediately. Two thumpers
@@ -220,15 +252,15 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] `Battleframe` shield data confirmed absent from build 1962
 - [x] Placeholders replaced with shipped values, remaining divergence written down
 
-[Full detail](streams/m2-npc-combat.md) — 4 of 5 done, 1 in progress
+[Full detail](streams/m2-npc-combat.md) — 5 of 5 done
 
 - [x] Threat table, target selection, line of sight (N1, N4, N7)
 - [x] Leashed steering and ground clamping (N8–N13). No terrain to clamp to, so height comes off the
   target's own footing instead
 - [x] Server-side attack entry point — weapon fire, since `dbmonster` names no abilities to prefer
   (N2, N3, N5, N6)
-- [~] Death notification other systems can subscribe to — published, nothing subscribes yet, so
-  nothing in game shows it
+- [x] Death notification other systems can subscribe to — `KillRewardSim` is the first subscriber,
+  landed with M5
 - [x] Spawn groups worth fighting, replacing the hardcoded debug row — three groups and thirteen
   monsters in zone 448, respawning, placed in game with `spawngroup` (N14–N16)
 
@@ -250,10 +282,15 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0`
 - [ ] Resolve node type from position instead of the literal `20`
 
-[Full detail](streams/m5-kill-rewards.md) — 0 of 3 done
+[Full detail](streams/m5-kill-rewards.md) — 1 dropped, 2 landed but unverified in game, 2 open
 
-- [ ] Award XP on kill, track it, push progression updates
-- [ ] Work out the client's drop protocol, then spawn loot
+- [x] ~~Award XP on kill~~ — dropped 2026-08-13. Levelling is inert and staying that way, and
+  `xp_resource_id` is set on 2 of 3109 monsters, so there was nothing to pay from either
+- [~] Load the loot tables and roll a kill's — `LootRoller` over `dbitems::LootTable`, tested
+  offline, no client has seen it
+- [~] Pay the killer the resources that dropped — `KillRewardSim` on `CharacterDiedEvent`, crystite
+  only, waiting on [K1](In-Game-Tests/Kill-Rewards.md)
+- [ ] Work out the client's drop protocol, then spawn the items the same tables already roll
 - [ ] Pick up a drop and put it in the bag
 
 [Full detail](streams/m6-persistence.md) — 0 of 3 done

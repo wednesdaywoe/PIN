@@ -92,3 +92,7 @@ clock. Don't derive one from the other.
 publish/subscribe. Publishing queues; `Flush()` at the end of the tick delivers. Use it when a
 system needs to react to another without a hard reference (physics → gameplay is the existing
 case).
+
+`KillRewardSim` is the only subscriber that isn't in the tick list above: it has no tick, it just
+lives on `CharacterDiedEvent` and pays the killer out of the dead monster's loot tables. `Shard`
+holds it in a field for the sole purpose of keeping the subscription alive.

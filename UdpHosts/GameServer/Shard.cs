@@ -16,6 +16,7 @@ using GameServer.Systems.Combat;
 using GameServer.Systems.Encounters;
 using GameServer.Systems.EntityManager;
 using GameServer.Systems.Hazards;
+using GameServer.Systems.Loot;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
 using GameServer.Systems.Spawning;
@@ -31,6 +32,9 @@ public class Shard : IShard
     private const double _networkTickRate = 1.0 / 20.0;
 
     private readonly ShieldSim _shieldSim;
+
+    /// <summary>Ticks nothing — it lives on <c>CharacterDiedEvent</c>. Held so it stays subscribed.</summary>
+    private readonly KillRewardSim _killRewards;
 
     private long _startTime;
     private double _lastNetTick;
@@ -60,6 +64,7 @@ public class Shard : IShard
         ProjectileSim = new ProjectileSim(this);
         _shieldSim = new ShieldSim(this);
         Hazards = new HazardSim(this);
+        _killRewards = new KillRewardSim(this);
         Chat = new ChatService(this, EventBus);
         Admin = new AdminService(this);
         EntityRefMap = new ConcurrentDictionary<ushort, Tuple<IEntity, Enums.GSS.Controllers>>();

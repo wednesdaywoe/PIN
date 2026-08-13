@@ -69,6 +69,10 @@ public class SDBInterface
     private static Dictionary<uint, Blueprints> _blueprints;
     private static Dictionary<uint, List<Blueprint_Items>> _blueprintItems;
     private static Dictionary<uint, List<BattleframeVisuals>> _battleframeVisuals;
+    private static Dictionary<uint, LootTable> _lootTable;
+    private static Dictionary<uint, List<LootTableItemDist>> _lootTableItemDist;
+    private static Dictionary<uint, List<LootTableSubTableDist>> _lootTableSubTableDist;
+    private static Dictionary<uint, ResourceItem> _resourceItem;
 
     // dbzonemetadata
     private static Dictionary<uint, ZoneRecord> _zoneRecord;
@@ -330,6 +334,10 @@ public class SDBInterface
         _blueprints = loader.LoadBlueprints();
         _blueprintItems = loader.LoadBlueprintItems();
         _battleframeVisuals = loader.LoadBattleframeVisuals();
+        _lootTable = loader.LoadLootTable();
+        _lootTableItemDist = loader.LoadLootTableItemDist();
+        _lootTableSubTableDist = loader.LoadLootTableSubTableDist();
+        _resourceItem = loader.LoadResourceItem();
 
         // dbzonemetadata
         _zoneRecord = loader.LoadZoneRecord();
@@ -616,6 +624,11 @@ public class SDBInterface
     public static Blueprints GetBlueprint(uint id) => _blueprints.GetValueOrDefault(id);
     public static List<Blueprint_Items> GetBlueprintItems(uint blueprintId) => _blueprintItems.GetValueOrDefault(blueprintId);
     public static List<BattleframeVisuals> GetBattleframeVisuals(uint id) => _battleframeVisuals.GetValueOrDefault(id);
+    public static LootTable GetLootTable(uint id) => _lootTable.GetValueOrDefault(id);
+    public static List<LootTableItemDist> GetLootTableItemDist(uint lootTableId) => _lootTableItemDist.GetValueOrDefault(lootTableId);
+    public static List<LootTableSubTableDist> GetLootTableSubTableDist(uint lootTableId) => _lootTableSubTableDist.GetValueOrDefault(lootTableId);
+    public static ResourceItem GetResourceItem(uint id) => _resourceItem.GetValueOrDefault(id);
+    public static bool IsResourceItem(uint id) => _resourceItem.ContainsKey(id);
 
     // dbzonemetadata
     public static ZoneRecord GetZoneRecord(uint id) => _zoneRecord.GetValueOrDefault(id);

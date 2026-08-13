@@ -1633,7 +1633,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         if (!IsPlayerControlled)
         {
-            // Nothing subscribes to CharacterDiedEvent yet, so corpses just despawn after a while
+            // KillRewardSim pays out off CharacterDiedEvent; nothing acts on the corpse itself, so it
+            // just despawns after a while
             Shard.EntityMan.SetRemainingLifetime(this, 30_000);
         }
     }
