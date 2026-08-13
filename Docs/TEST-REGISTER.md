@@ -19,25 +19,36 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**Locomotion went in front of a client on 2026-08-13 and the sitting was called on one defect:
-monsters teleported.** Everything else looked right — they acquired, closed, stopped and fired — but
-the approach was never drawn, so N8–N12 stay unmarked. A run nobody can see is not a result. The
-cause was replication, not steering: `Character_MovementView` is deliberately not flushed to scoped
-clients and an NPC had nothing sending a pose on its behalf, so a client held its scope-in position
-until a checksum mismatch corrected it in one jump ([NET-22](ISSUE-REGISTER.md), fixed the same day
-with `NpcPose`).
+**NPC Combat is complete, 13 of 13, as of 2026-08-13 — the first stream in the queue to close.** A
+monster now notices you, turns, runs the ground down, stops where its own weapon can reach, shoots,
+tracks you while it fires, gives up and walks home. That is [M2](PROGRESS.md)'s exit condition seen
+in game.
+
+It took two sittings that day. The first was called on one defect: monsters teleported, having
+neither walked nor slid. The cause was replication, not steering — `Character_MovementView` is
+deliberately not flushed to scoped clients and an NPC had nothing sending a pose on its behalf, so a
+client held its scope-in position until a checksum mismatch corrected it in one jump
+([NET-22](ISSUE-REGISTER.md)). Nothing that run produced was markable.
 
 The shape of that failure is the lesson worth keeping: **the server log could not have shown it.**
 Every line the AI writes describes the server's own copy, which was stepping 30cm every 50ms exactly
 as `SteeringTests` says. A defect that lives in what was *not* sent is invisible to a log of what
 was decided, and this stream's whole method — write down what to grep — had nothing to offer.
 
-It also explains something that had been shrugged off as roughness since combat testing started:
+It also explained something that had been shrugged off as roughness since combat testing started:
 NPCs aiming seconds behind a moving player, firing where you were and then snapping. Aim goes
 through the same unflushed view. It read as slow AI because the *burst* travels on the combat view,
 which is flushed — so the client was told to draw the shot on time and drew it along a stale aim.
-**N13** is new and exists for that half, because nothing about watching a monster walk correctly
-would prompt anyone to check whether it aims correctly, and N1–N7 all passed while it was broken.
+**N13** was written for that half, because nothing about watching a monster walk correctly would
+prompt anyone to check whether it aims correctly, and N1–N7 all passed while it was broken.
+
+Two findings came out of the closing sitting as gaps rather than failures, both from watching a
+melee Aranha. It renders about 90° off the player it is attacking, and a side-by-side against a
+Chosen in the same spot pinned that on the creature model rather than on anything the server sends
+([CLIENT-3](ISSUE-REGISTER.md)) — cosmetic, since shots are aimed from live positions. And chasing
+"4m looks too far for a claw" turned up `combatDist=` inside the shipped behaviour strings, which is
+retail's own standoff distance for most of what [DATA-10](ISSUE-REGISTER.md) currently invents. PIN
+can't reach that table yet; it is now the highest-value thing left in the SDB for M2.
 
 Re-run from **N8**, the milestone's exit condition. **N9** is still the entry most likely to come
 back with something: the movement state that drives the run animation (`0x2004`) is derived from two
@@ -108,12 +119,11 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Combat
 
-- [~] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 7 of 13 passing. Monsters notice you, turn, take
-  cover into account, shoot, hurt you, disengage when you leave, and die cleanly mid-burst. Four
-  entries failed on the first sitting and produced [DATA-11](ISSUE-REGISTER.md), a real AI defect
-  (N4), and one entry that was wrong about what the server can see (N3). N8–N12 are the locomotion
-  pass, attempted 2026-08-13 and unanswerable against [NET-22](ISSUE-REGISTER.md); N13 is new, and
-  covers the aim half of that same defect
+- [x] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 13 of 13 passing. Monsters notice you, turn, close
+  the ground, stop where their weapon can reach, shoot, hurt you, track you while firing, give up and
+  walk home, and die cleanly mid-burst. It took four sittings and produced
+  [DATA-11](ISSUE-REGISTER.md), [NET-22](ISSUE-REGISTER.md), a real AI defect (N4), one entry that was
+  wrong about what the server can see (N3), and [CLIENT-3](ISSUE-REGISTER.md)
 - [~] [Hostility](In-Game-Tests/Hostility.md) — 6 of 7 passing. H5 passed once NPCs could attack,
   confirming `CanDamage` with a monster as the attacker. Only H7 is left and it needs two clients
 - [~] [Damage Decay](In-Game-Tests/Damage-Decay.md) — 4 of 5 passing. The curve's shape between

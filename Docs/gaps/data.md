@@ -134,6 +134,26 @@ The attack and locomotion passes add more invented numbers of the same kind:
 | 50m chase leash | `NpcMovement` | how far from where it spawned it will chase before going home |
 | 45° max slope | `Steering` | steepest ground it believes is ground rather than a wall |
 
+**The named behaviors do carry it, and PIN cannot reach them yet.** Chased down on 2026-08-13 after
+a melee Aranha was seen standing further off than its claw wanted. `Monster.BehaviorOffensive` is a
+string with its parameters inline, and among them is exactly the number the table above invents:
+
+```
+Arch_FullbodyMelee_Attack(combatDist=4,am1Id=82621,am1Facing=true,am1MaxDist=15,am1NavToDist=5.0,...)
+Arch_MoveThenFire_Attack(am1Id=86132,...,combatWalk=true,combatDist=30)
+Arch_MedRangedHumanoid_Attack(triggerPullTime=1500,fireRestDuration=1000)
+```
+
+So retail set standoff per behavior — 4m for a full-body melee, 30m for move-then-fire — along with
+`am1MaxDist`, `am1NavToDist`, facing and turn radius. That is most of this table, shipped.
+
+The catch is that the three monsters the test queue uses (1196, 528, 2342) all have **empty**
+behavior strings and a populated `BehaviorInstanceId` (274, 140, 317) instead; 2658 of 3109 rows are
+the same shape. The instance table is not one of the 575 PIN maps — the SDB stores tables by numeric
+id with no names, so finding it means identifying the table by its column shape. Until then the
+constants above stand. This is now the single highest-value thing that could be read out of the SDB
+for M2, and it is a research pass in its own right rather than a lookup.
+
 The leash and the cap were added after [N4](../In-Game-Tests/NPC-Combat.md) ran, and are worth
 separating from the rest: they are invented numbers, but they exist to fix a genuine defect rather
 than to fill a hole in the data. Without them engagement was bounded by the weapon's reach instead of

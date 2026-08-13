@@ -98,16 +98,21 @@ baseline the next pass diffs against.
   sent on its behalf, so both position and aim only reached the client when a keyframe corrected
   them. Monsters teleported, and fired at where you used to be for seconds before snapping round —
   the burst itself travels on the combat view and arrived on time. Damage was always resolved from
-  the live direction. Fixed 2026-08-13 with `NpcPose`; awaiting the N8 and N13 re-runs
+  the live direction. Fixed 2026-08-13 with `NpcPose`, confirmed the same day by N8–N13 passing
 
 ## Client & Environment — CLIENT
 
-[Full detail](gaps/client.md) — 1 of 2 closed
+[Full detail](gaps/client.md) — 1 of 3 closed
 
 - [~] **CLIENT-1** — World-entry freeze traced to a lost wakeup in Wine's fsync path; closed via
   `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over 4 sessions, not yet proven un-recurring
 - [x] **CLIENT-2** — HTTPS login fails under Proton's WinHTTP; closed via all-HTTP client APIs
   plus a binary patch (must be reapplied after Steam file verification)
+- [ ] **CLIENT-3** — A Melded Aranha renders about 90° off the orientation it is sent; a Chosen in
+  the same place faces correctly, so it is the creature model's forward axis, not the server's
+  maths. Nothing PIN can read carries a per-model facing offset. Cosmetic — shots are aimed from
+  live positions, never from the rendered facing — and left open rather than papered over with an
+  invented table
 
 ---
 

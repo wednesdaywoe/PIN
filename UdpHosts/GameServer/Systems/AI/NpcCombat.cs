@@ -81,8 +81,14 @@ public static class NpcCombat
     ///     Refreshes the cached attack window if the NPC's weapon changed, and reports whether it has one
     ///     at all. Resolving costs several SDB lookups and, for a monster, two warnings about missing item
     ///     attribute ranges — at 20Hz per NPC that was 40 log lines a second saying nothing.
+    ///
+    ///     Public because movement needs the answer too, and needs it first: how close an NPC wants to
+    ///     stand is a fraction of what its weapon can reach, so a movement pass that runs before this has
+    ///     nothing to read and falls back to the default. That is what sent a melee Aranha to the 12m a
+    ///     rifle wants before it closed to the 4m its claw needs — <see cref="AIEngine"/> now resolves the
+    ///     weapon once, up front, so both passes see the same window on the same tick.
     /// </summary>
-    private static bool TryResolveWeapon(CharacterEntity npc, AIState state)
+    public static bool TryResolveWeapon(CharacterEntity npc, AIState state)
     {
         var weaponId = npc.GetActiveWeaponId();
         if (weaponId == 0)
@@ -180,11 +186,17 @@ public static class NpcCombat
             state.WeaponHot = true;
             npc.SetFireBurst((uint)now);
 
+            // The bearing is the yaw the server is asserting the NPC stands at, in world degrees. It is
+            // true by construction — Face has already pointed it at the target this tick — so it proves
+            // nothing on its own. What it is for is comparing two monsters: spawn a Chosen and an Aranha
+            // in the same place, and if both bearings agree while only one renders facing the player,
+            // the difference is in the model rather than in anything the server decided.
             logger.Debug(
-                "NPC {Npc} opens fire on {Target} at {Separation}m: {Shots} shot(s) every {ShotInterval}ms, next burst in {BurstInterval}ms",
+                "NPC {Npc} opens fire on {Target} at {Separation}m, bearing {Bearing:0.#}°: {Shots} shot(s) every {ShotInterval}ms, next burst in {BurstInterval}ms",
                 npc.EntityId,
                 state.CurrentTargetId,
                 shot.Separation,
+                MathF.Atan2(shot.Direction.Y, shot.Direction.X) * 180f / MathF.PI,
                 window.ShotsPerBurst,
                 window.ShotIntervalMs,
                 window.BurstIntervalMs);

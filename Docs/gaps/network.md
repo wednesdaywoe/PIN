@@ -304,3 +304,9 @@ Two things this cost, worth remembering next time something looks like an AI bug
   is answerable when the approach is not drawn, so a single replication gap took out both the
   milestone's exit condition and the entry watching the one value in this work that had never been
   seen on the wire.
+
+Confirmed the same day: with the pose replicated, [N8–N13](../In-Game-Tests/NPC-Combat.md) all pass.
+That also settles `0x2004` as the running movement state — an NPC now plays a run animation while it
+closes, so the value derived from `Movestate` and `MovementFlags` in
+[N9](../In-Game-Tests/NPC-Combat.md) is right, and the packing [NET-12](#net-12) flags as unconfirmed
+has at least one asserted value that the client agrees with.

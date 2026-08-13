@@ -48,3 +48,35 @@ undo steps: [Http-Only-Setup.md](../Http-Only-Setup.md). Confirmed by
 The guard doesn't survive a Steam file-verification pass — it reverts the patched exe — so this
 has to be reapplied after any Steam-initiated verify or update. Worth a line in
 [Session Setup](../In-Game-Tests/Session-Setup.md) if it isn't there already.
+
+### CLIENT-3 — Some creature models don't render along the orientation the server sends [ ] open, cosmetic
+
+A Melded Aranha (528) engaged at melee range stands and attacks about 90° off from the player it is
+attacking. Confirmed as a model property rather than a server defect on 2026-08-13, by the only test
+that can separate the two: a Chosen Fiend (1196) and an Aranha spawned in the same place, engaging
+the same player. The Fiend faces the player correctly. The Aranha does not. Both got their
+orientation from the same three lines of `Facing.Towards`, and the `opens fire` log line records the
+bearing each was told to stand at, so "the server sent different values" is ruled out rather than
+assumed.
+
+What that leaves is the models' own forward axes. `Facing.Towards` builds a yaw around +X because
+that is what [N1](../In-Game-Tests/NPC-Combat.md) confirmed — on a Chosen, a humanoid rig. Nothing
+said that generalises to a creature rig, and it doesn't.
+
+**The server has no way to know.** Nothing PIN can read carries a per-model facing offset:
+`dbcharacter::Monster` has no such column, and `PoseType` — the record that would be the natural home
+— carries only physics height, radius, mass and collision ids. The axis lives in the model asset,
+which the client loads and the server never sees. So a fix means either a hand-built table of
+per-monster yaw offsets, which is invention of exactly the kind
+[DATA-10](data.md#data-10) already tracks too much of, or reading the offset out of the asset DB,
+which is unexplored.
+
+Left open and unfixed on purpose. It is cosmetic: the shot direction is computed from live positions
+and never from the rendered facing, so a sideways Aranha hits exactly as hard as a forward-facing one
+(49 a swing at 4m, straight off the 2026-08-13 log). Worth revisiting if a second creature turns up
+wrong in a *different* direction, since two data points would say whether the offsets are per-model
+or whether every non-humanoid shares one.
+
+Not to be confused with the Aranha's `PosetypeId` of 0, which sounds alarming and isn't:
+`GetCharacterPoseAsset` already falls back to the visual record's `HitboxCollisionId` for those, and
+the session log has no `No suitable collisionId found` warnings.

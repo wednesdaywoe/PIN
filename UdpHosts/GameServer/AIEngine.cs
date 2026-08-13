@@ -81,6 +81,11 @@ public class AIEngine
                 _logger.Debug("NPC {Npc} target {Previous} -> {Current}", npc.EntityId, previousTarget, state.CurrentTargetId);
             }
 
+            // Before either pass, because both read the answer and movement reads it first: an NPC stands
+            // at a fraction of its weapon's reach, so a movement pass with no window yet falls back to the
+            // ranged default. That sent a melee Aranha to 12m before it closed to the 4m its claw needs.
+            NpcCombat.TryResolveWeapon(npc, state);
+
             // Move before shooting, so the range and line-of-sight checks are made from where the NPC
             // ends the tick rather than from where it started it, and so the turn to face a target is
             // the last word on which way it's pointing.

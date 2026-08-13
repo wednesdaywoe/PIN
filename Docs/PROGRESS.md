@@ -55,14 +55,22 @@ speed comes off its chassis, which is where `dbmonster`'s -1s were pointing all 
 part with no good answer — the server holds no terrain to clamp to, so an NPC takes its target's
 footing as the ground and refuses slopes too steep to be ground.
 
-What the sitting found was that none of it reached the client. Nothing replicated an NPC's movement
-at all: the movement view isn't flushed to scoped clients and no pose was sent on its behalf, so
-monsters teleported whenever a keyframe happened to correct the client
+The first of the day's two sittings found that none of it reached the client. Nothing replicated an
+NPC's movement at all: the movement view isn't flushed to scoped clients and no pose was sent on its
+behalf, so monsters teleported whenever a keyframe happened to correct the client
 ([NET-22](ISSUE-REGISTER.md), fixed the same day with
-[NpcPose](../UdpHosts/GameServer/Systems/AI/NpcPose.cs)). [N8–N12](In-Game-Tests/NPC-Combat.md) stay
-unmarked and want a re-run, because a walk nobody can see answers none of them. That leaves the spawn
-groups as the only piece of M2 with no code at all. See
-[streams/m2-npc-combat.md](streams/m2-npc-combat.md).
+[NpcPose](../UdpHosts/GameServer/Systems/AI/NpcPose.cs)). The second went green:
+**[NPC Combat](In-Game-Tests/NPC-Combat.md) is complete, 13 of 13, and it is the first stream in the
+queue to close.** A monster notices you, turns, runs the ground down, stops where its own weapon can
+reach, shoots, tracks you while it fires, and walks home when it loses you.
+
+**That leaves the spawn groups as the only piece of M2 with no code at all**, and the milestone can't
+close without them: its exit condition is a monster worth fighting, not a monster spawned by an admin
+command. Two findings from the closing sitting are recorded rather than fixed —
+[CLIENT-3](ISSUE-REGISTER.md), a creature model that renders 90° off the orientation it is sent, and
+[DATA-10](ISSUE-REGISTER.md) gaining a lead worth more than the entry it came from: retail's own
+standoff distances are sitting in the shipped behaviour strings as `combatDist=`, in a table PIN
+doesn't map yet. See [streams/m2-npc-combat.md](streams/m2-npc-combat.md).
 
 Two things landed alongside the milestone. **Environmental damage** went in on 2026-08-12 — deep
 water and melding walls both kill now, through
@@ -89,12 +97,11 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] `Battleframe` shield data confirmed absent from build 1962
 - [x] Placeholders replaced with shipped values, remaining divergence written down
 
-[Full detail](streams/m2-npc-combat.md) — 2 of 5 done
+[Full detail](streams/m2-npc-combat.md) — 3 of 5 done
 
 - [x] Threat table, target selection, line of sight (N1, N4, N7)
-- [~] Leashed steering and ground clamping — built, unit-tested, and now replicated
-  ([NET-22](ISSUE-REGISTER.md)); awaiting the N8–N12 re-run. No terrain to clamp to, so height comes
-  off the target's own footing instead
+- [x] Leashed steering and ground clamping (N8–N13). No terrain to clamp to, so height comes off the
+  target's own footing instead
 - [x] Server-side attack entry point — weapon fire, since `dbmonster` names no abilities to prefer
   (N2, N3, N5, N6)
 - [~] Death notification other systems can subscribe to — published, nothing subscribes yet, so

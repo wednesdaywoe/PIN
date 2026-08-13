@@ -19,20 +19,25 @@ that any of it is drawn on the client at all.
 **N1–N7 pass as of 2026-08-12**, across two sittings. Both model guesses that half of the stream
 existed to check came out right — local forward is +X (N1), and the burst timing read off the
 template reads as a weapon rather than a strobe (N5) — and neither is asserted any more.
-**N8–N12 were attempted on 2026-08-13 and the sitting was called on one defect: monsters
-teleported.** They neither walked nor slid — an NPC sat at its spawn and then appeared somewhere
-else. The steering was innocent; nothing replicated it. `Character_MovementView` is deliberately not
-flushed to scoped clients, and an NPC had nothing sending a pose on its behalf either, so a client
-held its scope-in position until a checksum mismatch corrected it in one jump
-([NET-22](../gaps/network.md#net-22), fixed the same day). The entries below are unmarked because a
-run nobody can see is not a result: N8 asks you to watch a monster the whole way in and N9 asks
-whether the run animates, and neither question was answerable. Re-run the set from N8.
+**N8–N13 pass as of 2026-08-13, on the second sitting of that day.** The first was called on one
+defect: monsters teleported. They neither walked nor slid — an NPC sat at its spawn and then appeared
+somewhere else. The steering was innocent; nothing replicated it. `Character_MovementView` is
+deliberately not flushed to scoped clients, and an NPC had nothing sending a pose on its behalf
+either, so a client held its scope-in position until a checksum mismatch corrected it in one jump
+([NET-22](../gaps/network.md#net-22)). Nothing about that run was markable: N8 asks you to watch a
+monster the whole way in and N9 asks whether the run animates, and neither question was answerable.
 
-The same defect turned out to explain something that had been shrugged off as roughness since combat
-testing began — a Chosen taking seconds to react to a moving player, firing where you were and then
-snapping round. Aim replicates through the same unflushed view as position. **N13 was written for it**,
-because after watching a monster walk correctly nobody would think to check whether it aims
-correctly, and N1–N7 all passed while it was broken.
+The same defect explained something that had been shrugged off as roughness since combat testing
+began — a Chosen taking seconds to react to a moving player, firing where you were and then snapping
+round. Aim replicates through the same unflushed view as position. **N13 was written for it**, because
+after watching a monster walk correctly nobody would think to check whether it aims correctly, and
+N1–N7 all passed while it was broken.
+
+With the pose replicated, the whole set went green. Two things the sitting turned up are recorded as
+gaps rather than as failures, both under N10: a Melded Aranha renders about 90° off the player it is
+attacking, which a side-by-side against a Chosen pinned on the creature model rather than on
+`Facing.Towards` ([CLIENT-3](../gaps/client.md#client-3)); and its first movement decision used the
+ranged standoff before its own weapon had been resolved, since fixed.
 
 Four of the seven failed the first time and only one of those was the AI's fault. Two failures
 (N2, N6) turned out to be the same weapon-resolution bug wearing different disguises, one stripping
@@ -265,7 +270,7 @@ Pass: no stuck firing animation on the corpse, and nothing in the log after the 
 entity opening fire or dealing damage. `rment` while an NPC is mid-burst is the case where state
 outlives the entity, which is what the prune pass in `AIEngine` is for.
 
-## [ ] N8: An NPC closes the distance
+## [x] N8: An NPC closes the distance
 
 The milestone's exit condition, and the one entry here that has to pass for locomotion to count as
 landed at all. Everything after it is about how well.
@@ -298,7 +303,7 @@ cannot help with, because every line the AI writes describes the server's own co
 correct throughout the 2026-08-13 sitting, while the client was drawing a teleport. Watching the
 screen is the only instrument for this one.
 
-## [ ] N9: The run reads as a run
+## [x] N9: The run reads as a run
 
 Separate from N8 because they fail separately: an NPC can arrive at exactly the right place while
 looking wrong the whole way, and that is the more likely of the two.
@@ -323,7 +328,7 @@ crouches or falls over says it's being read as a different `Movestate`.
 The resting value is unchanged from what every NPC has always had (`0x1000`, standing), so a wrong
 value here can only break the moving case.
 
-## [ ] N10: A short-ranged monster comes all the way in
+## [x] N10: A short-ranged monster comes all the way in
 
 The stopping distance is bounded by what the monster can actually hit you from, so two monsters with
 very different weapons should stop in very different places.
@@ -345,7 +350,29 @@ Fail, the Aranha stops at 12m with the Fiend and never fires: the stopping dista
 the weapon's reach, and `holding fire ... OutOfRange` in the log is what that looks like from the
 other side.
 
-## [ ] N11: It gives up and goes home
+**Passed 2026-08-13, and it took two goes to see what the log was saying.** The Aranha ends up at
+4.000004m and lands 49 a swing every 1280ms. But its *first* decision was wrong:
+
+```
+12:07:00  sets off ... at 11m/s, 33.5m away, stopping at 12m
+12:07:04  sets off ... at 11m/s,  7.3m away, stopping at 4m
+```
+
+It ran to rifle distance, stopped, and only then closed. `NpcMovement` reads the attack window that
+`NpcCombat` resolves, and movement runs first — so on the tick an NPC acquires a target the window
+is empty and `StandoffFor` falls back to the ranged default. `AIEngine` now resolves the weapon once
+before either pass. **On the next run, check both lines say 4m**; a stall at 12m before it closes is
+this coming back, and it is not visible from the screen because the Aranha does eventually arrive.
+
+Two things watched during this entry are not failures of it and are recorded elsewhere. The Aranha
+stands about 90° off the player while attacking — the model's forward axis, confirmed against a
+Chosen in the same place ([CLIENT-3](../gaps/client.md#client-3)), and cosmetic, since the shot is
+aimed from live positions rather than from what is drawn. And 4m looks far for a claw, but chasing
+that turned up `combatDist=4` in the shipped behaviour strings for full-body melee
+([DATA-10](../gaps/data.md#data-10)) — the invented 80%-of-reach lands on the number retail used, so
+there is nothing to change until that table can be read properly.
+
+## [x] N11: It gives up and goes home
 
 The leash. Without it a monster follows one player across the zone and never comes back, which is a
 worse failure than not moving at all because it empties the place out over a session.
@@ -370,7 +397,7 @@ it leashes at the right distance.
 It keeps shooting while it walks home, which looks odd and is deliberate — only movement is leashed.
 It stops on its own when you pass the 60m N4 measured, since past that it forgets you entirely.
 
-## [ ] N12: It doesn't follow you into the air
+## [x] N12: It doesn't follow you into the air
 
 The one that needs no client fix and no data to be a real bug. The server has no terrain at all
 (`LoadMapsCollision` is off, `MapsPath` is empty), so an NPC has no idea where the ground is; it
@@ -400,7 +427,7 @@ Fail, it levitates: whichever rule is wrong, say which of the two shapes it took
 hover is the airborne check, and climbing a smooth invisible ramp toward a rooftop is the slope
 limit.
 
-## [ ] N13: It tracks you while it shoots
+## [x] N13: It tracks you while it shoots
 
 Written off a symptom that had been misread as roughness since combat testing started, and only
 recognised as a defect on 2026-08-13: a Chosen would take several seconds to react to a player
