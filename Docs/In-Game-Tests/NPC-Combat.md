@@ -1,7 +1,7 @@
 ---
 project: pin
 kind: test-stream
-title: "NPC Combat (N1-N7)"
+title: "NPC Combat (N1-N12)"
 relates:
   - ../TEST-REGISTER.md
 ---
@@ -11,13 +11,14 @@ relates:
 Part of the [in-game test queue](README.md). Setup, admin commands and the monster type id table:
 [Session Setup](Session-Setup.md).
 
-The first check of anything [M2](../streams/m2-npc-combat.md) has built. Nothing moves yet, so every
-entry here is about a monster standing still: it notices, turns, and shoots. Walking towards you is
-the locomotion pass and isn't in this stream.
+The check on everything [M2](../streams/m2-npc-combat.md) has built. N1–N7 cover a monster that
+stands still and fights — it notices, turns, and shoots — and N8–N12 cover the locomotion pass that
+landed after them, which is the half that decides where it stands in the first place.
 
-**All seven pass as of 2026-08-12**, across two sittings. Both model guesses this stream existed to
-check came out right — local forward is +X (N1), and the burst timing read off the template reads as
-a weapon rather than a strobe (N5) — and neither is asserted any more.
+**N1–N7 pass as of 2026-08-12**, across two sittings. Both model guesses that half of the stream
+existed to check came out right — local forward is +X (N1), and the burst timing read off the
+template reads as a weapon rather than a strobe (N5) — and neither is asserted any more.
+**N8–N12 have not been run.**
 
 Four of the seven failed the first time and only one of those was the AI's fault. Two failures
 (N2, N6) turned out to be the same weapon-resolution bug wearing different disguises, one stripping
@@ -26,13 +27,16 @@ a rifle's range and the other a rifle's damage, live in every weapon the server 
 being wrong about what the server can see. That ratio is the argument for writing entries that say
 what to grep — none of it was visible from the screen.
 
-Confirm the deployed build is newer than the AI work before running any of these. A stale
-`GameServer.dll` fails every entry here identically and silently — an empty `AIEngine.Tick` writes
-nothing, so the log looks the same as an NPC that decided to do nothing:
+A stale `GameServer.dll` fails every entry here identically and silently — an empty `AIEngine.Tick`
+writes nothing, so the log looks exactly like an NPC that decided to do nothing. `start-pin.sh`
+builds and installs before it launches, so this is no longer a step to forget, but read the build
+banner it prints and confirm the server reports the same number back:
 
 ```
-ls -la ~/Games/PIN/GameServer/GameServer.dll UdpHosts/GameServer/bin/Release/net10.0/GameServer.dll
+grep -a "Running build" ~/Games/PIN/logs/GameServer.log
 ```
+
+[Session Setup](Session-Setup.md) explains what the banner means and what a mismatch looks like.
 
 Every entry wants the server log open:
 
@@ -40,10 +44,25 @@ Every entry wants the server log open:
 tail -f ~/Games/PIN/logs/GameServer.log
 ```
 
-The AI writes three Debug lines — `NPC {id} target {previous} -> {current}` when selection changes
-its mind, `NPC {id} opens fire on ...` at the start of each burst, and the existing
-`{Target} took {Amount} damage from {Attacker}` when a round lands. If none of the first two ever
-appear, suspect the deploy before suspecting the code.
+The AI writes these Debug lines, and if none of them ever appears, suspect the deploy before
+suspecting the code:
+
+| Line | Written when |
+|------|--------------|
+| `NPC {id} target {previous} -> {current}` | selection changes its mind |
+| `NPC {id} opens fire on ...` | a burst starts |
+| `NPC {id} holding fire on ...: {reason}` | it has a target and isn't shooting, once per change of reason |
+| `NPC {id} sets off {where} at {speed}m/s, {distance}m away, stopping at {stopWithin}m` | it starts walking |
+| `NPC {id} has chased {target} {distance}m from home and is going back` | it hits its leash |
+| `NPC {id} is home` | it arrives back |
+| `{Target} took {Amount} damage from {Attacker}` | a round lands (not new, and not AI-specific) |
+
+**`npc <id> <x> <y> <z>` takes a world position, not an offset from where you're standing** —
+[SpawnCharacterServerCommand](../../UdpHosts/GameServer/Systems/Admin/Commands/SpawnCharacterServerCommand.cs)
+passes the three numbers straight through. With no coordinates at all it spawns at your feet, which
+is the form to reach for when you don't care where. To put one a measured distance away, read your
+own position off `hazard` first and do the arithmetic — the locomotion entries below all start that
+way, because where an NPC begins is half of what they're measuring.
 
 ## [x] N1: An NPC notices you and turns to face you
 
@@ -161,6 +180,14 @@ Both are covered offline now in `ThreatTableTests`; what those can't tell you is
 actually falls in metres, which is this entry's job. Passed on the re-run the same day — the NPC now
 disengages at a measurable distance well inside draw distance, instead of holding on until scope-out.
 
+**Locomotion changed how this one behaves, without changing what it proves.** An NPC now follows
+you, so walking away no longer opens the gap on its own: it keeps pace at its own speed until it
+hits the 50m chase leash from where it spawned, turns round, and only then does the separation grow
+fast enough to cross 60m and drop you. The result is the same and the middle of it looks completely
+different, so re-run it expecting a chase. N11 is the entry that measures the leash itself. Of the
+first seven entries this is the only one locomotion touches — the rest spawn their monster inside the
+12m it wants to stand at, so it has no reason to move.
+
 ## [x] N5: The firing rhythm reads as a weapon
 
 1. `npc 1196 5 0 0` and let it shoot for ten seconds or so
@@ -209,3 +236,128 @@ and another losing its damage looks like two unrelated bugs right up until you r
 Pass: no stuck firing animation on the corpse, and nothing in the log after the kill mentions that
 entity opening fire or dealing damage. `rment` while an NPC is mid-burst is the case where state
 outlives the entity, which is what the prune pass in `AIEngine` is for.
+
+## [ ] N8: An NPC closes the distance
+
+The milestone's exit condition, and the one entry here that has to pass for locomotion to count as
+landed at all. Everything after it is about how well.
+
+1. `invuln on`
+2. `hazard` — its first line is `<your character> at <X, Y, Z>`; those are the numbers the next
+   command needs
+3. `npc 1196 <X+35> <Y> <Z>` — a Chosen Fiend 35m away, inside the 40m it can notice you from and
+   well outside the 12m it wants to stand at
+4. Stand still and watch it the whole way in
+5. `grep -aE "NPC [0-9]+ (target|sets off|opens fire)" ~/Games/PIN/logs/GameServer.log | tail -10`
+
+Pass: it acquires you, turns, and runs in — `sets off after <your entity id> at 6m/s, 35m away,
+stopping at 12m` — covers the ground in about four seconds, stops without walking into you, and
+opens fire from where it stopped. On screen the important part is that it *arrives* and *stops*:
+an NPC that keeps going until it's standing inside you is a stopping-distance bug, and one that
+never sets off at all is either a stale deploy or a target it never acquired, which step 5's first
+line tells you apart.
+
+6 m/s is not invented — it is monster 1196's chassis `FastSpeed`, read through
+`MoveSpeed.Resolve`. What is invented is the 12m it stops at
+([DATA-10](../gaps/data.md#data-10)); nothing in `dbmonster` says how close a monster likes to be.
+
+If it sets off and never arrives, check the log for it repeatedly setting off and stopping — that
+is the stopping distance oscillating, and it means the hysteresis in `NpcMovement` isn't holding.
+
+## [ ] N9: The run reads as a run
+
+Separate from N8 because they fail separately: an NPC can arrive at exactly the right place while
+looking wrong the whole way, and that is the more likely of the two.
+
+1. Run N8 and watch the monster's legs, not its position
+
+Pass: it plays a run animation while it closes and settles into an idle when it stops.
+
+Fail, it slides along in an idle pose the whole way: `RunningState` in `NpcMovement` is wrong. It's
+`0x2004` — `Movestate.Running` in the high nibble, `MovementFlags.Movement` in the low byte —
+derived from those two enums and never seen on the wire, on top of a packing that
+[NET-12](../gaps/network.md#net-12) already has down as unconfirmed. Nothing else in the server
+sets a movement state for a character it owns, so this is the first time the value has been asserted
+rather than echoed back from a client. Write down what it did do, because the failure is the
+evidence: a sliding idle says the high nibble is being read somewhere else, and a monster that
+crouches or falls over says it's being read as a different `Movestate`.
+
+The resting value is unchanged from what every NPC has always had (`0x1000`, standing), so a wrong
+value here can only break the moving case.
+
+## [ ] N10: A short-ranged monster comes all the way in
+
+The stopping distance is bounded by what the monster can actually hit you from, so two monsters with
+very different weapons should stop in very different places.
+
+1. `invuln on`
+2. `hazard`, then `npc 1196 <X+35> <Y> <Z>` — Chosen Fiend, 180m rifle
+3. Watch where it stops, then `rment` to clear it
+4. `hazard`, then `npc 528 <X+35> <Y> <Z>` — Melded Aranha, 5m reach and 11 m/s
+5. `grep -a "sets off" ~/Games/PIN/logs/GameServer.log | tail -5`
+
+Pass: the Fiend stops about 12m out and shoots from there; the Aranha runs past that and keeps
+coming until it's about 4m away — `stopping at 4m` in the log — because 80% of a 5m reach is as far
+back as it can stand and still land anything. Both then fire.
+
+The Aranha is also the fastest thing in the test set at 11 m/s against the Fiend's 6, so the
+difference in how they cross the ground should be obvious without measuring it.
+
+Fail, the Aranha stops at 12m with the Fiend and never fires: the stopping distance isn't reading
+the weapon's reach, and `holding fire ... OutOfRange` in the log is what that looks like from the
+other side.
+
+## [ ] N11: It gives up and goes home
+
+The leash. Without it a monster follows one player across the zone and never comes back, which is a
+worse failure than not moving at all because it empties the place out over a session.
+
+1. `invuln on`
+2. `hazard` and note the position — this is where the NPC's home will be
+3. `npc 1196` — spawns at your feet, so home is exactly where you're standing
+4. Walk away in a straight line, slowly enough that it keeps following, past 50m from that spot
+5. `grep -aE "NPC [0-9]+ (has chased|is home)" ~/Games/PIN/logs/GameServer.log | tail -5`
+
+Pass: it follows, then turns round somewhere past 50m — `has chased <you> 50.xm from home and is
+going back` — walks back to where it spawned, logs `is home`, and stops. Then walk back towards it
+and it should engage again, because arriving home is what lets it chase a second time.
+
+Watch for it turning round and immediately coming back out, which would show up as `has chased` and
+`is home` alternating every few seconds. That oscillation is what the `Returning` flag exists to
+prevent, and it's the most likely thing to be wrong here.
+
+50m is invented ([DATA-10](../gaps/data.md#data-10)). This entry confirms an NPC leashes, not that
+it leashes at the right distance.
+
+It keeps shooting while it walks home, which looks odd and is deliberate — only movement is leashed.
+It stops on its own when you pass the 60m N4 measured, since past that it forgets you entirely.
+
+## [ ] N12: It doesn't follow you into the air
+
+The one that needs no client fix and no data to be a real bug. The server has no terrain at all
+(`LoadMapsCollision` is off, `MapsPath` is empty), so an NPC has no idea where the ground is; it
+takes the height of whatever it's chasing and treats that as ground, on the grounds that a player
+standing on the ground is a ground measurement. A jetpack breaks that assumption, and
+`NpcMovement` is meant to notice.
+
+1. `invuln on`
+2. `hazard`, then `npc 1196 <X+35> <Y> <Z>`
+3. Let it start closing, then jetpack straight up and hold
+4. Watch it, then land somewhere else and watch it again
+5. Find something to stand on — a rock, a container, the roof of the Battleframe Station — and
+   watch from up there
+
+Pass: it keeps chasing across the ground underneath you and does not rise. When you land it walks
+to where you are. Standing on something a few metres up, it comes to the bottom and stops there
+rather than climbing an invisible ramp to your feet.
+
+Two separate rules are being checked and they can fail independently. The first is that a target's
+height is only believed while the target is on the ground — `IsAirborne`, which the client reports
+on every pose message. The second is `Steering.MaxSlope`: no destination is walked to up a slope
+steeper than 45° measured over the whole remaining approach, so a target on a roof 10m up and 3m
+away is refused outright. The unit tests in `SteeringTests` cover both as arithmetic; this is
+whether they read as an animal on screen.
+
+Fail, it levitates: whichever rule is wrong, say which of the two shapes it took — rising while you
+hover is the airborne check, and climbing a smooth invisible ramp toward a rooftop is the slope
+limit.

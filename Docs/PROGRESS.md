@@ -48,11 +48,14 @@ the damage of 220 in every weapon the server ever resolved, player and NPC alike
 because an NPC picks its weapon out of `dbmonster` rather than choosing one that works. A crash in
 the tail of one session log closed [NET-21](ISSUE-REGISTER.md).
 
-**What's left in M2 is locomotion and the spawn groups.** The exit condition is met except for
-"closes": a monster notices you and kills you where it stands, but won't follow you out of its own
-weapon range. Locomotion is the piece that needs several trips to the game machine, and it's worth
-starting with a target selection that has already been seen picking the right thing. See
-[streams/m2-npc-combat.md](streams/m2-npc-combat.md).
+**Locomotion is now built too, and is the thing to take to the game machine next.** An NPC steers
+straight at its target, stops short at a distance its weapon can reach, and walks back to where it
+spawned when it loses interest or chases too far; its speed comes off its chassis, which is where
+`dbmonster`'s -1s were pointing all along. Height is the part with no good answer — the server holds
+no terrain to clamp to, so an NPC takes its target's footing as the ground and refuses slopes too
+steep to be ground. [N8–N12](In-Game-Tests/NPC-Combat.md) are written and unrun; the arithmetic is
+covered offline in `SteeringTests`. That leaves the spawn groups as the only piece of M2 with no code
+at all. See [streams/m2-npc-combat.md](streams/m2-npc-combat.md).
 
 Two things landed alongside the milestone. **Environmental damage** went in on 2026-08-12 — deep
 water and melding walls both kill now, through
@@ -82,7 +85,8 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 [Full detail](streams/m2-npc-combat.md) — 2 of 5 done
 
 - [x] Threat table, target selection, line of sight (N1, N4, N7)
-- [ ] Leashed steering and ground clamping
+- [~] Leashed steering and ground clamping — built and unit-tested, awaiting N8–N12. No terrain to
+  clamp to, so height comes off the target's own footing instead
 - [x] Server-side attack entry point — weapon fire, since `dbmonster` names no abilities to prefer
   (N2, N3, N5, N6)
 - [~] Death notification other systems can subscribe to — published, nothing subscribes yet, so

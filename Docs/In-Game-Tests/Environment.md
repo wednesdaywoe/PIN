@@ -30,10 +30,11 @@ Two halves, and they are not equally trustworthy:
 
 Run **E3 before E4**, and run E3 with `invuln` on.
 
-Confirm the deployed build is newer than the hazard work before running any of these:
+`start-pin.sh` builds and installs the current tree before launching, so the hazard work is
+guaranteed present; confirm the server reports the build the banner announced:
 
 ```
-ls -la ~/Games/PIN/GameServer/GameServer.dll UdpHosts/GameServer/bin/Release/net10.0/GameServer.dll
+grep -a "Running build" ~/Games/PIN/logs/GameServer.log
 ```
 
 Every entry wants the server log open:

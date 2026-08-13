@@ -120,7 +120,7 @@ a def. Every monster currently notices, aggros and disengages identically regard
 of [M2](../streams/m2-npc-combat.md); revisit if the named behaviors turn out to carry this data
 somewhere PIN hasn't parsed yet.
 
-The attack pass adds more invented numbers of the same kind, all in the same two files:
+The attack and locomotion passes add more invented numbers of the same kind:
 
 | Number | Where | What it decides |
 |--------|-------|-----------------|
@@ -129,6 +129,10 @@ The attack pass adds more invented numbers of the same kind, all in the same two
 | 60 threat cap | `TargetSelection` | how long it stays interested after losing sight (6.25s) |
 | 20/8/10 gain, decay, engage | `TargetSelection` | how fast it aggros and disengages |
 | 250ms burst floor | `AttackWindow` | slowest cycle a template with no `MsPerBurst` may fire at |
+| 12m standoff, 3m band | `NpcMovement` | how close it walks in, and how far you get before it follows |
+| 0.8 of reach | `NpcMovement` | how far back a short-ranged monster settles instead |
+| 50m chase leash | `NpcMovement` | how far from where it spawned it will chase before going home |
+| 45° max slope | `Steering` | steepest ground it believes is ground rather than a wall |
 
 The leash and the cap were added after [N4](../In-Game-Tests/NPC-Combat.md) ran, and are worth
 separating from the rest: they are invented numbers, but they exist to fix a genuine defect rather
@@ -136,8 +140,18 @@ than to fill a hole in the data. Without them engagement was bounded by the weap
 perception — 180m against a 40m radius — and threat was uncapped, so an NPC that had watched a target
 for a minute needed minutes of decay to let go. It never disengaged in practice.
 
-None of these are confirmed against anything. N4 checks that disengagement behaves like a radius, not
-that 60m is the radius Firefall used.
+Movement **speed** is deliberately not on this list, because it turned out not to need inventing —
+see [MoveSpeed](../../UdpHosts/GameServer/Systems/AI/MoveSpeed.cs). It is not on `dbmonster` where
+you would look for it: that record's `FastSpeed` is an override which 3095 of its 3109 rows leave at
+-1. It is on the monster's `ChassisId`, which is a `dbitems::Battleframe` — the same
+record a player's frame speed comes from — and that resolves a real run speed for 2971 monsters.
+Only 124 need a stand-in, and even that is the table's own most common value (6 m/s) rather than a
+guess. What this does mean is that reading -1 as a speed would have every one of them walking
+backwards, which is [DATA-11](#data-11) again with a different sentinel.
+
+None of the invented numbers are confirmed against anything. N4 checks that disengagement behaves
+like a radius, not that 60m is the radius Firefall used, and [N8 and
+N11](../In-Game-Tests/NPC-Combat.md) will check the same way for the standoff and the chase leash.
 
 <a id="data-11"></a>
 

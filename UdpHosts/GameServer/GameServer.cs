@@ -34,6 +34,13 @@ internal class GameServer : PacketServer
                       SDB sdb)
         : base(serverSettings.Port, logger)
     {
+        // First line in the log, so a session transcript always names the build that produced it.
+        Logger.Information(
+            "Running build {BuildHash} ({BuildFile} written {BuildWritten:yyyy-MM-dd HH:mm:ss})",
+            BuildInfo.ShortHash,
+            BuildInfo.FileName,
+            BuildInfo.Written);
+
         _clientMap = new ConcurrentDictionary<uint, INetworkPlayer>();
         _shards = new ConcurrentDictionary<ulong, IShard>();
 

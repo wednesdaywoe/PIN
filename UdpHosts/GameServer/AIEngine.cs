@@ -55,11 +55,12 @@ public class AIEngine
 
             if (!npc.IsAlive)
             {
-                // The corpse sticks around for 30s before despawning, and if it died mid-burst the
-                // client is still holding a fire it was never told the end of.
+                // The corpse sticks around for 30s before despawning, and if it died mid-stride the
+                // client is still holding a fire and a run it was never told the end of.
                 if (_stateByEntity.TryGetValue(npc.EntityId, out var dead))
                 {
                     NpcCombat.Disengage(npc, dead, currentTime);
+                    NpcMovement.Halt(npc);
                 }
 
                 continue;
@@ -79,6 +80,10 @@ public class AIEngine
                 _logger.Debug("NPC {Npc} target {Previous} -> {Current}", npc.EntityId, previousTarget, state.CurrentTargetId);
             }
 
+            // Move before shooting, so the range and line-of-sight checks are made from where the NPC
+            // ends the tick rather than from where it started it, and so the turn to face a target is
+            // the last word on which way it's pointing.
+            NpcMovement.Tick(_shard, npc, state, elapsedSeconds, _logger);
             NpcCombat.Tick(_shard, npc, state, currentTime, _logger);
         }
     }

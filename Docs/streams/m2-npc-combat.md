@@ -28,7 +28,7 @@ answers line of sight, so this is a scoring loop plus a threat table, not new ma
 decides where. There's no navmesh, and world collision only loads when `LoadMapsCollision` is on.
 The first pass should be leashed direct steering with a downward raycast to clamp to ground, and
 should accept that NPCs will walk into walls. Pathing is its own project and shouldn't block a
-monster shooting back.
+monster shooting back. — *the raycast has nothing to hit; see below for what replaced it.*
 
 **Attacking.** Two paths already work server-side, and the choice between them matters. Abilities
 activate from the server today, which is how `Thumper` drives its own state machine. Weapon fire
@@ -134,6 +134,48 @@ threshold on its first tick, while the raycasts ran thousands of times a second 
 follows the same shape as `ShieldSim` and `WeaponSim`: its own 50ms clock, elapsed seconds derived
 from the wall clock. That interval is also the finest grain an NPC's rate of fire can be paced at.
 
+**Locomotion — code complete, not yet seen in game.** An NPC with a target now walks to it.
+[NpcMovement.cs](../../UdpHosts/GameServer/Systems/AI/NpcMovement.cs) runs between target selection
+and the attack pass each tick, so the range and line-of-sight checks are made from where the NPC
+ends the tick rather than where it started it. It steers straight at the target, stops 12m short —
+or at 80% of its weapon's reach, whichever is nearer, so a Melded Aranha's 5m claw closes to 4m
+instead of standing uselessly at 12 — and walks home again when it loses the target or chases more
+than 50m from where it spawned. The steering itself is
+[Steering.cs](../../UdpHosts/GameServer/Systems/AI/Steering.cs), pure and unit-tested.
+
+Two things it isn't: there is no pathing and no navmesh, so it walks into whatever is on the line,
+which the milestone accepted up front; and several NPCs on one target all converge on the same spot
+and stand in each other, because nothing separates them.
+
+**Speed came out of the data, which was not where the data was.** `dbmonster` has `NormalSpeed` and
+`FastSpeed` columns and 3095 of its 3109 rows hold -1 in the one that matters — they are an
+override, and almost nothing overrides. The real speed is on the monster's `ChassisId`, a
+`dbitems::Battleframe`, the same record a player's frame speed comes out of; that resolves for 2971
+monsters, and the 124 left over take the table's own most common value rather than an invented one.
+A Chosen Fiend runs at 6 m/s, a Melded Aranha at 11. Reading the -1 literally would have given every
+monster in the game a negative speed, which is [DATA-11](../gaps/data.md#data-11)'s lesson arriving a
+second time with a different sentinel: in this database an out-of-band number means "unset" far more
+often than it means anything.
+
+**The ground is the part with no good answer.** The milestone doc planned "a downward raycast to
+clamp to ground", and there is nothing to raycast against: `LoadMapsCollision` is off and `MapsPath`
+is empty, so the physics world holds entity colliders and no terrain at all — the thing
+[N3](../In-Game-Tests/NPC-Combat.md) found the hard way. What the server does have is where a player
+is standing, which is a ground height measured at that spot by the only participant that owns the
+terrain. So an NPC takes its target's height as ground and climbs toward it, with two rules keeping
+that from turning into a flying monster: the height is only believed while the target is *not*
+airborne (`IsAirborne`, which the client reports on every pose message), and no destination is
+walked to up a slope steeper than 45° measured over the whole remaining approach. The second rule
+is what refuses a player standing on a roof 10m up and 3m away. Both are guesses about what looks
+right, and N12 is where they get looked at.
+
+Also new, and small: `CharacterEntity.SetMovementState` sets the state a client animates from and
+keeps `MovementStateContainer` in step with it, so a running NPC also reads as moving to `WeaponSim`
+and takes the same spread penalty a running player does. The running value itself (`0x2004`) is
+derived from the `Movestate` and `MovementFlags` enums and has never been seen on the wire — on top
+of a packing [NET-12](../gaps/network.md#net-12) already lists as unconfirmed — so N9 exists to look
+at an NPC's legs.
+
 **Death notification — code complete, not yet seen in game.** `CharacterEntity.Die` now enqueues a
 `CharacterDiedEvent` (new in [Events.cs](../../UdpHosts/GameServer/Systems/SystemEvents/Events.cs))
 onto the `EventBus`, flushed once per tick like everything else that goes through it, rather than
@@ -172,12 +214,16 @@ shot a player fires, currently sees an empty world with a few entities floating 
 
 ## What's left
 
-Locomotion, and the spawn groups. With attacking in, the milestone's exit condition is met except for
-"closes" — a monster notices you, turns, and kills you where it stands, but won't follow you out of
-its own weapon range.
+The spawn groups, and getting locomotion in front of a client.
 
-That ordering was deliberate. Perception had no in-game exit condition of its own, and attacking gave
-it one without needing anything to move: [NPC Combat](../In-Game-Tests/NPC-Combat.md) N1–N7 check
+Every line of the milestone's exit condition now has code behind it — a hostile monster notices you,
+turns, closes, shoots, and kills you — but the closing half has only been seen as arithmetic.
+[N8–N12](../In-Game-Tests/NPC-Combat.md) are the entries that decide whether it landed: that it
+arrives and stops, that it looks like running rather than sliding, that a short-ranged monster comes
+further in, that it leashes home, and that it stays on the ground when you don't.
+
+The ordering across the whole milestone was deliberate. Perception had no in-game exit condition of
+its own, and attacking gave it one without needing anything to move, which is why N1–N7 could check
 perception, facing, line of sight, disengagement and firing in a single sitting. Locomotion is the
-piece that needs several trips to the game machine, and it's worth starting it with a target
-selection that's already been seen picking the right thing.
+piece expected to need several trips to the game machine, and it was worth starting with a target
+selection already seen picking the right thing — the thing it can't be worth debugging alongside.

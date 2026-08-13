@@ -1,0 +1,36 @@
+# OpenSSL profile for the PIN servers ONLY, selected via OPENSSL_CONF in
+# start-pin.sh. Nothing else on the system sees it.
+#
+# Firefall (2013) negotiates TLS 1.0, and PIN asks Kestrel for it explicitly
+# (Shared.Web/BaseWebServer.cs: "Required by FF itself *sigh*"). Fedora's
+# DEFAULT crypto policy blocks that in two separate ways, both of which have to
+# be lifted or the handshake dies before the client sees anything:
+#
+#   1. MinProtocol=TLSv1.2 + SECLEVEL=2
+#        -> error:0A000102:SSL routines::unsupported protocol
+#   2. SHA-1 signatures disabled. A TLS 1.0 handshake signs with SHA-1, so it
+#      fails even once the protocol is allowed:
+#        -> error:0A0C0103:SSL routines::internal error  (alert 80)
+#      Same Fedora restriction that blocks .NET strong-name signing.
+#
+# Deliberately does NOT include /etc/crypto-policies/back-ends/opensslcnf.config,
+# which is what imposes both. Scoped to loopback game traffic on this machine.
+
+openssl_conf = pin_init
+
+[pin_init]
+alg_section = evp_properties
+ssl_conf = ssl_sect
+
+[evp_properties]
+rh-allow-sha1-signatures = yes
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+MinProtocol = TLSv1
+MaxProtocol = TLSv1.3
+CipherString = ALL:@SECLEVEL=0
+SignatureAlgorithms = RSA+SHA1:ECDSA+SHA1:RSA+SHA256:RSA+SHA384:RSA+SHA512:ECDSA+SHA256:ECDSA+SHA384:ECDSA+SHA512
+Options = UnsafeLegacyRenegotiation

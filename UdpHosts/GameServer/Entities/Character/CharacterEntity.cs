@@ -993,6 +993,23 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         RefreshMovementView();
     }
 
+    /// <summary>
+    ///     Sets what the client draws this character doing — standing, running, falling. A player's
+    ///     arrives inside their pose messages and lands in <see cref="SetPoseData"/>; an NPC has no
+    ///     client to send one, so the AI sets it directly.
+    ///
+    ///     <see cref="MovementStateContainer"/> is kept in step because the two are the same value read
+    ///     two ways, and things that aren't the client read it: <see cref="IsMoving"/> comes off the
+    ///     container, and <c>WeaponSim</c> uses it to widen a moving shooter's spread. Letting them drift
+    ///     would mean an NPC that runs on screen and shoots like it's standing still.
+    /// </summary>
+    public void SetMovementState(short newState)
+    {
+        MovementState = newState;
+        MovementStateContainer.MovementStateValue = (ushort)newState;
+        RefreshMovementView();
+    }
+
     public void SetWeaponReloaded(uint time)
     {
         Character_CombatView.WeaponReloadedProp = time;

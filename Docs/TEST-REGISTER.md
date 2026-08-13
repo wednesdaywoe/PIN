@@ -19,6 +19,16 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**Locomotion is queued and unrun — N8–N12, and N8 is the milestone's own exit condition.** NPCs now
+walk: they close on a target, stop at a distance their weapon can reach, and go home when they lose
+it. Nothing about it has been in front of a client. Two of the five entries are watching guesses
+rather than behaviour, and are the ones most likely to come back with something: **N9** looks at
+whether an NPC's legs move, because the movement state that drives the animation (`0x2004`) is
+derived from two enums and has never been seen on the wire, on a packing
+[NET-12](ISSUE-REGISTER.md) already flags; **N12** looks at whether an NPC stays on the ground, which
+it has no way of knowing — the server holds no terrain, so an NPC borrows its target's footing and
+refuses slopes too steep to be ground.
+
 **Environmental damage: the water half passes, the melding half hasn't run.** E1, E2 and E6 went
 green on 2026-08-12. Drowning reproduces effect 789's compounding curve tick for tick in the log, and
 `invuln` suppresses damage while the hazard reading keeps running, which is what makes the melding
@@ -37,7 +47,8 @@ The same session produced [DATA-14](ISSUE-REGISTER.md) off a side question about
 monster wasn't hurting anyone: 1196 really does 8 dps, and the ids that hit harder are mostly ones
 whose damage PIN inflates because it doesn't model reloading.
 
-**NPC Combat is complete, 7 of 7, and it paid for itself several times over.** N1–N7 ran on
+**The standing-still half of NPC Combat is complete, 7 of 7, and it paid for itself several times
+over.** N1–N7 ran on
 2026-08-12 and four of them failed first time. N2 and N6 failing *differently* — one monster with no
 range, another doing no damage — exposed [DATA-11](ISSUE-REGISTER.md), a zero multiplier read
 literally that had stripped the range off 269 weapons and the damage off 220 in every weapon the
@@ -46,8 +57,7 @@ the entry itself being wrong: with `LoadMapsCollision` off there is no world geo
 every raycast PIN makes sees an empty world with a few entities in it. A crash in the tail of the
 same session log closed [NET-21](ISSUE-REGISTER.md). None of that was visible from the screen.
 
-[M2](streams/m2-npc-combat.md)'s exit condition is met bar locomotion. Everything below this line
-predates this session and is unchanged.
+Everything below this line predates these sessions and is unchanged.
 
 **Transport is clear; the queue is otherwise untouched since the M1 client sessions.** The
 2026-08-11/12 sessions were entirely about T7–T9 — closing the world-entry freeze — so
@@ -81,10 +91,11 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Combat
 
-- [x] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 7 of 7 passing. Monsters notice you, turn, take
+- [~] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 7 of 12 passing. Monsters notice you, turn, take
   cover into account, shoot, hurt you, disengage when you leave, and die cleanly mid-burst. Four
   entries failed on the first sitting and produced [DATA-11](ISSUE-REGISTER.md), a real AI defect
-  (N4), and one entry that was wrong about what the server can see (N3)
+  (N4), and one entry that was wrong about what the server can see (N3). N8–N12 are the locomotion
+  pass and have not been run
 - [~] [Hostility](In-Game-Tests/Hostility.md) — 6 of 7 passing. H5 passed once NPCs could attack,
   confirming `CanDamage` with a monster as the attacker. Only H7 is left and it needs two clients
 - [~] [Damage Decay](In-Game-Tests/Damage-Decay.md) — 4 of 5 passing. The curve's shape between

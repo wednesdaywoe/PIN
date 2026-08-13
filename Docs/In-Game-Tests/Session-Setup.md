@@ -14,25 +14,99 @@ servers up, the log being watched, and the type ids to hand.
 ## Starting a session
 
 ```
-dotnet build PIN.sln                     # 0 errors expected
-dotnet test PIN.sln                      # all green before leaving the desk
-WebHostManager                           # ports 4400-4411 / 44300-44311
-MatrixServer                             # UDP 25000
-GameServer                               # UDP 25001
+dotnet test PIN.sln                       # all green before leaving the desk
+cd ~/Games/PIN && ./start-pin.sh          # builds, installs, announces, launches
 ```
 
-Deploying a new build, from the repo root, with the GameServer stopped:
+That is the whole procedure. `start-pin.sh` builds all three servers from the repo, installs them
+over the deployment, prints the build it is about to run, and starts them —
+WebHostManager on 4400-4411 / 44300-44311, MatrixServer on UDP 25000, GameServer on UDP 25001. An
+incremental build of the three takes about six seconds, which is why it is unconditional: there is
+no version of skipping it that saves enough to be worth what it costs. A build failure aborts
+before anything is installed or launched, so a broken tree can never leave the previous binary
+running under a test entry written for the new one.
+
+There is no separate deploy step any more. `./deploy.sh` exists and does the build-and-install half
+on its own, but the only reason to call it directly is to install without starting.
+
+### Knowing which build you are on
+
+Testing a stale build has cost several sessions: the result gets written down against code that was
+never running, and nothing on screen contradicts it. Three independent readings of one number now
+have to agree before that can happen again — what `deploy.sh` recorded when it installed, what is
+hashed off the DLL at launch, and what the server hashes itself as and logs on its first line
+(`UdpHosts/GameServer/BuildInfo.cs`). The number is the first 12 hex of the assembly's SHA-256, so
+`sha256sum` is a fourth reading available at any time.
+
+The banner prints before launch and is repeated as the last line before you go to the client:
 
 ```
-OPENSSL_ENABLE_SHA1_SIGNATURES=1 dotnet build UdpHosts/GameServer/GameServer.csproj -c Release
-cp UdpHosts/GameServer/bin/Release/net10.0/GameServer.{dll,pdb} ~/Games/PIN/GameServer/
-cd ~/Games/PIN && ./use-build.sh          # reports which tagged build is live
+────────────────────────────────────────────────────────────────
+  build      29040939701d  (GameServer.dll, written 2026-08-13 09:05:20)
+  source     3d72051 on proton-config  "Doc update"  +14 uncommitted
+  installed  2026-08-13T09:05:53-04:00
+────────────────────────────────────────────────────────────────
 ```
 
-`use-build.sh good` swaps back to the `c659335` build from before the Damage/Effect work and
-`use-build.sh current` swaps forward again; both refuse to run while the server is up. Copying a
-fresh `GameServer.dll` in by hand leaves it matching neither tag, so `use-build.sh` with no argument
-prints `unknown` until the new build is also copied over `GameServer.dll.current`.
+The same three lines are written into the head of every log before the server appends to it, so a
+transcript read back weeks later still names the binary that produced it — by which time the DLL
+itself has been overwritten many times. Confirm the match against the server's own line:
+
+```
+grep -a "Running build" ~/Games/PIN/logs/GameServer.log
+```
+
+Anything wrong appears as `!!` lines inside the banner and in the logs: a DLL that does not match
+what was installed, or `--no-build` left on while the repo has moved ahead. A `source` line reading
+`unknown` means the installed DLL is not the one `deploy.sh` put there, so no commit can honestly
+be attributed to it.
+
+Builds are deterministic — the same source rebuilt gives the same hash — so the number identifies
+the source, not just the file.
+
+### Running an older build
+
+`./start-pin.sh --no-build` runs what is installed without touching it. This is the only mode in
+which the build under test is not the current tree, and it says so loudly every time, because the
+reason it exists is also the reason it gets left on by accident.
+
+```
+cd ~/Games/PIN && ./use-build.sh          # lists what is installed and what can be swapped in
+./use-build.sh <hash>                     # any archived build, by the hash the banner shows
+./use-build.sh latest                     # back to the current tree
+```
+
+`deploy.sh` archives the outgoing `GameServer.dll` into `builds/` before overwriting it, keeping the
+last ten. That matters because once a session has produced results against a binary, that binary is
+evidence, and it was previously destroyed by the next `cp`.
+
+Two named tags predate the archive and are kept only because test entries written at the time name
+them: `good` is the `c659335` build from before the Damage/Effect work, and **`current` is a
+misnomer** — it is the 2026-08-11 build, not the newest, and selecting it silently rolls back
+environmental damage, `invuln`, the [DATA-11](../ISSUE-REGISTER.md) weapon-modifier fix and NPC
+locomotion. The listing prints real dates beside every entry so no tag has to be trusted.
+
+### Where the scripts live
+
+In the repo, at [Tools/Session/](../../Tools/Session/) — `start-pin.sh`, `deploy.sh`,
+`use-build.sh` and `openssl-legacy.cnf`. `~/Games/PIN` holds symlinks to them, so every path in
+this doc and in the older entries still works and the pipeline is version-controlled with the code
+it builds. It used to exist only in the deployment directory, one `rm -rf` from gone.
+
+The split has one consequence worth knowing when editing them: a script has two homes, and which
+one it wants depends on the line. Resolving `$0` through the symlink finds the repo copy — the
+source tree, the openssl profile. Not resolving it finds the deployment — where the servers run.
+Run a script directly out of `Tools/Session/` and it will refuse rather than guess, because
+guessing would install a build on top of the source tree.
+
+### What the pipeline will not touch
+
+The deployed configs are not copies of the repo's. `GameServer/GameServer.dll.config` carries this
+machine's paths to `clientdb.sd2` and the asset DB where the repo's copy points at a Windows Steam
+install, and `WebHostManager/config/appsettings.json` has `DevMode` on locally and off in the repo.
+Both are excluded from the install, so a deploy can never break the server in a way that looks like
+a code bug. Their upstream templates are hash-tracked instead: when one changes in the repo,
+`deploy.sh` prints the `diff` to run and leaves the local file alone.
 
 ## Who you log in as
 

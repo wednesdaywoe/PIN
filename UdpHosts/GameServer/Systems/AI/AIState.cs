@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace GameServer.Systems.AI;
 
 /// <summary>
@@ -52,4 +54,37 @@ public sealed class AIState
     public AttackWindow CachedWindow { get; set; }
 
     public string CachedWeaponName { get; set; }
+
+    /// <summary>Where this NPC was first seen standing. What it is leashed to and what it walks back to.</summary>
+    public Vector3 Home { get; set; }
+
+    public bool HasHome { get; set; }
+
+    /// <summary>
+    ///     Whether it is currently walking somewhere. Held across ticks so the stopping distance has
+    ///     hysteresis: it closes all the way in, then stands until the target has opened a real gap,
+    ///     instead of shuffling a few centimetres every tick to hold an exact separation.
+    /// </summary>
+    public bool Moving { get; set; }
+
+    /// <summary>
+    ///     Whether it has given up on a chase and is walking home. Held until it arrives, so an NPC that
+    ///     leashes out with its target still in perception doesn't turn round and start chasing again on
+    ///     the next tick, and the one after that, forever.
+    /// </summary>
+    public bool Returning { get; set; }
+
+    /// <summary>
+    ///     The last place the current target was seen standing on the ground. Destinations are taken from
+    ///     here rather than from where the target is right now, because the only thing that makes a
+    ///     target's Z a ground height is the target being on the ground — see <see cref="NpcMovement"/>.
+    /// </summary>
+    public Vector3 TargetFooting { get; set; }
+
+    public bool HasTargetFooting { get; set; }
+
+    /// <summary>The monster type <see cref="CachedSpeed"/> was resolved from; 0 before the first resolve.</summary>
+    public uint CachedSpeedTypeId { get; set; }
+
+    public MoveSpeed CachedSpeed { get; set; }
 }
