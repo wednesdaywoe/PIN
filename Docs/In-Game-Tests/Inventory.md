@@ -42,6 +42,31 @@ divergences and rules out several other suspects:
 in the recording, and 0 is what an empty stack would look like — which is exactly the shape of a
 bug where the client accepts a message and lists nothing. Both are now fixed to match.
 
+**One suspect is now ruled out by evidence rather than by reading.**
+[G1](Resource-Payout.md) passed on 2026-08-13: three `createitem 10 200` calls in a row moved a
+crystite count from 0 to 600 in an inventory that was already open. Resources ride in a different
+array of the same `InventoryUpdate` and go out through `SendResourceUpdate`, the sibling of the call
+that sends items — so **the client does accept a partial update and does merge it into a UI on
+screen**. I1's second bullet below, which would have had the client refusing partial merges
+outright, cannot be what is happening. Whatever hides an item is in the item struct or the item
+arrays.
+
+**And a suspect nobody had looked at: there may be no room.** Every entry above asks whether the
+item was built correctly and whether the message carried it. None asks whether the client had
+anywhere to put it. PIN gives a character **every battleframe in the game at login** — 20 chassis,
+each with its default modules in a PvE and a PvP configuration, built by
+`GenerateCharCreateLoadoutAndItems` — which is not a quantity any retail character carried, and
+Firefall's bag had a size. An item created into a full inventory would produce exactly what I1
+describes: the type id resolves, the toast fires, the server lists it, and it is never drawn.
+
+It also explains why G1 sails through while I1 doesn't. Resources are not bag items; they have their
+own pool and their own array. A ceiling on the item side would leave the resource side untouched,
+which is precisely the split that has been observed.
+
+Nothing about this is confirmed — it is a hypothesis with a shape that fits, and **I3 is the entry
+that measures it.** The item count is now written to the server log at every full send, which
+nothing did before.
+
 Ruled out along the way, so nobody re-checks them:
 
 - **Sub-inventory mapping.** Retail put a looted Consumable in 2/Cache, weapons and modules in
@@ -77,9 +102,10 @@ Read the console output from step 3 alongside what you see:
 - Pass: the item shows, and `dbg_inventory` lists it as
   `20003 guid <hex> Weapon in Gear flags 0`.
 - **Listed by `dbg_inventory` but not shown, and `resend` makes it appear** — the item struct is
-  right and delivery is right, but the client will not merge a partial `InventoryUpdate`. Point
-  `CreateItem` at `SendFullInventory` and move on; the tests are unblocked either way. Worth a note
-  here, because it would mean `SendEquipmentChanges` and `SendResourceUpdate` are dead letters too.
+  right and delivery is right, but the client will not merge this particular partial
+  `InventoryUpdate`. It cannot be partial merging as a mechanism: [G1](Resource-Payout.md) watched
+  three of them land. So read it as the item arrays specifically, and run I3 before concluding
+  anything, because a full inventory would also make `resend` fail to help.
 - **Listed by `dbg_inventory` but not shown, and `resend` doesn't help either** — the client is
   rejecting or hiding the item itself, and the remaining suspects are all in the item struct.
   Bring back the `dbg_inventory` line and the client log
@@ -102,3 +128,46 @@ A regression check, not a feature check. `SendEquipmentChanges` sends the same p
 
 Pass: the swap holds in the client, and `dbg_inventory` shows the new item carrying the `IsEquipped`
 flag and the old one without it.
+
+## [ ] I3: There is room for one more item
+
+Run this before I1, and before trusting any conclusion I1 has already produced.
+
+Every other line of investigation here assumes the item was malformed or the message was wrong. This
+one asks whether the client simply had nowhere to put it. PIN hands a character all 20 battleframes
+at login with their default modules in two configurations each, which no retail character carried,
+and Firefall's inventory had a capacity. A created item arriving at a full bag looks identical to a
+created item the client rejected: type id resolves, toast fires, server lists it, nothing appears.
+
+**This entry is a measurement, not a pass/fail on the feature.** What it is really doing is putting
+a number next to a hypothesis, and the number is new — nothing measured the inventory before
+2026-08-13.
+
+1. Log in and let the world finish loading.
+2. `grep -a "SendFullInventory:" ~/Games/PIN/logs/GameServer.log | tail -1`
+3. Open the inventory and find whatever the UI says about capacity — a slot count, an `x / y`, a
+   "full" state. Write down both numbers. If the UI says nothing about capacity anywhere, that is
+   the answer to step 6 and worth recording as such.
+4. `createitem 20003`
+5. `dbg_inventory`, then `grep -a "dbg_inventory:" ~/Games/PIN/logs/GameServer.log | tail -1`
+6. Compare: does the server's item count exceed what the UI is willing to hold?
+
+The log line breaks the total down by sub-inventory, because that is where a ceiling would bite:
+
+```
+SendFullInventory: 412 item(s) [Gear 380, Bag 24, Cache 8], 0 resource(s), 20 loadout(s)
+```
+
+Pass — meaning the hypothesis is dead and I1's cause is elsewhere: the count is comfortably under
+whatever the client shows as capacity, and the new item still doesn't appear.
+
+**Confirmed — the inventory is full or over:** the count is at or above the UI's ceiling. Then I1 is
+not a wire-format bug at all, and none of the item-struct suspects above need chasing. The fix is to
+stop prestocking: `LoadHardcodedInventory` generates all 20 frames because the garage reads owned
+chassis out of the loadouts, so the thing to cut is the *items*, not the loadouts. Re-run I1
+immediately after, and if the Dev Shotgun appears, [NET-18](../ISSUE-REGISTER.md) closes without a
+single byte of the message changing.
+
+**Ambiguous — the count is high but under the ceiling:** worth knowing anyway, and worth trying
+`createitem` on a character whose bag is deliberately near-empty before moving on. Note the two
+numbers here either way; the next person should not have to re-derive them.

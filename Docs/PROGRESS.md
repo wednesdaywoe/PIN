@@ -19,12 +19,12 @@ For what the code does today, read the [Architecture Guide](Architecture/README.
 covers what's missing and what order to fix it in.
 
 ```
-M1 confirm the combat models
- └─> M2 NPCs that fight back
-      ├─> M3 resources come out of the ground
-      │    ├─> M4 where you thump matters
+M1 confirm the combat models                        done
+ └─> M2 NPCs that fight back                        done
+      ├─> M3 resources come out of the ground       done
+      │    ├─> M4 where you thump matters           <- open, unblocked
       │    └─> M7 an encounter that plays
-      └─> M5 killing something pays
+      └─> M5 killing something pays                 <- open, unblocked
 
 M6 persistence across sessions   wants M3 and M5 landed, so there's something worth saving
 M8 session stability             independent, but "playable" isn't honest without it
@@ -32,15 +32,52 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M2: NPCs that fight back is done, closed 2026-08-13 by [N14–N16](In-Game-Tests/NPC-Combat.md).**
-Zone 448 has thirteen monsters standing in it when you log in, none of them put there by a command.
-They notice you, close, shoot, respawn ninety seconds after they fall, and on the closing run the
-Basin Mouth pack killed the tester. The one piece that stays open is death notification, and only
-because it has nothing to show yet — `CharacterDiedEvent` is published and nobody subscribes, which
-is M5 and M7's job.
+**M3: resources come out of the ground is done, closed 2026-08-13 by
+[G2](In-Game-Tests/Resource-Payout.md).** A thumper called down at a player's feet ran its full
+cycle and paid 200 crystite, logged as `paying 200 of resource 10 to 1 participant(s)`, and the
+crystite showed up without a relog. G1, G2 and G5 all passed first attempt, which is not this
+queue's usual ratio. **M2 closed the same day**, by [N14–N16](In-Game-Tests/NPC-Combat.md): zone 448
+has thirteen monsters standing in it when you log in, none of them put there by a command, and on
+the closing run the Basin Mouth pack killed the tester.
 
-The next frontier is **M3, resources out of the ground** — two cuts are code-complete and have never
-been seen in game.
+**M3 closed on a calldown the player couldn't have made.** The thumper came from the `thumper` admin
+command, because the retail route needs a beacon item in the inventory and that is
+[I1](In-Game-Tests/Inventory.md)'s problem rather than M3's — holding the milestone open on it would
+have meant holding it open on something it can't fix. G3 stays in the queue and reopens the question
+the moment items are deliverable. This is a deliberate departure from M2, whose exit condition
+forbade admin commands outright, and it is written down here rather than in a commit message because
+it is the sort of thing that reads as an oversight later (decision 2026-08-13, user-agreed).
+
+The stream was split at the delivery boundary on purpose and the split earned itself. **G1 went
+first**: three `createitem 10 200` calls took a crystite count from 0 to 600 with the inventory
+open. That settled "updated in the UI without a relog" before a thumper was involved, and it
+narrowed a blocker it doesn't belong to — it is the first evidence anywhere that this client merges
+a partial `InventoryUpdate` into a UI on screen, so whatever hides an item in
+[I1](In-Game-Tests/Inventory.md) is in the item struct rather than in partial updates as a
+mechanism.
+
+**Something in the milestone still hasn't run, and it is the cut listed first.** The payout is read
+straight out of `CustomDBInterface` by `Thumper.OnSuccess`, so the uncommented `ModifyOwnerResources`
+case in `Factory.LoadCommand` was never on the path — no chain has yet constructed that command. The
+reward works; the aptitude route to it is untested.
+
+**G4** is the other one left, and G2 half answered it by accident — the tester collected at
+`COMPLETED` rather than waiting out its 120 seconds and was paid in full twelve seconds later, which
+is the flat grant this cut promised rather than a defect. Partial yield wants a figure `SetProgress`
+already keeps and nothing reads, which is M4.
+
+The next frontier is a choice between **M4, where you thump matters** and **M5, killing something
+pays**. Both are unblocked as of today and neither depends on the other. M5 is the older debt — M2
+has been publishing `CharacterDiedEvent` to nobody since it landed — and its XP half is small and
+known-shaped, while its loot half is a protocol question that could be a day or a milestone. M4 is
+the one with no ground truth to check against: the client only ever learned deposit positions by
+scanning, so nothing shipped with them and the distribution has to be invented.
+
+Two log lines went in to make any of this readable: what `RewardWithResource` paid and **to how many
+participants**, and every thumper state change. Both earned their place immediately. Two thumpers
+finished within twenty seconds of each other that evening, one paying a player and one — the Aero's,
+which nobody had thought about — paying nobody, and the participant count is the only thing that
+tells them apart in the log.
 
 Perception and target selection, the attack pass and death notification are all built
 under [Systems/AI](../UdpHosts/GameServer/Systems/AI/) and driven from
@@ -195,11 +232,15 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] Spawn groups worth fighting, replacing the hardcoded debug row — three groups and thirteen
   monsters in zone 448, respawning, placed in game with `spawngroup` (N14–N16)
 
-[Full detail](streams/m3-resource-payout.md) — 0 of 3 done
+[Full detail](streams/m3-resource-payout.md) — COMPLETE 2026-08-13, 1 of 3 cuts landed
 
-- [ ] Uncomment the `ModifyOwnerResources` case (Factory.cs)
-- [ ] Pay out on thumper completion, hardcoded per beacon
-- [ ] Fill in the grant defs that matter
+- [~] Uncomment the `ModifyOwnerResources` case (Factory.cs) — done in code, and still never run:
+  the thumper reads its grant straight out of `CustomDBInterface`, so no chain has constructed the
+  command
+- [x] Pay out on thumper completion, hardcoded per beacon — 200 crystite from grant 50329, seen in
+  game by [G2](In-Game-Tests/Resource-Payout.md) on 2026-08-13
+- [ ] Fill in the grant defs that matter — needs the client's ability data, same gap as
+  [DATA-5](gaps/data.md#data-5)
 
 [Full detail](streams/m4-thump-placement.md) — 0 of 5 done
 
@@ -239,6 +280,11 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 ## Completed milestones
 
 - **M1: Confirm the combat models** — COMPLETE 2026-08-11
+- **M2: NPCs that fight back** — COMPLETE 2026-08-13, on [N14–N16](In-Game-Tests/NPC-Combat.md)
+- **M3: Resources come out of the ground** — COMPLETE 2026-08-13, on
+  [G2](In-Game-Tests/Resource-Payout.md). Closed on a calldown made by an admin command, because the
+  retail route needs an item and item delivery is I1's problem; G3 reopens the question when it is
+  fixed
 
 ---
 

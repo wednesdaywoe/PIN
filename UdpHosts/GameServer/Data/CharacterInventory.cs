@@ -62,6 +62,33 @@ public class CharacterInventory
         return _resources.Values;
     }
 
+    /// <summary>
+    ///     Writes how big this inventory is to the server log, per sub-inventory.
+    /// </summary>
+    /// <remarks>
+    ///     <c>dbg_inventory</c> prints the same totals to the client console, which is the wrong place
+    ///     for a queue that reads the server log, and it only fires when someone types it. This runs
+    ///     at every full send, so the number is on record for every session whether or not anyone
+    ///     thought to ask.
+    /// </remarks>
+    public void LogInventorySize(string reason)
+    {
+        var bySubInventory = string.Join(
+            ", ",
+            _items.Values
+                .GroupBy(item => (InventoryType)item.SubInventory)
+                .OrderByDescending(group => group.Count())
+                .Select(group => $"{group.Key} {group.Count()}"));
+
+        _logger.Information(
+            "{Reason}: {ItemCount} item(s) [{BySubInventory}], {ResourceCount} resource(s), {LoadoutCount} loadout(s)",
+            reason,
+            _items.Count,
+            bySubInventory,
+            _resources.Count,
+            _loadouts.Count);
+    }
+
     public IEnumerable<uint> GetOwnedChassisIds()
     {
         return _loadouts.Values
@@ -209,8 +236,24 @@ public class CharacterInventory
         _loadouts.Add(loadout.FrameLoadoutId, loadout);
     }
 
+    /// <summary>
+    ///     Sends everything the character is carrying, as one message with the items split across
+    ///     three arrays because each one is length-prefixed by a byte.
+    /// </summary>
+    /// <remarks>
+    ///     The size is logged, broken down by sub-inventory, because nothing else measures it and it
+    ///     is a standing suspect for <see href="../../../Docs/In-Game-Tests/Inventory.md">I1</see>.
+    ///     PIN gives a character every frame in the game at login — 20 chassis and their default
+    ///     modules in two configurations each — which is not what a retail character carried, and a
+    ///     client that caps a bag would have nowhere to put the next item. Resources are counted
+    ///     separately here for the same reason: they arrive in their own array and
+    ///     <see href="../../../Docs/In-Game-Tests/Resource-Payout.md">G1</see> proved they arrive
+    ///     fine, so any ceiling that exists is on the item side.
+    /// </remarks>
     public void SendFullInventory()
     {
+        LogInventorySize("SendFullInventory");
+
         if (_items.Count > (255 * 3) - 1)
         {
             throw new NotImplementedException("Too many items in inventory, CharacterInventory.SendFullInventory has to be updated");

@@ -19,6 +19,39 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**[Resource Payout](In-Game-Tests/Resource-Payout.md) went 3 of 5 on the day it was written,
+2026-08-13, and closed [M3](PROGRESS.md).** A thumper called down at a player's feet ran its full
+cycle and paid 200 crystite, logged as `paying 200 of resource 10 to 1 participant(s)`. Every one of
+the three passed first attempt, which is not this queue's usual ratio and is worth being slightly
+suspicious of rather than pleased about.
+
+The milestone closed on a calldown made by an admin command, deliberately: the retail route needs a
+beacon item and that is [I1](In-Game-Tests/Inventory.md)'s problem, not M3's. **G3 is the entry that
+reopens it** when items are deliverable, so it stays in the queue rather than being marked skipped.
+
+The stream was split at the delivery boundary because a payout that arrives and is never drawn looks
+exactly like one that never happened, and **G1 — the half worth being nervous about — went first**:
+0 crystite to 200 to 400 to 600 on three `createitem 10 200` calls, the number climbing in an
+inventory already on screen. **That result reaches further than its own entry.** It is the first
+confirmation anywhere that this client accepts a partial `InventoryUpdate` and merges it, which
+takes the delivery mechanism off [I1](In-Game-Tests/Inventory.md)'s suspect list.
+
+**G5 passed without being run**, which is the ideal outcome for a regression check on an unattended
+timer: the zone's NPC-owned debug thumper completed during G2's session and paid
+`to 0 participant(s)` without taking the shard down. Both thumpers finished inside the same twenty
+seconds and the only thing telling them apart in the log is the participant count.
+
+Two entries are left and neither blocks the milestone. **G3** asks whether the client offers a
+thumper calldown at all without a beacon item, which is I1's problem; the `thumper` admin command
+exists so G2 didn't have to wait for the answer, and G2 used it. **G4** expects PIN to pay full
+yield for a thumper cut short, which is the flat grant M3 promised rather than a defect. G2 half
+answers it already — the tester collected at `COMPLETED` rather than waiting out its 120 seconds,
+and was paid in full twelve seconds later.
+
+**What none of it exercised is the aptitude command.** `Thumper.OnSuccess` reads the grant straight
+out of `CustomDBInterface`, so M3's first cut — the uncommented `case` in `Factory.LoadCommand` — is
+still code that has never run.
+
 **NPC Combat is closed, 16 of 16, on 2026-08-13 — and with it [M2](PROGRESS.md).** A monster notices
 you, turns, runs the ground down, stops where its own weapon can reach, shoots, tracks you while it
 fires, gives up and walks home. Thirteen of them are standing in zone 448 when you log in, they come
@@ -157,9 +190,12 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Blocks most of the queue
 
-- [ ] [Inventory Delivery](In-Game-Tests/Inventory.md) — 0 of 2 passing. `createitem` shows a
+- [ ] [Inventory Delivery](In-Game-Tests/Inventory.md) — 0 of 3 passing. `createitem` shows a
   pickup toast and delivers nothing; the wire-format fix is unverified
-  ([NET-18](ISSUE-REGISTER.md)). Gates every entry that spawns an item, all of P0–P6
+  ([NET-18](ISSUE-REGISTER.md)). Gates every entry that spawns an item, all of P0–P6.
+  **I3 is new and should be run first**: every other line of investigation asks whether the item
+  was built right, and none asks whether the client had room for it — PIN hands out all 20
+  battleframes and their modules at login, which no retail character carried
 
 ## Combat
 
@@ -178,6 +214,16 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 - [ ] [Deployables and Vehicles](In-Game-Tests/Deployables-And-Vehicles.md) — 0 of 7 passing, not
   yet run. [NET-14](ISSUE-REGISTER.md) (the discarded faction id) was found reading this code, not
   by running V6
+
+## Resources
+
+- [~] [Resource Payout](In-Game-Tests/Resource-Payout.md) — 3 of 5 passing, all on 2026-08-13.
+  **G2 is [M3](PROGRESS.md)'s exit condition and it passed**: a thumper ran its cycle and paid 200
+  crystite to one participant. G1 proved a resource count climbs on screen as partial updates
+  arrive, which also proves the client merges a partial `InventoryUpdate` at all; G5 passed
+  unattended. Left: G3, whether the client can call a thumper down without the admin command — "no"
+  is a valid answer for as long as [I1](In-Game-Tests/Inventory.md) is open — and G4, what a
+  thumper cut short pays
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and

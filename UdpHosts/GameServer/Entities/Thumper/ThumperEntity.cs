@@ -163,6 +163,14 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
         ResourceNode_ObserverView?.HostilityInfoProp = HostilityInfo;
     }
 
+    /// <summary>
+    ///     Moves the thumper to its next state and starts that state's countdown.
+    /// </summary>
+    /// <remarks>
+    ///     Logged because a full cycle is about seven and a half minutes of a machine standing still,
+    ///     and nothing on screen distinguishes "thumping" from "stalled". The line is the only way to
+    ///     tell which of those you are watching.
+    /// </remarks>
     public void TransitionToState(ThumperState newState)
     {
         StateInfo = new StateInfoStruct()
@@ -172,6 +180,12 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
                         CountdownTime = Shard.CurrentTime + newState.CountdownTime(),
                     };
         ResourceNode_ObserverView.StateInfoProp = StateInfo;
+
+        Shard.Logger.ForContext<ThumperEntity>().Information(
+            "Thumper {EntityId} entered {State}, for {CountdownMs}ms",
+            EntityId,
+            newState,
+            newState.CountdownTime());
     }
 
     public override bool IsInteractable()

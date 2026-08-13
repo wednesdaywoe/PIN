@@ -52,6 +52,10 @@ public class DebugInventoryServerCommand : ServerCommand
 
         context.SourcePlayer.SendDebugLog(stringBuilder.ToString());
 
+        // The listing goes to the client console, which is the wrong machine for a queue that reads
+        // the server log — the totals at least belong in both.
+        inventory.LogInventorySize("dbg_inventory");
+
         if (parameters.Length > 0 && parameters[0].Equals("resend", StringComparison.OrdinalIgnoreCase))
         {
             inventory.SendFullInventory();

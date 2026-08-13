@@ -68,8 +68,24 @@ public abstract class BaseEncounter : IEncounter
         }
     }
 
+    /// <summary>
+    ///     Pays every participant, and says so in the log.
+    /// </summary>
+    /// <remarks>
+    ///     An encounter with no participants pays nobody and is not an error — the Coral Forest debug
+    ///     thumper is owned by an NPC and reaches here with an empty set. The count is logged for
+    ///     exactly that reason: "nothing arrived in my inventory" and "nobody was there to pay" look
+    ///     identical from the screen.
+    /// </remarks>
     protected void RewardWithResource(uint resourceId, uint quantity)
     {
+        Shard.Logger.ForContext(GetType()).Information(
+            "Encounter {EncounterId} paying {Quantity} of resource {ResourceId} to {ParticipantCount} participant(s)",
+            EntityId,
+            quantity,
+            resourceId,
+            Participants.Count);
+
         foreach (var p in Participants)
         {
             p.Inventory.AddResource(resourceId, quantity);

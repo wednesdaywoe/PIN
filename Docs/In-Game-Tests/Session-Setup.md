@@ -147,6 +147,7 @@ the client keeps `/`-prefixed input for itself, so anything starting with `/` ne
 | `deployable <deployableTypeId> [<x> <y> <z>]` | `spawn_deployable` | |
 | `vehicle <vehicleTypeId> [<x> <y> <z>]` | `spawn_vehicle` | |
 | `carryable <carryableTypeId> [<x> <y> <z>]` | `spawn_carryable` | |
+| `thumper [<beaconCalldownDefId>]` | `spawn_thumper` | at your feet, owned by you, so it pays you when it finishes; defaults to def 766269. A full cycle is 7½ minutes — see [Resource Payout](Resource-Payout.md) |
 | `target [entityId/name]` | — | no argument ray-casts from your aim; `target me` or `target self` targets you; prints the distance, so it doubles as a rangefinder |
 | `clear` | `cleartarget`, `targetclear`, `untarget`, `removetarget`, `remtarget`, `deletetarget`, `deltarget` | clears the command target |
 | `hostility` | `stance` | stance both ways against the current target |
