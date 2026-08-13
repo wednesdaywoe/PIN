@@ -243,3 +243,64 @@ gets its own confirmation from the next session that leaves the Coral Forest thu
 The general lesson is point 3. `Shard.Tick` calls its systems in a row with no isolation between
 them, so any of them can still do this; the encounter loop is simply the one that was caught doing
 it. Worth extending the same treatment outward if a second system ever manages it.
+
+### NET-22 — An NPC's pose never reached the client [x] fixed 2026-08-13
+
+Monsters teleported. Found on the first locomotion session, 2026-08-13: an NPC would sit at its
+spawn, then appear somewhere else entirely, having neither walked nor slid. The steering was not the
+problem — server-side it was stepping about 30cm every 50ms, exactly as `SteeringTests` says it
+should.
+
+**Position was only half of it.** The same session turned up a second symptom that had been read as
+roughness rather than a defect since combat testing began: an NPC took several seconds to react to a
+target moving, holding its old aim and firing where the player used to be before snapping round.
+That is this bug too. `SetAim` writes the aim and body yaw into the movement view, so it travelled —
+or rather didn't — by the same route as the position.
+
+What made it read as slow AI rather than as a missing update is that the two halves of "an NPC is
+shooting at you" go different ways. `SetFireBurst` writes `WeaponBurstFiredProp` into
+`Character_CombatView`, which *is* flushed to scoped clients, so the client was told to draw the
+burst on time and drew it along an aim seconds old. Nothing replicates the projectile itself —
+`ProjectileSim` sends nothing to scoped clients — so the direction the shot appears to take is
+inferred entirely from the stale aim.
+
+The damage was never wrong. `NpcCombat.Fire` passes `shot.Direction`, recomputed each tick from live
+positions, straight into `WeaponSim.OnFireWeaponProjectile`; it never reads the replicated aim. Only
+the picture was stale, which is why N2, N5 and N6 could pass against this bug without anyone
+noticing it.
+
+Nor was the AI slow: `TargetSelection.Tick` and `NpcCombat.Face` both run on the 50ms AI tick, and
+`Face` re-aims on a deadband of about a degree. The only genuine delay is acquisition — threat gains
+20/s against a threshold of 10, so half a second to notice a new target — and that is deliberate.
+
+Nothing replicated it. `EntityManager.FlushChanges` skips `Character_MovementView` on purpose:
+
+> We don't flush Character_MovementView as those changes are basically handled entirely by
+> CurrentPoseUpdate
+
+That is true for a player, whose client sends a pose on every input and whose `MovementRelay`
+forwards it to everyone else as a `CurrentPoseUpdate`. It stopped being true the moment the server
+started moving a character nobody was driving. An NPC had neither half: its movement view was never
+flushed, and nothing sent a pose on its behalf.
+
+So the only position a client ever held was the one in its scope-in keyframe. The next time it heard
+anything was the checksum reconciliation in `EntityManager` noticing its copy no longer matched and
+sending a fresh keyframe — at which point the monster covered the whole distance in a single frame.
+The teleport was not the NPC moving wrongly; it was the client being told, late and all at once,
+about movement that had already finished.
+
+Fixed by `Systems/AI/NpcPose.cs`, which sends a `CurrentPoseUpdate` to the scoped clients once per AI
+tick, and only when the pose has actually changed so an idle monster stays silent. It carries
+`Shard.CurrentShortTime`, which is what the client interpolates between poses with.
+
+Two things this cost, worth remembering next time something looks like an AI bug:
+
+- **The server log could not have shown it.** Every line the AI writes describes the server's own
+  copy, which was correct throughout. A defect that lives entirely in what was *not* sent is
+  invisible to a log of what was decided. `SteeringTests` passing and the log reading correctly were
+  both true and both irrelevant.
+- **It masked the entry it broke.** [N8](../In-Game-Tests/NPC-Combat.md) asks you to watch a monster
+  the whole way in, and [N9](../In-Game-Tests/NPC-Combat.md) asks whether the run animates. Neither
+  is answerable when the approach is not drawn, so a single replication gap took out both the
+  milestone's exit condition and the entry watching the one value in this work that had never been
+  seen on the wire.

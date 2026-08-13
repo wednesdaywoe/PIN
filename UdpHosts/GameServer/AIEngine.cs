@@ -61,6 +61,7 @@ public class AIEngine
                 {
                     NpcCombat.Disengage(npc, dead, currentTime);
                     NpcMovement.Halt(npc);
+                    NpcPose.Publish(_shard, npc, dead);
                 }
 
                 continue;
@@ -85,6 +86,11 @@ public class AIEngine
             // the last word on which way it's pointing.
             NpcMovement.Tick(_shard, npc, state, elapsedSeconds, _logger);
             NpcCombat.Tick(_shard, npc, state, currentTime, _logger);
+
+            // Last, so one pose carries both where the NPC ended up and which way it turned to shoot.
+            // Nothing else replicates an NPC's movement: the movement view is not flushed to scoped
+            // clients, on the assumption that only a client ever moves a character.
+            NpcPose.Publish(_shard, npc, state);
         }
     }
 

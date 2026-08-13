@@ -65,7 +65,7 @@ baseline the next pass diffs against.
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 1 of 21 closed
+[Full detail](gaps/network.md) — 1 of 22 closed
 
 - [ ] **NET-1** — No retransmit queue; "reliable" only acks, never resends (scheduled as M8)
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
@@ -94,6 +94,11 @@ baseline the next pass diffs against.
 - [x] **NET-21** — An encounter throwing from `Tick` killed the whole shard thread; the Coral Forest
   thumper did it every session via a null participant, a set mutated mid-iteration, and no isolation
   around the update loop. Fixed 2026-08-12, verified headless
+- [~] **NET-22** — Nothing replicated an NPC's pose: the movement view is not flushed and no pose was
+  sent on its behalf, so both position and aim only reached the client when a keyframe corrected
+  them. Monsters teleported, and fired at where you used to be for seconds before snapping round —
+  the burst itself travels on the combat view and arrived on time. Damage was always resolved from
+  the live direction. Fixed 2026-08-13 with `NpcPose`; awaiting the N8 and N13 re-runs
 
 ## Client & Environment — CLIENT
 

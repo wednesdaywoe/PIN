@@ -19,15 +19,32 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**Locomotion is queued and unrun — N8–N12, and N8 is the milestone's own exit condition.** NPCs now
-walk: they close on a target, stop at a distance their weapon can reach, and go home when they lose
-it. Nothing about it has been in front of a client. Two of the five entries are watching guesses
-rather than behaviour, and are the ones most likely to come back with something: **N9** looks at
-whether an NPC's legs move, because the movement state that drives the animation (`0x2004`) is
-derived from two enums and has never been seen on the wire, on a packing
-[NET-12](ISSUE-REGISTER.md) already flags; **N12** looks at whether an NPC stays on the ground, which
-it has no way of knowing — the server holds no terrain, so an NPC borrows its target's footing and
-refuses slopes too steep to be ground.
+**Locomotion went in front of a client on 2026-08-13 and the sitting was called on one defect:
+monsters teleported.** Everything else looked right — they acquired, closed, stopped and fired — but
+the approach was never drawn, so N8–N12 stay unmarked. A run nobody can see is not a result. The
+cause was replication, not steering: `Character_MovementView` is deliberately not flushed to scoped
+clients and an NPC had nothing sending a pose on its behalf, so a client held its scope-in position
+until a checksum mismatch corrected it in one jump ([NET-22](ISSUE-REGISTER.md), fixed the same day
+with `NpcPose`).
+
+The shape of that failure is the lesson worth keeping: **the server log could not have shown it.**
+Every line the AI writes describes the server's own copy, which was stepping 30cm every 50ms exactly
+as `SteeringTests` says. A defect that lives in what was *not* sent is invisible to a log of what
+was decided, and this stream's whole method — write down what to grep — had nothing to offer.
+
+It also explains something that had been shrugged off as roughness since combat testing started:
+NPCs aiming seconds behind a moving player, firing where you were and then snapping. Aim goes
+through the same unflushed view. It read as slow AI because the *burst* travels on the combat view,
+which is flushed — so the client was told to draw the shot on time and drew it along a stale aim.
+**N13** is new and exists for that half, because nothing about watching a monster walk correctly
+would prompt anyone to check whether it aims correctly, and N1–N7 all passed while it was broken.
+
+Re-run from **N8**, the milestone's exit condition. **N9** is still the entry most likely to come
+back with something: the movement state that drives the run animation (`0x2004`) is derived from two
+enums, has never been seen on the wire, and sits on a packing [NET-12](ISSUE-REGISTER.md) already
+flags — and now finally gets drawn. **N12** looks at whether an NPC stays on the ground, which it has
+no way of knowing: the server holds no terrain, so an NPC borrows its target's footing and refuses
+slopes too steep to be ground.
 
 **Environmental damage: the water half passes, the melding half hasn't run.** E1, E2 and E6 went
 green on 2026-08-12. Drowning reproduces effect 789's compounding curve tick for tick in the log, and
@@ -91,11 +108,12 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Combat
 
-- [~] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 7 of 12 passing. Monsters notice you, turn, take
+- [~] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 7 of 13 passing. Monsters notice you, turn, take
   cover into account, shoot, hurt you, disengage when you leave, and die cleanly mid-burst. Four
   entries failed on the first sitting and produced [DATA-11](ISSUE-REGISTER.md), a real AI defect
   (N4), and one entry that was wrong about what the server can see (N3). N8–N12 are the locomotion
-  pass and have not been run
+  pass, attempted 2026-08-13 and unanswerable against [NET-22](ISSUE-REGISTER.md); N13 is new, and
+  covers the aim half of that same defect
 - [~] [Hostility](In-Game-Tests/Hostility.md) — 6 of 7 passing. H5 passed once NPCs could attack,
   confirming `CanDamage` with a monster as the attacker. Only H7 is left and it needs two clients
 - [~] [Damage Decay](In-Game-Tests/Damage-Decay.md) — 4 of 5 passing. The curve's shape between

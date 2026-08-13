@@ -87,4 +87,23 @@ public sealed class AIState
     public uint CachedSpeedTypeId { get; set; }
 
     public MoveSpeed CachedSpeed { get; set; }
+
+    /// <summary>
+    ///     The pose <see cref="NpcPose"/> last put on the wire. Held so an NPC that hasn't moved or
+    ///     turned since the last tick sends nothing at all, rather than repeating itself to every
+    ///     scoped client twenty times a second for as long as it stands there.
+    /// </summary>
+    public Vector3 LastSentPosition { get; set; }
+
+    public Quaternion LastSentOrientation { get; set; }
+
+    public Vector3 LastSentAim { get; set; }
+
+    public short LastSentMovementState { get; set; }
+
+    /// <summary>
+    ///     False until the first pose goes out, so that a spawn is always announced. Without it an NPC
+    ///     spawned exactly where the defaults sit would compare equal and never send one.
+    /// </summary>
+    public bool HasSentPose { get; set; }
 }

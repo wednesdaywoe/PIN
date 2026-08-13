@@ -1,7 +1,7 @@
 ---
 project: pin
 kind: test-stream
-title: "NPC Combat (N1-N12)"
+title: "NPC Combat (N1-N13)"
 relates:
   - ../TEST-REGISTER.md
 ---
@@ -12,13 +12,27 @@ Part of the [in-game test queue](README.md). Setup, admin commands and the monst
 [Session Setup](Session-Setup.md).
 
 The check on everything [M2](../streams/m2-npc-combat.md) has built. N1–N7 cover a monster that
-stands still and fights — it notices, turns, and shoots — and N8–N12 cover the locomotion pass that
-landed after them, which is the half that decides where it stands in the first place.
+stands still and fights — it notices, turns, and shoots — N8–N12 cover the locomotion pass that
+landed after them, which is the half that decides where it stands in the first place, and N13 checks
+that any of it is drawn on the client at all.
 
 **N1–N7 pass as of 2026-08-12**, across two sittings. Both model guesses that half of the stream
 existed to check came out right — local forward is +X (N1), and the burst timing read off the
 template reads as a weapon rather than a strobe (N5) — and neither is asserted any more.
-**N8–N12 have not been run.**
+**N8–N12 were attempted on 2026-08-13 and the sitting was called on one defect: monsters
+teleported.** They neither walked nor slid — an NPC sat at its spawn and then appeared somewhere
+else. The steering was innocent; nothing replicated it. `Character_MovementView` is deliberately not
+flushed to scoped clients, and an NPC had nothing sending a pose on its behalf either, so a client
+held its scope-in position until a checksum mismatch corrected it in one jump
+([NET-22](../gaps/network.md#net-22), fixed the same day). The entries below are unmarked because a
+run nobody can see is not a result: N8 asks you to watch a monster the whole way in and N9 asks
+whether the run animates, and neither question was answerable. Re-run the set from N8.
+
+The same defect turned out to explain something that had been shrugged off as roughness since combat
+testing began — a Chosen taking seconds to react to a moving player, firing where you were and then
+snapping round. Aim replicates through the same unflushed view as position. **N13 was written for it**,
+because after watching a monster walk correctly nobody would think to check whether it aims
+correctly, and N1–N7 all passed while it was broken.
 
 Four of the seven failed the first time and only one of those was the AI's fault. Two failures
 (N2, N6) turned out to be the same weapon-resolution bug wearing different disguises, one stripping
@@ -63,6 +77,20 @@ passes the three numbers straight through. With no coordinates at all it spawns 
 is the form to reach for when you don't care where. To put one a measured distance away, read your
 own position off `hazard` first and do the arithmetic — the locomotion entries below all start that
 way, because where an NPC begins is half of what they're measuring.
+
+Two things make the spawn point hard to judge by eye, and both were hit on 2026-08-13. `npc <id>`
+with no coordinates puts the monster on top of you, and your camera sits behind your character, so
+it renders *behind* you every time — that is the command working, not a placement bug. And once it
+has a target an NPC starts closing immediately, so where it is by the time you have turned around is
+the standoff ring, not the spawn. Don't reason about this from the screen; the server says where it
+put things:
+
+```
+grep -a "Spawned monster" ~/Games/PIN/logs/GameServer.log | tail -5
+```
+
+Compare that against the position `hazard` gave you. If the numbers are the ones you typed, the
+spawn is correct and anything surprising afterwards is locomotion.
 
 ## [x] N1: An NPC notices you and turns to face you
 
@@ -264,10 +292,20 @@ line tells you apart.
 If it sets off and never arrives, check the log for it repeatedly setting off and stopping — that
 is the stopping distance oscillating, and it means the hysteresis in `NpcMovement` isn't holding.
 
+If it jumps instead of walking, that is [NET-22](../gaps/network.md#net-22) coming back: the
+approach is happening on the server and not being sent. It is the one failure in this entry the log
+cannot help with, because every line the AI writes describes the server's own copy — which was
+correct throughout the 2026-08-13 sitting, while the client was drawing a teleport. Watching the
+screen is the only instrument for this one.
+
 ## [ ] N9: The run reads as a run
 
 Separate from N8 because they fail separately: an NPC can arrive at exactly the right place while
 looking wrong the whole way, and that is the more likely of the two.
+
+Not answerable on 2026-08-13 — a teleporting monster has no gait to judge
+([NET-22](../gaps/network.md#net-22)). This is still the entry most likely to come back with
+something, because `0x2004` has never been seen on the wire and now finally gets to be.
 
 1. Run N8 and watch the monster's legs, not its position
 
@@ -361,3 +399,39 @@ whether they read as an animal on screen.
 Fail, it levitates: whichever rule is wrong, say which of the two shapes it took — rising while you
 hover is the airborne check, and climbing a smooth invisible ramp toward a rooftop is the slope
 limit.
+
+## [ ] N13: It tracks you while it shoots
+
+Written off a symptom that had been misread as roughness since combat testing started, and only
+recognised as a defect on 2026-08-13: a Chosen would take several seconds to react to a player
+moving, holding its aim and firing where you had been before snapping round. It was
+[NET-22](../gaps/network.md#net-22) — the same unreplicated pose as the teleporting — and this entry
+exists to make sure it stays fixed, because it is the half nobody would look for after watching a
+monster walk correctly.
+
+1. `invuln on`
+2. `hazard`, then `npc 1196 <X+20> <Y> <Z>`
+3. Let it acquire you and open fire, then strafe left and right across its front, then circle it
+4. `grep -aE "NPC [0-9]+ (opens fire|holding fire)" ~/Games/PIN/logs/GameServer.log | tail -10`
+
+Pass: the body turns with you continuously while it fires, no worse than a fifth of a second behind.
+There should be no version of it firing at empty ground and then snapping.
+
+The server tracks at 20Hz — `NpcCombat.Face` runs on the 50ms AI tick with a deadband of about a
+degree — and the pose goes out on the same tick, so a lag longer than a tick or two is the wire, not
+the AI. Half a second of delay on *first* acquisition is correct and not a failure: threat gains
+20/s against a threshold of 10, so an NPC takes 0.5s to decide it has a target at all
+([DATA-10](../gaps/data.md#data-10) — the rates are invented).
+
+Fail, it lags by seconds and snaps: `NpcPose` is not sending, or not being flushed. Fail, it turns
+smoothly but late by a fixed amount: that is client interpolation working off `ShortTime`, and worth
+writing down as a number rather than an impression.
+
+Fail, it turns in steps rather than smoothly: 20Hz is too coarse for the client to interpolate
+between, and the AI tick rate is the thing to change, not the pose rate — they are deliberately the
+same so an NPC never sends a pose it hasn't decided on.
+
+**The damage is not what this entry measures, and doesn't move with it.** `NpcCombat.Fire` passes a
+direction recomputed each tick from live positions, so shots have always been resolved against where
+you actually are. A monster that looks like it is firing wide can still be hitting you, which is
+exactly how this survived N2, N5 and N6.

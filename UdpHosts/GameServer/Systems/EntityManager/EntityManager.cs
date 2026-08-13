@@ -74,6 +74,13 @@ public class EntityManager
         _shard.Physics.CreateKineticEntity(characterEntity);
         _shard.Physics.UpdateEntity(characterEntity);
         Add(characterEntity.EntityId, characterEntity);
+
+        // Where a monster was put is otherwise only answerable by looking at the screen, and the screen
+        // is the least reliable witness available: an NPC starts closing on its target immediately, so
+        // by the time it is on screen it is somewhere else. `npc <id>` spawns on top of the player and
+        // `npc <id> <x> <y> <z>` takes a world position, and telling those apart by eye is guesswork.
+        _logger.Debug("Spawned monster {TypeId} as {EntityId} at {Position}", typeId, characterEntity.EntityId, position);
+
         return characterEntity;
     }
 
