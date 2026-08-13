@@ -310,3 +310,52 @@ That also settles `0x2004` as the running movement state — an NPC now plays a 
 closes, so the value derived from `Movestate` and `MovementFlags` in
 [N9](../In-Game-Tests/NPC-Combat.md) is right, and the packing [NET-12](#net-12) flags as unconfirmed
 has at least one asserted value that the client agrees with.
+
+<a id="net-23"></a>
+
+### NET-23 — A dead player has no way back [ ] open, found 2026-08-13
+
+Death is a one-way door. Found by [N16](../In-Game-Tests/NPC-Combat.md) on 2026-08-13, which is the
+first time in PIN's history that a player has been killed by the game rather than by a command: the
+tester stood in front of Basin Mouth with invulnerability off and let it run.
+
+The server handled the kill correctly and everything after it stopped.
+
+```
+17:48:16 Fallback took 1 damage from CharacterEntity (2305015472095170560), 0 shields and 0 health left
+17:48:16 NPC 2305015472095171584 target 11072869122414870784 -> null
+17:48:16 NPC 2305015472095171328 target 11072869122414870784 -> null
+17:48:16 NPC 2305015472095170816 sets off home at 11m/s, 29.886986m away, stopping at 1.5m
+17:48:56 RECEIVED CloseConnection
+```
+
+`CharacterEntity.Die` ran — all six attackers dropped target and walked home inside the same second,
+which only happens once `Alive` is false — and it sent a `KilledEvent` to the scoped clients and set
+`CharacterStatus.Dead`. Forty seconds later the tester quit, because nothing else was going to
+happen.
+
+**The machinery to come back exists and was never asked to run.** `BaseController.RequestRespawn`
+(command 198) is implemented, guards correctly on the character being `Dead`, and calls
+`NetworkPlayer.Respawn`, which is a complete and working routine — it is what puts every player into
+the world at login. The client simply never sent the command. Nothing in the session log between the
+kill and the disconnect is anything but keyframe chatter.
+
+So the gap is on the way out, not the way in: the client is not being told enough at death to offer a
+respawn. The likely candidate is `RespawnTimesData` — `Respawn` writes `RespawnTimesProp` twice and
+clears it, with a comment saying it isn't understood, and `Die` never touches it at all. Retail drove
+the death screen's countdown and spawn-point list from that field, so a client with nothing in it
+plausibly has no UI to offer. Unconfirmed: nobody has watched what a retail server sends on death,
+and the [2016 capture](../In-Game-Tests/Capture-Replay.md) is the cheap place to look before guessing
+at the field's shape.
+
+Two smaller things fall out of the same entry:
+
+- `Die` had no log line, so the only evidence a player had died was arithmetic across thousands of
+  damage lines. It now logs at Information, which is what makes the sequence above greppable.
+- Nothing subscribes to `CharacterDiedEvent`. The event is enqueued and dropped for players; for NPCs
+  `Die` reaches around it and sets a corpse lifetime directly. Whatever fixes this should probably go
+  in the subscriber rather than deeper into `Die`.
+
+Not an M2 defect — M2 is about whether a monster is worth fighting, and being killed by one is the
+evidence that it is. It belongs to whichever milestone owns the player lifecycle, and until then a
+tester who dies has to reconnect.

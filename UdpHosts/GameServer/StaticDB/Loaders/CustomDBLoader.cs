@@ -8,6 +8,8 @@ using Shared.Common;
 
 public class CustomDBLoader
 {
+    public const string SpawnGroupPath = "./StaticDB/CustomData/spawn_group.json";
+
     private static readonly SnakeCasePropertyNamingPolicy _policy = new SnakeCasePropertyNamingPolicy();
     private readonly JsonSerializerOptions _serializerOptions = new()
     {
@@ -904,9 +906,26 @@ public class CustomDBLoader
 
     public Dictionary<uint, Dictionary<uint, SpawnGroup>> LoadSpawnGroup()
     {
-        return LoadJSON<SpawnGroup>("./StaticDB/CustomData/spawn_group.json")
+        return LoadJSON<SpawnGroup>(SpawnGroupPath)
                .GroupBy(row => row.ZoneId)
                .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
+    }
+
+    /// <summary>
+    ///     Writes every zone's spawn groups back out. The only custom data file the server edits rather
+    ///     than just reads, because the <c>spawngroup</c> command places monsters where a player is
+    ///     standing and that position has to survive the session.
+    /// </summary>
+    /// <remarks>
+    ///     This writes to the deploy directory's copy, not the repo's. Copy it back:
+    ///     <c>cp ~/Games/PIN/GameServer/StaticDB/CustomData/spawn_group.json
+    ///     &lt;repo&gt;/UdpHosts/GameServer/StaticDB/CustomData/</c>. The alternative was teaching the
+    ///     server where its own source tree is, which is worse.
+    /// </remarks>
+    public void SaveSpawnGroups(IEnumerable<SpawnGroup> groups)
+    {
+        var options = new JsonSerializerOptions(_serializerOptions) { WriteIndented = true };
+        File.WriteAllText(SpawnGroupPath, JsonSerializer.Serialize(groups.OrderBy(g => g.ZoneId).ThenBy(g => g.Id), options));
     }
 
     public Dictionary<uint, Dictionary<uint, LgvRaceDef>> LoadLgvRace()

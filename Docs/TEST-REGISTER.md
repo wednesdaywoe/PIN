@@ -19,15 +19,51 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**NPC Combat went 13 of 13 on 2026-08-13 and then reopened at 13 of 16.** A monster now notices you,
-turns, runs the ground down, stops where its own weapon can reach, shoots, tracks you while it
-fires, gives up and walks home, all confirmed in game.
+**NPC Combat is closed, 16 of 16, on 2026-08-13 — and with it [M2](PROGRESS.md).** A monster notices
+you, turns, runs the ground down, stops where its own weapon can reach, shoots, tracks you while it
+fires, gives up and walks home. Thirteen of them are standing in zone 448 when you log in, they come
+back ninety seconds after they die, and on the closing run the basin pack killed a player. Nothing
+in that sentence needs an admin command.
 
-What every one of those thirteen entries has in common is that the tester spawned the monster.
+**N14 took four attempts and failed on content every time, never on the spawn code.** The first
+groups used the three monsters the test queue had already proven, because all three were known
+hostile to the player. They are also in three mutually hostile factions: the zone fought itself out
+in twenty seconds, killed Aero, and left a player logging in to find a few survivors and empty
+ground. The second put three Chosen under the terrain, where they shot a player who never saw them.
+The third scattered groups over a radius across ground that moves 12m vertically inside 9m
+horizontally, and put monsters inside walls.
+
+**The fourth passed, and then N16 found a fourth way to be underground — this time the tester.**
+That entry's own `tp` target was a coordinate nobody had stood on, so the fight was conducted from
+about 8m inside a hillside, and the teleport destination went into the footing record as if it were
+ground. The client reports grounded inside terrain exactly as it does on top of it, which makes a
+placement tool that trusts the player's footing only as good as the footing being genuine. Closed
+the same way as the others: `CharacterEntity.PlacedPosition` marks a position a character was *put*
+at, no footing is recorded until it walks off that spot, and `spawngroup add` refuses outright until
+then.
+
+**Two findings came out of the closing run and neither belongs to M2.** A player who dies has no way
+back — the server kills them correctly and the client never asks to respawn
+([NET-23](ISSUE-REGISTER.md)) — and the first balance reading ever taken against real content says
+the monsters are bullet sponges, which is [DATA-6](ISSUE-REGISTER.md)'s flat 2500 health pool for
+every creature in the game rather than anything about the pack. The incoming half of that reading is
+roughly retail already.
+
+None of those is the sort of thing a test entry catches twice, so each became a server-side guard
+rather than a note. `SpawnGroupSim` audits every standing NPC pair at startup for hostile
+neighbours, and N14 step 4 greps for it. `MovementRelay` logs a grounded player's position once a
+second, which is the only terrain measurement this server ever receives. And `spawngroup add` places
+a monster where the tester is standing, which removes the guess entirely: the queue stopped writing
+coordinates into a file and started walking to them.
+
+The second failure is also the clearest example yet of the stream's own method. From the screen it
+was "there are no enemies"; from the log it was three NPCs closing to 9m and holding fire for
+`NoLineOfSight`. Being shot by something you cannot see now has its own named signature in N14.
+
+What every one of the first thirteen entries had in common is that the tester spawned the monster.
 [M2](PROGRESS.md)'s exit condition is a monster worth fighting, not a monster spawned by an admin
-command, so the spawn groups landing added **N14 to N16** and the stream is the frontier again
-rather than the first one closed. N14 is the exit condition and the only entry in the queue that
-forbids the `npc` command.
+command, so the spawn groups landing added **N14 to N16**. N14 is the exit condition and the only
+entry in the queue that forbids the `npc` command.
 
 It took two sittings that day. The first was called on one defect: monsters teleported, having
 neither walked nor slid. The cause was replication, not steering — `Character_MovementView` is
@@ -127,14 +163,14 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Combat
 
-- [~] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 13 of 16 passing, and the stream reopened rather
-  than closed. Monsters notice you, turn, close the ground, stop where their weapon can reach, shoot,
-  hurt you, track you while firing, give up and walk home, and die cleanly mid-burst. It took four
-  sittings and produced [DATA-11](ISSUE-REGISTER.md), [NET-22](ISSUE-REGISTER.md), a real AI defect
-  (N4), one entry that was wrong about what the server can see (N3), and
-  [CLIENT-3](ISSUE-REGISTER.md). N14–N16 were added when the spawn groups landed: every one of the
-  first thirteen ran against a monster the tester put there by hand, which is not the claim the
-  milestone needs
+- [x] [NPC Combat](In-Game-Tests/NPC-Combat.md) — 16 of 16 passing, closed 2026-08-13. Monsters
+  notice you, turn, close the ground, stop where their weapon can reach, shoot, hurt you, track you
+  while firing, give up and walk home, and die cleanly mid-burst — and thirteen of them are standing
+  in the zone before you type anything, respawn where they fell, and can kill you. It took five
+  sittings and produced [DATA-11](ISSUE-REGISTER.md), [NET-22](ISSUE-REGISTER.md),
+  [NET-23](ISSUE-REGISTER.md), a real AI defect (N4), one entry that was wrong about what the server
+  can see (N3), one entry that fought its own fight from inside a hillside (N16), and
+  [CLIENT-3](ISSUE-REGISTER.md)
 - [~] [Hostility](In-Game-Tests/Hostility.md) — 6 of 7 passing. H5 passed once NPCs could attack,
   confirming `CanDamage` with a monster as the attacker. Only H7 is left and it needs two clients
 - [~] [Damage Decay](In-Game-Tests/Damage-Decay.md) — 4 of 5 passing. The curve's shape between

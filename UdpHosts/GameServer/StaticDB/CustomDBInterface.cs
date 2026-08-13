@@ -3,6 +3,7 @@ using GameServer.StaticDB.Records.customdata.Encounters;
 namespace GameServer.StaticDB;
 
 using System.Collections.Generic;
+using System.Linq;
 using Records.customdata;
 
 public class CustomDBInterface
@@ -470,4 +471,42 @@ public class CustomDBInterface
     public static Dictionary<uint, MeldingRepulsorDef> GetZoneMeldingRepulsors(uint zoneId) => _meldingRepulsor.GetValueOrDefault(zoneId) ?? [];
     public static Dictionary<uint, LgvRaceDef> GetZoneLgvRaces(uint zoneId) => _lgvRace.GetValueOrDefault(zoneId) ?? [];
     public static Dictionary<uint, SpawnGroup> GetZoneSpawnGroups(uint zoneId) => _spawnGroup.GetValueOrDefault(zoneId) ?? [];
+
+    /// <summary>
+    ///     Writes the current spawn groups to disk and re-reads them, so what the server holds and what
+    ///     the file says can't drift. Only the <c>spawngroup</c> admin command calls this.
+    /// </summary>
+    public static void SaveSpawnGroups()
+    {
+        var loader = new CustomDBLoader();
+        loader.SaveSpawnGroups(_spawnGroup.Values.SelectMany(zone => zone.Values));
+        _spawnGroup = loader.LoadSpawnGroup();
+    }
+
+    /// <summary>Adds a group to the in-memory set. Call <see cref="SaveSpawnGroups"/> to persist it.</summary>
+    public static void AddSpawnGroup(SpawnGroup group)
+    {
+        if (!_spawnGroup.TryGetValue(group.ZoneId, out var zone))
+        {
+            _spawnGroup[group.ZoneId] = zone = new Dictionary<uint, SpawnGroup>();
+        }
+
+        zone[group.Id] = group;
+    }
+
+    public static bool RemoveSpawnGroup(uint zoneId, uint groupId) =>
+        _spawnGroup.TryGetValue(zoneId, out var zone) && zone.Remove(groupId);
+
+    /// <summary>Lowest group id not in use in this zone, so a new group never collides with an old one.</summary>
+    public static uint NextSpawnGroupId(uint zoneId)
+    {
+        var zone = _spawnGroup.GetValueOrDefault(zoneId);
+        uint id = 1;
+        while (zone != null && zone.ContainsKey(id))
+        {
+            id++;
+        }
+
+        return id;
+    }
 }

@@ -64,6 +64,43 @@ hand-reconstructed from captures so far
 side of the "~197 aptitude stubs" line in [Deferred](../PROGRESS.md#deferred) — recorded here as
 the size of the unknown, not as work to schedule.
 
+**What is missing is the parameters, not the scripts** (measured 2026-08-13, while establishing that
+retail's spawn placements are unrecoverable for [DATA-15](#data-15)). Two things make that precise.
+
+`apt::CommandType` names every command the engine has, 218 of them, split 168 server and 50 client,
+and each row carries the def table that holds its parameters. Hashing those names against the file
+says which shipped: **161 named def tables are referenced by the data and absent from the db**, and
+they are exactly the `aptgss::` set. That is the same fact as the stub count above, arrived at from
+the data rather than from PIN's own loader, which is worth having because it rules out the reading
+that PIN simply hasn't mapped them.
+
+`apt::BaseCommandDef` is the other half, and it did ship: **143,498 command steps**, each naming a
+command type and the next step in its chain. **18,025 of those steps call a server-side command
+whose def table is absent.** So retail's scripts survive as structure with every leaf blank. The
+chain says a step activates a spawn table; the row naming which table, holding which monsters,
+is gone.
+
+For the population question specifically, the calls break down as:
+
+| Calls | Command | What the step did |
+|-------|---------|-------------------|
+| 884 | `agsEncounterSignalCommandDef` | drove encounter state |
+| 399 | `SpawnLootCommandDef` | dropped loot |
+| 385 | `agsTargetByNPCCommandDef` | picked an NPC to act on |
+| 356 | `agsDeployableSpawnCommandDef` | placed an object |
+| 297 | `agsNPCSpawnCommandDef` | spawned a monster |
+| 252 | `agsActivateSpawnTableCommandDef` | switched a spawn table on |
+| 59 | `agsEncounterSpawnCommandDef` | spawned an encounter |
+| 56 | `agsNPCBehaviorChangeCommandDef` | swapped an NPC's behaviour mid-fight |
+| 15 | `agsUpdateSpawnTableCommandDef` | retuned a live spawn table |
+| 3 | `agsCreateSpawnPointCommandDef` | made a spawn point at runtime |
+
+Two conclusions worth carrying. Firefall populated a zone by **running scripts**, not by reading a
+placement list, which is why no spawn table turns up anywhere and why looking for one was the wrong
+search. And the surviving skeleton is usable on its own terms: it says how a retail encounter was
+shaped, how many spawn steps it took and in what order, without saying what any of them spawned.
+[M7](../streams/m7-encounter-combat.md) is where that stops being trivia.
+
 <a id="data-6"></a>
 
 ### DATA-6 — Monster health and shields are hardcoded placeholders [ ] open
@@ -71,6 +108,49 @@ the size of the unknown, not as work to schedule.
 `dbcharacter::Monster` and `MonsterScaling` exist but aren't read.
 [CharacterEntity.cs:342-347](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L342-L347)
 gives every monster the same placeholder max health/shields regardless of type or level.
+
+**This is what "bullet sponge" means, and [N16](../In-Game-Tests/NPC-Combat.md) is the first entry
+that felt it.** 2500 health against a player rifle landing 39 a shot is about 64 shots to kill a
+level 1 Chosen Fiend, and it is the same 64 shots for every monster in the game. The other half of
+that session's balance reading is not this entry: the player's 19192 is
+[DATA-3](#data-3)'s live-observed number and correct, and the Chosen's 1 damage a shot resolves to
+about the 8 dps [DATA-14](#data-14) measured for monster 1196, so the incoming side is roughly
+retail. It is the outgoing side — one flat health pool for every creature — that makes a fight
+against a low-level monster take as long as a fight against anything else.
+
+**The retail numbers shipped, and the TODO in the code names the wrong table.** Checked
+2026-08-13 against `prod-1962` after a beta video showed a Dreadnaught killing monster 528 with a
+few seconds of chaingun fire:
+
+| Table | Rows | What it holds |
+|-------|------|---------------|
+| `dbcharacter::MonsterScaling` | 80 | `level`, `health`, `damage` — health 100 at level 1 rising to 153726 at level 80 |
+| `dbencounterdata::ScalingTableEntry` | 155 | `health_scale`/`damage_scale` per `player_count`, six tables — party-size scaling in percent |
+| `dbcharacter::Monster.difficulty_cost` | 906 of 3109 non-zero | 28 distinct values, 1..1000 — the only shipped per-monster toughness rating |
+
+`MonsterScaling` is keyed by **level**, not by `ScalingTableId`, so
+`CharacterEntity.cs`'s "derive from `monsterInfo.ScalingTableId`" points at the wrong join.
+`ScalingTableId` (55 monsters, 5 values) resolves to `ScalingTableEntry`, which is the group-size
+multiplier applied *after* the base — one player is always 100%.
+
+So the base health formula is `MonsterScaling[level].health`, and **the missing input is level, not
+the table.** A monster's level was set by whatever spawned it, which was server content
+([DATA-15](#data-15)). The shipped substitute is `difficulty_cost`: monster 528 sits at 20, in the
+lowest populated band (only four rated monsters in the whole db are below it), and monster 1196
+sits at 35, which matches how the two actually play. It is an encounter budget rather than a level,
+so it orders monsters correctly but does not convert to one.
+
+Against that curve PIN's flat 2500 is a level 17–18 monster, which is why 528 reads two or three
+tiers above what it is. Level 8 is 477 health and level 10 is 745 — the band where a few seconds of
+sustained fire kills something.
+
+The proposed fix keeps the shipped curve and puts the one missing number where PIN already authors
+world content: an optional per-member `level` in `spawn_group.json`, defaulting per group, set in
+game by a `spawngroup level` subcommand alongside `add` and `delay`. That closes this entry using
+only shipped data plus PIN's own placements, and it does not reintroduce player levels, which the
+[restoration charter](../PROGRESS.md) rules out. The interim lever is
+`HardcodedCharacterData.MonsterMaxHealth`, one number, worth moving to about 500 to test the feel
+before building the per-monster path.
 
 <a id="data-7"></a>
 
@@ -195,6 +275,14 @@ says the same about the chase leash, at 30 to 45 against PIN's 50.
 None of that is a lookup PIN can just wire up, because a parser has to exist first and 959 rows would
 still fall through it. What the numbers do settle is what the fallbacks should be: a default taken
 from the distribution of what shipped is defensible in a way that 40m is not.
+
+**Perception stays at 40m for now** (decision 2026-08-13, user-chosen). Narrowing it was on the table
+as soon as the 25m ceiling turned up, and it was declined until [N14 to
+N16](../In-Game-Tests/NPC-Combat.md) have run: [N4](../In-Game-Tests/NPC-Combat.md) measured
+disengagement against the current radius, and changing the number underneath a spawn-group test makes
+a failure ambiguous between the content and the tuning. The cost is recorded under
+[DATA-15](#data-15): at 40m no hostile group fits on zone 448's starting shelf at all, so an invented
+constant is currently choosing where the level's monsters can stand.
 
 `triggerPullTime` and `fireRestDuration` are the two most widely populated parameters in the whole
 set, and they describe exactly the pause [DATA-14](#data-14) says is missing from NPC cadence. That
@@ -356,23 +444,67 @@ client has to draw them. Nothing has to draw a spawner. The zone file holds terr
 perimeters, cinematic camera paths and dropship scripting, and no monster placements at all, which
 is the same wall [DATA-10](#data-10) hit from the other side.
 
-So the four groups are authored, and the [restoration charter](../Restoration.md) is what makes that
+So the groups are authored, and the [restoration charter](../Restoration.md) is what makes that
 acceptable rather than a shortfall: the goal is the loop working on 1962, not a survey of where
 Red 5 put things.
 
 What is still worth writing down is which parts are guesses and which aren't:
 
-- **Anchors are real positions.** Each group's anchor is copied off a shipped object in zone 448,
-  so its height is a height something actually sat at. That matters more than it sounds, because the
-  server holds no terrain to sample and any Z typed by hand is a monster in the air or under the
-  ground. [SpawnScatter](../../UdpHosts/GameServer/Systems/Spawning/SpawnScatter.cs) never moves a
-  member in Z for the same reason, and the radii are small so that spreading in X and Y stays on
-  ground the anchor vouches for.
-- **Which monsters are chosen** is a test-queue decision, not a content one. 1196, 528 and 2342 are
-  the three [N1 to N13](../In-Game-Tests/NPC-Combat.md) ran against, so they are the three known to
-  resolve a working weapon and read as hostile to faction 1.
-- **Respawn delays (60 to 120s) and pack sizes (2 to 6) are invented outright.** Nothing anywhere
+- **Positions are measured now, not inferred. It took three failures to get there.** The server holds
+  no terrain to sample, so nothing offline can answer "is this spot on the ground", and the first two
+  cuts answered it from shipped object positions instead. An object's position is not a ground
+  height: objects sit wherever they were placed, including inside structures and below the surface.
+  A lone object at Z 465.52 put three Chosen 26m under the shelf above them, shooting a player who
+  never saw them.
+
+  Requiring corroboration, three objects within 25m agreeing on a height, survived one more run and
+  then failed too. It rules out a badly placed object but not a slope, and around zone 448's valley
+  the ground moves **12m vertically inside 9m horizontally**. Members scattered over a 12m radius
+  landed in the hillside, which is the "some were inside walls" reading from the third sitting. That
+  killed anchor-and-radius as a model: a radius is a bet that the ground is flat, and this server
+  cannot check the bet.
+
+  Every monster now carries the position a player stood on to place it, written by
+  [`spawngroup add`](../../UdpHosts/GameServer/Systems/Admin/Commands/SpawnGroupServerCommand.cs).
+  Zone 448's current content is 13 monsters on walked footings, twelve on the Z 401 basin floor and
+  one on the shelf above it. See [Authoring World Content](../streams/world-authoring.md), including
+  the part worth knowing for later: the consumer side of terrain collision is already built and
+  proven, and only the extractor from the client's world chunks is missing.
+
+  The measurement behind all of it is
+  [MovementRelay.RecordGroundSample](../../UdpHosts/GameServer/Systems/MovementRelay/MovementRelay.cs),
+  which logs a grounded player's position when they have both moved 3m and let a second pass. A
+  player's pose is the only ground truth about terrain that reaches this server, because the client
+  computed it against the real thing:
+
+  ```
+  grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log
+  ```
+
+  **A fourth way to get this wrong showed up on the run that closed the milestone, and it is the one
+  that undermines the method rather than a placement.** The client reports grounded inside terrain
+  exactly as it does on top of it. [N16](../In-Game-Tests/NPC-Combat.md) teleported to a coordinate
+  nobody had stood on, landed about 8m under the basin floor, and its destination entered the footing
+  record indistinguishable from a real measurement. Placement is only trustworthy if the footing was
+  walked to, so `CharacterEntity.PlacedPosition` marks any position a character was *put* at,
+  `RecordGroundSample` writes nothing until it leaves that spot, and `spawngroup add` refuses until
+  then.
+- **Which monsters are chosen is constrained, not free**, and the first cut got it wrong. 1196, 528
+  and 2342 are the three [N1 to N13](../In-Game-Tests/NPC-Combat.md) ran against, so all three
+  resolve a working weapon and read as hostile to faction 1, and that is the only relationship
+  anyone checked before shipping them 25m apart. They are also in three mutually hostile factions:
+  1196 is chosen (2), 528 is melding (6), 2342 is gaea (7), and gaea is hostile to everything while
+  chosen and melding are friendly only with each other. The zone fought itself out in the first
+  twenty seconds of the 2026-08-13 sitting. The content now uses chosen and melded only, and
+  `SpawnGroupSim` audits every standing pair at startup rather than trusting anyone to remember.
+- **Respawn delays (90 to 120s) and pack sizes (3 to 6) are invented outright.** Nothing anywhere
   suggests what retail used.
+- **Where the groups can go is decided by [DATA-10](#data-10)'s perception number, not by design.**
+  Anything hostile within 40m of Aero kills it, and the only ground near the station anything has
+  been seen standing on is a shelf about 45m across with Aero on it. No hostile group fits there at
+  all, which is why zone 448 currently has nothing to fight within 120m of where a player logs in.
+  Retail's widest shipped `perceptionDist` is 25m and its most common are 10 and 15, at which the
+  shelf holds a group comfortably.
 
 The delay is also measured from the corpse despawning rather than from the kill, which adds
 `CharacterEntity.Die`'s fixed 30s to all of them. That is an implementation choice in

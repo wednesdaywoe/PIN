@@ -30,6 +30,11 @@ public class TeleportServerCommand : ServerCommand
             Vector3 destination = new Vector3(x, y, z);
 
             character.SetPosition(destination);
+
+            // A teleport destination is not a footing. The client reports grounded even when it lands
+            // inside a hillside, so mark it until the tester walks off it; see CharacterEntity.PlacedPosition.
+            character.MarkPlacedAt(destination);
+
             var forcedMove = new ForcedMovement
             {
                 Data = new ForcedMovementData

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -36,6 +37,14 @@ namespace GameServer.Entities.Character;
 public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarget, IDamageable
 {
     public const byte MaxMapMarkerCount = 64;
+
+    /// <summary>
+    ///     Weapon/attribute pairs already reported missing by <see cref="ReadWeaponAttribute"/>. Static
+    ///     because the fact belongs to the weapon, not to whoever is holding it, and every NPC carrying
+    ///     the same rifle would otherwise report it again.
+    /// </summary>
+    private static readonly ConcurrentDictionary<(uint WeaponId, ItemAttributeId Attribute), byte> _reportedMissingAttributes = new();
+
     private readonly MapMarkerState[] _mapMarkers = new MapMarkerState[MaxMapMarkerCount];
     private readonly ShieldRecharge _shieldRecharge = new();
 
@@ -92,6 +101,18 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public bool Invulnerable { get; set; }
     public short TimeSinceLastJump { get; set; }
     public bool IsAirborne { get; set; }
+
+    /// <summary>
+    ///     Where the character was last put by something other than its own legs — a teleport or a
+    ///     respawn — cleared once it walks away from that spot.
+    /// </summary>
+    /// <remarks>
+    ///     A position a character was <em>placed</em> at is not evidence that the ground is there. The
+    ///     client reports grounded either way, so a <c>tp</c> that lands inside a hillside looks exactly
+    ///     like a footing: N16 was run on 2026-08-13 from inside the terrain, and <c>tp 160 175 401</c>
+    ///     went into the footing record as if the tester had walked to it.
+    /// </remarks>
+    public Vector3? PlacedPosition { get; private set; }
     public bool IsMoving { get => MovementStateContainer.Sprint || MovementStateContainer.Movement; }
     public bool IsCrouching { get => MovementStateContainer.Crouch; }
     public bool IsAttached { get => AttachedToEntity != null; }
@@ -356,7 +377,10 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             FactionId = (byte)monsterInfo.FactionId
         });
 
-        // TODO: Derive from monsterInfo.ScalingTableId (dbcharacter::MonsterScaling) once that table is loaded
+        // TODO: dbcharacter::MonsterScaling shipped whole — 80 rows of level, health and damage — but it
+        // is keyed by level, not by monsterInfo.ScalingTableId, which resolves to the party-size multiplier
+        // in dbencounterdata::ScalingTableEntry instead. What is missing is a monster's level, which was
+        // server content. See DATA-6 for the proposed per-placement level in spawn_group.json.
         SetMaxHealth(HardcodedCharacterData.MonsterMaxHealth, true);
 
         // Monsters stay shieldless until dbcharacter::Monster gives them a real number, so the placeholder
@@ -994,6 +1018,24 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     }
 
     /// <summary>
+    ///     Records that the character was put at <paramref name="position"/> rather than having walked
+    ///     there. See <see cref="PlacedPosition"/>.
+    /// </summary>
+    public void MarkPlacedAt(Vector3 position)
+    {
+        PlacedPosition = position;
+    }
+
+    /// <summary>
+    ///     Clears <see cref="PlacedPosition"/>, once the character has moved off the spot it was put on
+    ///     under its own power.
+    /// </summary>
+    public void ClearPlacedPosition()
+    {
+        PlacedPosition = null;
+    }
+
+    /// <summary>
     ///     Sets what the client draws this character doing — standing, running, falling. A player's
     ///     arrives inside their pose messages and lands in <see cref="SetPoseData"/>; an NPC has no
     ///     client to send one, so the AI sets it directly.
@@ -1382,25 +1424,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         var weaponAttributesDict = weaponAttributes.ToDictionary(p => p.Id);
 
-        float weaponAttributeSpread = 1f;
-        float weaponAttributeRateOfFire = 1f;
-        try
-        {
-            weaponAttributeSpread = weaponAttributesDict[(ushort)ItemAttributeId.WeaponSpread].Value;
-        }
-        catch (Exception)
-        {
-            Logger.Warning("Failed to get WeaponSpread Attribute");
-        }
-
-        try
-        {
-            weaponAttributeRateOfFire = weaponAttributesDict[(ushort)ItemAttributeId.RateOfFire].Value;
-        }
-        catch (Exception)
-        {
-            Logger.Warning("Failed to get RateOfFire Attribute");
-        }
+        float weaponAttributeSpread = ReadWeaponAttribute(weaponAttributesDict, ItemAttributeId.WeaponSpread, weaponId);
+        float weaponAttributeRateOfFire = ReadWeaponAttribute(weaponAttributesDict, ItemAttributeId.RateOfFire, weaponId);
 
         // Calculate spread factor using Main even for Underbarrel, based on testing in-game.
         // Bio Crossbow - Max spread 0, min spread 0.75, attribute spread 1, expected spread 0.75 => Ignore max spread if 0 and use attribute spread
@@ -1414,6 +1439,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             RateOfFire = weaponAttributeRateOfFire,
         };
     }
+
 #nullable disable
 
     public Vector3 GetProjectileOrigin()
@@ -1587,6 +1613,12 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         Alive = false;
         SetCharacterState(CharacterStateData.CharacterStatus.Dead, Shard.CurrentTime);
 
+        Logger.Information(
+            "{Who} {EntityId} died to {Killer}",
+            IsPlayerControlled ? "Player" : "NPC",
+            EntityId,
+            killer == null ? "nothing" : $"{killer.EntityId}");
+
         var killed = new KilledEvent
         {
             ShortTime = Shard.CurrentShortTime,
@@ -1604,6 +1636,32 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             // Nothing subscribes to CharacterDiedEvent yet, so corpses just despawn after a while
             Shard.EntityMan.SetRemainingLifetime(this, 30_000);
         }
+    }
+
+    /// <summary>
+    ///     Reads an item attribute off a resolved weapon, defaulting to 1 (no modifier) when the weapon
+    ///     doesn't carry one, and saying so once per weapon rather than once per shot.
+    /// </summary>
+    /// <remarks>
+    ///     Monster weapons carry no item attribute ranges at all, so every NPC misses both of these on
+    ///     every round it fires. This used to be two warnings per shot through a caught
+    ///     <c>KeyNotFoundException</c>: one session with thirteen standing NPCs logged 3803 of each, and
+    ///     the exceptions were on the fire path. Which weapons lack the attribute is still worth knowing,
+    ///     so it's reported, just not on repeat.
+    /// </remarks>
+    private float ReadWeaponAttribute(Dictionary<ushort, StatsData> attributes, ItemAttributeId id, uint weaponId)
+    {
+        if (attributes.TryGetValue((ushort)id, out var attribute))
+        {
+            return attribute.Value;
+        }
+
+        if (_reportedMissingAttributes.TryAdd((weaponId, id), 0))
+        {
+            Logger.Warning("Weapon {WeaponId} carries no {Attribute} attribute, using 1. Normal for a monster weapon", weaponId, id);
+        }
+
+        return 1f;
     }
 
     private void InitFields()

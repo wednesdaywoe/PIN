@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
+using GameServer.Entities.Character;
 using GameServer.StaticDB;
+using GameServer.Systems.AI;
+using GameServer.Systems.Hostility;
 using Serilog;
 
 namespace GameServer.Systems.Spawning;
@@ -28,6 +31,8 @@ public class SpawnGroupSim
     private readonly ILogger _logger;
     private readonly List<Slot> _slots = new();
     private ulong _lastUpdate;
+    private bool _audited;
+    private uint _zoneId;
 
     public SpawnGroupSim(Shard shard)
     {
@@ -37,26 +42,19 @@ public class SpawnGroupSim
 
     /// <summary>
     ///     Flattens the zone's groups into one place per member. Called from
-    ///     <c>EntityManager.SpawnZoneEntities</c>, alongside the other world content.
+    ///     <c>EntityManager.SpawnZoneEntities</c>, alongside the other world content, and again by
+    ///     <c>spawngroup reload</c> after the file is edited in game.
     /// </summary>
     public void Load(uint zoneId)
     {
+        _zoneId = zoneId;
         _slots.Clear();
+        _audited = false;
 
         var groups = CustomDBInterface.GetZoneSpawnGroups(zoneId);
 
         foreach (var group in groups.Values)
         {
-            // Positions are assigned across the whole group rather than per member entry, so a mixed
-            // pack interleaves instead of putting each monster type in its own arc.
-            var slotCount = 0;
-            foreach (var member in group.Members)
-            {
-                slotCount += member.Count;
-            }
-
-            var slotIndex = 0;
-
             foreach (var member in group.Members)
             {
                 if (SDBInterface.GetMonster(member.MonsterTypeId) == null)
@@ -64,28 +62,41 @@ public class SpawnGroupSim
                     // Dropped rather than left to throw out of LoadMonster on the first tick, where it
                     // would read as a shard fault instead of a typo in the JSON.
                     _logger.Warning(
-                        "Spawn group {Group} names monster {TypeId}, which isn't in the SDB. Skipping {Count}.",
+                        "Spawn group {Group} names monster {TypeId}, which isn't in the SDB. Skipping it.",
                         group.Name,
-                        member.MonsterTypeId,
-                        member.Count);
-                    slotIndex += member.Count;
+                        member.MonsterTypeId);
                     continue;
                 }
 
-                for (var i = 0; i < member.Count; i++, slotIndex++)
+                _slots.Add(new Slot
                 {
-                    _slots.Add(new Slot
-                    {
-                        GroupName = group.Name,
-                        MonsterTypeId = member.MonsterTypeId,
-                        Position = SpawnScatter.Placement(group.Anchor, group.Radius, slotIndex, slotCount),
-                        RespawnDelayMs = group.RespawnDelayMs,
-                    });
-                }
+                    GroupName = group.Name,
+                    MonsterTypeId = member.MonsterTypeId,
+                    Position = member.Position,
+                    RespawnDelayMs = group.RespawnDelayMs,
+                });
             }
         }
 
         _logger.Information("Loaded {Groups} spawn group(s) for zone {ZoneId}, {Slots} monster(s)", groups.Count, zoneId, _slots.Count);
+    }
+
+    /// <summary>
+    ///     Despawns everything the groups put out and loads the file again. What makes placing a monster
+    ///     in game worth doing: walk, place, look at it, move it, without a server restart between.
+    /// </summary>
+    public void Reload()
+    {
+        foreach (var slot in _slots)
+        {
+            if (slot.EntityId.HasValue && _shard.Entities.ContainsKey(slot.EntityId.Value))
+            {
+                _shard.EntityMan.Remove(slot.EntityId.Value);
+            }
+        }
+
+        Load(_zoneId);
+        _lastUpdate = 0;
     }
 
     public void Tick(double deltaTime, ulong currentTime, CancellationToken ct)
@@ -124,6 +135,76 @@ public class SpawnGroupSim
             slot.VacantSince = 0;
 
             _logger.Debug("Spawn group {Group}: monster {TypeId} as {EntityId} at {Position}", slot.GroupName, slot.MonsterTypeId, npc.EntityId, slot.Position);
+        }
+
+        if (!_audited)
+        {
+            _audited = true;
+            AuditNeighbours();
+        }
+    }
+
+    /// <summary>
+    ///     Reports any two standing NPCs that are close enough to see each other and hostile enough to
+    ///     start shooting. Runs once, after the first fill.
+    /// </summary>
+    /// <remarks>
+    ///     The first cut of zone 448 put Aranha, Chosen and Melded within 25m of each other because all
+    ///     three were hostile to the player, which was the only relationship anyone checked. They are also
+    ///     hostile to each other: the zone fought itself to a standstill in the first 20 seconds and killed
+    ///     Aero on the way through, so a player logging in found a few survivors and empty ground. Nothing
+    ///     in the content says who is friendly with whom, so a wrong pairing is invisible until someone
+    ///     watches it happen, which is exactly the kind of mistake worth spending a startup loop on.
+    ///
+    ///     It runs over the shard rather than over the slots so that world content spawned outside a group
+    ///     is included, which is how Aero would have been caught. It warns rather than refuses: two hostile
+    ///     factions in sight of each other is a legitimate thing to want, just never by accident.
+    /// </remarks>
+    private void AuditNeighbours()
+    {
+        var npcs = new List<CharacterEntity>();
+
+        foreach (var entity in _shard.Entities.Values)
+        {
+            if (entity is CharacterEntity npc && !npc.IsPlayerControlled)
+            {
+                npcs.Add(npc);
+            }
+        }
+
+        var reported = 0;
+
+        for (var i = 0; i < npcs.Count; i++)
+        {
+            for (var j = i + 1; j < npcs.Count; j++)
+            {
+                var separation = Vector3.Distance(npcs[i].Position, npcs[j].Position);
+
+                if (separation > TargetSelection.PerceptionRange)
+                {
+                    continue;
+                }
+
+                if (!HostilityRules.AreHostile(npcs[i], npcs[j]) && !HostilityRules.AreHostile(npcs[j], npcs[i]))
+                {
+                    continue;
+                }
+
+                reported++;
+                _logger.Warning(
+                    "Spawned NPCs {A} (faction {FactionA}) and {B} (faction {FactionB}) are hostile and {Separation:0.#}m apart, inside the {Perception}m perception radius. They will fight each other on sight.",
+                    npcs[i].EntityId,
+                    npcs[i].HostilityInfo.FactionId,
+                    npcs[j].EntityId,
+                    npcs[j].HostilityInfo.FactionId,
+                    separation,
+                    TargetSelection.PerceptionRange);
+            }
+        }
+
+        if (reported == 0)
+        {
+            _logger.Information("Spawn group audit: {Count} standing NPC(s), no hostile pairs within perception of each other", npcs.Count);
         }
     }
 

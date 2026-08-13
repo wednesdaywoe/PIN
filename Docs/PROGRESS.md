@@ -32,8 +32,17 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M2: NPCs that fight back — four of five pieces in, three of them confirmed against a real
-client, and the fifth waiting on one sitting.** Perception and target selection, the attack pass and death notification are all built
+**M2: NPCs that fight back is done, closed 2026-08-13 by [N14–N16](In-Game-Tests/NPC-Combat.md).**
+Zone 448 has thirteen monsters standing in it when you log in, none of them put there by a command.
+They notice you, close, shoot, respawn ninety seconds after they fall, and on the closing run the
+Basin Mouth pack killed the tester. The one piece that stays open is death notification, and only
+because it has nothing to show yet — `CharacterDiedEvent` is published and nobody subscribes, which
+is M5 and M7's job.
+
+The next frontier is **M3, resources out of the ground** — two cuts are code-complete and have never
+been seen in game.
+
+Perception and target selection, the attack pass and death notification are all built
 under [Systems/AI](../UdpHosts/GameServer/Systems/AI/) and driven from
 [AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick.
 [N1–N7](In-Game-Tests/NPC-Combat.md) ran on 2026-08-12 and all pass: an NPC notices you, turns to
@@ -60,20 +69,75 @@ NPC's movement at all: the movement view isn't flushed to scoped clients and no 
 behalf, so monsters teleported whenever a keyframe happened to correct the client
 ([NET-22](ISSUE-REGISTER.md), fixed the same day with
 [NpcPose](../UdpHosts/GameServer/Systems/AI/NpcPose.cs)). The second went green:
-**[NPC Combat](In-Game-Tests/NPC-Combat.md) is complete, 13 of 13, and it is the first stream in the
-queue to close.** A monster notices you, turns, runs the ground down, stops where its own weapon can
-reach, shoots, tracks you while it fires, and walks home when it loses you.
+**[NPC Combat](In-Game-Tests/NPC-Combat.md) went 13 of 13 that day**, and finished at 16 of 16 once
+the spawn groups had entries of their own — the first stream in the queue to close. A monster
+notices you, turns, runs the ground down, stops where its own weapon can reach, shoots, tracks you
+while it fires, and walks home when it loses you.
 
-**The spawn groups are built, and they're the last piece of M2.** Zone 448 now comes with thirteen
-monsters in four groups of its own, described in
+**The spawn groups were the last piece of M2, and they closed it.** Zone 448 now comes with thirteen
+monsters in three groups of its own, described in
 [spawn_group.json](../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) and kept populated
 by [SpawnGroupSim](../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), which refills a place
-about 90 seconds after the thing standing in it dies. The dead faction-test row in
-`TempSpawnTestEntities` came out with it. None of that has been seen in game:
-[N14–N16](In-Game-Tests/NPC-Combat.md) are the entries, and N14 is the milestone's exit condition
-and the only one in the stream that forbids the `npc` command. The heights are what that sitting is
-most likely to correct, since the server holds no terrain and every anchor's Z is borrowed from a
-real object nearby ([DATA-15](ISSUE-REGISTER.md)).
+about two minutes after the thing standing in it dies. The dead faction-test row in
+`TempSpawnTestEntities` came out with it. [N14–N16](In-Game-Tests/NPC-Combat.md) are the entries,
+N14 is the milestone's exit condition and the only one in the stream that forbids the `npc` command,
+and all three passed.
+
+**Three sittings on 2026-08-13 all failed on content rather than code, in three different ways, and
+each one produced a guard rather than just a correction.** The first four groups used the three
+monsters the test queue had already proven, on the reasoning that all three were known hostile to
+the player. They are also in three mutually hostile factions, so the zone fought itself out in
+twenty seconds and killed Aero on the way through. `SpawnGroupSim` now audits every standing NPC
+pair at startup and warns about any hostile pair inside perception, which is the check nobody would
+think to repeat.
+
+The other two were both about height, and together they ended the idea that this content can be
+authored offline at all. A group anchored on a lone object's Z ended up under the terrain, shooting
+a player who never saw it. Requiring several objects to agree on a height survived one more run and
+then failed too: around the valley the ground moves 12m vertically inside 9m horizontally, so
+scattering a group over a radius put monsters in the hillside.
+
+So placement is measured now. `MovementRelay.RecordGroundSample` logs a grounded player's position
+once a second, because a player's pose is the only terrain measurement that reaches this server and
+nothing was writing it down. The
+[`spawngroup`](../UdpHosts/GameServer/Systems/Admin/Commands/SpawnGroupServerCommand.cs) command
+places a monster where you are standing, saves, and respawns the group, so the loop is walk, place,
+look, adjust. Anchor-and-radius is gone: every monster carries its own verified position, and zone
+448's thirteen are all on footings from a walk ([DATA-15](ISSUE-REGISTER.md)).
+
+**The closing sitting found a fourth way to end up underground and it was the tester.** N16's own
+`tp` target was a coordinate nobody had stood on, so the fight was run from about 8m inside a
+hillside — and worse, that destination went straight into the footing record, because the client
+reports grounded inside terrain exactly as it does on top of it. A tool that trusts the player's
+footing is only as good as the footing being real, so `CharacterEntity.PlacedPosition` now marks a
+position a character was *put* at rather than walked to, no footing is recorded until it leaves that
+spot, and `spawngroup add` refuses until then.
+
+Two things came out of that run and neither is an M2 defect. **A player who dies has no way back**:
+the server kills them correctly, all six attackers drop target in the same second, and the client
+never sends `RequestRespawn`, so the session ends with a reconnect
+([NET-23](ISSUE-REGISTER.md)). And the first balance reading ever taken against real content —
+monsters are bullet sponges while doing little damage — resolves to one existing gap rather than to
+the pack: incoming is roughly retail already (19192 player health is
+[DATA-3](ISSUE-REGISTER.md)'s observed figure, the Chosen's ~8 dps is
+[DATA-14](ISSUE-REGISTER.md)'s measured one), and outgoing is
+[DATA-6](ISSUE-REGISTER.md)'s flat 2500 health pool for every creature in the game.
+
+Those sittings also showed what the invented perception radius costs, and it is not cosmetic. At 40m
+nothing hostile fits on zone 448's starting shelf while Aero stands on it, because the shelf is
+about 45m across, and it is the only ground near the station anything has been seen standing on.
+Zone 448 therefore has nothing to fight within 120m of where a player logs in. Retail's widest
+shipped `perceptionDist` is 25m and its most common are 10 and 15. Keeping 40m until N14–N16 had run
+was a deliberate call (decision 2026-08-13, user-chosen) so a spawn-group failure couldn't be
+confused with a tuning change. They have now run and passed, so that reason has expired and the
+question is open again — narrowing it would let something stand on the starting shelf, and N16 read
+the pack's 45m spread as arriving in ones and twos, which is 40m perception against that spread
+rather than a defect.
+
+Two log floods came out of the same runs and are fixed: 8472 warnings for pose asset `00000000`
+(a character with no collision id, re-asked on every physics query because only successes were
+cached) and 3803 each of `Failed to get WeaponSpread/RateOfFire Attribute`, thrown and caught once
+per round fired.
 
 Where the placements come from is the part worth knowing: nowhere. Retail's spawn tables were
 server-side, and the client's own `system/maps/448.zone` holds terrain, melding perimeters and
@@ -119,7 +183,7 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] `Battleframe` shield data confirmed absent from build 1962
 - [x] Placeholders replaced with shipped values, remaining divergence written down
 
-[Full detail](streams/m2-npc-combat.md) — 3 of 5 done, 2 in progress
+[Full detail](streams/m2-npc-combat.md) — 4 of 5 done, 1 in progress
 
 - [x] Threat table, target selection, line of sight (N1, N4, N7)
 - [x] Leashed steering and ground clamping (N8–N13). No terrain to clamp to, so height comes off the
@@ -128,8 +192,8 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
   (N2, N3, N5, N6)
 - [~] Death notification other systems can subscribe to — published, nothing subscribes yet, so
   nothing in game shows it
-- [~] Spawn groups worth fighting, replacing the hardcoded debug row — four groups and thirteen
-  monsters in zone 448, respawning; code complete, N14–N16 not yet run
+- [x] Spawn groups worth fighting, replacing the hardcoded debug row — three groups and thirteen
+  monsters in zone 448, respawning, placed in game with `spawngroup` (N14–N16)
 
 [Full detail](streams/m3-resource-payout.md) — 0 of 3 done
 
@@ -208,6 +272,13 @@ Out of scope because the slice closes without them:
 - **Crafting and blueprints** — spending resources needs `RequireResource` and
   `RequireResourceFromTarget`, both stubs, plus `Blueprint_Resources` which nothing reads;
   gathering is the loop, crafting is a second one (see [Restoration](Restoration.md))
+- **Server-side terrain** — `LoadMapsCollision` is off, so every raycast in the game sees an empty
+  world. The consumer is already built and proven: `ZoneLoader` plus `TagfileLoader` turn Havok
+  collision into Bepu statics, and that same path loads deployable collision today. Only the
+  extractor from the client's world chunks is missing. Deferred because the slice closes without
+  it, and flagged because it would close [DATA-15](ISSUE-REGISTER.md), replace the NPC
+  ground-clamping hack with a real downward raycast, and give every shot real cover. See
+  [streams/world-authoring.md](streams/world-authoring.md)
 - **Public-server hardening** (identity/auth, input validation, topology, ops, distribution) — not
   scheduled and shouldn't start before the slice closes; full detail in
   [streams/public-server-hardening.md](streams/public-server-hardening.md)

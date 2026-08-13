@@ -35,6 +35,19 @@ round. Aim replicates through the same unflushed view as position. **N13 was wri
 after watching a monster walk correctly nobody would think to check whether it aims correctly, and
 N1–N7 all passed while it was broken.
 
+**N14–N16 pass as of 2026-08-13, and the stream is complete at 16 of 16.** N14 took four attempts
+and failed on content every time, never on the spawn code: the first zone fought itself out in
+twenty seconds, the second put its monsters under the terrain, the third put them inside walls, and
+the fourth stood thirteen of them on ground a player had walked. Each failure became a server-side
+guard rather than a note, which is why the entry now greps for a hostile-neighbour audit line and
+why placements are made by walking rather than by typing coordinates.
+
+The closing run produced two findings and neither is an M2 defect. Death is a one-way door —
+[NET-23](../gaps/network.md#net-23), the first time the game rather than a command killed a player,
+and the client never asks to respawn. And the first balance reading taken against real content says
+monsters are bullet sponges, which is [DATA-6](../gaps/data.md#data-6)'s flat 2500 health pool
+rather than anything about the pack. Both are written up under the entries that found them.
+
 With the pose replicated, the whole set went green. Two things the sitting turned up are recorded as
 gaps rather than as failures, both under N10: a Melded Aranha renders about 90° off the player it is
 attacking, which a side-by-side against a Chosen pinned on the creature model rather than on
@@ -465,66 +478,111 @@ direction recomputed each tick from live positions, so shots have always been re
 you actually are. A monster that looks like it is firing wide can still be hitting you, which is
 exactly how this survived N2, N5 and N6.
 
-## [ ] N14: The zone has monsters in it before you type anything
+## [x] N14: The zone has monsters in it before you type anything
+
+**Passed 2026-08-13, on the fourth attempt and the first one that failed at nothing.** Twelve
+monsters were standing on the basin floor at login, the audit line read
+`13 standing NPC(s), no hostile pairs within perception of each other`, and the tester walked into
+them and fought without spawning anything. That closes M2.
 
 The milestone's exit condition, and the only entry here that forbids the `npc` command. Everything
 N1 to N13 checked was checked against a monster put in front of the tester by hand. This asks
 whether [spawn_group.json](../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) puts
 them there on its own.
 
-Zone 448 ships four groups and thirteen monsters. The one this entry walks to is Station Approach:
-three Aranha (2342) scattered around (185.7, 247.1, 491.87), roughly 15m east of the Battleframe
-Station.
+Zone 448 ships three groups and thirteen monsters, twelve of them on the basin floor at Z 401
+south-west of the station and one placed in game on the shelf above at Z 413, and every one of them
+stands on a position a player has already stood on. There is deliberately nothing within 120m of
+where you log in; see [DATA-15](../gaps/data.md#data-15) for why, because it is a constraint rather
+than a design.
+
+The thirteenth is worth knowing about before you go looking for it. It was added mid-session with
+`spawngroup add 1196 1` and belongs to Basin Mouth for its respawn delay only — it stands about 70m
+from the rest of that group, up on the shelf rather than down on the floor.
 
 1. Start the server and log in to zone 448 as usual ([Session Setup](Session-Setup.md)). Type no
-   admin command until step 4.
+   admin command until step 5.
 2. `grep -a "spawn group" ~/Games/PIN/logs/GameServer.log`
 3. `grep -acE "Spawn group .+: monster [0-9]+ as" ~/Games/PIN/logs/GameServer.log`
-4. `invuln on`
-5. `tp 178 247 492`
-6. Face east and walk toward (185.7, 247.1).
+4. `grep -a "hostile and" ~/Games/PIN/logs/GameServer.log`
+5. `invuln on`
+6. `tp 160 175 401`, then walk north-west along the basin toward (117, 201).
 
-Pass: step 2 prints `Loaded 4 spawn group(s) for zone 448, 13 monster(s)`, step 3 prints `13`, and
-three Aranha are standing near the anchor with their feet on the ground. They notice you, close, and
-attack without anything being spawned.
+Pass: step 2 prints `Loaded 3 spawn group(s) for zone 448, 13 monster(s)` and an audit line reading
+`14 standing NPC(s), no hostile pairs within perception of each other` — one more than the monsters,
+because Aero is standing too — step 3 prints `13`, step 4 prints nothing, and six monsters are strung
+out along the basin with their feet on the ground. They notice you, close, and attack without
+anything being spawned.
 
-The heights are the part most likely to be wrong, and they are wrong in a specific way worth
-recording rather than just failing. Every anchor is copied off a real object in zone 448, so its Z
-is a height something sat at, but nothing checked that the ground is at that height a few metres
-away ([DATA-15](../gaps/data.md#data-15)). If a monster floats or is buried, note by how much and at
-which anchor; that number is the correction, and it goes straight into the JSON.
+**Three failures have already happened here, none of them in the spawn code.** They are worth
+checking for by name because each has a different signature.
+
+Step 4 covers the first. Zone 448's original content put Aranha, Chosen and Melded within 25m of
+each other, all three hostile to the player and, unnoticed, to each other. The zone fought itself
+out in twenty seconds and killed Aero on the way through. Any output from step 4 means it is
+happening again and nothing below is worth reading.
+
+The second was **being shot by something never on screen**: a group anchored under the terrain, with
+the log showing three Chosen closing to 9m and holding fire for `NoLineOfSight`. The third was
+**monsters inside walls**, from scattering a group over a radius across ground that moves 12m
+vertically inside 9m horizontally.
+
+Both height failures have the same fix now, and it does not involve editing a file offline. Walk to
+where the monster should be and place it there:
+
+```
+spawngroup list
+spawngroup add 1196 1
+```
+
+`add` puts the monster at your feet, saves, and respawns the group, so you see the result
+immediately. It refuses while you are airborne. Everything the command does is in
+[Authoring World Content](../streams/world-authoring.md), including how to copy the edited file back
+into the repo, which is the step that is easy to forget and loses the session's work.
 
 Fail, nothing spawns and step 2 prints nothing: the loader never ran. `SpawnGroupSim.Load` is called
 from `EntityManager.SpawnZoneEntities`, so check the zone is 448 and that
 `StaticDB/CustomData/spawn_group.json` reached the deploy directory.
 
-Fail, step 2 prints a smaller count than 13: a member named a monster id the SDB doesn't have, which
-logs its own warning line. `grep -a "isn't in the SDB" ~/Games/PIN/logs/GameServer.log`
+Fail, step 3 prints fewer than 13: a member named a monster id the SDB doesn't have, which logs its
+own line. `grep -a "isn't in the SDB" ~/Games/PIN/logs/GameServer.log`
 
-Fail, they stand there and ignore you: this is not a spawn group defect. Faction and perception are
-N1 and N4, both passing, so suspect the monsters loaded without a weapon before suspecting the AI.
+Fail, they stand there and ignore you: not a spawn group defect. Faction and perception are N1 and
+N4, both passing, so suspect the monsters loaded without a weapon before suspecting the AI.
 
-Fail, all three stand in the same spot: `SpawnScatter` was bypassed or the radius read as 0, which
-`SpawnScatterTests` covers offline and should have caught first.
+## [x] N15: A killed spawn comes back where it was
 
-## [ ] N15: A killed spawn comes back where it was
+**Passed 2026-08-13 on all three of North Flats' slots at once**, which is a better result than the
+entry asks for because the positions can be compared across three independent cycles:
+
+```
+17:34:25 Spawn group North Flats: 2305008157765798656 is gone, respawning in 90000ms
+17:35:55 Spawn group North Flats: monster 1196 as 2305013543654853632 at <31.57, 268.86, 401.03>
+17:36:09 Spawn group North Flats: monster 1196 as 2305013775583087872 at <41.18, 270.48, 401.03>
+17:36:39 Spawn group North Flats: monster 528 as 2305014282389229056 at <21.95, 268.54, 401.03>
+```
+
+Ninety seconds to the digit, a new entity id each time, and the position identical to the original
+spawn line rather than drifted — which is the thing to watch, and the reason the entry says to read
+it off the log instead of off the screen.
 
 A group that empties permanently is a debug row with extra steps. This is what makes the zone a
 place rather than a one-time delivery.
 
-Station Approach respawns 60s after a place falls empty, and a corpse holds its place for the 30s
-`CharacterEntity.Die` gives it, so the whole cycle is about 90s from the kill.
+Basin West refills 90s after a place falls empty, and a corpse holds its place for the 30s
+`CharacterEntity.Die` gives it, so the whole cycle is about two minutes from the kill. It is the
+group to use because three monsters are easier to keep track of than the six at Basin Mouth.
 
 1. `invuln on`
-2. `tp 178 247 492`
-3. Kill exactly one of the three Aranha. Note the wall-clock time.
+2. `tp 90 224 401`
+3. Kill exactly one of the three. Note the wall-clock time.
 4. Stay where you are and watch the spot it died on.
-5. After two minutes:
-   `grep -a "Spawn group Station Approach" ~/Games/PIN/logs/GameServer.log | tail -5`
+5. After three minutes:
+   `grep -a "Spawn group Basin West" ~/Games/PIN/logs/GameServer.log | tail -5`
 
-Pass: the log shows a `... is gone, respawning in 60000ms` line about 30s after the kill, then a
-`... monster 2342 as <new id> at <X, Y, Z>` line about 60s after that, carrying the same position as
-the original spawn line for that slot. A new Aranha is standing there, and the other two were never
+Pass: the log shows a `... is gone, respawning in 90000ms` line about 30s after the kill, then a
+`... monster <id> as <new id> at <X, Y, Z>` line about 90s after that, carrying the same position as
+the original spawn line for that slot. A new monster is standing there, and the other two were never
 disturbed.
 
 Watch the position in the two spawn lines rather than trusting the one on screen. A slot that
@@ -541,34 +599,76 @@ deserialised to 0, which `SpawnGroupContentTests` asserts against offline.
 Fail, two come back for one kill: a slot is being filled twice, which would mean `EntityId` is not
 being recorded after the spawn.
 
-## [ ] N16: The valley pack can kill you
+## [x] N16: The basin pack can kill you
 
-"Worth fighting" was the word in the milestone, and three Aranha next to the station is not it. The
-Valley Floor group is six monsters at (155.8, 119.9, 413.39), about 130m from the station and about
-80m below it: four Aranha (2342) and two Chosen Fiend (1196), spread over a 12m radius so they
-arrive as a group rather than in single file.
+**Passed 2026-08-13, and it is the entry that killed a player for the first time.** The pack engaged,
+held the tester through a ten-minute fight, and took them from 19192 to zero without anything else
+being spawned. Three things came out of the run and none of them are spawn group defects; all three
+are recorded below the steps.
+
+"Worth fighting" was the word in the milestone. Basin Mouth is six monsters strung along the basin
+between (153.7, 168.9) and (117.1, 201.2), four Chosen Fiend (1196) at range and two Melded Aranha
+(528) in close, spread over about 45m so they arrive in ones and twos rather than as a wall.
+
+Chosen and Melded are the pairing this content is built on because they are friendly to each other
+and hostile to the player. That is not a general property of monsters and it is the thing N14 step 4
+exists to keep true.
 
 Run this with invulnerability off. The entry is partly about whether the fight resolves at all and
 partly about whether it is survivable, and neither reads correctly if nothing can hurt you.
 
 1. `invuln off`
-2. `tp 158 132 414`
-3. Fight the group, or die to it.
-4. `grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -20`
+2. `tp 118.9 283.5 401`, which is a measured footing 82m north of the nearest monster
+3. Walk a few steps and check you are on the surface rather than under it:
+   `grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3`
+4. Walk south down the basin toward (117, 201) until they notice you. Fight, or die to it.
+5. `grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -20`
 
-Pass: all six engage, the two Chosen open fire from range while the Aranha close to contact, and the
-fight goes one way or the other without anything standing still. Six NPCs on one target is also the
-first time the "nothing separates them" limitation from the locomotion pass gets looked at
-deliberately: they will converge on the same spot and stand in each other, and that is expected, not
-a failure. Record how bad it looks.
+Pass: they engage you and only you, the Chosen open fire from range while the Aranha close to
+contact, and the fight goes one way or the other without anything standing still. Every target line
+in step 5 should name your character; a monster targeting another monster is the N14 step 4 failure
+arriving late.
 
-Fail, the pack is at a different height than you are: same anchor-Z question as N14, on the one
-anchor taken from the valley floor rather than the station shelf.
+Step 3 exists because **the first run of this entry was fought from inside a hillside.** The original
+instruction was `tp 160 175 401`, a coordinate nobody had stood on, and it put the tester about 8m
+under the basin floor. The fight still worked — the monsters could see them and shoot them, which is
+how it went unnoticed — but every reading of distance and cover it produced was worthless.
 
-Fail, they trickle in one at a time: perception is a 40m radius against a 12m spread, so they should
-all acquire within a second of each other. Staggered arrival is a speed difference (a Chosen Fiend
-runs at 6 m/s, an Aranha at 11) and is correct.
+Worse, the teleport destination was written into the footing record as if it were ground, because
+the client reports grounded inside terrain exactly as it does on top of it. That is the one input the
+placement tool trusts, so it has been closed: `CharacterEntity.PlacedPosition` marks wherever a
+character was *put* rather than walked to, `MovementRelay` records no footing until you leave that
+spot, and `spawngroup add` refuses outright with *"You were put here rather than walking here, which
+is not proof of ground."* Walk before you place, every time.
+
+If step 3 reads about 401 you are on the basin floor. Roughly 392 means you are inside it, and the
+answer is to walk out and back rather than to trust anything the run tells you.
+
+The 45m spread is deliberate and worth judging. It is what a walked placement gives you, and the
+question is whether a running fight along a basin reads better or worse than a camp you pull all at
+once. If it reads worse, the fix is `spawngroup drop` and re-placing them closer together, which is
+a two-minute job now.
+
+Fail, they trickle in one at a time in a way that feels wrong rather than staged: perception is 40m
+against a 45m spread, so arriving separately is arithmetic, not a defect. Judge the feel, and record
+it as a placement note rather than a bug.
 
 Fail, the fight is trivially easy or instantly lethal: not a spawn group defect, and worth reading
 against [DATA-6](../gaps/data.md#data-6) (monster health is a hardcoded placeholder) and
 [DATA-14](../gaps/data.md#data-14) before touching the pack size.
+
+**Death is a dead end, and that is [NET-23](../ISSUE-REGISTER.md), not this entry.** When the tester
+hit zero the server did everything right — all six attackers dropped target and walked home in the
+same second — and then nothing happened. `RequestRespawn` is implemented and the client never sends
+it, so the session ends with a reconnect. Budget for that when you run this with `invuln off`.
+
+**The balance reading, recorded because it is the first one taken against real content.** The
+tester's judgement was that low-level enemies do barely any damage while also being bullet sponges,
+and that their memory of retail's time-to-kill is too hazy to check it against. The log splits that
+in two and only one half is a gap. Incoming is roughly right: 19192 player health is
+[DATA-3](../gaps/data.md#data-3)'s live-observed figure, and the Chosen's 1 damage a shot works out
+near the 8 dps [DATA-14](../gaps/data.md#data-14) measured for monster 1196, so several minutes to
+chew through a full health bar is close to what retail did. Outgoing is the gap: every monster in the
+game has [DATA-6](../gaps/data.md#data-6)'s flat 2500 pool, about 64 rifle shots, whatever it is and
+whatever level it is. Don't tune the pack for this — it is one number in one file, and re-judging
+after DATA-6 closes is cheaper than re-placing monsters twice.

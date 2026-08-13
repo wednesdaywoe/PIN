@@ -17,6 +17,14 @@ public class PoseLoader
     private readonly ConcurrentDictionary<string, string> _pathCache = new();
     private readonly ConcurrentDictionary<string, PoseData> _dataCache = new();
 
+    /// <summary>
+    ///     Asset ids already reported as unresolvable. Only successful loads were cached before, so a
+    ///     character whose collision id is 0 asked for pose <c>00000000</c> and got a fresh warning on
+    ///     every physics query: one run with thirteen standing NPCs logged 8472 copies of the same line.
+    ///     The lookup was always cheap; the log was the cost.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, byte> _missing = new();
+
     public PoseLoader(string assetRoot)
     {
         _assetRoot = assetRoot;
@@ -48,11 +56,28 @@ public class PoseLoader
 
     public bool TryLoad(string assetId, out PoseData result)
     {
-        _logger.Debug("Pose file {assetId} Requested", assetId);
         result = default!;
+
+        if (_missing.ContainsKey(assetId))
+        {
+            return false;
+        }
+
+        _logger.Debug("Pose file {assetId} Requested", assetId);
+
         if (string.IsNullOrWhiteSpace(assetId) || assetId.Length != 8 || !assetId.All(char.IsDigit))
         {
             _logger.Warning("Invalid asset ID format: {AssetId}", assetId);
+            _missing.TryAdd(assetId ?? string.Empty, 0);
+            return false;
+        }
+
+        // A character with no collision id resolves to this, which is a question with no answer rather
+        // than a missing file. Callers already fall back to a default shape.
+        if (assetId == "00000000")
+        {
+            _logger.Debug("Pose file 00000000 requested, which means the character carries no collision id. Using the fallback shape and not asking again.");
+            _missing.TryAdd(assetId, 0);
             return false;
         }
 
@@ -67,6 +92,7 @@ public class PoseLoader
         if (path == null)
         {
             _logger.Warning("Pose file {AssetId} file not found", assetId);
+            _missing.TryAdd(assetId, 0);
             return false;
         }
 
@@ -81,6 +107,7 @@ public class PoseLoader
         catch (Exception ex)
         {
             _logger.Error(ex, "Pose file {AssetId} Failed to load pose from file {Path}", assetId, path);
+            _missing.TryAdd(assetId, 0);
             return false;
         }
     }

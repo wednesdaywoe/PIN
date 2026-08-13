@@ -215,12 +215,12 @@ deployable with a real collision id (395, the Battleframe Station) instead of wo
 passes. Worth remembering well beyond this test: every server-side raycast in PIN, including every
 shot a player fires, currently sees an empty world with a few entities floating in it.
 
-**Spawn groups — code complete, not yet seen in game.** Zone 448 comes with thirteen monsters in
-four groups, described in
+**Spawn groups — built, and rebuilt twice by what client sittings found.** Zone 448 comes with
+thirteen monsters in three groups, described in
 [spawn_group.json](../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) and kept
 populated by [SpawnGroupSim](../../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), which
 loads alongside the other world content in `EntityManager.SpawnZoneEntities` and runs its own 1s
-clock. A group is an anchor, a radius, a list of monster types and counts, and a respawn delay; a
+clock. A group is a name, a respawn delay and a list of monsters each carrying its own position; a
 member's place counts as empty once its entity is gone from the shard, so a kill costs the corpse's
 fixed 30 seconds plus the delay. That keeps spawning off `CharacterDiedEvent`, which M5 and M7 are
 the ones that want. The dead faction-test row in `TempSpawnTestEntities` is gone with it; it only
@@ -233,29 +233,92 @@ neighbouring content files are. `melding.json` matches perimeter names in the cl
 spawner: the zone file holds terrain, melding perimeters and cinematic paths, and no monster
 placements at all. Retail's spawn tables were server-side, which is also why
 `ActivateSpawnTableCommandDef` and `UpdateSpawnTableCommandDef` are two of
-[DATA-5](../gaps/data.md#data-5)'s empty stubs. So the four groups are PIN's own content
+[DATA-5](../gaps/data.md#data-5)'s empty stubs. So the three groups are PIN's own content
 ([DATA-15](../gaps/data.md#data-15)), which the [restoration charter](../Restoration.md) allows.
 
-The one part that isn't a free choice is height. The server holds no terrain, so a Z typed by hand
-is a monster in the air or under the ground, and every anchor is therefore copied off a shipped
-object in zone 448.
-[SpawnScatter](../../UdpHosts/GameServer/Systems/Spawning/SpawnScatter.cs) spreads members over the
-anchor's disc without ever moving one in Z, on a fixed golden-angle layout so a group lays out the
-same every run and a logged position can be matched against one on screen. It's pure and
-unit-tested, and there's a second test that reads the shipped JSON back through the loader, because
-a misspelt key deserialises to a default rather than failing and would otherwise cost a client
-session to find.
+**The first cut of the content was wrong in a way worth keeping written down.** It put three packs
+15 to 25m apart on the starting shelf, using the three monsters the test queue had already proven:
+Chosen Fiend, Melded Aranha and Aranha. All three are hostile to the player, which is the only
+relationship anyone thought to check. They are also in three mutually hostile factions, and gaea
+(the Aranha) is hostile to everything that exists. Within a second of the zone loading, every pack
+opened fire on every other pack; Aero, the friendly test NPC, was dead 17 seconds in; and the
+Valley Floor group settled into killing its own Chosen on a loop for the rest of the session. A
+player logging in found a few survivors near the station and empty ground everywhere else, which is
+exactly what it looked like from the outside and nothing like what the log said had been spawned.
 
-## What's left
+Two things came out of that. The content now uses chosen and melded only, which are friendly with
+each other and hostile to the player, placed where nothing hostile stands within perception of Aero.
+And `SpawnGroupSim` now audits every standing NPC pair once at startup and warns on any hostile pair
+inside `TargetSelection.PerceptionRange`, because the relationship that broke this is invisible in
+the content file and nobody would think to look for it twice.
 
-Getting the spawn groups in front of a client. [N14 to N16](../In-Game-Tests/NPC-Combat.md) are the
-entries: that the zone has monsters in it before anyone types a command, that a killed one comes
-back where it was, and that the valley pack is a fight rather than a delivery. N14 is the
-milestone's exit condition and the only entry in the stream that forbids the `npc` command.
+Where the groups can go turned out to be decided by [DATA-10](../gaps/data.md#data-10) rather than
+by design. At a 40m perception radius, nothing hostile fits on the starting shelf at all while Aero
+is standing on it, since the shelf is about 45m across. Retail's widest shipped `perceptionDist` is
+25m. An invented constant is currently choosing the level layout.
 
-The height guesses are what that sitting is most likely to correct. Anchors sit at heights real
-objects sit at, but nothing has checked that the ground is still there a few metres out, so a
-monster floating or buried is the expected class of failure and the observed offset is the fix.
+**The next two cuts were both wrong about height, and between them they ended offline authoring.**
+With the factions sorted, three Chosen anchored at Z 465.52 shot a player who never saw them: the
+log had them closing to 9m and then holding fire for `NoLineOfSight`, which is what standing under
+the terrain looks like from the server's side. That anchor came from a single shipped object, on the
+assumption that an object sits on the ground. Objects sit wherever they were placed.
+
+Requiring corroboration, three objects within 25m agreeing on a height, ruled out a badly placed
+object and not a slope. Around the valley the ground moves 12m vertically inside 9m horizontally, so
+scattering a group over a radius put members in the hillside. That is the third sitting's "some were
+inside walls", and it killed anchor-and-radius as a model: a radius is a bet that the ground is
+flat, and this server cannot check the bet.
+
+Two things replaced it.
+[MovementRelay.RecordGroundSample](../../UdpHosts/GameServer/Systems/MovementRelay/MovementRelay.cs)
+logs a grounded player's position once a second, because a player's pose is the only terrain
+measurement that ever reaches this server and nothing wrote it down. And
+[SpawnGroupServerCommand](../../UdpHosts/GameServer/Systems/Admin/Commands/SpawnGroupServerCommand.cs)
+turns the running game into the editor: `spawngroup add <monsterId>` places a monster where you are
+standing, saves the file and respawns the group, so the loop is walk, place, look, adjust. Every
+monster now carries its own position rather than an offset from a group anchor, and zone 448's
+thirteen are all footings from a walk — twelve from the walk that replaced the anchors, and the
+thirteenth placed in game with the command itself. `SpawnScatter` and its tests are gone with the
+model that needed them.
+
+The wider version of that argument, including why a 3D map editor is the wrong next thing and what
+loading real terrain would fix, is in [Authoring World Content](world-authoring.md).
+
+What remains offline is a test that reads the shipped JSON back through the loader, because a
+misspelt key deserialises to a default rather than failing, the server writes this file now, and
+either way it would otherwise cost a client session to find. It also checks that no two monsters
+were placed on the same spot, which is one keystroke away when you place by standing still.
+
+## Closed, 2026-08-13
+
+**[N14 to N16](../In-Game-Tests/NPC-Combat.md) all passed on the fourth attempt at the content and
+the first one that failed at nothing.** Thirteen monsters were standing in zone 448 at login, the
+hostile-neighbour audit was clean, North Flats refilled all three of its slots at ninety seconds to
+the digit and at the recorded position rather than a drifted one, and Basin Mouth killed the tester.
+N14 was the milestone's exit condition and the only entry in the stream that forbade the `npc`
+command, so M2 closes here.
+
+The heights stopped being the risk they had been for the previous two attempts, because every
+placement stands on a footing a player walked over. **The tester's own position turned out to be the
+remaining hole.** N16's `tp` target was a coordinate nobody had stood on, so that fight was run from
+about 8m inside a hillside — and the teleport destination was written into the footing record as
+ground, because the client reports grounded inside terrain exactly as it does on top of it. A tool
+that trusts the player's footing is only as good as the footing being genuine, so
+`CharacterEntity.PlacedPosition` now marks any position a character was *put* at rather than walked
+to, `MovementRelay` records no footing until it leaves that spot, and `spawngroup add` refuses until
+then. The same pass fixed the sampler logging one footing three hundred times while a tester stood
+still: the interval and the spacing were ANDed rather than both required.
+
+Two findings from the closing run belong to other milestones and are written up under the entries
+that found them. Death is a one-way door — the server kills a player correctly, every attacker drops
+target in the same second, and the client never sends `RequestRespawn`, so the session ends with a
+reconnect ([NET-23](../gaps/network.md#net-23)). And the first balance reading taken against real
+content resolves to [DATA-6](../gaps/data.md#data-6): one flat 2500 health pool for every creature
+in the game is what "bullet sponge" means, while the incoming side of the fight is already roughly
+retail.
+
+What remains open in this milestone is the piece that has nothing to show: `CharacterEntity.Die`
+publishes `CharacterDiedEvent` and nothing subscribes. M5 and M7 are what give it a listener.
 
 The ordering across the whole milestone was deliberate. Perception had no in-game exit condition of
 its own, and attacking gave it one without needing anything to move, which is why N1–N7 could check

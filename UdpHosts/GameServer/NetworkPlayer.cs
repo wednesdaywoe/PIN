@@ -153,6 +153,7 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
                              : AssignedShard.Outposts[CurrentZone.ID][outpostId].RandomSpawnPoint;
 
         CharacterEntity.PositionAtSpawnPoint(spawnPoint);
+        CharacterEntity.MarkPlacedAt(spawnPoint.Position);
         CharacterEntity.SetSpawnTime(AssignedShard.CurrentTime);
         var forcedMove = new ForcedMovement
         {

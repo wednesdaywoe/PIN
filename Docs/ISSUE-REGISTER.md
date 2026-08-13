@@ -45,7 +45,11 @@ baseline the next pass diffs against.
 - [ ] **DATA-4** — Splash and ability-projectile range falloff are guessed/unmodeled, unlike the
   confirmed weapon curve
 - [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs
-- [ ] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB
+- [ ] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
+  2500 pool for every creature is ~64 player rifle shots each, which is the "bullet sponge" reading
+  [N16](In-Game-Tests/NPC-Combat.md) came back with. Researched 2026-08-13: `MonsterScaling` shipped
+  whole (80 levels, 100..153726 health) but is keyed by level, and level was server content — 2500 is
+  a level 17 monster, which is why the lowest-tier arahna plays like a mid-tier one
 - [ ] **DATA-7** — Character level comes from `HardcodedCharacterData`, not real progression
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)
@@ -70,7 +74,7 @@ baseline the next pass diffs against.
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 1 of 22 closed
+[Full detail](gaps/network.md) — 1 of 23 closed
 
 - [ ] **NET-1** — No retransmit queue; "reliable" only acks, never resends (scheduled as M8)
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
@@ -104,6 +108,11 @@ baseline the next pass diffs against.
   them. Monsters teleported, and fired at where you used to be for seconds before snapping round —
   the burst itself travels on the combat view and arrived on time. Damage was always resolved from
   the live direction. Fixed 2026-08-13 with `NpcPose`, confirmed the same day by N8–N13 passing
+
+- [ ] **NET-23** — A dead player has no way back. `Die` runs correctly and `RequestRespawn` is
+  implemented, but the client never sends it, so death ends the session. Found by
+  [N16](In-Game-Tests/NPC-Combat.md) on 2026-08-13, the first time the game rather than a command
+  killed a player. Suspect `RespawnTimesData`, which `Die` never writes
 
 ## Client & Environment — CLIENT
 
