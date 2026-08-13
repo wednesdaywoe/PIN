@@ -131,14 +131,16 @@ Out of scope because the slice closes without them:
   correct
 - **Turret damageability** — `Turret_ObserverView` has no health field, so the client doesn't
   model turrets as shootable either; fixing it means protocol work for a small payoff
-- **Environmental damage — melding and drowning** — both were near-instant death in retail and
-  neither does anything now, which reads in-game as an invulnerable character. `MeldingBubbleEntity`
-  is position and radius only, with no proximity check behind it, and `dbvisualrecords::WaterDesc`
-  parses `DrowningPercent` and `DrowningCharStatusEffectId` that nothing reads. There is no periodic
-  or environmental damage source in the server at all — every `TakeDamage` call today comes from a
-  projectile or an `InflictDamage` aptitude command. Noticed while running
-  [H5](In-Game-Tests/Hostility.md); nothing in the slice needs it, and the melding wall being
-  harmless is a smaller problem than the melding wall being missing
+- **The rest of environmental damage** — the base case is built, not deferred: drowning and melding
+  walls both kill now, through
+  [HazardSim](../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs), and the checks are
+  [E1–E7](In-Game-Tests/Environment.md). What is still out of scope is everything around it —
+  **NPCs are exempt from both hazards** (melded creatures live in the melding and no NPC reports a
+  water level), vehicles have their own drowning effects (2148, 2149) that nothing applies, retail's
+  own status effects are not used in place of the damage PIN applies directly, and the perimeter
+  sets are all live at once rather than rotating through melding phases. Also unbuilt: fall damage,
+  which is the other environmental death and has no data problem behind it, only nobody has needed
+  it
 - **Army, mail, market, chat beyond what exists** — social systems, none gate a session
 - **Crafting and blueprints** — spending resources needs `RequireResource` and
   `RequireResourceFromTarget`, both stubs, plus `Blueprint_Resources` which nothing reads;

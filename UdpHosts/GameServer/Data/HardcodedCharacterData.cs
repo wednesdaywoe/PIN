@@ -34,7 +34,7 @@ public static class HardcodedCharacterData
     public static int GeneratedLoadoutCounter = 20001;
     public static HashSet<uint> HostileFactionIds = [2, 3, 5, 6, 7, 8, 17, 22, 42, 43, 45, 46, 47, 48];
 
-    public static BasicCharacterData FallbackData = new()
+    public static BasicCharacterData MaleFallbackData = new()
     {
         CharacterInfo = new BasicCharacterInfo()
         {
@@ -64,6 +64,59 @@ public static class HardcodedCharacterData
             FacialHairColor = 0x320D0021u,
         }
     };
+
+    /// <summary>
+    ///     The same character with every gendered id swapped for a female one that actually shipped that
+    ///     way, rather than only flipping the gender field.
+    ///
+    ///     Gender on its own does most of the work: <c>ApplyLoadout</c> already picks the frame's visual
+    ///     record out of <c>dbitems::BattleframeVisuals</c> by matching the row's gender char, so the body
+    ///     model follows the field. Everything hanging off the body does not. Head 10002 is <c>sex = M</c>
+    ///     in <c>dbcharacter::Head</c>, voice set 1000 is <c>sex = 0</c>, and head accessories 10089 and
+    ///     10106 appear on 112 monster rows, every one of them male. The replacements below are the set
+    ///     Accord female NPCs use (head 10026, accessory 10115, voice 1040), so they are a combination the
+    ///     game shipped rather than one assembled here.
+    ///
+    ///     Ornament groups carry over untouched: <c>dbvisualrecords::OrnamentsMap</c> filters the group's
+    ///     contents by <c>sex_flags</c> on the client's side, so a group id is already gender-neutral.
+    /// </summary>
+    public static BasicCharacterData FemaleFallbackData = new()
+    {
+        CharacterInfo = new BasicCharacterInfo()
+        {
+            Name = "Fallback",
+            Gender = (uint)CharacterGender.Female,
+            Race = (uint)CharacterRace.Human,
+            TitleId = 135,
+            CurrentBattleframeSDBId = 76331,
+            ArmyTag = ArmyTag,
+            ArmyGuid = ArmyGUID,
+            ArmyIsOfficer = true,
+        },
+        CharacterVisuals = new BasicCharacterVisuals()
+        {
+            Head = 10026,
+            Eyes = 0,
+            VoiceSet = 1040,
+            Vehicle = 1000,
+            Glider = 1000,
+            HeadAccessories = [10115],
+            Ornaments = [10224, 10270, 10061],
+
+            SkinColor = 0x52680000u,
+            EyeColor = 0x6a2440e0u,
+            LipColor = 0xffff0000u,
+            HairColor = 0x320D0021u,
+            FacialHairColor = 0x320D0021u,
+        }
+    };
+
+    /// <summary>
+    ///     Who you log in as. Every login uses this today — <c>NetworkPlayer.Init</c> only reaches for
+    ///     remote character data over gRPC and there is no RIN answering, so the fallback is the character.
+    ///     Point it at <see cref="MaleFallbackData"/> to switch back.
+    /// </summary>
+    public static BasicCharacterData FallbackData = FemaleFallbackData;
 
     public static Dictionary<uint, uint> TempCharCreateLoadouts = new()
     {

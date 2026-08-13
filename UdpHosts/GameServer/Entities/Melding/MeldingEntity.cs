@@ -3,11 +3,14 @@ using System.Numerics;
 using AeroMessages.Common;
 using AeroMessages.GSS.V66;
 using AeroMessages.GSS.V66.Melding.View;
+using GameServer.Systems.Hazards;
 
 namespace GameServer.Entities.Melding;
 
 public sealed class MeldingEntity : BaseEntity
 {
+    private Vector2[] _perimeter;
+
     public MeldingEntity(IShard shard, ulong eid, string perimiterSetName)
         : base(shard, eid)
     {
@@ -24,10 +27,18 @@ public sealed class MeldingEntity : BaseEntity
     public ActiveDataStruct ActiveData { get; set; }
     public ScopeBubbleInfoData ScopeBubbleInfo { get; set; }
 
+    /// <summary>
+    ///     The wall as a flat polyline, for <see cref="GameServer.Systems.Hazards.MeldingField"/> to
+    ///     measure against. Built on demand and thrown away whenever the perimeter moves, which is rare —
+    ///     only a repulsor does it, and only while it is pushing.
+    /// </summary>
+    public Vector2[] Perimeter => _perimeter ??= MeldingField.Tessellate(ActiveData.FromPoints, ActiveData.FromTangents);
+
     public void SetActiveData(ActiveDataStruct newValue)
     {
         ActiveData = newValue;
         Melding_ObserverView.ActiveDataProp = newValue;
+        _perimeter = null;
     }
 
     private void InitFields()

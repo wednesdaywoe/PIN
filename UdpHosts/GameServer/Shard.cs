@@ -15,6 +15,7 @@ using GameServer.Systems.Chat;
 using GameServer.Systems.Combat;
 using GameServer.Systems.Encounters;
 using GameServer.Systems.EntityManager;
+using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
 using GameServer.Systems.SystemEvents;
@@ -56,6 +57,7 @@ public class Shard : IShard
         WeaponSim = new WeaponSim(this);
         ProjectileSim = new ProjectileSim(this);
         _shieldSim = new ShieldSim(this);
+        Hazards = new HazardSim(this);
         Chat = new ChatService(this, EventBus);
         Admin = new AdminService(this);
         EntityRefMap = new ConcurrentDictionary<ushort, Tuple<IEntity, Enums.GSS.Controllers>>();
@@ -75,6 +77,7 @@ public class Shard : IShard
     public AbilitySystem Abilities { get; }
     public ProjectileSim ProjectileSim { get; }
     public WeaponSim WeaponSim { get; }
+    public HazardSim Hazards { get; }
     public ChatService Chat { get; }
     public AdminService Admin { get; }
     public ulong InstanceId { get; }
@@ -112,6 +115,7 @@ public class Shard : IShard
         Abilities.Tick(deltaTime, currentTime, ct);
         WeaponSim.Tick(deltaTime, currentTime, ct);
         _shieldSim.Tick(deltaTime, currentTime, ct);
+        Hazards.Tick(deltaTime, currentTime, ct);
         EventBus.Flush();
 
         return true;

@@ -72,8 +72,24 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public Vector3 AimDirection { get; set; }
     public short MovementState { get; set; }
     public ushort MovementShortTime { get; set; }
+
+    /// <summary>
+    ///     How deep in water the client says it is, packed <c>ddddllll</c> — high nibble a water
+    ///     description index, low nibble a submersion level out of 15. Only a client fills this in; an
+    ///     NPC has no client and stays dry. Read it through <see cref="Systems.Hazards.Submersion"/>
+    ///     rather than unpacking it again anywhere else.
+    /// </summary>
+    public byte WaterLevelAndDesc { get; private set; }
     public bool Alive { get; set; }
     public bool IsAlive => CharacterState.State == CharacterStateData.CharacterStatus.Living && CurrentHealth > 0;
+
+    /// <summary>
+    ///     Turns off every incoming hit, set by the <c>invuln</c> admin command. A testing switch, not a
+    ///     game mechanic: nothing in the data sets it and nothing clears it but the command. Retail did
+    ///     have the notion — <c>RequireDamageResponseCommandDef</c> carries a <c>NotInvulnerable</c> flag —
+    ///     but PIN doesn't model damage responses yet, so this sits in front of them all.
+    /// </summary>
+    public bool Invulnerable { get; set; }
     public short TimeSinceLastJump { get; set; }
     public bool IsAirborne { get; set; }
     public bool IsMoving { get => MovementStateContainer.Sprint || MovementStateContainer.Movement; }
@@ -959,6 +975,15 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         Velocity = poseData.Velocity;
         AimDirection = poseData.Aim;
         MovementShortTime = shortTime;
+
+        // Pose messages arrive at the client's frame rate, so this only goes on the wire when the value
+        // actually moves — it changes when you wade in or out, not sixty times a second.
+        if (poseData.WaterLevelAndDesc != WaterLevelAndDesc)
+        {
+            WaterLevelAndDesc = poseData.WaterLevelAndDesc;
+            Character_ObserverView.WaterLevelAndDescProp = WaterLevelAndDesc;
+        }
+
         RefreshMovementView();
     }
 
@@ -1462,7 +1487,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     /// </summary>
     public void TakeDamage(DamageInfo damage)
     {
-        if (!IsAlive)
+        if (!IsAlive || Invulnerable)
         {
             return;
         }

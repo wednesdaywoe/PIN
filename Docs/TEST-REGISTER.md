@@ -19,6 +19,16 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**Environmental damage is queued and unrun — E1–E7, and E3 gates the rest.** Deep water and melding
+walls can now kill you, which closes the "my character is invulnerable" reading that came out of
+[H5](In-Game-Tests/Hostility.md). Drowning is read from real data on both sides: the client reports
+its own submersion and the rates come out of status effects 787 and 789. The melding is not — where
+the wall is comes from the control points the client draws, but which side of it is lethal is
+inferred from their winding, and the damage rate is invented ([DATA-12](ISSUE-REGISTER.md),
+[DATA-13](ISSUE-REGISTER.md)). **E3 is the entry that has to run first**, because a backwards reading
+would make the safe world lethal; it is written to run with `invuln` on so it costs nothing to be
+wrong.
+
 **NPC Combat is complete, 7 of 7, and it paid for itself several times over.** N1–N7 ran on
 2026-08-12 and four of them failed first time. N2 and N6 failing *differently* — one monster with no
 range, another doing no damage — exposed [DATA-11](ISSUE-REGISTER.md), a zero multiplier read
@@ -76,6 +86,10 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   by running V6
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
+- [ ] [Environmental Damage](In-Game-Tests/Environment.md) — 0 of 7 passing, not yet run. Drowning
+  and melding walls, the first damage in the server that doesn't come from something pulling a
+  trigger. E3 confirms which side of a melding perimeter is the lethal one and should be run before
+  E4; E1 is also where the water coordinates for E2 come from, since the server holds no water map
 
 ## Client prediction
 

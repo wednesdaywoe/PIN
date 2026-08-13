@@ -25,12 +25,14 @@ core allows and the rate constants are minimum intervals rather than a fixed tim
 loop:
   if (elapsed since last net tick >= 1/20s)  NetworkTick()   → every client: drain + Channel.Process
   Tick():
-      AI.Tick()             AIEngine.cs           (currently a stub)
+      AI.Tick()             perception, target selection, NPC weapon fire, >= 50ms apart
       Physics.Tick()        accumulator, steps Bepu at 50ms
       EntityMan.Tick()      zone spawn, scope in/out, change flush, lifetimes
       EncounterMan.Tick()
       Abilities.Tick()      duration/update chains, >= 20ms apart
       WeaponSim.Tick()      spread recovery, >= 50ms apart
+      ShieldSim.Tick()      shield recharge, >= 100ms apart
+      Hazards.Tick()        drowning and melding damage, >= 500ms apart
       EventBus.Flush()
 ```
 
@@ -47,8 +49,12 @@ Each system does its own rate limiting with the same pattern:
 if (currentTime > _lastUpdate + _updateIntervalMs) { _lastUpdate = currentTime; ... }
 ```
 
-Intervals in use: abilities 20ms, weapon sim 50ms, physics 50ms, scope check / scope-in / change
-flush / lifetime check in `EntityManager`.
+Intervals in use: abilities 20ms, AI 50ms, weapon sim 50ms, physics 50ms, shields 100ms, hazards
+500ms, and the scope check / scope-in / change flush / lifetime check in `EntityManager`.
+
+Two of those intervals aren't arbitrary. The AI's 50ms is also the finest grain an NPC's rate of
+fire can be paced at, and the hazard sim's 500ms is retail's own `update_frequency` for the drowning
+status effects whose damage rates it reproduces.
 
 ## Clocks, three of them, don't mix them up
 

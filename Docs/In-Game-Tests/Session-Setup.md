@@ -34,6 +34,24 @@ cd ~/Games/PIN && ./use-build.sh          # reports which tagged build is live
 fresh `GameServer.dll` in by hand leaves it matching neither tag, so `use-build.sh` with no argument
 prints `unknown` until the new build is also copied over `GameServer.dll.current`.
 
+## Who you log in as
+
+Every login is the same character. `NetworkPlayer.Init` asks the RIN for character data over gRPC,
+nothing answers, and it falls back to `HardcodedCharacterData.FallbackData` — so the fallback isn't a
+fallback in practice, it's the character.
+
+It is female as of 2026-08-13. Gender alone does most of that: `ApplyLoadout` picks the frame's
+visual record out of `dbitems::BattleframeVisuals` by matching the row's gender char, so the body
+model follows the field. Everything hanging off the body doesn't, and was changed with it — head
+10002 is `sex = M` in `dbcharacter::Head`, voice set 1000 is `sex = 0`, and head accessories 10089
+and 10106 appear on 112 monster rows, all male. The replacements (head 10026, accessory 10115, voice
+1040) are the set Accord female NPCs use, so it's a combination the game shipped rather than one
+assembled here. Ornament groups are unchanged: `dbvisualrecords::OrnamentsMap` filters a group's
+contents by `sex_flags` client-side, so a group id is already gender-neutral.
+
+`HardcodedCharacterData.FallbackData` points at `FemaleFallbackData`; point it at
+`MaleFallbackData` to switch back. Both presets are in the same file.
+
 Remember to watch the GameServer log throughout. Two things are silent failures worth grepping for
 after any session:
 
@@ -58,6 +76,8 @@ the client keeps `/`-prefixed input for itself, so anything starting with `/` ne
 | `target [entityId/name]` | — | no argument ray-casts from your aim; `target me` or `target self` targets you; prints the distance, so it doubles as a rangefinder |
 | `clear` | `cleartarget`, `targetclear`, `untarget`, `removetarget`, `remtarget`, `deletetarget`, `deltarget` | clears the command target |
 | `hostility` | `stance` | stance both ways against the current target |
+| `hazard` | `env` | water level and nearest melding wall, with which side of it you're on |
+| `invuln [on\|off]` | `god` | no argument toggles; hits the current target if there is one |
 | `dbg_weapon` | — | weapon template, ammo and the resolved decay curve |
 | `ability <abilityId>` | `useability`, `activateability`, `apt_ability` | runs the chain server-side, so the client never predicts it |
 | `applyeffect <effectId>` | `apply_effect`, `apt_apply` | |

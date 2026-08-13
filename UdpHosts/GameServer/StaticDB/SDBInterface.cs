@@ -43,6 +43,7 @@ public class SDBInterface
     // dbvisualrecords
     private static Dictionary<uint, WarpaintPalette> _warpaintPalettes;
     private static Dictionary<uint, VisualRecord> _visualRecord;
+    private static Dictionary<uint, WaterDesc> _waterDesc;
 
     // dbitems
     private static Dictionary<uint, AttributeCategory> _attributeCategory;
@@ -303,6 +304,7 @@ public class SDBInterface
         // dbvisualrecords
         _warpaintPalettes = loader.LoadWarpaintPalettes();
         _visualRecord = loader.LoadVisualRecord();
+        _waterDesc = loader.LoadWaterDesc();
 
         // dbitems
         _attributeCategory = loader.LoadAttributeCategory();
@@ -592,6 +594,7 @@ public class SDBInterface
     // dbvisualrecords
     public static WarpaintPalette GetWarpaintPalette(uint id) => _warpaintPalettes.GetValueOrDefault(id);
     public static VisualRecord GetVisualRecord(uint id) => _visualRecord.GetValueOrDefault(id);
+    public static WaterDesc GetWaterDesc(uint id) => _waterDesc.GetValueOrDefault(id);
 
     // dbitems
     public static RootItem GetRootItem(uint id) => _rootItem.GetValueOrDefault(id);

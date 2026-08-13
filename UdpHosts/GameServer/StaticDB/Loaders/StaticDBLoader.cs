@@ -133,6 +133,12 @@ public class StaticDBLoader : ISDBLoader
         .ToDictionary(row => row.Id);
     }
 
+    public Dictionary<uint, WaterDesc> LoadWaterDesc()
+    {
+        return LoadStaticDB<WaterDesc>("dbvisualrecords::WaterDesc")
+        .ToDictionary(row => row.Id);
+    }
+
     public Dictionary<uint, AttributeCategory> LoadAttributeCategory()
     {
         return LoadStaticDB<AttributeCategory>("dbitems::AttributeCategory")

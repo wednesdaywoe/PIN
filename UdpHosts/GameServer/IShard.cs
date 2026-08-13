@@ -9,6 +9,7 @@ using GameServer.Systems.Aptitude;
 using GameServer.Systems.Chat;
 using GameServer.Systems.Encounters;
 using GameServer.Systems.EntityManager;
+using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
 using GameServer.Systems.SystemEvents;
@@ -34,6 +35,7 @@ public interface IShard : IPacketSender
     AbilitySystem Abilities { get; }
     ProjectileSim ProjectileSim { get; }
     WeaponSim WeaponSim { get; }
+    HazardSim Hazards { get; }
     ChatService Chat { get; }
     AdminService Admin { get; }
     uint ZoneId { get; }

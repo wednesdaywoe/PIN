@@ -125,12 +125,13 @@ visible happens, and the arithmetic is why: its rifle does 1 damage a round at a
 and a half minutes to strip the shields and half an hour to finish the job. Use `2342` (125 a hit)
 if the point is to watch something die.
 
-Walking into a melding wall or deep water doing nothing is a different thing entirely, and not a
-damage-routing failure: **there is no environmental damage in the server at all.**
-`MeldingBubbleEntity` carries a position and a radius and nothing that hurts anyone,
-`dbvisualrecords::WaterDesc` parses `DrowningPercent` and `DrowningCharStatusEffectId` that nothing
-reads, and every `TakeDamage` call in the codebase comes from a projectile or an `InflictDamage`
-aptitude command. Recorded under [Deferred](../PROGRESS.md#deferred).
+Walking into a melding wall or deep water doing nothing was a different thing entirely, and not a
+damage-routing failure: at the time **there was no environmental damage in the server at all** —
+every `TakeDamage` call came from a projectile or an `InflictDamage` aptitude command.
+[HazardSim](../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs) has since closed that, and its
+own checks are [E1–E7](Environment.md). What is left of it is in
+[Deferred](../PROGRESS.md#deferred): NPCs are still exempt from both hazards, and nothing models
+fall damage.
 
 ## [x] H6: Same-faction NPCs no longer hurt each other
 

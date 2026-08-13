@@ -240,6 +240,6 @@ One caveat on that run: it was the build with the null filtered at `CreateThumpe
 and the snapshot and try/catch are identical between them, so the run stands — but the shipped binary
 gets its own confirmation from the next session that leaves the Coral Forest thumper running.
 
-The general lesson is point 3. `Shard.Tick` calls eight systems in a row with no isolation between
+The general lesson is point 3. `Shard.Tick` calls its systems in a row with no isolation between
 them, so any of them can still do this; the encounter loop is simply the one that was caught doing
 it. Worth extending the same treatment outward if a second system ever manages it.

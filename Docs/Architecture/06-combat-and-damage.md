@@ -160,6 +160,43 @@ are given zero shields, so the guess only lands on players and NPC damage behave
 `MaxShields` and `CurrentShields` only exist on `BaseController`, which means a player sees their own
 shield bar and nobody else's. Health has a percentage on `ObserverView`; shields have no equivalent.
 
+### Invulnerability
+
+`CharacterEntity.Invulnerable` drops every incoming hit at the top of `TakeDamage`. Nothing in the
+data sets it and nothing clears it: it exists for the `invuln` admin command, so a hazard can be
+walked into and back out of. Retail had the notion for real — `RequireDamageResponseCommandDef`
+carries a `NotInvulnerable` flag — but PIN doesn't model damage responses, so this sits in front of
+all of them rather than being one.
+
+## Environmental damage
+
+[HazardSim](../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs) is the only damage source that
+isn't something pulling a trigger, and the only caller of `TakeDamage` that passes a null attacker.
+It runs on a 500ms tick — retail's `update_frequency` for the effects it is standing in for — and
+looks at player-controlled characters only.
+
+| Hazard | Reading | Rate |
+|--------|---------|------|
+| Drowning | client's `WaterLevelAndDesc` past `dbvisualrecords::WaterDesc.drowning_percent` | 1% of max health a tick, flat (effect 787) |
+| Fully submerged | same, past `dying_percent` | 2% a tick, multiplied by 1.05 after each one (effect 789) |
+| Melding | position against the perimeter the client is drawing | 5% a tick, invented ([DATA-12](../gaps/data.md#data-12)) |
+
+The water level is the client's reading, not the server's — with `LoadMapsCollision` off there is no
+terrain and no water volume here to measure against, so the one byte the client sends on every
+movement pose is the whole of it. [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs)
+unpacks it; [DATA-13](../gaps/data.md#data-13) covers the half of that byte that can't be resolved.
+
+The melding reads the same control points the client draws the wall from, tessellated as a Hermite
+curve by [MeldingField](../../UdpHosts/GameServer/Systems/Hazards/MeldingField.cs), so the two agree
+even while a `MeldingRepulsor` is pushing a control point around. Melded ground is taken to be to the
+left of the directed curve, which is inferred rather than read — [E3](../In-Game-Tests/Environment.md)
+is what confirms it.
+
+Applying retail's status effects instead of the damage directly would be the faithful version. It
+isn't what happens, because those chains run through registers, conditional branches and stat
+modifiers whose coverage in PIN's aptitude engine is unknown, and a half-executing chain is
+indistinguishable from no damage at all.
+
 ## Ability damage
 
 Abilities reach the same funnel through aptitude commands in

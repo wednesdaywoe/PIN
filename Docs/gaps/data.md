@@ -174,3 +174,57 @@ its rounds did 0). One zero, two symptoms, neither of them where the bug was.
 Regenerate [the weapon reference](../Wiki/Reference/Weapons.md) with `Tools/SdbDocs` after touching
 resolution — it renders through `GetDetailedWeaponInfo`, so it shows what the server would send, and
 it is where the 269 and 220 counts came from.
+
+<a id="data-12"></a>
+
+### DATA-12 — Melding wall damage rate is invented [ ] open
+
+[HazardSim](../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs) takes 5% of max health every
+500ms off anyone standing in the melding, which kills in about twelve seconds through a full shield
+and health pool. Nothing chose that number but the need for one.
+
+Drowning, sitting right next to it in the same file, is the contrast: effects 787 and 789 survive
+intact in `clientdb.sd2` with their `update_frequency` of 500ms and their damage as a register of
+`max_health * 0.01`, so those rates are read rather than picked. The melding has no equivalent. Of
+the 20 status effects that inflict damage type 29 (`dbcharacter::DamageType` names it "Melding"),
+every one whose chain could be walked is a melded creature's attack — a PBAE target selector with a
+radius, applied by something that hit you. Nothing in the db applies damage for being in a place.
+The reasonable reading is that retail drove the wall from zone logic on the server, which never
+shipped to a client and so isn't in a client db.
+
+Retail killed faster than twelve seconds. The rate is deliberately survivable so that
+[E4](../In-Game-Tests/Environment.md) can be watched happening rather than inferred from a corpse;
+tightening it is one constant.
+
+<a id="data-13"></a>
+
+### DATA-13 — The water description nibble can't be resolved, so all water is row 10001 [ ] open
+
+`WaterLevelAndDesc` arrives from the client packed `ddddllll`. The low nibble is submersion and is
+fully understood — see [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs), where
+the reading is confirmed against the 2016 capture. The high nibble picks which of the six
+`dbvisualrecords::WaterDesc` rows applies, and it is an index into a per-zone list the map holds and
+the server does not, so it can't be turned into a row id here.
+
+Every body of water is therefore read as row 10001: movement restricted at 0.33 of your height,
+drowning at 0.735, dying at 1.0. Two of the six rows carry exactly that profile, so it is the
+standard water rather than an arbitrary pick, and the capture only ever shows nibble 0.
+
+The six rows, read back through `SDBInterface.GetWaterDesc`:
+
+| Row | restricted | drowning | dying | drown effect | dying effect |
+|-----|-----------|----------|-------|--------------|--------------|
+| 10001 | 0.33 | 0.7353 | 1.0 | 787 | 789 |
+| 10002 | 0.0496 | 0.9522 | 1.0 | 4525 | 4525 |
+| 10003 | 0 | 0.0845 | 0.328 | 4722 | 9752 |
+| 10008 | 0.0654 | 0.9575 | 1.0 | 4525 | 4525 |
+| 10110 | 0.33 | 0.73 | 1.0 | 787 | 789 |
+| 10111 | 0.0496 | 0.9575 | 1.0 | 12112 | 12112 |
+
+The failure this avoids is worse than the one it accepts. Row 10003 starts drowning you at 0.0845
+and killing you at 0.328 — presumably something caustic — so a wrong resolution would kill people
+standing in a river. `Submersion.Against` treats an unresolvable row as harmless for the same
+reason. What it costs is that if 448 has any non-standard water, it currently behaves like a lake.
+
+`HazardSim` logs each distinct nibble the first time it sees one, which is what a real mapping would
+have to be built from; [E1](../In-Game-Tests/Environment.md) is the entry that collects them.
