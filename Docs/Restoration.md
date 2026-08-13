@@ -24,6 +24,29 @@ of them is not a requirement.
 and describe a discovery layer sitting on top of crafting. It can be implemented, simplified, or
 skipped, and that is a gameplay call rather than a fidelity one.
 
+**Levels are already inert.** PIN never implemented leveling. Character level is the constant 45 in
+`HardcodedCharacterData`, XP always goes out as zero, `LevelUpEvent` is never sent, and level-based
+stat scaling was never written. Power comes entirely from the loadout: `CalculateItemAttributes`
+sums the chassis and every slotted item, and level isn't a term in it. That's the beta model,
+arrived at by accident. So level-45 balance is a number the client draws rather than a system
+crafted output has to satisfy.
+
+The beta budget survives in the data but isn't wired up. `dbitems::ItemTypeAttributeModifier`
+carries per-attribute weight, power and cpu coefficients, and loads, but nothing reads it.
+`dbitems::FrameMassRange` carries the mass-to-speed rule, has no loader, and isn't confirmed
+present in 1962. Rebuilding CPU/Mass/Power is new construction, not removal, and the gate was
+whether 1962's garage still shows three budgets or only an aggregate.
+
+**Checked in game 2026-08-13: the garage shows a power rating and an equipment score, and nothing
+else.** Two aggregates, no CPU, mass or power bars, so the beta budget has no surface left in the
+client — the same shape of problem as the deleted crafting panel, and the same answer applies:
+a replacement surface would have to be authored, not restored. Only `PowerRating` (attribute 1451)
+is modelled server-side, hardcoded to 100 in
+[CharacterLoadout.cs](../UdpHosts/GameServer/Data/CharacterLoadout.cs) and 681 in
+[CharacterEntity.cs](../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs); equipment score
+appears nowhere in the codebase, so the client is deriving it. That makes the three-budget model a
+deliberate build rather than a reconnection, and it is not on any milestone.
+
 **Sources become design references.** The [patch corpus](Wiki/Sources.md) stops being a spec to
 conform to and becomes an argument about what each loop was for and why it worked. Beta-era
 material is back in play precisely because we are not bound to 1962's decisions.
