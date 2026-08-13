@@ -199,3 +199,47 @@ the next suspect.
 [Prediction-Sweep.md](../In-Game-Tests/Prediction-Sweep.md) covers 47 effects shaped like the one
 D5h fixed (27 player-reachable); all of it blocks on P0. One rollup entry rather than 47, since
 none of them are independently actionable until P0 confirms the cert-gate fix holds.
+
+<a id="net-21"></a>
+
+### NET-21 — An encounter could kill the shard thread outright [x] fixed 2026-08-12
+
+The Coral Forest thumper reliably ended every session it was left running in. Around seven and a
+half minutes after the zone loaded, `Thumper.OnSuccess` reached `BaseEncounter.RewardWithResource`,
+threw a `NullReferenceException`, and took `Shard.RunThread` with it: no tick, no physics, no AI, no
+movement for anyone still connected, and nothing in the log but a stack trace at the very end. It
+was found while chasing something else entirely, in the tail of a
+[NPC combat](../In-Game-Tests/NPC-Combat.md) session log.
+
+Three separate defects, stacked so that fixing only the visible one would have swapped a crash for a
+different crash:
+
+1. **A null participant.** `EncounterManager.CreateThumper` built its participant set as
+   `[owner.Player]`. `CharacterEntity.Player` is null for every NPC, and the debug thumper is called
+   down by the Aero, so the set held a single null from the moment it was created. Nothing
+   dereferenced it until the payout, minutes later. Now filtered at the source, and
+   `BaseEncounter.LiveParticipants` skips nulls for the two helpers that reach through a participant.
+2. **Mutation during iteration.** `Tick` walked `_encountersToUpdate` with a `foreach` while
+   `OnUpdate` → `OnSuccess` → `StopUpdatingEncounter` removed from that same set. Thumper does this
+   on its LEAVING tick, so the payout NRE and a `Collection was modified` were racing to be thrown;
+   the NRE won and hid the other. Both update loops now iterate a snapshot.
+3. **No net under any of it.** An unhandled throw from one encounter stopped the entire shard. The
+   update loop now catches per encounter, logs it, and stops updating the offender — content
+   misbehaving costs that encounter, not the server.
+
+Verified by running the server headless through a full unattended thumper cycle — no client needed,
+the state machine advances on its own clock in about seven and a half minutes. The confirmation is
+exact rather than circumstantial: in the crashed session the last line before the stack trace was
+`Executing Chain 1154394 (RemoveEffect), Self: ThumperEntity`, and in the verification run that same
+chain fired at the same point in the lifecycle, the thumper went silent as `OnSuccess` removed it,
+and the shard kept ticking for three more minutes with no unhandled exception and nothing caught by
+the new guard.
+
+One caveat on that run: it was the build with the null filtered at `CreateThumper` rather than in the
+`BaseEncounter` constructor, which is where it ended up. Both produce the same empty participant set
+and the snapshot and try/catch are identical between them, so the run stands — but the shipped binary
+gets its own confirmation from the next session that leaves the Coral Forest thumper running.
+
+The general lesson is point 3. `Shard.Tick` calls eight systems in a row with no isolation between
+them, so any of them can still do this; the encounter loop is simply the one that was caught doing
+it. Worth extending the same treatment outward if a second system ever manages it.

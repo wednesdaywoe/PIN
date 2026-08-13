@@ -16,7 +16,14 @@ public abstract class BaseEncounter : IEncounter
         Shard = shard;
         EntityId = entityId;
         AeroEntityId = new EntityId() { Backing = EntityId, ControllerId = Controller.Encounter };
-        Participants = participants;
+
+        // Every caller builds this set out of some entity's Player, and CharacterEntity.Player is null
+        // for an NPC, so an encounter an NPC starts arrives holding a null. It costs nothing until
+        // something finally reaches through it, which for the Coral Forest thumper was the completion
+        // payout seven minutes later, and that unhandled NRE took the whole shard tick down. Stripped
+        // here rather than at each use because there are eight places that walk this set and only one
+        // that fills it.
+        Participants = participants == null ? [] : [.. participants.Where(p => p != null)];
     }
 
     protected BaseEncounter(IShard shard, ulong entityId, INetworkPlayer soloParticipant)

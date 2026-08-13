@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using AeroMessages.Common;
@@ -12,6 +13,7 @@ using GameServer.Entities.Character;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
 using GameServer.Systems.Encounters.Encounters;
+using Serilog;
 
 namespace GameServer.Systems.Encounters;
 
@@ -28,6 +30,7 @@ public class EncounterManager
     private readonly ConcurrentDictionary<ulong, Lifetime> _lifetimeByEncounter = new();
 
     private readonly Shard _shard;
+    private readonly ILogger _logger;
     private ulong _lastUpdateFlush;
     private ulong _lastLifetimeCheck;
     private bool _hasSpawnedZoneEncounters;
@@ -35,6 +38,7 @@ public class EncounterManager
     public EncounterManager(Shard shard)
     {
         _shard = shard;
+        _logger = shard.Logger.ForContext<EncounterManager>();
         Factory = new Factory(shard);
     }
 
@@ -64,6 +68,8 @@ public class EncounterManager
     {
         var thumperEntity = _shard.EntityMan.SpawnThumper(nodeType, position, owner, commandDef);
 
+        // An NPC-owned thumper -- the Coral Forest debug one is called down by the Aero -- contributes
+        // no participant at all, because a monster has no Player. BaseEncounter drops the null.
         // add squadmates later
         var thumper = new Thumper(
           _shard,
@@ -133,15 +139,31 @@ public class EncounterManager
         {
             _lastUpdateFlush = currentTime;
 
-            foreach (var encounter in _encountersToUpdate)
+            // Snapshotted because an encounter routinely finishes from inside its own OnUpdate, and
+            // OnSuccess calls StopUpdatingEncounter -- which removes from the very set being walked.
+            // Thumper does exactly this on the LEAVING tick. Iterating the live set threw
+            // "Collection was modified" from the shard thread; the payout NRE just happened to fire
+            // first and hide it.
+            foreach (var encounter in _encountersToUpdate.ToArray())
             {
                 // todo add update queue
-                encounter.OnUpdate(currentTime);
+                // An encounter is content, and a bug in one is not worth the whole shard. Before this
+                // an unhandled throw here killed Shard.RunThread outright: every player frozen, no
+                // physics, no AI, and the only sign of it a stack trace at the end of the log.
+                try
+                {
+                    encounter.OnUpdate(currentTime);
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e, "Encounter {Encounter} {EntityId} threw during OnUpdate and will stop updating", encounter.GetType().Name, encounter.EntityId);
+                    StopUpdatingEncounter(encounter);
+                }
 
                 // FlushChanges(encounter);
             }
 
-            foreach (var (entity, encounter) in _entitiesToCheckProximity)
+            foreach (var (entity, encounter) in _entitiesToCheckProximity.ToArray())
             {
                 foreach (var p in encounter.Participants)
                 {
