@@ -475,6 +475,33 @@ public class SDBUtils
         return result;
     }
 
+    /// <summary>
+    ///     Applies one item's <c>WeaponTemplateModifiers</c> row to one template value, as
+    ///     <c>(base + modifier) * multiplier</c>.
+    ///
+    ///     A multiplier of zero means the row doesn't set one, not that the stat should be zeroed. The SDB
+    ///     zero-fills, and the data tunes each stat through one of the two columns and leaves the other at
+    ///     0: the Chosen Grunt Rifle carries <c>range 80, range_mult 0</c>, the Accord Famas carries
+    ///     <c>damage_per_round 35, damage_per_round_mult 0</c>, and the Accord Guard Rifle carries
+    ///     <c>damage_per_round 0, damage_per_round_mult 5</c>. Reading a literal zero multiplied 269
+    ///     weapons down to no range and 220 to no damage, which is how NPCs came to stand there holding a
+    ///     rifle that could not reach anything and firing rounds that could not hurt anything.
+    /// </summary>
+    public static float WeaponTemplateModifier(float baseValue, float? modifierValue, float? multiplierValue = 1)
+    {
+        return (baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue);
+    }
+
+    /// <summary>
+    ///     The multiplier half of <see cref="WeaponTemplateModifier"/>, shared by every overload so a stat
+    ///     stored as an int can't quietly keep the old reading. Absent or zero both mean "this row doesn't
+    ///     multiply", which is the whole point — see the remarks above.
+    /// </summary>
+    private static float Multiplier(float? multiplierValue)
+    {
+        return multiplierValue is null or 0f ? 1f : multiplierValue.Value;
+    }
+
     private static uint WeaponTemplateOverrider(uint baseValue, uint? overrideValue)
     {
         if (overrideValue != null)
@@ -513,27 +540,27 @@ public class SDBUtils
 
     private static sbyte WeaponTemplateModifier(sbyte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
     {
-        return (sbyte)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+        return (sbyte)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
     private static byte WeaponTemplateModifier(byte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
     {
-        return (byte)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+        return (byte)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
     private static uint WeaponTemplateModifier(uint baseValue, int? modifierValue, float? multiplierValue = 1)
     {
-        return (uint)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+        return (uint)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
     private static int WeaponTemplateModifier(int baseValue, int? modifierValue, float? multiplierValue = 1)
     {
-        return (int)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+        return (int)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
     private static ushort WeaponTemplateModifier(ushort baseValue, short? modifierValue, float? multiplierValue = 1)
     {
-        return (ushort)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+        return (ushort)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
     /// <summary>
@@ -599,11 +626,6 @@ public class SDBUtils
         }
 
         return result;
-    }
-
-    private static float WeaponTemplateModifier(float baseValue, float? modifierValue, float? multiplierValue = 1)
-    {
-        return (float)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
     }
 }
 

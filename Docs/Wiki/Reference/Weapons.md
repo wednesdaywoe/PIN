@@ -79,9 +79,9 @@ same resolution; they simply are not obtainable.
 | Accord Biomass Launcher | BioTech Needler Shotgun (12135) | 1 | 50 | 3 | 35 | 12 | 1000 | 1400 | 70 | Chemical | 143147 |
 | Accord Chemical Sprayer I | Accord Chemical Sprayer (11969) | 1 | 1 | 1 | 50 | 999 | 100 | 1200 | 6 | Bullet (UNUSED) | 77932 |
 | Accord Explosive Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 86396 |
-| Accord Mortar Launcher | Accord Mortar Launcher (11965) | 2 | 5 | 2 | 750 | 0 to 100 | 1250 | 1750 | 150 | Blast (UNUSED) | 77863 |
-| Alpha Firecat Incendiary Weapon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 95 | 3000 | 0 | Thermal | 142093 |
-| Amazonian | Rocket-Propelled Grenade (12095) | 2 | 1 to 40 | 3 to 4 | 0 | 6 | 1250 | 4250 | 100 | Generic | 118571 |
+| Accord Mortar Launcher | Accord Mortar Launcher (11965) | 2 | 5 | 2 | 750 | 100 to 103 | 1250 | 1750 | 150 | Blast (UNUSED) | 77863 |
+| Alpha Firecat Incendiary Weapon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 95 | 3000 | 90 | Thermal | 142093 |
+| Amazonian | Rocket-Propelled Grenade (12095) | 2 | 1 to 40 | 3 to 4 | 350 | 6 | 1250 | 4250 | 100 | Generic | 118571 |
 | Amazonian HV | Rocket-Propelled Grenade (12095) | 1 | 17 | 3 | 350 | 6 | 1250 | 4250 | 100 | Generic | 117712 |
 | Amazonian LX | Rocket-Propelled Grenade (12095) | 1 | 22 | 3 | 350 | 6 | 1250 | 4250 | 100 | Generic | 117713 |
 | Amazonian MX | Rocket-Propelled Grenade (12095) | 1 | 27 | 3 | 350 | 6 | 1250 | 4250 | 100 | Generic | 117714 |
@@ -95,18 +95,18 @@ same resolution; they simply are not obtainable.
 | Ambient NPC - Guard Lvl 2 - Assault Rifle | NPC Guard Rifle (30) | 1 | 1 | 1 | 40 | 20 | 100 | 700 | 30 | Kinetic | 84916 |
 | Ambient NPC - Guard Lvl 3 - Assault Rifle | NPC Guard Rifle (30) | 1 | 1 | 1 | 40 | 20 | 100 | 700 | 30 | Kinetic | 84917 |
 | Ambient NPC - Mustang - Assault Weapon | NPC Guard Rifle (30) | 1 | 1 | 1 | 40 | 20 | 100 | 700 | 30 | Kinetic | 85226 |
-| Anzu Clone Dummy Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 0 | 50 | 1000 | 215 | Kinetic | 140372 |
-| Aranha Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Kinetic | 122770 |
-| Aranha Ranged Spit Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Kinetic | 122768 |
-| Aranha Soldier Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 122772 |
-| Aranha Worker Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 123032 |
+| Anzu Clone Dummy Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 2 | 50 | 1000 | 215 | Kinetic | 140372 |
+| Aranha Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 2700 | 5000 | 50 | Kinetic | 122770 |
+| Aranha Ranged Spit Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 50 | Kinetic | 122768 |
+| Aranha Soldier Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 4.6 |   | 122772 |
+| Aranha Worker Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 4.6 |   | 123032 |
 | ARC Bald Bully Particle Beam | Particle Beam Ability (11975) | 1 | 1 | 1 | 100 | 5 | 1600 | 2000 | 120 | Energy | 120497 |
-| Arc Content - Combat Drone Particle Cannon | Particle Beam Ability (11975) | 1 | 1 | 1 | 100 | 0 | 1600 | 2000 | 120 | Energy | 96796 |
+| Arc Content - Combat Drone Particle Cannon | Particle Beam Ability (11975) | 1 | 1 | 1 | 100 | 6 | 1600 | 2000 | 120 | Energy | 96796 |
 | Arc Thrower | Tesla Rifle 2.0 (12132) | 24 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 85982 |
-| Arch Scorcher Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 | Thermal | 141913 |
+| Arch Scorcher Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 600 | 3000 | 130 | Thermal | 141913 |
 | AREA JOB]  Chosen Tech | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141550 |
-| Armored Culex Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 0 | 1 | 4 | 59464 | 0 | 300 | 0 | Kinetic | 137035 |
-| Armored Scorcher Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Thermal | 122759 |
+| Armored Culex Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 0 | 1 | 4 | 59464 | 800 | 300 | 130 | Kinetic | 137035 |
+| Armored Scorcher Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 5600 | 5000 | 50 | Thermal | 122759 |
 | Arsenal Combat Shotgun | PvE - Shotgun (secondary) (1) | 4 | 1 to 40 | 1 to 4 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 143666 |
 | Assault Rifle | Assault Rifle (secondary) (4) | 1 | 1 | 1 | 46 | 130 | 75 | 2000 | 150 | Kinetic | 85675 |
 | Assault Rifle | PvE - Assault Rifle (Secondary) (12113) | 24 | 1 | 1 | 46 | 55 | 105 | 2100 | 150 | Kinetic | 85984 |
@@ -116,7 +116,7 @@ same resolution; they simply are not obtainable.
 | Assault Rifle I^Q | Assault Rifle (secondary) (4) | 1 | 1 | 1 | 46 | 35 | 90 | 2000 | 150 | Kinetic | 78493 |
 | Astrek Bio Crossbow ^Q | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 84351 |
 | Astrek Bio Needler^Q | Bio Launcher (61) | 1 | 1 | 1 | 75 | 50 | 150 | 1200 | 150 | Chemical | 83073 |
-| Astrek Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 0 | 60 | 150 | 1200 | 120 | Chemical | 84369 |
+| Astrek Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 84369 |
 | Astrek Charge Rifle^Q | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 84375 |
 | Astrek Fusion Cannon^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 84350 |
 | Astrek Heavy Laser MG^Q | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 1 | 54 | 200 | 90 | 3000 | 80 | Energy | 84371 |
@@ -138,18 +138,18 @@ same resolution; they simply are not obtainable.
 | Bald Bully LMG | LMG (11976) | 1 | 1 | 1 | 43 | 120 | 75 | 2500 | 110 | Kinetic | 120500 |
 | Ball III | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 77933 |
 | Bandit Barricade Scrambler Grenade | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 119910 |
-| Bandit Boss Plasma Cannon | Fusion Cannon (60) | 1 | 1 | 1 | 0 | 0 | 0 | 3000 | 150 | Thermal | 86280 |
+| Bandit Boss Plasma Cannon | Fusion Cannon (60) | 1 | 1 | 1 | 300 | 164 | 1300 | 3000 | 150 | Thermal | 86280 |
 | Bandit Dealer Shotgun | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 18 | 10989 | 800 | 1500 | 20 | Kinetic | 86174 |
 | Bandit Disguise SMG | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 30 | 30 | 180 | 2000 | 150 | Kinetic | 96458 |
 | Bandit Gate Key Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 95387 |
-| Baneclaw Needle Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 | Kinetic | 142087 |
+| Baneclaw Needle Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 1300 | 3000 | 80 | Kinetic | 142087 |
 | Barnstormer | PvE - Assault Rifle (Secondary) (12113) | 3 | 1 to 40 | 3 | 46 | 55 | 105 | 2100 | 150 | Kinetic | 118557 |
 | BaseDefense Turret Rifle | Wall Turret (2) | 1 | 1 | 1 | 175 | 8 | 500 | 1000 | 75 | Kinetic | 20039 |
 | BD-L1 Javelin | BioCrossbow - Recluse Primary (11959) | 33 | 20 to 30 | 2 to 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 87660 |
 | BD-L5 Pilum | BioCrossbow - Recluse Primary (11959) | 30 | 31 to 40 | 2 to 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 98707 |
 | BD-L7 Framea | BioCrossbow - Recluse Primary (11959) | 15 | 41 to 45 | 2 to 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 134792 |
 | BD-L9 Harpoon | BioCrossbow - Recluse Primary (11959) | 15 | 46 to 50 | 2 to 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 134797 |
-| Big Game Hunt Haken Ranged Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 118845 |
+| Big Game Hunt Haken Ranged Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 2600 | 0 | 27.6 | Kinetic | 118845 |
 | Bio Crossbow | BioCrossbow - Recluse Primary (11959) | 4 | 24 to 40 | 2 to 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 106397 |
 | Bio Crossbow  III^Q | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 79060 |
 | Bio Crossbow  II^Q | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 79059 |
@@ -165,17 +165,17 @@ same resolution; they simply are not obtainable.
 | Bio Rifle II^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 79040 |
 | Bio Rifle IV^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 79042 |
 | Bio Rifle I^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 79039 |
-| BioHazard Aranha Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 | Chemical | 123235 |
-| Black Hills Dreadnaught HMG | Heavy MG - HMG (32) | 1 | 1 | 1 | 7 | 53142 | 65 | 0 | 80 | Kinetic | 96889 |
+| BioHazard Aranha Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 750 | 3000 | 60 | Chemical | 123235 |
+| Black Hills Dreadnaught HMG | Heavy MG - HMG (32) | 1 | 1 | 1 | 7 | 53142 | 65 | 5000 | 80 | Kinetic | 96889 |
 | Blazar Seven | Plasma Cannon - Current (12129) | 2 | 15 to 40 | 3 | 100 | 240 | 600 | 3000 | 100 | Thermal | 124627 |
 | Blitz | PvE - Grenade Launcher (secondary) (12124) | 3 | 1 to 40 | 3 | 367 | 6 | 1000 | 2500 | 150 | Kinetic | 118572 |
-| Blizzard Aranha Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 | Cryogenic | 123023 |
-| Bloodborn Culex Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 0 | 500 | 25 | Kinetic | 136992 |
+| Blizzard Aranha Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 600 | 3000 | 60 | Cryogenic | 123023 |
+| Bloodborn Culex Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2150 | 500 | 25 | Kinetic | 136992 |
 | Bloodhound | PvE - SMG (Secondary) (12116) | 3 | 1 to 40 | 3 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 118547 |
-| Bloodking Biocrossbow | Crossbow Grenade Launcher Altfire (11968) | 1 | 1 | 1 | 300 | 6 | 0 | 2500 | 50 | Chemical | 96839 |
-| Bloodking Commander Flamethrower | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 400 | 32773 | 0 | 2000 | 0 |   | 97434 |
-| Bloodking Commander Flamethrower II Hardmode | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 400 | 59994 | 0 | 2000 | 0 | Thermal | 118155 |
-| Bloodking Thermal Cannon | Flaming Multishot Alt Fire (11966) | 1 | 1 | 1 | 185 | 6 | 0 | 2000 | 215 | Thermal | 96838 |
+| Bloodking Biocrossbow | Crossbow Grenade Launcher Altfire (11968) | 1 | 1 | 1 | 300 | 6 | 3300 | 2500 | 50 | Chemical | 96839 |
+| Bloodking Commander Flamethrower | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 400 | 32773 | 5000 | 2000 | 222 |   | 97434 |
+| Bloodking Commander Flamethrower II Hardmode | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 400 | 59994 | 1750 | 2000 | 265 | Thermal | 118155 |
+| Bloodking Thermal Cannon | Flaming Multishot Alt Fire (11966) | 1 | 1 | 1 | 185 | 6 | 1700 | 2000 | 215 | Thermal | 96838 |
 | Bloodkings Turret - Weapon | Heavy MG - HMG (32) | 1 | 1 | 1 | 39 | 250 | 100 | 300 | 65 | Kinetic | 118138 |
 | Bolt Driver | BioCrossbow - Recluse Primary (11959) | 77 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 85974 |
 | BR-44 Shaman | David's Magic Bio Rifle Ironsights (12171) | 33 | 20 to 30 | 2 to 4 | 100 | 50 | 90 | 2500 | 150 | Chemical | 87601 |
@@ -183,7 +183,7 @@ same resolution; they simply are not obtainable.
 | BR-66 Kahuna | David's Magic Bio Rifle Ironsights (12171) | 15 | 41 to 45 | 2 to 4 | 100 | 50 | 90 | 2500 | 150 | Chemical | 134752 |
 | BR-77 Apothecary | David's Magic Bio Rifle Ironsights (12171) | 15 | 46 to 50 | 2 to 4 | 100 | 50 | 90 | 2500 | 150 | Chemical | 134757 |
 | Bridge Parts Carrying Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 86473 |
-| Brinewyrm Spit Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 125 | 0 | 0 | 5000 | 200 | Chemical | 122910 |
+| Brinewyrm Spit Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 125 | 10003 | 2300 | 5000 | 200 | Chemical | 122910 |
 | Broken Heat Rifle | Tesla Rifle (62) | 4 | 1 to 40 | 1 to 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 96475 |
 | Broken Inferno Cannon | Fusion Cannon (60) | 4 | 1 to 40 | 1 to 4 | 125 | 160 | 1000 | 3000 | 150 | Fire (UNUSED) | 95455 |
 | Broken LMG | LMG (11976) | 140 | 1 to 40 | 1 to 4 | 43 | 120 | 75 | 2500 | 110 | Kinetic | 86078 |
@@ -196,8 +196,8 @@ same resolution; they simply are not obtainable.
 | Broken Weapon | Custom Assault Rifle (R36) (11955) | 11 | 1 to 40 | 1 to 4 | 65 | 45 | 120 | 2000 | 150 | Kinetic | 95465 |
 | Broken Weapon | Nanite Grenade Launcher - Primary Fire (12159) | 11 | 1 to 40 | 1 to 4 | 330 | 8 | 650 | 2500 | 150 | Energy | 95466 |
 | Broken Weapon | Rotary Cannon (Mammoth) (12106) | 64 | 1 to 50 | 1 to 4 | 200 | 140 | 300 | 3500 | 80 | Kinetic | 122981 |
-| Brontodon Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 77093 |
-| Burrowing Hisser Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Bullet (UNUSED) | 122819 |
+| Brontodon Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3600 | 0 | 17.6 |   | 77093 |
+| Burrowing Hisser Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 7100 | 5000 | 20 | Bullet (UNUSED) | 122819 |
 | Burst Rifle | PvE - Burst Rifle (Secondary) (12126) | 24 | 1 | 1 | 30 | 45 | 300 | 2100 | 150 | Kinetic | 85988 |
 | C51 Osprey | Charge Rifle (Raptor) (12120) | 33 | 20 to 30 | 2 to 4 | 550 | 20 | 150 | 3000 | 215 | Energy | 87542 |
 | C61 Falcon | Charge Rifle (Raptor) (12120) | 30 | 31 to 40 | 2 to 4 | 550 | 20 | 150 | 3000 | 215 | Energy | 98559 |
@@ -213,43 +213,43 @@ same resolution; they simply are not obtainable.
 | Charge Rifle IV^Q | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 78884 |
 | Charge Rifle I^Q | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 78881 |
 | Chocolate Mooncake Launcher | PvE - Grenade Launcher (secondary) (12124) | 3 | 1 to 28 | 1 to 3 | 350 | 6 | 1000 | 2500 | 150 | Kinetic | 137076 |
-| Chosen Annihilator Weapon | NPC Flamethrower (12144) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 |   | 118697 |
-| Chosen Archon Weapon | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 0 | 2000 | 0 | Energy | 121374 |
-| Chosen Assassin Weapon | Plasma Cannon - Current (12129) | 1 | 1 | 1 | 107 | 240 | 0 | 3000 | 0 | Thermal | 124711 |
-| Chosen Biotech Toxic Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 0 | 0 | 0 | 150 | Chemical | 122927 |
-| Chosen Chaingunner Weapon | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 500 | 50 | 2000 | 0 | Kinetic | 87382 |
-| Chosen Chemical Vampire Needle Launcher | NPC Biomass Launcher (12192) | 1 | 8 | 3 | 0 | 450 | 150 | 3000 | 150 | Chemical | 141810 |
-| Chosen Commander Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 0 | 30 | 0 | 2000 | 150 | Blast (UNUSED) | 85645 |
-| Chosen Elite Laser Cannon | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 500 | 50 | 2000 | 0 | Energy | 85386 |
-| Chosen Engineer Gun I | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 150 | Kinetic | 77760 |
+| Chosen Annihilator Weapon | NPC Flamethrower (12144) | 1 | 5 | 2 | 800 | 510 | 2600 | 3500 | 14 |   | 118697 |
+| Chosen Archon Weapon | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 100 | 2000 | 50 | Energy | 121374 |
+| Chosen Assassin Weapon | Plasma Cannon - Current (12129) | 1 | 1 | 1 | 107 | 240 | 2100 | 3000 | 160 | Thermal | 124711 |
+| Chosen Biotech Toxic Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 7 | 2500 | 4000 | 150 | Chemical | 122927 |
+| Chosen Chaingunner Weapon | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 500 | 50 | 2000 | 230 | Kinetic | 87382 |
+| Chosen Chemical Vampire Needle Launcher | NPC Biomass Launcher (12192) | 1 | 8 | 3 | 375 | 450 | 150 | 3000 | 150 | Chemical | 141810 |
+| Chosen Commander Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 121 | 30 | 225 | 2000 | 150 | Blast (UNUSED) | 85645 |
+| Chosen Elite Laser Cannon | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 500 | 50 | 2000 | 105 | Energy | 85386 |
+| Chosen Engineer Gun I | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 458 | 2000 | 150 | Kinetic | 77760 |
 | Chosen Fusion Cannon IV^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 82740 |
-| Chosen Healing Drone Weapon | Healing Gun Beam (36) | 1 | 1 | 1 | -150 | 1 | 350 | 1500 | 0 | Bullet (UNUSED) | 121471 |
-| Chosen Heavy Personel Turret Core Mission 3 | Turret Cannon (39) | 1 | 1 | 1 | 0 | 5500 | 0 | 2000 | 120 | Thermal | 120692 |
-| Chosen Heavy Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 0 | 25 | 0 | 1500 | 0 | Kinetic | 123445 |
-| Chosen Light Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 0 | 25 | 0 | 1500 | 0 | Kinetic | 123448 |
-| Chosen Mosquito Bot Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 0 | 500 | 0 | Energy | 119906 |
-| Chosen Thermal Drone Weapon | NPC Flamethrower (12144) | 1 | 1 | 1 | 400 | 5 | 0 | 1750 | 7 |   | 140378 |
-| Chosen Turret Bot Machine Guns Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 0 | 1500 | 65 | Energy | 120560 |
-| Combat Shotgun | Combat Shotgun (Arsenal Ability) (11971) | 1 | 1 | 1 | 35 | 0 | 0 | 0 | 0 | Kinetic | 82345 |
+| Chosen Healing Drone Weapon | Healing Gun Beam (36) | 1 | 1 | 1 | -150 | 1 | 350 | 1500 | 22 | Bullet (UNUSED) | 121471 |
+| Chosen Heavy Personel Turret Core Mission 3 | Turret Cannon (39) | 1 | 1 | 1 | 5600 | 5500 | 1650 | 2000 | 120 | Thermal | 120692 |
+| Chosen Heavy Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 160 | 25 | 250 | 1500 | 265 | Kinetic | 123445 |
+| Chosen Light Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 160 | 25 | 425 | 1500 | 265 | Kinetic | 123448 |
+| Chosen Mosquito Bot Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 1550 | 500 | 90 | Energy | 119906 |
+| Chosen Thermal Drone Weapon | NPC Flamethrower (12144) | 1 | 1 | 1 | 400 | 5 | 2600 | 1750 | 7 |   | 140378 |
+| Chosen Turret Bot Machine Guns Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 275 | 1500 | 65 | Energy | 120560 |
+| Combat Shotgun | Combat Shotgun (Arsenal Ability) (11971) | 1 | 1 | 1 | 35 | 9 | 350 | 500 | 30 | Kinetic | 82345 |
 | Comet | Custom Assault Rifle (R36) (Current) (12121) | 2 | 15 to 40 | 3 | 1 | 45 | 300 | 3000 | 180 | Kinetic | 124632 |
 | Concussion Gun | A-Team Concussive Shotgun (12188) | 9 | 1 to 50 | 1 to 4 | 24 | 7 | 800 | 3000 | 40 | Kinetic | 140799 |
 | Confluence | PvE - SMG (Secondary) (12116) | 7 | 1 to 50 | 1 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 142099 |
 | Convoy Cargo | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 119730 |
 | Coolant | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118220 |
-| Crab Spider Blaster Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Kinetic | 122827 |
-| Crab Spider Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Bullet (UNUSED) | 122825 |
-| Crab Spider Soldier Web Spray Weapon | NPC Flamethrower (12144) | 1 | 1 | 1 | 400 | 5 | 0 | 1750 | 0 |   | 122829 |
-| Crab Spider Spinner Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Kinetic | 122831 |
+| Crab Spider Blaster Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 225 | 2000 | 100 | Kinetic | 122827 |
+| Crab Spider Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 20 | Bullet (UNUSED) | 122825 |
+| Crab Spider Soldier Web Spray Weapon | NPC Flamethrower (12144) | 1 | 1 | 1 | 400 | 5 | 2600 | 1750 | 12 |   | 122829 |
+| Crab Spider Spinner Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 4100 | 5000 | 20 | Kinetic | 122831 |
 | Crashed Sleigh Part | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 121198 |
 | Crashed Thumper Part | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 97405 |
-| Crate Polymorph | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 0 | 2000 | 215 |   | 123441 |
+| Crate Polymorph | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1700 | 2000 | 215 |   | 123441 |
 | Crystalkin | Nanomissile Launcher (28) | 2 | 1 to 45 | 1 to 5 | 45 | 60 | 300 | 2000 | 70 | Kinetic | 139837 |
-| Crystite Aranha Crystal Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Energy | 122891 |
-| Crystite Aranha Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 9999 | 0 | 0 | 0 | Kinetic | 81968 |
-| Crystite Aranha Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Energy | 123385 |
-| Culex Weapon | NPC Ranged Default (10) | 1 | 0 | 1 | 54 | 500 | 0 | 150 | 25 | Kinetic | 32747 |
+| Crystite Aranha Crystal Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 225 | 2000 | 100 | Energy | 122891 |
+| Crystite Aranha Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 9999 | 2800 | 0 | 6.6 | Kinetic | 81968 |
+| Crystite Aranha Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 2125 | 2000 | 100 | Energy | 123385 |
+| Culex Weapon | NPC Ranged Default (10) | 1 | 0 | 1 | 54 | 500 | 2300 | 150 | 25 | Kinetic | 32747 |
 | Custard Mooncake Launcher | PvE - Grenade Launcher (secondary) (12124) | 3 | 1 to 28 | 1 to 3 | 350 | 6 | 1000 | 2500 | 150 | Kinetic | 137077 |
-| Cyborg Samurai Swords Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 0 | Kinetic | 122613 |
+| Cyborg Samurai Swords Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 6.6 | Kinetic | 122613 |
 | D12 Vigilante | David's Magic HMG (12115) | 36 | 11 to 20 | 1 to 4 | 39 | 250 | 65 | 4000 | 80 | Kinetic | 86861 |
 | D16 Equalizer | David's Magic HMG (12115) | 30 | 21 to 30 | 2 to 4 | 39 | 250 | 65 | 4000 | 80 | Kinetic | 97735 |
 | D20 Peacemaker | David's Magic HMG (12115) | 30 | 31 to 40 | 2 to 4 | 39 | 250 | 65 | 4000 | 80 | Kinetic | 97745 |
@@ -272,12 +272,12 @@ same resolution; they simply are not obtainable.
 | David's Magic Tesla Rifle | Tesla Rifle 2.0 (12132) | 1 | 40 | 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 122650 |
 | David's Magic Thermal Cannon | Thermal Cannon - Firecat Primary (11962) | 1 | 40 | 4 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 122739 |
 | Deathhammer | Fusion Cannon (60) | 3 | 1 to 45 | 1 to 4 | 125 | 160 | 1000 | 3000 | 150 | Energy | 96593 |
-| Deep Freeze Cryo Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 9999 | 0 | 1000 | 215 | Cryogenic | 139946 |
+| Deep Freeze Cryo Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 9999 | 1050 | 1000 | 215 | Cryogenic | 139946 |
 | DevTEST Burst Rifle | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 30 | 30 | 180 | 2000 | 150 | Kinetic | 20006 |
 | DevTEST Shotgun | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 20003 |
-| DiamondHead Warfront Darkslip Main Turret | Terrorclaw Spittle (13) | 1 | 1 | 1 | 750 | 1 | 7688 | 0 | 0 |   | 86492 |
-| DiamondHead Warfront Darkslip MiniTurret | NPC Chosen Dropship MiniTurret (57) | 1 | 1 | 1 | 75 | 100 | 4980 | 1 | 0 | Kinetic | 86491 |
-| Diseased Culex Weapon | NPC Ranged Default (10) | 1 | 0 | 1 | 54 | 500 | 0 | 150 | 25 | Kinetic | 137028 |
+| DiamondHead Warfront Darkslip Main Turret | Terrorclaw Spittle (13) | 1 | 1 | 1 | 750 | 1 | 7688 | 5000 | 520 |   | 86492 |
+| DiamondHead Warfront Darkslip MiniTurret | NPC Chosen Dropship MiniTurret (57) | 1 | 1 | 1 | 75 | 100 | 4980 | 1 | 650 | Kinetic | 86491 |
+| Diseased Culex Weapon | NPC Ranged Default (10) | 1 | 0 | 1 | 54 | 500 | 3300 | 150 | 25 | Kinetic | 137028 |
 | Disguise Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 350 | 6 | 1000 | 2500 | 150 | Generic | 96457 |
 | Disposable Jetball | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 85471 |
 | Disruption Defuse Bomb Key Pin - Black | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 81967 |
@@ -286,11 +286,11 @@ same resolution; they simply are not obtainable.
 | Disruptor Grenades | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 85249 |
 | Distant Memory | Prototype Remote Mine Launcher (12289) | 1 | 45 | 5 | 330 | 8 | 350 | 2500 | 150 | Kinetic | 144038 |
 | Do Not Translate - Test HMG | David's Magic HMG (12115) | 1 | 40 | 4 | 39 | 250 | 65 | 4000 | 80 | Kinetic | 121456 |
-| Doomsday Earthbreaker Plasma Rifle | NPC Chosen Plasma Cannon (50) | 1 | 5 | 5 | 4500 | 0 | 0 | 1000 | 215 | Thermal | 95383 |
-| Doomsday Earthbreaker Wave Motion Gun | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 225000 | 65534 | 0 | 500 | 215 | Energy | 118938 |
-| Doomsday Stormbringer Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 5 | 450 | 0 | 0 | 0 | 0 | Thermal | 95410 |
+| Doomsday Earthbreaker Plasma Rifle | NPC Chosen Plasma Cannon (50) | 1 | 5 | 5 | 4500 | 10003 | 1960 | 1000 | 215 | Thermal | 95383 |
+| Doomsday Earthbreaker Wave Motion Gun | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 225000 | 65534 | 3050 | 500 | 215 | Energy | 118938 |
+| Doomsday Stormbringer Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 5 | 450 | 10003 | 2500 | 3750 | 430 | Thermal | 95410 |
 | Door Access Keycard | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 120623 |
-| DreadNautilus Spit Attack | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 0 | Kinetic | 122476 |
+| DreadNautilus Spit Attack | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 225 | 2000 | 200 | Kinetic | 122476 |
 | Drill Repair Unit | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118660 |
 | E1 Hathor | Tesla Rifle 2.0 (12132) | 22 | 1 to 10 | 1 to 3 | 30 | 150 | 50 | 2000 | 25 | Energy | 87386 |
 | E11 Taranis | Tesla Rifle 2.0 (12132) | 30 | 21 to 30 | 2 to 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 98401 |
@@ -299,17 +299,17 @@ same resolution; they simply are not obtainable.
 | E31 Izanagi | Tesla Rifle 2.0 (12132) | 15 | 46 to 50 | 2 to 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 131823 |
 | E5 Aether | Tesla Rifle 2.0 (12132) | 36 | 11 to 20 | 1 to 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 87396 |
 | Elephant Gun | PvE - Shotgun (secondary) (1) | 9 | 1 to 50 | 3 to 4 | 40 | 6 | 800 | 2100 | 150 | Bullet (UNUSED) | 120122 |
-| Elite Chosen Chaingunner Laser Cannon | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 500 | 50 | 2000 | 0 | Energy | 88155 |
-| Elite Chosen Engineer Gun | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 150 | Kinetic | 118851 |
-| Elite Chosen Juggernaut Plasma Cannon Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | Thermal | 82484 |
+| Elite Chosen Chaingunner Laser Cannon | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 500 | 50 | 2000 | 105 | Energy | 88155 |
+| Elite Chosen Engineer Gun | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 458 | 2000 | 150 | Kinetic | 118851 |
+| Elite Chosen Juggernaut Plasma Cannon Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 13 | 6800 | 3000 | 365 | Thermal | 82484 |
 | Elite Engineer Drone Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 25 | Energy | 118932 |
 | ELITE NPC CHOSEN Shocktrooper Assault Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 170 | 2000 | 100 | Energy | 86643 |
-| Elite Raider Plasma Blaster | BioRifle (11970) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 120 | Thermal | 82387 |
+| Elite Raider Plasma Blaster | BioRifle (11970) | 1 | 1 | 1 | 135 | 68 | 300 | 1950 | 120 | Thermal | 82387 |
 | Engineer Assault Rifle Secondary Weapon (for visuals) | Engineer Secondary Weapon (for visuals) (11936) | 1 | 1 | 0 | 60 | 7 | 1200 | 2000 | 50 |   | 76957 |
 | Engineer Secondary Weapon (for visuals) | Engineer Secondary Weapon (for visuals) (11936) | 1 | 1 | 0 | 60 | 7 | 1200 | 2000 | 50 |   | 81287 |
 | Engineer Secondary Weapon, ironsights (for visuals) | Engineer Secondary Weapon (for visuals) (11936) | 1 | 1 | 0 | 60 | 7 | 1200 | 2000 | 50 |   | 33870 |
 | Engineer Super Turret | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 40 | 25 | 87 | 1500 | 65 | Energy | 78011 |
-| Enyo Bot Charge Railgun | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 1 | 0 | 1500 | 215 | Energy | 123340 |
+| Enyo Bot Charge Railgun | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 1 | 3050 | 1500 | 215 | Energy | 123340 |
 | Experimental Thermal Assault Rifle | Assault Rifle (secondary) (4) | 1 | 23 | 2 | 46 | 35 | 90 | 2000 | 150 | Kinetic | 97068 |
 | Experimental Thermal Burst Rifle | FAMAS Burst Rifle (53) | 1 | 23 | 2 | 30 | 30 | 180 | 2000 | 150 | Kinetic | 97067 |
 | Experimental Thermal Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 23 | 2 | 350 | 6 | 1000 | 2500 | 150 | Generic | 97070 |
@@ -321,12 +321,12 @@ same resolution; they simply are not obtainable.
 | F44 Redshift | Fusion Cannon (60) | 15 | 41 to 45 | 2 to 4 | 200 | 160 | 1000 | 3000 | 150 | Energy | 134512 |
 | F50 Solforge | Fusion Cannon (60) | 15 | 46 to 50 | 2 to 4 | 200 | 160 | 1000 | 3000 | 150 | Energy | 134517 |
 | Finger of Death | Charge Rifle (Raptor) (12120) | 3 | 1 to 45 | 1 to 4 | 550 | 20 | 150 | 3000 | 215 | Energy | 96592 |
-| Firebreath Scorcher Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 49 | 1 | 0 | 0 | 0 | Kinetic | 124587 |
+| Firebreath Scorcher Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 49 | 1 | 4100 | 0 | 9.6 | Kinetic | 124587 |
 | Flak Cannon | Plasma Flak Cannon (12097) | 64 | 1 to 50 | 1 to 4 | 200 | 12 | 750 | 2500 | 40 | Thermal | 118276 |
-| Flamethrower Firecat Flamethrower Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 32768 | 0 | 0 | 0 |   | 110764 |
-| Flamethrower Firejacket Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 0 | Bullet (UNUSED) | 96930 |
+| Flamethrower Firecat Flamethrower Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 32768 | 3600 | 0 | 52.6 |   | 110764 |
+| Flamethrower Firejacket Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 24 | Bullet (UNUSED) | 96930 |
 | Frank's Sidearm | PvE - SMG (Secondary) (12116) | 2 | 16 to 40 | 3 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 118545 |
-| Freezing Aranha Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 0 | 0 | 2000 | 0 | Energy | 123019 |
+| Freezing Aranha Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 10029 | 225 | 2000 | 110 | Energy | 123019 |
 | Fusion Cannon | Fusion Cannon (60) | 81 | 1 to 40 | 1 to 4 | 125 to 200 | 160 | 1000 | 3000 | 150 | Energy | 85967 |
 | Fusion Cannon III^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 79339 |
 | Fusion Cannon II^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 79336 |
@@ -334,12 +334,12 @@ same resolution; they simply are not obtainable.
 | Fusion Cannon I^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 79335 |
 | Gauss Rifle | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 175 | 1500 | 65 | Kinetic | 20008 |
 | Generator Repair Parts Carrying Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 139559 |
-| Giant Aranha Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 82340 |
-| Giant Aranha Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Kinetic | 122775 |
-| Giant Nautilus Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 10 | Kinetic | 82342 |
-| Giant Nautilus Weapon | Heavy MG - HMG (32) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 | Kinetic | 122919 |
+| Giant Aranha Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 6.6 | Kinetic | 82340 |
+| Giant Aranha Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3600 | 5000 | 50 | Kinetic | 122775 |
+| Giant Nautilus Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 525 | 1 | 2850 | 0 | 10 | Kinetic | 82342 |
+| Giant Nautilus Weapon | Heavy MG - HMG (32) | 1 | 1 | 1 | 39 | 250 | 315 | 3000 | 110 | Kinetic | 122919 |
 | Glider Challenge AR | Assault Rifle (secondary) (4) | 1 | 6 | 1 | 46 | 35 | 90 | 600 | 150 | Aranha Meteorite Bite (UNUSED) | 118230 |
-| Glow Bug Ranged Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 0 | 500 | 0 | Thermal | 93707 |
+| Glow Bug Ranged Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2300 | 500 | 70 | Thermal | 93707 |
 | Glowing Orb Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118287 |
 | Green Crystal Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118273 |
 | Grenade Launcher | PvE - Grenade Launcher (secondary) (12124) | 24 | 1 | 1 | 350 | 6 | 1000 | 2500 | 150 | Kinetic | 85986 |
@@ -363,9 +363,9 @@ same resolution; they simply are not obtainable.
 | Heavy Plasma MG I^Q | Heavy Plasma MG - Mammoth Primary (11963) | 1 | 1 | 1 | 70 | 200 | 100 | 3000 | 80 | Thermal | 78489 |
 | Heavy Turret - Gunner | NPC Guard Rifle (30) | 1 | 1 | 1 | 60 | 20 | 150 | 700 | 30 | Kinetic | 77777 |
 | Heavy Turret II - Gunner | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 50 | 1500 | 65 | Kinetic | 116561 |
-| Heavy Turret Weapon | Heavy MG - HMG (32) | 1 | 1 | 1 | 39 | 250 | 0 | 300 | 65 | Kinetic | 123444 |
+| Heavy Turret Weapon | Heavy MG - HMG (32) | 1 | 1 | 1 | 39 | 250 | 135 | 300 | 65 | Kinetic | 123444 |
 | HelioSys Bio Crossbow ^Q | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 84443 |
-| HelioSys Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 0 | 60 | 150 | 1200 | 120 | Chemical | 84448 |
+| HelioSys Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 84448 |
 | HelioSys Charge Rifle^Q | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 84451 |
 | HelioSys Fusion Cannon^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 84442 |
 | HelioSys Heavy Laser MG^Q | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 1 | 54 | 200 | 90 | 3000 | 80 | Energy | 84450 |
@@ -379,32 +379,32 @@ same resolution; they simply are not obtainable.
 | HelioSys Tesla Rifle^Q | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 84444 |
 | HelioSys Thermal Cannon^Q | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 84447 |
 | HelioSysBio Needler^Q | Bio Launcher (61) | 1 | 1 | 1 | 75 | 50 | 150 | 1200 | 150 | Chemical | 83832 |
-| Hellfire Scorcher Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Thermal | 122757 |
+| Hellfire Scorcher Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 2700 | 5000 | 50 | Thermal | 122757 |
 | Hellmouth | David's Magic HMG (12115) | 2 | 15 to 40 | 3 | 39 | 250 | 65 | 4000 | 80 | Kinetic | 124629 |
-| Hisser Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Kinetic | 122806 |
-| Hisser Queen Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 122815 |
-| Hisser Soldier Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 122808 |
+| Hisser Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 2700 | 5000 | 50 | Kinetic | 122806 |
+| Hisser Queen Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3600 | 0 | 3.6 |   | 122815 |
+| Hisser Soldier Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 4.6 |   | 122808 |
 | Hobbes' Revenge | Plasma Cannon - Current (12129) | 12 | 1 to 50 | 1 to 4 | 100 | 240 | 600 | 3000 | 100 | Thermal | 96598 |
-| Horned Fox Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 97414 |
+| Horned Fox Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 2600 | 0 | 4.6 | Kinetic | 97414 |
 | Hostile NPC AP Turret Rifle I | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 30 | 25 | 175 | 1500 | 65 | Kinetic | 75453 |
-| Hunter Hisser Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 121021 |
+| Hunter Hisser Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 4.6 |   | 121021 |
 | Hurricane | Rocket-Propelled Grenade (12095) | 15 | 1 to 50 | 3 to 4 | 350 | 6 | 1250 | 3750 to 4250 | 100 | Generic | 118566 |
-| Ice Claw Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | Kinetic | 138375 |
-| Icy Aranha Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Cryogenic | 123017 |
-| Icy Aranha Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Cryogenic | 123015 |
+| Ice Claw Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 10000 | 3350 | 0 | 7.1 | Kinetic | 138375 |
+| Icy Aranha Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 2700 | 5000 | 50 | Cryogenic | 123017 |
+| Icy Aranha Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 50 | Cryogenic | 123015 |
 | Ikinya Leader Pulse Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 170 | 2000 | 100 | Thermal | 96866 |
 | Incendiary Cannon | Phason Thrower - Firecat Primary (12157) | 4 | 24 to 40 | 2 to 4 | -30 | 100 | 95 | 3000 | 30 | Thermal | 106412 |
 | Incineration_Chosen_Energy_Source_01 | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 101762 |
 | Indomitible | Rotary Cannon (Mammoth) (12106) | 2 | 1 to 45 | 1 to 4 | 200 | 140 | 300 | 3500 | 80 | Kinetic | 141563 |
-| Infected Kestral Halitosis Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 0 | 57600 | 0 | 1500 | 0 | Bullet (UNUSED) | 123029 |
-| Infected Kestral Vector Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 0 | 57600 | 0 | 1500 | 200 | Chemical | 123026 |
-| Infected Storm Kestral Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 0 | 57600 | 0 | 1500 | 200 | Chemical | 123024 |
+| Infected Kestral Halitosis Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 483 | 57600 | 3300 | 1500 | 23 | Bullet (UNUSED) | 123029 |
+| Infected Kestral Vector Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 483 | 57600 | 3300 | 1500 | 200 | Chemical | 123026 |
+| Infected Storm Kestral Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 483 | 57600 | 2800 | 1500 | 200 | Chemical | 123024 |
 | Infernal | PvE BioNeedler (12134) | 2 | 15 to 40 | 3 | 75 | 50 | 150 | 2100 | 150 | Chemical | 124634 |
 | Iron Cross | PvE - Assault Rifle (Secondary) (12113) | 15 | 1 to 50 | 3 to 4 | 46 | 55 | 105 | 2100 | 200 | Kinetic | 118562 |
 | Jetball Toss Ball | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 85173 |
-| Jetball Toss Knockback Turret | Turret Cannon (39) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 62.5 | Blast (UNUSED) | 85429 |
+| Jetball Toss Knockback Turret | Turret Cannon (39) | 1 | 1 | 1 | 5500 | 10099 | 3900 | 2000 | 62.5 | Blast (UNUSED) | 85429 |
 | Judicator | Player Chosen Shotgun (12279) | 1 | 45 | 3 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 143920 |
-| Kalidor The Giant Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Thermal | 142169 |
+| Kalidor The Giant Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3100 | 5000 | 120 | Thermal | 142169 |
 | Kanaloa Burst Rifle | FAMAS Burst Rifle (53) | 5 | 1 to 40 | 3 to 4 | 30 | 30 | 180 | 2000 | 150 | Kinetic | 96532 |
 | Kanaloa Launcher | Grenade Launcher (secondary) (11) | 5 | 1 to 40 | 3 to 4 | 350 | 6 | 1000 | 2500 | 150 | Generic | 96530 |
 | Kanaloa Rifle | Assault Rifle (secondary) (4) | 4 | 1 to 40 | 3 to 4 | 46 | 35 | 90 | 2000 | 150 | Kinetic | 96524 |
@@ -414,7 +414,7 @@ same resolution; they simply are not obtainable.
 | Keycard | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 124123 |
 | Kisuton Bio Crossbow ^Q | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 84382 |
 | Kisuton Bio Needler^Q | Bio Launcher (61) | 1 | 1 | 1 | 75 | 50 | 150 | 1200 | 150 | Chemical | 83636 |
-| Kisuton Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 0 | 60 | 150 | 1200 | 120 | Chemical | 84407 |
+| Kisuton Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 84407 |
 | Kisuton Charge Rifle^Q | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 84419 |
 | Kisuton Fusion Cannon^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 84381 |
 | Kisuton Heavy Laser MG^Q | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 1 | 54 | 200 | 90 | 3000 | 80 | Energy | 84418 |
@@ -446,24 +446,24 @@ same resolution; they simply are not obtainable.
 | M1A Shortbarrel | PvE - Assault Rifle (Secondary) (12113) | 21 | 1 to 10 | 1 to 3 | 46 | 55 | 105 | 2100 | 150 | Kinetic | 87741 |
 | M1B Longbarrel | PvE - Burst Rifle (Secondary) (12126) | 21 | 1 to 10 | 1 to 3 | 30 | 45 | 300 | 2100 | 150 | Kinetic | 87978 |
 | M21A Warlord | PvE - Assault Rifle (Secondary) (12113) | 15 | 46 to 50 | 2 to 4 | 46 | 55 | 105 | 2100 | 150 | Kinetic | 131863 |
-| M22 - Pyrexion Cryo Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 0 | 3000 | 0 | Cryogenic | 143086 |
-| M22 - Pyrexion Incendiary Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 0 | 3000 | 0 | Thermal | 143087 |
+| M22 - Pyrexion Cryo Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 245 | 3000 | 90 | Cryogenic | 143086 |
+| M22 - Pyrexion Incendiary Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 245 | 3000 | 90 | Thermal | 143087 |
 | M4B Caiman | PvE - Burst Rifle (Secondary) (12126) | 36 | 11 to 20 | 1 to 4 | 30 | 45 | 300 | 2100 | 150 | Kinetic | 87988 |
 | M6A Chief | PvE - Assault Rifle (Secondary) (12113) | 36 | 11 to 20 | 1 to 4 | 46 | 55 | 105 | 2100 | 150 | Kinetic | 87751 |
 | M8B Hornbill | PvE - Burst Rifle (Secondary) (12126) | 30 | 21 to 30 | 2 to 4 | 30 | 45 | 300 | 2100 | 150 | Kinetic | 97623 |
 | Marksman Rifle | Custom Assault Rifle (R36) (Current) (12121) | 26 | 1 to 8 | 1 to 3 | 1 | 45 | 300 | 3000 | 180 | Kinetic | 85975 |
 | Martha | PvE - Shotgun (secondary) (1) | 13 | 1 to 50 | 3 to 4 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 121271 |
-| Matriarch Hisser Spit Attack | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Chemical | 121050 |
+| Matriarch Hisser Spit Attack | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 225 | 2000 | 100 | Chemical | 121050 |
 | Melded Culex Rapid Fire Attack Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 25 | Melding | 88172 |
-| Melding Blaster Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Melding | 122861 |
-| Melding Bomber Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 0 | 500 | 25 | Melding | 122871 |
-| Melding Melee Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 |   | 123059 |
-| Melding Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Melding | 122859 |
-| Melding Tentacle Weapon | Marc's Magic Foggy Finger (12183) | 1 | 1 | 1 | 200 | 0 | 125 | 3000 | 30 | Melding | 139905 |
-| Melding Ultra Culex Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 |   | 138300 |
-| Melding Vorrax Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 30 | Melding | 122868 |
-| Metamorphic Hisser Stage 1 Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Kinetic | 122811 |
-| Metamorphic Hisser Stage 2 Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Kinetic | 122813 |
+| Melding Blaster Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 225 | 2000 | 100 | Melding | 122861 |
+| Melding Bomber Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 4300 | 500 | 25 | Melding | 122871 |
+| Melding Melee Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 9 | 1900 | 3750 | 222 |   | 123059 |
+| Melding Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 4600 | 5000 | 20 | Melding | 122859 |
+| Melding Tentacle Weapon | Marc's Magic Foggy Finger (12183) | 1 | 1 | 1 | 200 | 1003 | 125 | 3000 | 30 | Melding | 139905 |
+| Melding Ultra Culex Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 9 | 1900 | 3750 | 222 |   | 138300 |
+| Melding Vorrax Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 600 | 3000 | 30 | Melding | 122868 |
+| Metamorphic Hisser Stage 1 Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3600 | 5000 | 20 | Kinetic | 122811 |
+| Metamorphic Hisser Stage 2 Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 225 | 2000 | 100 | Kinetic | 122813 |
 | MG13 Rainmaker | PvE - Grenade Launcher (secondary) (12124) | 30 | 31 to 40 | 2 to 4 | 350 | 6 | 1000 | 2500 | 150 | Kinetic | 99003 |
 | MG16 Firebolt | PvE - Grenade Launcher (secondary) (12124) | 15 | 41 to 45 | 2 to 4 | 350 | 6 | 1000 | 2500 | 150 | Kinetic | 131938 |
 | MG20 Warmachine | PvE - Grenade Launcher (secondary) (12124) | 15 | 46 to 50 | 2 to 4 | 350 | 6 | 1000 | 2500 | 150 | Kinetic | 131943 |
@@ -479,19 +479,19 @@ same resolution; they simply are not obtainable.
 | ML-X3 Mantis | Mine Launcher - Primary (11957) | 30 | 31 to 40 | 2 to 4 | 1 | 6 | 1200 | 2500 | 100 | Energy | 97819 |
 | ML-X5 Krueger | Mine Launcher - Primary (11957) | 15 | 41 to 45 | 2 to 4 | 1 | 6 | 1200 | 2500 | 100 | Energy | 134432 |
 | ML-X7 Predator | Mine Launcher - Primary (11957) | 15 | 46 to 50 | 2 to 4 | 1 | 6 | 1200 | 2500 | 100 | Energy | 134437 |
-| Mob - Fox - Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 96691 |
-| MONSTER Putrid Soul Ranged Heavy | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 250 | 9600 | 0 | 5000 | 130 | Bullet (UNUSED) | 86197 |
+| Mob - Fox - Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 2600 | 0 | 4.6 | Kinetic | 96691 |
+| MONSTER Putrid Soul Ranged Heavy | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 250 | 9600 | 8600 | 5000 | 130 | Bullet (UNUSED) | 86197 |
 | MP11 Wildcat | PvE - SMG (Secondary) (12116) | 36 | 11 to 20 | 1 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 87928 |
 | MP15 Guerrilla | PvE - SMG (Secondary) (12116) | 30 | 21 to 30 | 2 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 99067 |
 | MP20 Tempest | PvE - SMG (Secondary) (12116) | 30 | 31 to 40 | 2 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 99077 |
 | MP22 Scorpion | PvE - SMG (Secondary) (12116) | 15 | 41 to 45 | 2 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 131978 |
 | MP26 Commando | PvE - SMG (Secondary) (12116) | 15 | 46 to 50 | 2 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 131983 |
 | MP9 Swiftfire | PvE - SMG (Secondary) (12116) | 21 | 1 to 10 | 1 to 3 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 87918 |
-| Multi Turret Rifle | Multi Turret Weapon (engi) (11944) | 1 | 1 | 1 | 30 | 0 | 720 | 2000 | 45 | Kinetic | 75622 |
-| Myrmidon Ranged Weapon Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Chemical | 121049 |
+| Multi Turret Rifle | Multi Turret Weapon (engi) (11944) | 1 | 1 | 1 | 30 | 1200 | 720 | 2000 | 45 | Kinetic | 75622 |
+| Myrmidon Ranged Weapon Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 5600 | 5000 | 20 | Chemical | 121049 |
 | Nanomissile Launcher | Nanomissile Launcher (28) | 64 | 1 to 50 | 1 to 4 | 45 | 60 | 300 | 2000 | 70 | Kinetic | 136989 |
 | Nautilus Bait | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 122652 |
-| Nautilus Weapon | Terrorclaw Spittle (13) | 1 | 5 | 2 | 250 | 4 | 0 | 5000 | 0 | Kinetic | 122918 |
+| Nautilus Weapon | Terrorclaw Spittle (13) | 1 | 5 | 2 | 250 | 4 | 2300 | 5000 | 50 | Kinetic | 122918 |
 | Necro Bio Rifle | BioRifle (11970) | 1 | 40 | 4 | 60 | 60 | 150 | 1200 | 120 | Chemical | 116408 |
 | Necro Charge Rifle | Charged Sniper Rifle (11947) | 1 | 40 | 4 | 550 | 20 | 250 | 2000 | 215 | Energy | 116410 |
 | Necro Crossbow | BioCrossbow - Recluse Primary (11959) | 1 | 40 | 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 116407 |
@@ -506,19 +506,19 @@ same resolution; they simply are not obtainable.
 | Needle Vermin Culex Rapid Fire Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 30 | Kinetic | 85929 |
 | Nergal | Phason Thrower - Firecat Primary (12157) | 3 | 1 to 45 | 1 to 4 | 20 | 100 | 95 | 3000 | 30 | Thermal | 96604 |
 | Neutron Reassembler | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 534 | 700 | 2000 | 100 | Energy | 118402 |
-| NEW King Skiver Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 | Kinetic | 122723 |
-| New Ranged Skiver Spit Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Kinetic | 122717 |
-| Nightmare NPC Toxic Land Shark Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 116554 |
-| No weapon - Melding Acolyte | Assault Rifle (secondary) (4) | 1 | 1 | 1 | 46 | 35 | 0 | 2000 | 150 |   | 77328 |
+| NEW King Skiver Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 1000 | 3000 | 60 | Kinetic | 122723 |
+| New Ranged Skiver Spit Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 50 | Kinetic | 122717 |
+| Nightmare NPC Toxic Land Shark Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 3600 | 0 | 9.6 | Kinetic | 116554 |
+| No weapon - Melding Acolyte | Assault Rifle (secondary) (4) | 1 | 1 | 1 | 46 | 35 | 90 | 2000 | 150 |   | 77328 |
 | Nokorus | BioTech Needler Shotgun (12135) | 12 | 1 to 50 | 1 to 4 | 35 | 40 | 1000 | 2000 | 70 | Chemical | 96591 |
 | NOTLM Headless Horseman's Head Toss | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118136 |
 | Nutrepaste Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118256 |
-| OCT - NPC Toxic Land Shark Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 95101 |
+| OCT - NPC Toxic Land Shark Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 3600 | 0 | 9.6 | Kinetic | 95101 |
 | Omega Perseid | Prototype AutoShotgun (12283) | 1 | 45 | 5 | 40 | 10 | 255 | 2500 | 80 | Melding | 144040 |
 | Omnidyne Heavy Turret Gun | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 150 | 1500 | 65 | Kinetic | 96716 |
 | Omnidyne-M Accord Bio Needler^Q | Bio Launcher (61) | 1 | 1 | 1 | 75 | 50 | 150 | 1200 | 150 | Chemical | 83252 |
 | Omnidyne-M Bio Crossbow ^Q | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 84433 |
-| Omnidyne-M Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 0 | 60 | 150 | 1200 | 120 | Chemical | 84438 |
+| Omnidyne-M Bio Rifle^Q | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 84438 |
 | Omnidyne-M Charge Rifle^Q | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 84441 |
 | Omnidyne-M Fusion Cannon^Q | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 84432 |
 | Omnidyne-M Heavy Laser MG^Q | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 1 | 54 | 200 | 90 | 3000 | 80 | Energy | 84440 |
@@ -531,14 +531,14 @@ same resolution; they simply are not obtainable.
 | Omnidyne-M Sticky Grenade Launcher^Q | Mine Launcher - Primary (11957) | 1 | 1 | 1 | 1 | 6 | 1200 | 2500 | 100 | Blast (UNUSED) | 83266 |
 | Omnidyne-M Tesla Rifle^Q | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 84434 |
 | Omnidyne-M Thermal Cannon^Q | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 84437 |
-| Operation - Reaper Gunship MiniTurret | NPC Chosen Dropship MiniTurret (57) | 1 | 1 | 1 | 75 | 100 | 4980 | 1 | 0 | Kinetic | 124318 |
+| Operation - Reaper Gunship MiniTurret | NPC Chosen Dropship MiniTurret (57) | 1 | 1 | 1 | 75 | 100 | 4980 | 1 | 650 | Kinetic | 124318 |
 | Operation Test Rocket Launcher | Rocket Launcher (11978) | 1 | 1 | 1 | 400 | 6 | 900 | 2000 | 215 | Blast (UNUSED) | 122296 |
-| Ophanim Lasher Weapon | NPC Tesla Weapon (12194) | 1 | 40 | 4 | 30 | 150 | 1550 | 2000 | 0 | Bullet (UNUSED) | 142053 |
-| Ophanim Tesla Weapon | NPC Tesla Weapon (12194) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 0 | Energy | 142063 |
+| Ophanim Lasher Weapon | NPC Tesla Weapon (12194) | 1 | 40 | 4 | 30 | 150 | 1550 | 2000 | 12 | Bullet (UNUSED) | 142053 |
+| Ophanim Tesla Weapon | NPC Tesla Weapon (12194) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 107 | Energy | 142063 |
 | Orcus | David's Magic Bio Rifle Ironsights (12171) | 3 | 1 to 45 | 1 to 4 | 100 | 50 | 90 | 2500 | 150 | Chemical | 96590 |
-| Outpost Heavy Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 0 | 0 | 0 | 1500 | 0 | Kinetic | 85731 |
-| Overseeer - HMG | NPC Chosen FAMAS (11949) | 1 | 1 | 2 | 26 | 75 | 0 | 2000 | 0 | Energy | 137004 |
-| Overseeer - HMG (Beam Mode) | Overseer Beam Weapon (12176) | 1 | 1 | 2 | 26 | 0 | 0 | 2000 | 0 | Energy | 137014 |
+| Outpost Heavy Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 160 | 1024 | 195 | 1500 | 165 | Kinetic | 85731 |
+| Overseeer - HMG | NPC Chosen FAMAS (11949) | 1 | 1 | 2 | 26 | 75 | 545 | 2000 | 300 | Energy | 137004 |
+| Overseeer - HMG (Beam Mode) | Overseer Beam Weapon (12176) | 1 | 1 | 2 | 26 | 10029 | 545 | 2000 | 300 | Energy | 137014 |
 | P82 Foxtail | Phason Thrower - Firecat Primary (12157) | 33 | 20 to 30 | 2 to 4 | 20 | 100 | 95 | 3000 | 30 | Thermal | 87125 |
 | P85 Salamander | Phason Thrower - Firecat Primary (12157) | 30 | 31 to 40 | 2 to 4 | 20 | 100 | 95 | 3000 | 30 | Thermal | 98041 |
 | P87 Wyvern | Phason Thrower - Firecat Primary (12157) | 15 | 41 to 45 | 2 to 4 | 20 | 100 | 95 | 3000 | 30 | Thermal | 134472 |
@@ -550,7 +550,7 @@ same resolution; they simply are not obtainable.
 | Pestilence | BioCrossbow - Recluse Primary (11959) | 3 | 1 to 45 | 1 to 4 | 260 | 10 | 750 | 1400 | 150 | Chemical | 96588 |
 | Phason Thrower | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | 20 | 100 | 95 | 3000 | 30 | Thermal | 85966 |
 | Phason Thrower1] | Phason Thrower - Firecat Primary (12157) | 76 | 1 | 1 | 20 | 100 | 95 | 3000 | 30 | Thermal | 87087 |
-| Phobos Drone HMG Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 53 | 0 | 0 | 3000 | 0 | Energy | 96783 |
+| Phobos Drone HMG Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 53 | 32768 | 1700 | 3000 | 82.6 | Energy | 96783 |
 | Phobos Tesla Rifle | Tesla Rifle (62) | 1 | 40 | 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 123341 |
 | Photon Lance | Photon Lance (12161) | 81 | 1 to 40 | 1 to 4 | 200 | 200 | 90 | 3500 | 20 | Thermal | 85970 |
 | Plague Doctor | BioInjector (12101) | 2 | 1 to 45 | 1 to 4 | 75 | 20 | 150 | 3000 | 150 | Chemical | 141841 |
@@ -561,13 +561,13 @@ same resolution; they simply are not obtainable.
 | Plasma Cannon II^Q | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 40 | 700 | 2000 | 100 | Thermal | 77948 |
 | Plasma Cannon IV^Q | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 40 | 700 | 2000 | 100 | Thermal | 77950 |
 | Plasma Cannon I^Q | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 40 | 700 | 2000 | 100 | Thermal | 77919 |
-| Polymorph: Chosen Warmonger Beam Cannon | NPC Juggernaut Beam Cannon (12123) | 1 | 5 | 2 | 0 | 12800 | 0 | 0 | 0 | Energy | 122997 |
+| Polymorph: Chosen Warmonger Beam Cannon | NPC Juggernaut Beam Cannon (12123) | 1 | 5 | 2 | 800 | 12800 | 100 | 3500 | 300 | Energy | 122997 |
 | Polymorph: Chosen Warmonger Laser HMG | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 400 | 50 | 2000 | 80 | Energy | 122998 |
 | Prison Recreation Ball | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141530 |
 | Prophet | Sticky Grenade Launcher PVE (12256) | 3 | 1 to 45 | 3 to 4 | 330 | 8 | 350 | 2500 | 150 | Energy | 96602 |
 | Proximity Mine v2 | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 124714 |
 | Proximity Mortar | Mine Launcher - Primary (11957) | 4 | 24 to 40 | 2 to 4 | 1 | 6 | 1200 | 2500 | 100 | Blast (UNUSED) | 106410 |
-| PvP - Glider Mode - Glider Rocket Pack | Plasma Cannon (14) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 100 | Blast (UNUSED) | 77458 |
+| PvP - Glider Mode - Glider Rocket Pack | Plasma Cannon (14) | 1 | 1 | 1 | 750 | 140 | 950 | 3000 | 100 | Blast (UNUSED) | 77458 |
 | PvP - MvG - Hunter - Signature Weapon | Melee - Shadowstrike (21) | 1 | 0 | 1 | 390 | 9 | 499 | 200 | 30 |   | 124759 |
 | PvP - MvG - Soldier - Signature Weapon (Biotech Chemical Sprayer) | Accord Chemical Sprayer (11969) | 1 | 1 | 1 | 50 | 999 | 100 | 1200 | 20 | Bullet (UNUSED) | 138330 |
 | PvP - MvG - Survivor - Signature Weapon - Energy Sword | Default "Trigger Ability" Template (58) | 1 | 0 | 1 | 1 | 1 | 333 | 200 | 30 |   | 140975 |
@@ -608,30 +608,30 @@ same resolution; they simply are not obtainable.
 | R36 Assault Rifle I^Q | Custom Assault Rifle (R36) (11955) | 1 | 1 | 1 | 65 | 45 | 120 | 2000 | 150 | Kinetic | 79197 |
 | R36 Harlequin | Custom Assault Rifle (R36) (Current) (12121) | 15 | 46 to 50 | 2 to 4 | 1 | 45 | 300 | 3000 | 180 | Kinetic | 131743 |
 | R6 Moccasin | Custom Assault Rifle (R36) (Current) (12121) | 21 | 1 to 10 | 1 to 3 | 1 | 45 | 300 | 3000 | 180 | Kinetic | 86969 |
-| Raider Baron Rocket Launcher | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 0 | 0 | 2000 | 100 | Blast (UNUSED) | 81396 |
+| Raider Baron Rocket Launcher | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 44 | 1700 | 2000 | 100 | Blast (UNUSED) | 81396 |
 | Raider Baron Shotgun | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 18 | 10989 | 800 | 1500 | 20 | Kinetic | 82354 |
 | Range Finder | Empty unused (12162) | 1 | 1 | 4 | 120 | 250 | 60 | 2000 | 15 | Thermal | 141840 |
-| Ranged Hisser Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Kinetic | 122803 |
-| Ranok's UltraTrooper Weapon | Plasma Cannon (14) | 1 | 1 | 1 | 0 | 40 | 0 | 2000 | 0 | Thermal | 140688 |
+| Ranged Hisser Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3400 | 5000 | 20 | Kinetic | 122803 |
+| Ranok's UltraTrooper Weapon | Plasma Cannon (14) | 1 | 1 | 1 | 500 | 40 | 1250 | 2000 | 160 | Thermal | 140688 |
 | Rasheed's Burster | PvE - Burst Rifle (Secondary) (12126) | 12 | 1 to 50 | 1 to 4 | 30 | 45 | 880 | 2100 | 150 | Kinetic | 96585 |
-| Rashnu's Laser HMG | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 0 | 50 | 2000 | 0 | Energy | 138380 |
-| Rasper Blaster Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 0 | 2000 | 100 | Energy | 122845 |
-| Rasper Heavy Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Energy | 122849 |
-| Rasper Soldier Drainer Weapon | Tesla Rifle (62) | 1 | 1 | 1 | 3 | 150 | 0 | 200 | 0 | Energy | 124727 |
-| Rasper Spitter Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Energy | 122843 |
-| Raspernaut Weapon | Tesla Rifle (62) | 1 | 1 | 1 | 3 | 150 | 0 | 200 | 0 | Energy | 122851 |
-| Rat King Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 118811 |
-| Rat Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 118801 |
-| Rat Tunneler Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 118805 |
-| Ratling Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 118802 |
+| Rashnu's Laser HMG | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 20 | 700 | 50 | 2000 | 230 | Energy | 138380 |
+| Rasper Blaster Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 425 | 2000 | 100 | Energy | 122845 |
+| Rasper Heavy Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 5600 | 5000 | 50 | Energy | 122849 |
+| Rasper Soldier Drainer Weapon | Tesla Rifle (62) | 1 | 1 | 1 | 3 | 150 | 150 | 200 | 35 | Energy | 124727 |
+| Rasper Spitter Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 20 | Energy | 122843 |
+| Raspernaut Weapon | Tesla Rifle (62) | 1 | 1 | 1 | 3 | 150 | 200 | 200 | 75 | Energy | 122851 |
+| Rat King Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 2600 | 0 | 6.9 |   | 118811 |
+| Rat Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 2600 | 0 | 6.9 |   | 118801 |
+| Rat Tunneler Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 2600 | 0 | 6.9 |   | 118805 |
+| Ratling Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 2600 | 0 | 6.9 |   | 118802 |
 | RC-01 Wendigo | Disruptor Rotary Cannon (12173) | 33 | 20 to 30 | 2 to 4 | 39 | 250 | 175 | 4000 | 100 | Kinetic | 87302 |
 | RC-03 Tarasque | Disruptor Rotary Cannon (12173) | 30 | 31 to 40 | 2 to 4 | 39 | 250 | 175 | 4000 | 100 | Kinetic | 98263 |
 | RC-06 Behemoth | Disruptor Rotary Cannon (12173) | 15 | 41 to 45 | 2 to 4 | 39 | 250 | 175 | 4000 | 100 | Kinetic | 134592 |
 | RC-09 Bahamut | Disruptor Rotary Cannon (12173) | 15 | 46 to 50 | 2 to 4 | 39 | 250 | 175 | 4000 | 100 | Kinetic | 134597 |
 | Reaper Captain Mortar Launcher | Accord Mortar Launcher (11965) | 1 | 5 | 2 | 750 | 100 | 1250 | 1750 | 150 | Blast (UNUSED) | 124774 |
-| Reaper Parrot Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 124773 |
+| Reaper Parrot Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 27.6 | Kinetic | 124773 |
 | Rebel Disguise Rifle | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 30 | 30 | 270 | 2000 | 150 | Kinetic | 114667 |
-| Rebel Rioter Molotov | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 0 | 4000 | 150 | Thermal | 121472 |
+| Rebel Rioter Molotov | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 2500 | 4000 | 150 | Thermal | 121472 |
 | Red Bean Mooncake Launcher | PvE - Grenade Launcher (secondary) (12124) | 3 | 1 to 28 | 1 to 3 | 350 | 6 | 1000 | 5000 | 150 | Kinetic | 137053 |
 | Red Crystal Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118274 |
 | Red Horse | Disruptor Rotary Cannon (12173) | 3 | 1 to 45 | 1 to 4 | 39 | 250 | 175 | 4000 | 100 | Kinetic | 96596 |
@@ -689,20 +689,20 @@ same resolution; they simply are not obtainable.
 | Sassaflash | PvE - Burst Rifle (Secondary) (12126) | 11 | 1 to 50 | 3 to 4 | 30 | 45 | 300 | 2100 | 150 | Kinetic | 118555 |
 | Scale of Justice | Shock Rail - PVE (11935) | 3 | 1 to 45 | 1 to 4 | 100 | 9 | 500 | 2000 | 100 | Energy | 96600 |
 | Scan Hammer | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 1000 | 200 | 25 |   | 56826 |
-| Scan Hammer Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 300 | 200 | 0 |   | 139876 |
-| Scorcher Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Thermal | 122755 |
-| Scorpion King Weapon | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 0 | 0 | 0 | 2000 | 0 | Melding | 110771 |
+| Scan Hammer Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 300 | 200 | 26 |   | 139876 |
+| Scorcher Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 40 | Thermal | 122755 |
+| Scorpion King Weapon | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 225 | 7 | 2600 | 2000 | 275 | Melding | 110771 |
 | Scrambler Rifle | David's Magic Less Than Lethal Shock Rifle (12195) | 3 | 1 to 40 | 1 | 30 | 30 | 180 | 3000 | 150 | Kinetic | 140006 |
 | Sertao - George Clay - Scan Hammer | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 1000 | 200 | 25 | Kinetic | 95448 |
 | Shadowhunt | Custom Assault Rifle (R36) (Current) (12121) | 12 | 1 to 50 | 1 to 4 | 1 | 45 | 300 | 3000 | 180 | Kinetic | 96599 |
 | Shadowlance | David's Magic Void Scout Rifle (Current) (12163) | 2 | 1 to 45 | 1 to 4 | 375 | 6 | 1155 | 3000 | 150 | Melding | 141540 |
 | Shadowlance | Prototype Lancer (12285) | 1 | 45 | 5 | 375 | 12 | 550 | 2500 | 300 | Melding | 144039 |
-| Shared Canine Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 66846 |
-| Shared Human Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 0 | 0 | 0 | 1500 | 65 | Kinetic | 123443 |
+| Shared Canine Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 3600 | 0 | 6.9 | Kinetic | 66846 |
+| Shared Human Turret Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 80 | 1024 | 425 | 1500 | 65 | Kinetic | 123443 |
 | Shared NPC Engineer Tesla Rifle | NPC Tesla Weapon (12194) | 1 | 40 | 4 | 30 | 150 | 50 | 2000 | 7 | Energy | 122543 |
-| Shared Sonic Hammer Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 0 | 200 | 0 | Kinetic | 117042 |
-| Shield Crawler Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Bullet (UNUSED) | 122834 |
-| Shield Hisser Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 122817 |
+| Shared Sonic Hammer Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 2500 | 200 | 65 | Kinetic | 117042 |
+| Shield Crawler Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 10600 | 5000 | 90 | Bullet (UNUSED) | 122834 |
+| Shield Hisser Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 4.6 |   | 122817 |
 | Shock Rail | Shock Rail - PVE (11935) | 81 | 1 to 40 | 1 to 4 | 100 | 9 | 500 | 2000 | 100 | Energy | 85983 |
 | Shock Rail III^Q | Shock Rail - PVE (11935) | 1 | 1 | 1 | 50 | 9 | 500 | 2000 | 100 | Energy | 79050 |
 | Shock Rail II^Q | Shock Rail - PVE (11935) | 1 | 1 | 1 | 50 | 9 | 500 | 2000 | 100 | Energy | 79045 |
@@ -713,21 +713,21 @@ same resolution; they simply are not obtainable.
 | Shotgun II^Q | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 79092 |
 | Shotgun IV^Q | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 79094 |
 | Shotgun I^Q | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 40 | 6 | 800 | 2100 | 50 | Kinetic | 79091 |
-| Siegebreaker Rifle | Assault Rifle (secondary) (4) | 1 | 5 | 2 | 92 | 0 | 0 | 1000 | 150 | Kinetic | 118755 |
+| Siegebreaker Rifle | Assault Rifle (secondary) (4) | 1 | 5 | 2 | 92 | 40 | 240 | 1000 | 150 | Kinetic | 118755 |
 | Singh's Little Friend | PvE - Grenade Launcher (secondary) (12124) | 12 | 1 to 50 | 1 to 4 | 350 | 6 | 1250 | 2500 | 150 | Generic | 96587 |
 | Singh's Prayer | PvE - SMG (Secondary) (12116) | 12 | 1 to 50 | 1 to 4 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 96586 |
-| Skiver Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Kinetic | 122720 |
-| Skiver Composter Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 122744 |
-| Skiver Destroyer Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 |   | 122750 |
-| Skiver Soldier Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 122742 |
+| Skiver Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 2700 | 5000 | 50 | Kinetic | 122720 |
+| Skiver Composter Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 4600 | 0 | 4.6 |   | 122744 |
+| Skiver Destroyer Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 3600 | 0 | 9.6 |   | 122750 |
+| Skiver Soldier Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 4.6 |   | 122742 |
 | Smart Blaster | BioTech Needler Shotgun (12135) | 24 | 1 | 1 | 35 | 40 | 1000 | 2000 | 70 | Chemical | 85972 |
-| Snake-a-pede Ranged Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 | Kinetic | 95106 |
+| Snake-a-pede Ranged Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 42.6 | Kinetic | 95106 |
 | Sniper Rifle | Sniper Rifle Boltaction (unscoped) (12118) | 82 | 1 to 40 | 1 to 4 | 375 to 450 | 4 | 1155 | 3000 | 215 | Kinetic | 85979 |
 | Sniper Rifle III^Q | Sniper Rifle Boltaction (unscoped) (3) | 1 | 1 | 1 | 450 | 4 | 1650 | 2000 | 215 | Kinetic | 78889 |
 | Sniper Rifle II^Q | Sniper Rifle Boltaction (unscoped) (3) | 1 | 1 | 1 | 450 | 4 | 1650 | 2000 | 215 | Kinetic | 78888 |
 | Sniper Rifle IV^Q | Sniper Rifle Boltaction (unscoped) (3) | 1 | 1 | 1 | 450 | 4 | 1650 | 2000 | 215 | Kinetic | 78890 |
 | Sniper Rifle I^Q | Sniper Rifle Boltaction (unscoped) (3) | 1 | 1 | 1 | 450 | 4 | 1650 | 2000 | 215 | Kinetic | 78887 |
-| Spraying Aranha Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 0 | 3000 | 0 |   | 123231 |
+| Spraying Aranha Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 39 | 250 | 600 | 3000 | 40 |   | 123231 |
 | SR-23 Ranseur | Shock Rail - PVE (11935) | 33 | 20 to 30 | 2 to 4 | 100 | 9 | 500 | 2000 | 100 | Energy | 87361 |
 | SR-38 Trident | Shock Rail - PVE (11935) | 30 | 31 to 40 | 2 to 4 | 100 | 9 | 500 | 2000 | 100 | Energy | 98337 |
 | SR-45 Sibat | Shock Rail - PVE (11935) | 15 | 41 to 45 | 2 to 4 | 100 | 9 | 500 | 2000 | 100 | Energy | 134632 |
@@ -740,7 +740,7 @@ same resolution; they simply are not obtainable.
 | Stock Accord Heavy Machine Gun | Heavy MG - HMG (32) | 1 | 1 | 1 | 39 | 250 | 65 | 3000 | 80 | Kinetic | 78301 |
 | Stock Assault Rifle | Assault Rifle (secondary) (4) | 1 | 1 | 1 | 46 | 35 | 90 | 2000 | 150 | Kinetic | 78043 |
 | Stock Bio Crossbow | BioCrossbow - Recluse Primary (11959) | 1 | 1 | 1 | 260 | 10 | 750 | 1400 | 150 | Chemical | 77660 |
-| Stock Bio Rifle | BioRifle (11970) | 1 | 1 | 1 | 0 | 60 | 150 | 1200 | 120 | Chemical | 77909 |
+| Stock Bio Rifle | BioRifle (11970) | 1 | 1 | 1 | 60 | 60 | 150 | 1200 | 120 | Chemical | 77909 |
 | Stock Charge Rifle | Charged Sniper Rifle (11947) | 1 | 1 | 1 | 550 | 20 | 250 | 2000 | 215 | Energy | 78434 |
 | Stock Fusion Cannon | Fusion Cannon (60) | 1 | 1 | 1 | 125 | 160 | 1000 | 3000 | 150 | Energy | 76003 |
 | Stock Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 350 | 6 | 1000 | 2500 | 150 | Generic | 78062 |
@@ -757,10 +757,10 @@ same resolution; they simply are not obtainable.
 | Stock Sub-Machine Gun (SMG) | SMG - Suppressor Rifle (secondary) (15) | 1 | 1 | 1 | 28 | 75 | 60 | 1500 | 70 | Kinetic | 78060 |
 | Stock Tesla Rifle | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 78084 |
 | Stock Thermal Cannon | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 77727 |
-| Storm Kestral Thundra Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 0 | 500 | 0 | 3000 | 0 | Energy | 123031 |
-| Storm Kestrel Hunter Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 0 | 2500 | 0 | 3000 | 300 | Energy | 123010 |
-| Strix Feathers Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 118850 |
-| Strong Melee NPC SIN Blades Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 121315 |
+| Storm Kestral Thundra Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 72 | 500 | 550 | 3000 | 100 | Energy | 123031 |
+| Storm Kestrel Hunter Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 73 | 2500 | 750 | 3000 | 300 | Energy | 123010 |
+| Strix Feathers Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3900 | 0 | 27.6 | Kinetic | 118850 |
+| Strong Melee NPC SIN Blades Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 121315 |
 | Stunner Shotgun | A-Team Concussive Shotgun (12188) | 3 | 1 to 40 | 1 | 40 | 7 | 800 | 3000 | 40 | Kinetic | 139840 |
 | Sub-Machine Gun | PvE - SMG (Secondary) (12116) | 24 | 1 | 1 | 28 | 80 | 60 | 2000 | 70 | Kinetic | 85987 |
 | Sub-Machine Gun (SMG) III^Q | SMG - Suppressor Rifle (secondary) (15) | 1 | 1 | 1 | 28 | 75 | 60 | 1500 | 70 | Kinetic | 79085 |
@@ -768,55 +768,55 @@ same resolution; they simply are not obtainable.
 | Sub-Machine Gun (SMG) IV^Q | SMG - Suppressor Rifle (secondary) (15) | 1 | 1 | 1 | 28 | 75 | 60 | 1500 | 70 | Kinetic | 79086 |
 | Sub-Machine Gun (SMG) I^Q | SMG - Suppressor Rifle (secondary) (15) | 1 | 1 | 1 | 28 | 75 | 60 | 1500 | 70 | Kinetic | 79083 |
 | Surplus Bio Needler II^Q | Bio Launcher (61) | 1 | 1 | 1 | 75 | 50 | 150 | 1200 | 150 | Chemical | 83225 |
-| Swamp Hisser Ranged Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Chemical | 121012 |
-| Tank Skiver Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 |   | 97038 |
+| Swamp Hisser Ranged Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3600 | 5000 | 20 | Chemical | 121012 |
+| Tank Skiver Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 3600 | 0 | 9.6 |   | 97038 |
 | Tanken Cyborg Hitman Weapon | Heavy MG - HMG (32) | 1 | 1 | 1 | 5 | 100 | 65 | 3000 | 80 | Energy | 122563 |
-| Tanken Cyborg Samurai Bolo Weapon | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 1400 | 4000 | 0 | Kinetic | 122567 |
-| Tanken Infiltrator Smoke Launcher Weapon | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 232 | 6 | 0 | 2500 | 150 | Generic | 122895 |
-| Tanken Raider Chief Heavy Machine Gun | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 1 | 10 | 3192 | 90 | 0 | 80 | Energy | 81305 |
+| Tanken Cyborg Samurai Bolo Weapon | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 1400 | 4000 | 170 | Kinetic | 122567 |
+| Tanken Infiltrator Smoke Launcher Weapon | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 232 | 6 | 2500 | 2500 | 150 | Generic | 122895 |
+| Tanken Raider Chief Heavy Machine Gun | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 1 | 10 | 3192 | 90 | 5000 | 80 | Energy | 81305 |
 | Tanken_Datapad_01 | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 86141 |
 | Tarhunt | Tesla Rifle 2.0 (12132) | 12 | 1 to 50 | 1 to 4 | 30 | 150 | 50 | 2000 | 25 | Energy | 96603 |
 | Tesla Rifle III^Q | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 79101 |
 | Tesla Rifle II^Q | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 79100 |
 | Tesla Rifle IV^Q | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 79115 |
 | Tesla Rifle I^Q | Tesla Rifle (62) | 1 | 1 | 1 | 30 | 150 | 50 | 2000 | 25 | Energy | 79099 |
-| Test Invisible Gun | Particle Beam Ability (11975) | 1 | 1 | 1 | 0 | 0 | 0 | 2000 | 0 | Sonic Detonator | 97288 |
+| Test Invisible Gun | Particle Beam Ability (11975) | 1 | 1 | 1 | 100 | 5 | 1600 | 2000 | 120 | Sonic Detonator | 97288 |
 | The Deputy | PvE - Assault Rifle (Secondary) (12113) | 3 | 1 to 40 | 3 | 46 | 55 | 105 | 2100 | 150 | Kinetic | 118559 |
-| The Giggler Mine Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 0 | 4000 | 150 | Kinetic | 140529 |
+| The Giggler Mine Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 1800 | 4000 | 150 | Kinetic | 140529 |
 | Thermal Cannon III^Q | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 79306 |
 | Thermal Cannon II^Q | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 79305 |
 | Thermal Cannon IV^Q | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 79312 |
 | Thermal Cannon I^Q | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 79304 |
 | Thumper Repair Unit | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 85554 |
-| Timber Slinger Trebuchet Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 215 | Thermal | 92856 |
+| Timber Slinger Trebuchet Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 225 | 5 | 3300 | 3000 | 215 | Thermal | 92856 |
 | Torch | Tesla Rifle 2.0 (12132) | 2 | 15 to 40 | 3 | 30 | 150 | 50 | 2000 | 25 | Energy | 124636 |
-| Toxic Aranha Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Chemical | 123229 |
-| Toxic Aranha Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Chemical | 123227 |
-| Toxic Artillery Aranha Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Chemical | 123233 |
+| Toxic Aranha Blaster Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 2700 | 5000 | 50 | Chemical | 123229 |
+| Toxic Aranha Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 50 | Chemical | 123227 |
+| Toxic Artillery Aranha Ranged Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 5100 | 5000 | 120 | Chemical | 123233 |
 | Tranquility | PvE - Burst Rifle (Secondary) (12126) | 3 | 1 to 40 | 3 | 30 | 30 | 300 | 3100 | 150 | Kinetic | 122937 |
-| Trap Jaw Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 9999 | 0 | 0 | 0 | Bullet (UNUSED) | 85474 |
+| Trap Jaw Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 9999 | 2900 | 0 | 8.6 | Bullet (UNUSED) | 85474 |
 | Turret Bot Core Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 120570 |
 | Turret Cannon | Turret Cannon (39) | 1 | 1 | 1 | 5500 | 100 | 100 | 2000 | 250 | Blast (UNUSED) | 30045 |
 | Void Rifle | David's Magic Void Scout Rifle (Current) (12163) | 64 | 1 to 50 | 1 to 4 | 375 | 6 | 1155 | 3000 | 150 | Cryogenic | 122971 |
 | Voltaic Rifle | David's Magic Less Than Lethal Shock Rifle (12195) | 9 | 1 to 50 | 1 to 4 | 30 | 30 | 180 | 3000 | 150 | Kinetic | 140558 |
 | Wasteland BUD Ball | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 95444 |
-| Whack an Elf Candy Cane Scan Hammer Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 300 | 200 | 0 |   | 120938 |
-| White Wargrim Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 9999 | 0 | 0 | 0 | Kinetic | 82585 |
+| Whack an Elf Candy Cane Scan Hammer Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 1 | 300 | 200 | 26 |   | 120938 |
+| White Wargrim Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 9999 | 3100 | 0 | 7.6 | Kinetic | 82585 |
 | Yellow Crystal Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118275 |
-| Young Brontodon Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 |   | 137142 |
+| Young Brontodon Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 12.6 |   | 137142 |
 | [ARC][COMBAT] Claire's Thermal Cannon | Thermal Cannon - Firecat Primary (11962) | 1 | 1 | 1 | 350 | 6 | 1000 | 2000 | 215 | Fire (UNUSED) | 118409 |
 | [AREA JOB]  Bandit Laundry | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141552 |
 | [AREA JOB]  SIN Implant | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141551 |
 | [AREA JOB] Stolen Crystite | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141422 |
 | [AREA JOB] Torque Ring | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141424 |
 | [AREA JOB] Weapons Crate | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 141426 |
-| [DoD] Defense of Dredge AA Turret Weapon | Turret Cannon (39) | 1 | 1 | 1 | 0 | 100 | 0 | 2000 | 250 | Anti-Armor | 139388 |
-| [DoD] Defense of Dredge Defense Turret Weapon | Turret Cannon (39) | 1 | 1 | 1 | 3574 | 0 | 0 | 3000 | 250 | Kinetic | 139389 |
+| [DoD] Defense of Dredge AA Turret Weapon | Turret Cannon (39) | 1 | 1 | 1 | 5638 | 100 | 1050 | 2000 | 250 | Anti-Armor | 139388 |
+| [DoD] Defense of Dredge Defense Turret Weapon | Turret Cannon (39) | 1 | 1 | 1 | 3574 | 110 | 3500 | 3000 | 250 | Kinetic | 139389 |
 | [LIVE] Hazardous Research - Sample - Carried Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 114345 |
-| [LIVE][NIAN] NPC Fireball Nian Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Thermal | 142146 |
-| [LIVE][NOTLM] Headless Horseman Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 118410 |
-| [LIVE][WINTERTIDE] Basic Snow Brawling - Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 0 | 2000 | 900 | 25 |   | 121006 |
-| [LIVE][WINTERTIDE] Basic Snowball Toss - Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 0 | 1450 | 1500 | 215 |   | 121000 |
+| [LIVE][NIAN] NPC Fireball Nian Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 3100 | 0 | 27.6 | Thermal | 142146 |
+| [LIVE][NOTLM] Headless Horseman Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 118410 |
+| [LIVE][WINTERTIDE] Basic Snow Brawling - Weapon | Default "Trigger Ability" Template (58) | 1 | 1 | 1 | 1 | 4 | 2000 | 900 | 25 |   | 121006 |
+| [LIVE][WINTERTIDE] Basic Snowball Toss - Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 59 | 1450 | 1500 | 215 |   | 121000 |
 | [OWPVP] Anti Personnel Turret, Carryable Weapon | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 95029 |
 | [OWPVP] Anti Personnel Turret, Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 3000000 | 5000 | 275 | 150 | 130 | Kinetic | 118945 |
 | _Repulsor Part | CTF-Ball (11967) | 1 | 1 | 1 | 400 | 50 | 1200 | 2000 | 215 |   | 118843 |
@@ -825,103 +825,103 @@ same resolution; they simply are not obtainable.
 
 | Weapon | Template | Items | Level | Quality | Damage/round | Clip | ms/burst | Reload ms | Range | Damage type | First id |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| NPC  - Chosen Dread - Lazer HMG | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 0 | 398 | 50 | 2000 | 80 | Energy | 86126 |
-| NPC -  Diamond Head - Mini boss | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 215 | Blast (UNUSED) | 86636 |
-| NPC - Aranha Queen - Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Thermal | 124718 |
+| NPC  - Chosen Dread - Lazer HMG | Heavy Laser MG - Rhino Primary (11960) | 1 | 1 | 2 | 99 | 398 | 50 | 2000 | 80 | Energy | 86126 |
+| NPC -  Diamond Head - Mini boss | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 225 | 32771 | 3300 | 3000 | 215 | Blast (UNUSED) | 86636 |
+| NPC - Aranha Queen - Weapon | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 5600 | 5000 | 120 | Thermal | 124718 |
 | NPC - Arctic Aranha Spitter - Ice Spit - Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 135 | 9600 | 2600 | 5000 | 20 | Cryogenic | 82613 |
 | NPC - Arctic Aranha Spitter - Melee Attack - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 249 | 1 | 1600 | 0 | 2.6 | Bullet (UNUSED) | 82614 |
-| NPC - Arctic Brontodon - Ice Hurl - Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 450 | 57600 | 0 | 1500 | 100 | Bullet (UNUSED) | 82618 |
-| NPC - Arctic Brontodon - Toss - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 1600 | 0 | 0 | Kinetic | 82616 |
-| NPC - Arctic Wolf - Basic Melee Attack - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 82619 |
-| NPC - Arctic Wolf - Shoulder Bash - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 | Kinetic | 82663 |
-| NPC - Captain Fuller - Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 0 | 0 | 2000 | 0 | Thermal | 122900 |
-| NPC - Cat Badger - Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 |   | 120606 |
-| NPC - Chosen mini-turret bot - Machine Guns Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 0 | 1500 | 65 | Bullet (UNUSED) | 121136 |
-| NPC - Chosen Replicator - Machine Guns Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 0 | 1500 | 65 | Energy | 122470 |
+| NPC - Arctic Brontodon - Ice Hurl - Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 450 | 57600 | 7000 | 1500 | 100 | Bullet (UNUSED) | 82618 |
+| NPC - Arctic Brontodon - Toss - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 1600 | 0 | 9.1 | Kinetic | 82616 |
+| NPC - Arctic Wolf - Basic Melee Attack - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 2850 | 0 | 6.9 | Kinetic | 82619 |
+| NPC - Arctic Wolf - Shoulder Bash - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 14.6 | Kinetic | 82663 |
+| NPC - Captain Fuller - Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 10040 | 1700 | 2000 | 250 | Thermal | 122900 |
+| NPC - Cat Badger - Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 2400 | 0 | 9.6 |   | 120606 |
+| NPC - Chosen mini-turret bot - Machine Guns Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 675 | 1500 | 65 | Bullet (UNUSED) | 121136 |
+| NPC - Chosen Replicator - Machine Guns Weapon | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 675 | 1500 | 65 | Energy | 122470 |
 | NPC - Chosen Tactician - Assault Rfile | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 170 | 2000 | 100 | Energy | 121018 |
 | NPC - Chosen Tactician - Shotgun | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 18 | 10989 | 800 | 1500 | 20 | Kinetic | 121016 |
-| NPC - Elite Blood King Assault - Nova Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 450 | 0 | 3600 | 1000 | 215 | Thermal | 117625 |
-| NPC - Fish Cat - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Cryogenic | 118833 |
-| NPC - Hellfire Scorcher - Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | -9 | 0 | 0 | 0 | 50 | Fire (UNUSED) | 120953 |
-| NPC - Juggernaut Attack Drone - Tesla Beam | Tesla Rifle (62) | 1 | 40 | 4 | 30 | 150 | 50 | 2000 | 0 | Energy | 124546 |
+| NPC - Elite Blood King Assault - Nova Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 450 | 9 | 3600 | 1000 | 215 | Thermal | 117625 |
+| NPC - Fish Cat - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 3100 | 0 | 27.6 | Cryogenic | 118833 |
+| NPC - Hellfire Scorcher - Weapon | NPC Assault Rifle (49) | 1 | 1 | 1 | -9 | 54 | 175 | 3500 | 50 | Fire (UNUSED) | 120953 |
+| NPC - Juggernaut Attack Drone - Tesla Beam | Tesla Rifle (62) | 1 | 40 | 4 | 30 | 150 | 50 | 2000 | 32 | Energy | 124546 |
 | NPC - Jungle Shaman - Bio Needler | Bio Launcher (61) | 1 | 1 | 1 | 75 | 50 | 150 | 1200 | 150 | Chemical | 121444 |
-| NPC - Kara Novan - Nighthawk Sniper Rilfe | Sniper Rifle Boltaction (unscoped) (3) | 1 | 1 | 1 | 375 | 0 | 0 | 2500 | 215 | Kinetic | 122902 |
+| NPC - Kara Novan - Nighthawk Sniper Rilfe | Sniper Rifle Boltaction (unscoped) (3) | 1 | 1 | 1 | 375 | 14 | 4650 | 2500 | 215 | Kinetic | 122902 |
 | NPC - Kara Novan - SMG | SMG - Suppressor Rifle (secondary) (15) | 1 | 37 | 4 | 28 | 75 | 60 | 1500 | 70 | Kinetic | 122989 |
-| NPC - Lung Beetle Queen - Ranged Projectile | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Blast (UNUSED) | 95144 |
-| NPC - Magma Armored Scorcher - Armor Pierce - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Bullet (UNUSED) | 85658 |
-| NPC - Magma Armored Scorcher - Horn Lance - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 85657 |
-| NPC - Magma Hisser - Basic Melee Attack - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 82608 |
-| NPC - Magma Salamander - Bite - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 82659 |
-| NPC - Magma Scorpion - Acid Salvo - Weapon | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 0 | 0 | 0 | 2000 | 0 | Bullet (UNUSED) | 85678 |
-| NPC - Magma Wasp - Basic Ranged Attack - Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 0 | Bullet (UNUSED) | 82599 |
-| NPC - Magma Wasp - Sting - Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 10 | Bullet (UNUSED) | 82600 |
-| NPC - Mason Chen - Raptor Sniper Rilfe | Charge Rifle (Raptor) (12120) | 1 | 1 | 1 | 550 | 0 | 0 | 3500 | 215 | Energy | 124798 |
-| NPC - Melded Salamander - Head Slam - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 6000 | 0 | Kinetic | 85138 |
-| NPC - Melded Salamander - Horn Slash - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 85165 |
-| NPC - Melded Spawnling - Basic Melee - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 2.6 | Bullet (UNUSED) | 85187 |
-| NPC - Melded Surger - Basic Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 300 | 1 | 0 | 0 | 0 | Kinetic | 85261 |
-| NPC - Melded Wyrm - Snapdragon - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Chemical | 85189 |
-| NPC - Melded Wyrm - Turret Spit - Weapon | Engineer Secondary Weapon (for visuals) (11936) | 1 | 1 | 1 | 165 | 10002 | 1200 | 0 | 250 |   | 85190 |
-| NPC - Melding Puker - Tentacle Swipe - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 3000 | 0 | 0 | Kinetic | 85175 |
-| NPC - Ogrix Attack Drone - Tesla Beam | Tesla Rifle (62) | 1 | 40 | 4 | 30 | 150 | 0 | 2000 | 0 | Energy | 124343 |
-| NPC - Pangolin - Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 96537 |
-| NPC - Rageclaw - Swipe - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | Kinetic | 85221 |
-| NPC - Razorwind Assassin Twin 01 - Eruption Round Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 0 | 0 | 1500 | 215 | Kinetic | 122669 |
+| NPC - Lung Beetle Queen - Ranged Projectile | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 7100 | 5000 | 80 | Blast (UNUSED) | 95144 |
+| NPC - Magma Armored Scorcher - Armor Pierce - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3000 | 0 | 12.6 | Bullet (UNUSED) | 85658 |
+| NPC - Magma Armored Scorcher - Horn Lance - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2800 | 0 | 6.6 | Kinetic | 85657 |
+| NPC - Magma Hisser - Basic Melee Attack - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 350 | 1 | 2800 | 0 | 6.6 | Kinetic | 82608 |
+| NPC - Magma Salamander - Bite - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3600 | 0 | 10.6 | Kinetic | 82659 |
+| NPC - Magma Scorpion - Acid Salvo - Weapon | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 225 | 7 | 2600 | 2000 | 275 | Bullet (UNUSED) | 85678 |
+| NPC - Magma Wasp - Basic Ranged Attack - Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 65 | Bullet (UNUSED) | 82599 |
+| NPC - Magma Wasp - Sting - Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 525 | 1 | 2850 | 0 | 10 | Bullet (UNUSED) | 82600 |
+| NPC - Mason Chen - Raptor Sniper Rilfe | Charge Rifle (Raptor) (12120) | 1 | 1 | 1 | 550 | 40 | 650 | 3500 | 215 | Energy | 124798 |
+| NPC - Melded Salamander - Head Slam - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 4600 | 6000 | 14.6 | Kinetic | 85138 |
+| NPC - Melded Salamander - Horn Slash - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3400 | 0 | 12.6 | Kinetic | 85165 |
+| NPC - Melded Spawnling - Basic Melee - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3600 | 0 | 2.6 | Bullet (UNUSED) | 85187 |
+| NPC - Melded Surger - Basic Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 300 | 1 | 3600 | 0 | 6.6 | Kinetic | 85261 |
+| NPC - Melded Wyrm - Snapdragon - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3600 | 0 | 12.6 | Chemical | 85189 |
+| NPC - Melded Wyrm - Turret Spit - Weapon | Engineer Secondary Weapon (for visuals) (11936) | 1 | 1 | 1 | 165 | 10002 | 1200 | 3250 | 250 |   | 85190 |
+| NPC - Melding Puker - Tentacle Swipe - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3000 | 0 | 10.6 | Kinetic | 85175 |
+| NPC - Ogrix Attack Drone - Tesla Beam | Tesla Rifle (62) | 1 | 40 | 4 | 30 | 150 | 150 | 2000 | 32 | Energy | 124343 |
+| NPC - Pangolin - Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 10.6 | Kinetic | 96537 |
+| NPC - Rageclaw - Swipe - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 10000 | 3350 | 0 | 7.1 | Kinetic | 85221 |
+| NPC - Razorwind Assassin Twin 01 - Eruption Round Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 11 | 3050 | 1500 | 215 | Kinetic | 122669 |
 | NPC - Razorwind Assassin Twin 02 - SMG | SMG - Suppressor Rifle (secondary) (15) | 1 | 37 | 4 | 28 | 75 | 60 | 1500 | 70 | Kinetic | 122655 |
-| NPC - Razorwind Brutalizer - Beam Cannon | NPC Juggernaut Beam Cannon (12123) | 1 | 5 | 2 | 0 | 12800 | 0 | 0 | 0 | Energy | 122946 |
-| NPC - Sargasso Salamander - Head Bash - Weapon^Q | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 82762 |
+| NPC - Razorwind Brutalizer - Beam Cannon | NPC Juggernaut Beam Cannon (12123) | 1 | 5 | 2 | 800 | 12800 | 100 | 3500 | 300 | Energy | 122946 |
+| NPC - Sargasso Salamander - Head Bash - Weapon^Q | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3400 | 0 | 14.6 | Kinetic | 82762 |
 | NPC - Sargasso Thresher - Large Spit - Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 400 | 57600 | 5040 | 1500 | 50 | Chemical | 82606 |
 | NPC - Sargasso Thresher - Small Spit - Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 149 | 16959 | 2800 | 2500 | 50 | Chemical | 82605 |
 | NPC - Sargasso Wasp - Basic Ranged Attack - Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 25 | Bullet (UNUSED) | 82601 |
-| NPC - Sargasso Wasp - Sting - Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 10 | Bullet (UNUSED) | 82602 |
-| NPC - Scorcher Queen - Spit Attack Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 100 | 9600 | 0 | 5000 | 20 | Thermal | 118575 |
-| NPC - Shield Crab Spider Ground Pound Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 95024 |
-| NPC - Smokestack Scorpion - Weapon | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 0 | 0 | 0 | 2000 | 0 | Melding | 92853 |
-| NPC - Terrorclaw - Shockwave Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 85136 |
-| NPC - Terrorclaw - Swipe - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | Kinetic | 85191 |
-| NPC Accord Famas Rifle | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 0 | 30 | 300 | 2000 | 150 | Kinetic | 76108 |
+| NPC - Sargasso Wasp - Sting - Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 525 | 1 | 2850 | 0 | 10 | Bullet (UNUSED) | 82602 |
+| NPC - Scorcher Queen - Spit Attack Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 100 | 9600 | 2300 | 5000 | 20 | Thermal | 118575 |
+| NPC - Shield Crab Spider Ground Pound Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3000 | 0 | 12.6 | Kinetic | 95024 |
+| NPC - Smokestack Scorpion - Weapon | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 225 | 7 | 2800 | 2000 | 275 | Melding | 92853 |
+| NPC - Terrorclaw - Shockwave Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3400 | 0 | 12.6 | Kinetic | 85136 |
+| NPC - Terrorclaw - Swipe - Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 10000 | 3350 | 0 | 7.1 | Kinetic | 85191 |
+| NPC Accord Famas Rifle | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 65 | 30 | 300 | 2000 | 150 | Kinetic | 76108 |
 | NPC Accord Guard Rifle | PvE - Assault Rifle (Secondary) (12113) | 1 | 45 | 4 | 230 | 55 | 105 | 2100 | 150 | Kinetic | 137167 |
 | NPC Accord Guard SMG | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 12 | 2970 | 630 | 1000 | 75 | Kinetic | 82418 |
-| NPC Alpha Wargrim Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 97244 |
-| NPC Aranhas Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 49 | 1 | 1280 | 0 | 0 | Kinetic | 20046 |
+| NPC Alpha Wargrim Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 3100 | 0 | 6.9 | Kinetic | 97244 |
+| NPC Aranhas Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 49 | 1 | 1280 | 0 | 5 | Kinetic | 20046 |
 | NPC Biomass Launcher | NPC Biomass Launcher (12192) | 1 | 8 | 3 | 75 | 50 | 150 | 3000 | 150 | Chemical | 139888 |
-| NPC Blackhat Hacker Weapon | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 0 | 4000 | 150 | Fire (UNUSED) | 96854 |
+| NPC Blackhat Hacker Weapon | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 8000 | 4000 | 150 | Fire (UNUSED) | 96854 |
 | NPC Bloodking HMG | Heavy MG - HMG (32) | 1 | 1 | 1 | 5 | 100 | 65 | 3000 | 80 | Kinetic | 114637 |
-| NPC Bloodking Plasma Cannon Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 1800 | 0 | 0 | Thermal | 96955 |
-| NPC Brontodon King Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 49.4 | Kinetic | 118538 |
-| NPC Brontodon King Rock Throw | NPC Ranged Default (10) | 1 | 1 | 1 | 0 | 57600 | 168000 | 1500 | 200 | Kinetic | 118271 |
-| NPC Brontodon Rock Throw | NPC Ranged Default (10) | 1 | 1 | 1 | 450 | 57600 | 0 | 1500 | 200 | Kinetic | 77140 |
+| NPC Bloodking Plasma Cannon Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 525 | 12 | 1800 | 3750 | 365 | Thermal | 96955 |
+| NPC Brontodon King Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 16600 | 0 | 49.4 | Kinetic | 118538 |
+| NPC Brontodon King Rock Throw | NPC Ranged Default (10) | 1 | 1 | 1 | 450 | 57600 | 168000 | 1500 | 200 | Kinetic | 118271 |
+| NPC Brontodon Rock Throw | NPC Ranged Default (10) | 1 | 1 | 1 | 450 | 57600 | 7000 | 1500 | 200 | Kinetic | 77140 |
 | NPC Brood Culex Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 250 | 9600 | 2600 | 500 | 25 | Kinetic | 97063 |
 | NPC Burst Rifle I | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 30 | 30 | 180 | 2000 | 150 | Kinetic | 82416 |
-| NPC Buzzard Punk Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 105231 |
-| NPC Chosen Artillery Cannon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 1000 | 1 | 32200 | 0 | 1800 | Generic | 77723 |
+| NPC Buzzard Punk Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 105231 |
+| NPC Chosen Artillery Cannon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 1000 | 1 | 32200 | 5000 | 1800 | Generic | 77723 |
 | NPC CHOSEN Assault Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 125 | 2000 | 100 | Energy | 32739 |
 | NPC CHOSEN Assault Rifle TEST | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 170 | 2000 | 100 | Energy | 92799 |
-| NPC CHOSEN Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 1 | 0 | 1000 | 215 | Kinetic | 77049 |
-| NPC Chosen Drop Ship Cannon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 750 | 1 | 7688 | 0 | 0 |   | 32848 |
+| NPC CHOSEN Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 1 | 100 | 1000 | 215 | Kinetic | 77049 |
+| NPC Chosen Drop Ship Cannon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 750 | 1 | 7688 | 5000 | 520 |   | 32848 |
 | NPC Chosen Dropship Mini-turret | NPC Chosen Dropship MiniTurret (57) | 1 | 1 | 1 | 50 | 100 | 4750 | 1 | 225 | Kinetic | 33979 |
-| NPC CHOSEN Grunt Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | Kinetic | 85953 |
-| NPC Chosen Incursion Double Barrel Turret | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 0 | 0 | 2000 | 4000 | 0 | Kinetic | 77214 |
+| NPC CHOSEN Grunt Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 54 | 175 | 3500 | 180 | Kinetic | 85953 |
+| NPC Chosen Incursion Double Barrel Turret | NPC Chosen Plasma Cannon (50) | 1 | 1 | 1 | 425 | 24 | 2000 | 4000 | 280 | Kinetic | 77214 |
 | NPC Chosen Incursion Turret | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 120 | 30 | 2860 | 1 | 145 | Kinetic | 34475 |
-| NPC Chosen Juggernaut Mortar Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 2500 | 0 | 0 | Thermal | 32741 |
-| NPC Chosen Mortar Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | Thermal | 122645 |
-| NPC Chosen Nova Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 450 | 0 | 3600 | 1000 | 215 | Thermal | 75769 |
+| NPC Chosen Juggernaut Mortar Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 12 | 2500 | 3750 | 365 | Thermal | 32741 |
+| NPC Chosen Mortar Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 12 | 3000 | 3750 | 315 | Thermal | 122645 |
+| NPC Chosen Nova Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 450 | 9 | 3600 | 1000 | 215 | Thermal | 75769 |
 | NPC Chosen Nova Cannon ELITE | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 225 | 4 | 1800 | 2000 | 215 | Thermal | 82465 |
 | NPC CHOSEN Shotgun | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 25 | 7 | 800 | 1500 | 20 | Kinetic | 20016 |
 | NPC CORAL - Accord Guard Assault Rifle | NPC Guard Rifle (30) | 1 | 1 | 1 | 40 | 20 | 100 | 700 | 30 | Kinetic | 30025 |
 | NPC FADE Charge Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 20 | 50 | 1000 | 215 | Kinetic | 121318 |
-| NPC Fireball Firecat Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Thermal | 96917 |
+| NPC Fireball Firecat Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 3100 | 0 | 27.6 | Thermal | 96917 |
 | NPC Firewhip Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 1600 | 0 | 2.6 | Kinetic | 110770 |
-| NPC Gerald Greeenway Bandit Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 625 | 1 | 0 | 1500 | 215 | Kinetic | 116680 |
+| NPC Gerald Greeenway Bandit Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 625 | 1 | 3050 | 1500 | 215 | Kinetic | 116680 |
 | NPC Giant Aranha Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 319 | 1 | 1600 | 0 | 3.64 | Bullet (UNUSED) | 30808 |
-| NPC Harrier Needler | NPC Ranged Default (10) | 1 | 1 | 1 | 0 | 57600 | 1800 | 1500 | 200 | Kinetic | 77248 |
-| NPC Harrier Talon Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 77268 |
-| NPC Hisser Queen Spit Attack Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 100 | 9600 | 0 | 5000 | 20 | Bullet (UNUSED) | 97130 |
-| NPC Incendiary Cannon - Crematorium | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 9900 | 0 | 3000 | 0 | Thermal | 139939 |
-| NPC King Skiver Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Bullet (UNUSED) | 118583 |
+| NPC Harrier Needler | NPC Ranged Default (10) | 1 | 1 | 1 | 483 | 57600 | 1800 | 1500 | 200 | Kinetic | 77248 |
+| NPC Harrier Talon Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3100 | 0 | 9.6 | Kinetic | 77268 |
+| NPC Hisser Queen Spit Attack Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 100 | 9600 | 2800 | 5000 | 20 | Bullet (UNUSED) | 97130 |
+| NPC Incendiary Cannon - Crematorium | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 9900 | 170 | 3000 | 90 | Thermal | 139939 |
+| NPC King Skiver Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3600 | 5000 | 50 | Bullet (UNUSED) | 118583 |
 | NPC LMG | LMG (11976) | 1 | 1 | 1 | 30 | 120 | 75 | 2500 | 110 | Kinetic | 85735 |
-| NPC Melee Porcupine Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 0 |   | 96832 |
-| NPC MONSTER Bandit Assassin Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 96488 |
+| NPC Melee Porcupine Melee Weapon | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 2850 | 0 | 4.6 |   | 96832 |
+| NPC MONSTER Bandit Assassin Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 96488 |
 | NPC MONSTER Baneclaw Melding Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 375 | 9600 | 2600 | 5000 | 20 | Bullet (UNUSED) | 77274 |
 | NPC MONSTER Baneclaw Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 799 | 1 | 3200 | 200 | 2.6 | Bullet (UNUSED) | 77399 |
 | NPC MONSTER Boss Copperpot Scarab Pound AOE Melee | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 315 | 1 | 3200 | 200 | 2.6 | Bullet (UNUSED) | 77150 |
@@ -931,15 +931,15 @@ same resolution; they simply are not obtainable.
 | NPC MONSTER Giant Copperpot Scarab Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 100 | 9600 | 2600 | 5000 | 20 | Bullet (UNUSED) | 20023 |
 | NPC MONSTER Giant Hisser Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 450 | 1 | 1120 | 0 | 2.6 | Kinetic | 77416 |
 | NPC MONSTER Giant Mosquito Rapid Fire Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 1400 | 500 | 25 | Kinetic | 34089 |
-| NPC MONSTER Grunt Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 34143 |
-| NPC MONSTER Hisser Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 124 | 999 | 0 | 0 | 0 | Kinetic | 30903 |
+| NPC MONSTER Grunt Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 34143 |
+| NPC MONSTER Hisser Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 124 | 999 | 3600 | 0 | 5.6 | Kinetic | 30903 |
 | NPC MONSTER Large Aranhas Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 104 | 1 | 1600 | 0 | 2.6 | Kinetic | 34076 |
-| NPC MONSTER Large Hisser Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 300 | 1 | 0 | 0 | 0 | Kinetic | 34003 |
+| NPC MONSTER Large Hisser Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 300 | 1 | 3600 | 0 | 6.6 | Kinetic | 34003 |
 | NPC MONSTER Large Salamander Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 749 | 1 | 1120 | 0 | 9.6 | Kinetic | 34478 |
-| NPC MONSTER Massive Culex | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 0 | 500 | 25 | Kinetic | 97061 |
-| NPC MONSTER Medium Aranhas Sieger Acid Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Bullet (UNUSED) | 33830 |
-| NPC MONSTER Medium Aranhas Stormer Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 20 | Bullet (UNUSED) | 40472 |
-| NPC MONSTER Melding Wyrm Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 300 | 9600 | 0 | 5000 | 0 | Bullet (UNUSED) | 34057 |
+| NPC MONSTER Massive Culex | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2800 | 500 | 25 | Kinetic | 97061 |
+| NPC MONSTER Medium Aranhas Sieger Acid Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 4100 | 5000 | 20 | Bullet (UNUSED) | 33830 |
+| NPC MONSTER Medium Aranhas Stormer Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 4100 | 5000 | 20 | Bullet (UNUSED) | 40472 |
+| NPC MONSTER Melding Wyrm Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 300 | 9600 | 3100 | 5000 | 40 | Bullet (UNUSED) | 34057 |
 | NPC MONSTER Mosquito Rapid Fire Slowing Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 250 | 9600 | 2600 | 500 | 25 | Kinetic | 77218 |
 | NPC MONSTER Skiver Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 49 | 1 | 1280 | 0 | 2.6 | Bullet (UNUSED) | 77539 |
 | NPC MONSTER Skiverling Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 49 | 1 | 1280 | 0 | 2.6 | Bullet (UNUSED) | 118709 |
@@ -949,21 +949,21 @@ same resolution; they simply are not obtainable.
 | NPC MONSTER Small Mosquito Rapid Fire Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 20 | 9600 | 1400 | 500 | 20 | Kinetic | 34088 |
 | NPC MONSTER Small Salamander Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 249 | 9999 | 1120 | 0 | 2.6 | Kinetic | 34477 |
 | NPC MONSTER Small Thresher Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 38 | 1 | 1120 | 0 | 2.6 | Kinetic | 34090 |
-| NPC MONSTER Thresher Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 76 | 9999 | 0 | 0 | 0 | Kinetic | 33949 |
-| NPC MONSTER Tortured Soul Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 77878 |
-| NPC MONSTER Tortured Soul Melee Attack No Snare | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 1600 | 0 | 0 | Kinetic | 85745 |
-| NPC MONSTER Tortured Soul Ranged Heavy | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 250 | 9600 | 0 | 5000 | 130 | Melding | 77879 |
-| NPC MONSTER Tortured Soul Ranged Light | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 130 | Bullet (UNUSED) | 77880 |
+| NPC MONSTER Thresher Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 76 | 9999 | 3100 | 0 | 5.6 | Kinetic | 33949 |
+| NPC MONSTER Tortured Soul Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 4100 | 0 | 2.6 | Kinetic | 77878 |
+| NPC MONSTER Tortured Soul Melee Attack No Snare | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 1600 | 0 | 6.6 | Kinetic | 85745 |
+| NPC MONSTER Tortured Soul Ranged Heavy | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 250 | 9600 | 8600 | 5000 | 130 | Melding | 77879 |
+| NPC MONSTER Tortured Soul Ranged Light | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 6600 | 5000 | 130 | Bullet (UNUSED) | 77880 |
 | NPC MONSTER Wasp Rapid Fire Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2600 | 500 | 25 | Kinetic | 77574 |
 | NPC MONSTER Wyrm Goo Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 100 | 9999 | 2300 | 5000 | 100 | Bullet (UNUSED) | 34048 |
-| NPC Multi-Turret Rifle | Multi Turret Weapon (engi) (11944) | 1 | 1 | 1 | 30 | 0 | 0 | 2000 | 45 | Kinetic | 140774 |
-| NPC Nautilus Ink Weapon | Terrorclaw Spittle (13) | 1 | 5 | 2 | 250 | 4 | 0 | 5000 | 0 | Kinetic | 92800 |
-| NPC Nautilus Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | Kinetic | 77164 |
-| NPC Nautilus Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 250 | 0 | 0 | 5000 | 200 | Kinetic | 77163 |
-| NPC NEW Juggernaut Beam Cannon | NPC Juggernaut Beam Cannon (12123) | 1 | 5 | 2 | 0 | 65534 | 0 | 0 | 0 | Energy | 122686 |
-| NPC NEW Juggernaut Mortar | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | Thermal | 118295 |
+| NPC Multi-Turret Rifle | Multi Turret Weapon (engi) (11944) | 1 | 1 | 1 | 30 | 10599 | 1070 | 2000 | 45 | Kinetic | 140774 |
+| NPC Nautilus Ink Weapon | Terrorclaw Spittle (13) | 1 | 5 | 2 | 250 | 4 | 2800 | 5000 | 50 | Kinetic | 92800 |
+| NPC Nautilus Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 325 | 1 | 3200 | 0 | 9.6 | Kinetic | 77164 |
+| NPC Nautilus Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 250 | 10003 | 3050 | 5000 | 200 | Kinetic | 77163 |
+| NPC NEW Juggernaut Beam Cannon | NPC Juggernaut Beam Cannon (12123) | 1 | 5 | 2 | 800 | 65534 | 125 | 3500 | 250 | Energy | 122686 |
+| NPC NEW Juggernaut Mortar | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 12 | 5800 | 3750 | 365 | Thermal | 118295 |
 | NPC Oilspill's Shotgun | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 40 | 5994 | 1040 | 1050 | 25 | Bullet (UNUSED) | 85728 |
-| NPC Ol'Betsy Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 86130 |
+| NPC Ol'Betsy Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 2600 | 0 | 4.6 | Kinetic | 86130 |
 | NPC Ophanim Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 40 | 1400 | 2000 | 100 | Thermal | 96876 |
 | NPC Paratrooper LMG | LMG (11976) | 1 | 1 | 1 | 43 | 120 | 75 | 2500 | 110 | Kinetic | 96666 |
 | NPC Pirate Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 350 | 594 | 1400 | 4000 | 150 | Fire (UNUSED) | 77336 |
@@ -971,49 +971,49 @@ same resolution; they simply are not obtainable.
 | NPC Pirate Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 400 | 40 | 1400 | 2000 | 100 | Thermal | 77339 |
 | NPC Pirate Shotgun | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 40 | 5994 | 2400 | 1050 | 15 | Bullet (UNUSED) | 77335 |
 | NPC Pirate SMG | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 30 | 2970 | 630 | 1000 | 75 | Kinetic | 77337 |
-| NPC Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 200 | 40 | 0 | 2000 | 0 | Thermal | 30688 |
+| NPC Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 200 | 40 | 2200 | 2000 | 180 | Thermal | 30688 |
 | NPC Porcupine Quill Weapon | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 20 | 10989 | 800 | 1500 | 20 | Bullet (UNUSED) | 93706 |
 | NPC R36 Assault Rifle | Custom Assault Rifle (R36) (11955) | 1 | 1 | 1 | 65 | 45 | 120 | 2000 | 150 | Kinetic | 82411 |
 | NPC R36 Assault Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 125 | 2000 | 100 | Energy | 139886 |
-| NPC Rageclaw Mortar Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 1503 | 0 | 215 | Thermal | 49118 |
-| NPC Ranged Hornet Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 0 | 500 | 25 | Bullet (UNUSED) | 105232 |
-| NPC Ranged Skiver Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 0 | 5000 | 0 | Bullet (UNUSED) | 97020 |
-| NPC Reaper Captain Cherise Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 0 | 4000 | 150 | Fire (UNUSED) | 122473 |
-| NPC Reaper Captain Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 0 | 4000 | 150 | Kinetic | 96881 |
-| NPC Shared Bandit Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | Kinetic | 96842 |
-| NPC Shared Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 0 | 50 | 1000 | 215 | Kinetic | 96871 |
-| NPC Shared Chemical Cannon | NPC Fluid Cannon (12264) | 1 | 1 | 1 | -30 | 200 | 0 | 3000 | 0 | Chemical | 143829 |
-| NPC Shared Cryo Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 0 | 3000 | 0 | Cryogenic | 141979 |
-| NPC Shared Dummy Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | Bullet (UNUSED) | 140672 |
+| NPC Rageclaw Mortar Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 225 | 5 | 1503 | 3000 | 215 | Thermal | 49118 |
+| NPC Ranged Hornet Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 30 | 9600 | 2800 | 500 | 25 | Bullet (UNUSED) | 105232 |
+| NPC Ranged Skiver Spit Attack | NPC Aranhas Sieger Acid Spit Attack (11952) | 1 | 1 | 1 | 125 | 9600 | 3350 | 5000 | 50 | Bullet (UNUSED) | 97020 |
+| NPC Reaper Captain Cherise Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 2000 | 4000 | 150 | Fire (UNUSED) | 122473 |
+| NPC Reaper Captain Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 1400 | 4000 | 150 | Kinetic | 96881 |
+| NPC Shared Bandit Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 54 | 175 | 3500 | 180 | Kinetic | 96842 |
+| NPC Shared Charge Sniper Rifle | NPC Charge Sniper Rifle (51) | 1 | 1 | 1 | 500 | 2 | 50 | 1000 | 215 | Kinetic | 96871 |
+| NPC Shared Chemical Cannon | NPC Fluid Cannon (12264) | 1 | 1 | 1 | -30 | 200 | 245 | 3000 | 90 | Chemical | 143829 |
+| NPC Shared Cryo Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 245 | 3000 | 90 | Cryogenic | 141979 |
+| NPC Shared Dummy Weapon | Terrorclaw Spittle (13) | 1 | 1 | 1 | 250 | 5 | 1300 | 5000 | 120 | Bullet (UNUSED) | 140672 |
 | NPC Shared Energy HMG | NPC HMG (12191) | 1 | 1 | 1 | 5 | 100 | 65 | 3000 | 80 | Energy | 103849 |
 | NPC Shared HMG | NPC HMG (12191) | 1 | 1 | 1 | 0 | 100 | 65 | 3000 | 80 | Kinetic | 106335 |
 | NPC Shared HMG - Cryo | NPC HMG (12191) | 1 | 1 | 1 | 5 | 100 | 65 | 3000 | 80 | Cryogenic | 139879 |
 | NPC Shared Human Assault Rifle | NPC Assault Rifle (49) | 1 | 1 | 1 | 1 | 30 | 125 | 2000 | 100 | Energy | 96847 |
-| NPC Shared Incendiary Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 0 | 3000 | 0 | Thermal | 140162 |
-| NPC Shared Mine Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 0 | 4000 | 150 | Kinetic | 140284 |
-| NPC Shared Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 0 | 0 | 0 | 2000 | 100 | Thermal | 122968 |
-| NPC Shared Plasma Cannon New | NPC Plasma Cannon (12193) | 1 | 1 | 1 | 0 | 0 | 500 | 2000 | 215 | Thermal | 139891 |
-| NPC Shared Shotgun | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 25 | 7 | 800 | 1500 | 0 | Kinetic | 122621 |
-| NPC Shared SMG | SMG - Suppressor Rifle (secondary) (15) | 1 | 1 | 1 | 11 | 0 | 0 | 750 | 35 | Kinetic | 114632 |
-| NPC Small Crystite Aranhas Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 1 | 1280 | 0 | 3.12 | Sonic Detonator | 85898 |
-| NPC Storm Kestrel Lighting Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 0 | 99 | 0 | 1500 | 0 | Energy | 124553 |
-| NPC Storm Kestrel Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 0 | 24750 | 0 | 3000 | 0 | Energy | 122913 |
-| NPC Tanken Assassin Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 96868 |
+| NPC Shared Incendiary Cannon | Phason Thrower - Firecat Primary (12157) | 1 | 1 | 1 | -30 | 200 | 245 | 3000 | 90 | Thermal | 140162 |
+| NPC Shared Mine Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 2500 | 4000 | 150 | Kinetic | 140284 |
+| NPC Shared Plasma Cannon | Plasma Cannon (14) | 1 | 1 | 1 | 500 | 44 | 1950 | 2000 | 100 | Thermal | 122968 |
+| NPC Shared Plasma Cannon New | NPC Plasma Cannon (12193) | 1 | 1 | 1 | 200 | 10 | 500 | 2000 | 215 | Thermal | 139891 |
+| NPC Shared Shotgun | NPC Chosen Shotgun (11953) | 1 | 1 | 1 | 25 | 7 | 800 | 1500 | 70 | Kinetic | 122621 |
+| NPC Shared SMG | SMG - Suppressor Rifle (secondary) (15) | 1 | 1 | 1 | 11 | 125 | 135 | 750 | 35 | Kinetic | 114632 |
+| NPC Small Crystite Aranhas Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 1280 | 0 | 3.12 | Sonic Detonator | 85898 |
+| NPC Storm Kestrel Lighting Weapon | NPC Ranged Default (10) | 1 | 1 | 1 | 483 | 99 | 1800 | 1500 | 120 | Energy | 124553 |
+| NPC Storm Kestrel Weapon | NPC Charge Up and Channel Fire (12143) | 1 | 1 | 1 | 72 | 24750 | 750 | 3000 | 130 | Energy | 122913 |
+| NPC Tanken Assassin Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 96868 |
 | NPC Tanken Auto Shotgun | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 16 | 5994 | 400 | 2100 | 50 | Bullet (UNUSED) | 117621 |
 | NPC Tanken Grenade Launcher | Grenade Launcher (secondary) (11) | 1 | 1 | 1 | 140 | 594 | 1400 | 4000 | 150 | Kinetic | 67424 |
 | NPC Tanken Heavy Machine Gun | Heavy MG - HMG (32) | 1 | 1 | 1 | 5 | 100 | 65 | 3000 | 80 | Kinetic | 75116 |
-| NPC Tanken Master Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 0 | 0 | 2.6 | Kinetic | 96873 |
-| NPC Tanken Overclocked Advanced Plasma Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 1800 | 0 | 0 | Blast (UNUSED) | 81308 |
+| NPC Tanken Master Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 149 | 1 | 2400 | 0 | 2.6 | Kinetic | 96873 |
+| NPC Tanken Overclocked Advanced Plasma Cannon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 525 | 12 | 1800 | 3750 | 365 | Blast (UNUSED) | 81308 |
 | NPC Tanken Shotgun | PvE - Shotgun (secondary) (1) | 1 | 1 | 1 | 20 | 5994 | 2400 | 1050 | 15 | Bullet (UNUSED) | 67423 |
 | NPC Tanken SMG | FAMAS Burst Rifle (53) | 1 | 1 | 1 | 9 | 2970 | 630 | 1000 | 75 | Kinetic | 67425 |
-| NPC Tesla Force Chosen Mortar Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | Energy | 139950 |
+| NPC Tesla Force Chosen Mortar Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 12 | 4300 | 3750 | 315 | Energy | 139950 |
 | NPC Thresher Large Spit Attack *TEST* | NPC Ranged Default (10) | 1 | 1 | 1 | 400 | 57600 | 5040 | 1500 | 50 | Generic | 67426 |
 | NPC Thresher Spit Attack *TEST* | NPC Ranged Default (10) | 1 | 1 | 1 | 149 | 16959 | 2800 | 2500 | 50 | Chemical | 66851 |
-| NPC Toxic Land Shark Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 0 | 999 | 0 | 0 | 0 | Kinetic | 81402 |
+| NPC Toxic Land Shark Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 999 | 3600 | 0 | 9.6 | Kinetic | 81402 |
 | NPC Turret Bot (engineer) Rifle I | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 175 | 1500 | 65 | Kinetic | 20038 |
 | NPC Turret Bot (engineer) Rifle II | Engi Turret Deployable "Gauss" (6) | 1 | 1 | 1 | 60 | 25 | 262 | 1500 | 65 | Kinetic | 30767 |
-| NPC UltraTrooper Weapon - Melding | NPC UltraTrooper Weapon (12172) | 1 | 1 | 1 | 0 | 6 | 350 | 2000 | 100 | Melding | 142004 |
-| NPC UltraTrooper Weapon - Thermal | NPC UltraTrooper Weapon (12172) | 1 | 1 | 1 | 0 | 6 | 350 | 2000 | 100 | Thermal | 124703 |
-| NPC Volcano Hippo Projectile Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 0 | 6780 | 0 | 0 | 0 | Thermal | 92865 |
-| NPC Wyrm Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 0 | 0 | 5.6 | Kinetic | 77118 |
-| NPC Wyrm Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 125 | 0 | 1950 | 5000 | 200 | Chemical | 77119 |
+| NPC UltraTrooper Weapon - Melding | NPC UltraTrooper Weapon (12172) | 1 | 1 | 1 | 200 | 6 | 350 | 2000 | 100 | Melding | 142004 |
+| NPC UltraTrooper Weapon - Thermal | NPC UltraTrooper Weapon (12172) | 1 | 1 | 1 | 200 | 6 | 350 | 2000 | 100 | Thermal | 124703 |
+| NPC Volcano Hippo Projectile Weapon | NPC Chosen Plasma Cannon (50) | 1 | 5 | 2 | 625 | 6780 | 4800 | 3750 | 365 | Thermal | 92865 |
+| NPC Wyrm Melee Attack | NPC Melee Medium (Spyder) (9) | 1 | 1 | 1 | 225 | 1 | 3600 | 0 | 5.6 | Kinetic | 77118 |
+| NPC Wyrm Spit Attack | Terrorclaw Spittle (13) | 1 | 1 | 1 | 125 | 10003 | 1950 | 5000 | 200 | Chemical | 77119 |
