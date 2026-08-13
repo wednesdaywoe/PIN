@@ -18,7 +18,14 @@ public static class HardcodedCharacterData
     // Don't "fix" it from dbitems::Battleframe.base_health, which is ~1000 — that column is the pre-scaling
     // base, and the level and attribute scaling that turns it into 19192 isn't implemented.
     public static int MaxHealth = 19192;
-    public static int MonsterMaxHealth = 2500;
+
+    // Still one flat pool for every creature in the game (DATA-6), just a smaller one: 2500 took about
+    // 64 rifle shots to kill anything, which is what N16 read as "bullet sponge". 500 is ~13. Chosen
+    // deliberately over the shipped figure — dbcharacter::MonsterScaling says 100 at level 1 — because
+    // level is the input PIN doesn't have, and 100 across the board would make everything trivial for
+    // the same reason 2500 made everything a slog. Replace the whole line, not the number, once level
+    // resolves.
+    public static int MonsterMaxHealth = 500;
 
     // The dump happened (MinimalSDB dump, prod-1962): build 1962 had no shields. base_shields is non-zero on
     // 5 of 1676 Battleframe rows, and the 2016 capture agrees — MaxShields reads 0 across every

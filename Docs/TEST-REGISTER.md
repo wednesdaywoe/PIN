@@ -86,9 +86,11 @@ then.
 **Two findings came out of the closing run and neither belongs to M2.** A player who dies has no way
 back — the server kills them correctly and the client never asks to respawn
 ([NET-23](ISSUE-REGISTER.md)) — and the first balance reading ever taken against real content says
-the monsters are bullet sponges, which is [DATA-6](ISSUE-REGISTER.md)'s flat 2500 health pool for
-every creature in the game rather than anything about the pack. The incoming half of that reading is
-roughly retail already.
+the monsters are bullet sponges, which is [DATA-6](ISSUE-REGISTER.md)'s flat health pool for every
+creature in the game rather than anything about the pack. The incoming half of that reading is
+roughly retail already. **The pool has since been dropped from 2500 to 500** (2026-08-13), so any
+NPC Combat entry re-run from here is being run against a different fight than the one recorded
+above — kills take about 13 rifle shots now rather than 64.
 
 None of those is the sort of thing a test entry catches twice, so each became a server-side guard
 rather than a note. `SpawnGroupSim` audits every standing NPC pair at startup for hostile

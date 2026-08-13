@@ -140,17 +140,26 @@ lowest populated band (only four rated monsters in the whole db are below it), a
 sits at 35, which matches how the two actually play. It is an encounter budget rather than a level,
 so it orders monsters correctly but does not convert to one.
 
-Against that curve PIN's flat 2500 is a level 17–18 monster, which is why 528 reads two or three
-tiers above what it is. Level 8 is 477 health and level 10 is 745 — the band where a few seconds of
-sustained fire kills something.
+Against that curve PIN's original flat 2500 was a level 17–18 monster, which is why 528 read two or
+three tiers above what it is. Level 8 is 477 health and level 10 is 745 — the band where a few
+seconds of sustained fire kills something.
+
+**The interim lever has been pulled: `MonsterMaxHealth` is 500 as of 2026-08-13** (user-chosen),
+which lands the flat pool at about level 8 on the shipped curve, or roughly 13 rifle shots against
+N16's 39-a-shot reading instead of 64. It is still one number for every creature in the game, so
+what it fixes is the slog and not the entry. Deliberately above `MonsterScaling`'s own level-1
+figure of 100: level is the input PIN doesn't have, and 100 across the board would make everything
+trivial for exactly the reason 2500 made everything a slog. **Nothing in game has confirmed the new
+feel yet** — the first read on it will come from whoever runs
+[K1](../In-Game-Tests/Kill-Rewards.md), which needs a lot of kills.
 
 The proposed fix keeps the shipped curve and puts the one missing number where PIN already authors
 world content: an optional per-member `level` in `spawn_group.json`, defaulting per group, set in
 game by a `spawngroup level` subcommand alongside `add` and `delay`. That closes this entry using
 only shipped data plus PIN's own placements, and it does not reintroduce player levels, which the
-[restoration charter](../PROGRESS.md) rules out. The interim lever is
-`HardcodedCharacterData.MonsterMaxHealth`, one number, worth moving to about 500 to test the feel
-before building the per-monster path.
+[restoration charter](../PROGRESS.md) rules out. The interim lever was
+`HardcodedCharacterData.MonsterMaxHealth` and it has now been moved, so what is left here is the
+per-monster path rather than the number.
 
 <a id="data-7"></a>
 

@@ -46,10 +46,11 @@ baseline the next pass diffs against.
   confirmed weapon curve
 - [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs
 - [ ] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
-  2500 pool for every creature is ~64 player rifle shots each, which is the "bullet sponge" reading
-  [N16](In-Game-Tests/NPC-Combat.md) came back with. Researched 2026-08-13: `MonsterScaling` shipped
-  whole (80 levels, 100..153726 health) but is keyed by level, and level was server content — 2500 is
-  a level 17 monster, which is why the lowest-tier arahna plays like a mid-tier one
+  pool for every creature, and at 2500 that was ~64 player rifle shots each — the "bullet sponge"
+  reading [N16](In-Game-Tests/NPC-Combat.md) came back with. Researched 2026-08-13: `MonsterScaling`
+  shipped whole (80 levels, 100..153726 health) but is keyed by level, and level was server content.
+  **Dropped to 500 on 2026-08-13** (~13 shots, about level 8 on the shipped curve), which fixes the
+  slog without fixing the entry — it is still one number for every creature, and unconfirmed in game
 - [ ] **DATA-7** — Character level comes from `HardcodedCharacterData`, not real progression
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)

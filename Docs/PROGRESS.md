@@ -190,7 +190,11 @@ monsters are bullet sponges while doing little damage — resolves to one existi
 the pack: incoming is roughly retail already (19192 player health is
 [DATA-3](ISSUE-REGISTER.md)'s observed figure, the Chosen's ~8 dps is
 [DATA-14](ISSUE-REGISTER.md)'s measured one), and outgoing is
-[DATA-6](ISSUE-REGISTER.md)'s flat 2500 health pool for every creature in the game.
+[DATA-6](ISSUE-REGISTER.md)'s flat health pool for every creature in the game. **That pool went from
+2500 to 500 on 2026-08-13** (user-chosen), which is about 13 rifle shots instead of 64 and lands the
+flat figure around level 8 on `MonsterScaling`'s shipped curve. It is still one number for every
+creature, so DATA-6 stays open on the real fix — level, which nothing gives a monster — and the new
+feel is unconfirmed until someone kills something.
 
 Those sittings also showed what the invented perception radius costs, and it is not cosmetic. At 40m
 nothing hostile fits on zone 448's starting shelf while Aero stands on it, because the shelf is
