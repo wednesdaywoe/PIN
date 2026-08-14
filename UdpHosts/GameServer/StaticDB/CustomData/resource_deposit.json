@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "zone_id": 448,
+    "name": "Station Shelf Crystite",
+    "node_type_id": 242,
+    "position": {
+      "x": 158.3,
+      "y": 249.3,
+      "z": 491.93
+    },
+    "radius": 30
+  },
+  {
+    "id": 2,
+    "zone_id": 448,
+    "name": "Basin Mouth Iron",
+    "node_type_id": 233,
+    "position": {
+      "x": 138.8,
+      "y": 181.3,
+      "z": 401.0
+    },
+    "radius": 45
+  },
+  {
+    "id": 3,
+    "zone_id": 448,
+    "name": "Basin West Crystite Trace",
+    "node_type_id": 241,
+    "position": {
+      "x": 85.5,
+      "y": 226.8,
+      "z": 400.9
+    },
+    "radius": 35
+  },
+  {
+    "id": 4,
+    "zone_id": 448,
+    "name": "North Flats Crystite and Iron",
+    "node_type_id": 239,
+    "position": {
+      "x": 31.6,
+      "y": 268.9,
+      "z": 401.0
+    },
+    "radius": 35
+  }
+]

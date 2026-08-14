@@ -20,8 +20,8 @@ public class ResourceNodeBeaconCalldownCommand : Command, ICommand
         if (request != null)
         {
             var encounterMan = context.Shard.EncounterMan;
-            uint nodeType = 20; // TODO: Figure out how to use and determine these
             var position = request.Position;
+            var nodeType = context.Shard.Resources.ResolveNodeType(position);
             encounterMan.CreateThumper(nodeType, position, caller as CharacterEntity, Params);
             return true;
         }

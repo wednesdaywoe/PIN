@@ -147,7 +147,8 @@ the client keeps `/`-prefixed input for itself, so anything starting with `/` ne
 | `deployable <deployableTypeId> [<x> <y> <z>]` | `spawn_deployable` | |
 | `vehicle <vehicleTypeId> [<x> <y> <z>]` | `spawn_vehicle` | |
 | `carryable <carryableTypeId> [<x> <y> <z>]` | `spawn_carryable` | |
-| `thumper [<beaconCalldownDefId>]` | `spawn_thumper` | at your feet, owned by you, so it pays you when it finishes; defaults to def 766269. A full cycle is 7½ minutes — see [Resource Payout](Resource-Payout.md) |
+| `thumper [<beaconCalldownDefId>]` | `spawn_thumper` | at your feet, owned by you, so it pays you when it finishes; defaults to def 766269. Since M4 the feedback names the deposit (or barren ground) it landed on, and the payout comes from that — see [Thump Placement](Thump-Placement.md). A full cycle is 7½ minutes — see [Resource Payout](Resource-Payout.md) |
+| `deposit list \| add <nodeTypeId> [radius] \| remove <id> \| radius <id> <metres> \| reload` | — | places a resource deposit centered where you stand and saves it immediately, same footing guards as `spawngroup`; see [Thump Placement](Thump-Placement.md) |
 | `target [entityId/name]` | — | no argument ray-casts from your aim; `target me` or `target self` targets you; prints the distance, so it doubles as a rangefinder |
 | `clear` | `cleartarget`, `targetclear`, `untarget`, `removetarget`, `remtarget`, `deletetarget`, `deltarget` | clears the command target |
 | `hostility` | `stance` | stance both ways against the current target |

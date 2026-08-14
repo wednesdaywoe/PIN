@@ -22,7 +22,7 @@ covers what's missing and what order to fix it in.
 M1 confirm the combat models                        done
  └─> M2 NPCs that fight back                        done
       ├─> M3 resources come out of the ground       done
-      │    ├─> M4 where you thump matters           <- open, unblocked
+      │    ├─> M4 where you thump matters           code complete, awaiting S1-S6 in game
       │    └─> M7 an encounter that plays
       └─> M5 killing something pays                 done
 
@@ -31,6 +31,26 @@ M8 session stability             independent, but "playable" isn't honest withou
 ```
 
 ## Current frontier
+
+**M4: where you thump matters is code complete as of 2026-08-13, and nothing of it has been seen in
+game.** The milestone that was "the one with no ground truth to check against" turned out to be
+half-shipped after all: `dbzonemetadata::ResourceNodeType` and `ResourceNodeTypeResource` carry 46
+node types and 67 live yield rows — the center-to-rim gradient is real data, crystite is item 10 in
+it, and node type 20, the literal every thumper used, is the data's own name for barren ground
+("Thumper Sifted Earth", one unit of dirt). Only the positions had to be invented, and they follow
+the spawn-group doctrine rather than the seeded scatter the stream doc proposed: four deposits on
+walked coordinates in [resource_deposit.json](../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json),
+and a `deposit` admin command that places one where you stand, with the same footing guards as
+`spawngroup`. A deposit is a disc in X and Y only, which is what makes it the first zone content
+that is safe to author without terrain. All four scan-protocol messages now carry real data, the
+thumper pays the gradient where it stands scaled by its own progress bar — so G4's partial-yield
+question died on the drawing board — and the flat 200-crystite grant is gone.
+[S1–S6](In-Game-Tests/Thump-Placement.md) are the check; S3–S5 are the exit condition, and the
+ranges (40–100 rich, 10–25 poor, ~nothing barren) cannot overlap, so single runs decide. The two
+invented values are flagged in the stream doc: `Unk4` on a scan area (radius, by guess) and the
+scan def's `Range` column (600m from a shipped comment, 100m elsewhere). What no code answers is
+which UI action makes the client send `GeographicalReportRequest`; S2 goes looking. Full detail in
+[streams/m4-thump-placement.md](streams/m4-thump-placement.md).
 
 **M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.md).** A
 Gaia creature died and paid 4 crystite, logged as `paid 4 of resource 10`, and the tester saw it
@@ -104,10 +124,9 @@ went first as the older debt. What was expected to be the risky half of it — t
 turned out to be separable from the payout entirely, so M5's resource half landed in a day and its
 item half is still the same open protocol question it was.
 
-**M4 is the remaining frontier and it is the one with no ground truth to check against**: the client
-only ever learned deposit positions by scanning, so nothing shipped with them and the distribution
-has to be invented. With M5 closed it is the last unbuilt thing between here and a loop that closes,
-apart from M6 keeping any of it across a logout.
+**M4 was the remaining frontier and is now built, unverified** — see the top of this section. With
+its code landed, the last unbuilt thing between here and a loop that closes is M6 keeping any of it
+across a logout.
 
 Three milestones closed on 2026-08-13, which is worth being wary of rather than pleased about. M5's
 own check found a defect that produced a completely convincing log — the reward system ran end to
@@ -293,13 +312,23 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Fill in the grant defs that matter — needs the client's ability data, same gap as
   [DATA-5](gaps/data.md#data-5)
 
-[Full detail](streams/m4-thump-placement.md) — 0 of 5 done
+[Full detail](streams/m4-thump-placement.md) — code complete 2026-08-13, awaiting
+[S1–S6](In-Game-Tests/Thump-Placement.md) in game
 
-- [ ] Per-zone resource map ("what's near here")
-- [ ] Load node type and yield tables
-- [ ] Wire the scan command, send `FoundResourceAreas`
-- [ ] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0`
-- [ ] Resolve node type from position instead of the literal `20`
+- [x] Load node type and yield tables — live data, 46 types and 67 gradient rows; the sampler is
+  pinned offline by `DepositSamplerTests` on the real rows
+- [~] Per-zone resource map ("what's near here") — four deposits on walked ground in
+  `resource_deposit.json`, plus the `deposit` command to author more in game; discs not yet seen
+  from a client (S6)
+- [~] Wire the scan command, send `FoundResourceAreas` — sends every deposit in range; whether the
+  client draws it, and what `Unk4` should really carry, is S1
+- [~] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0` — handler reads the ground
+  underfoot, `MapOpened` re-sends the latest report; the client-side trigger is unknown (S2)
+- [~] Resolve node type from position instead of the literal `20` — all three call sites resolve;
+  20 survives as what barren ground is ([DATA-2](ISSUE-REGISTER.md) fixed in code)
+- [~] Sample the gradient where the thumper landed and pay that out — payout scales with the
+  progress bar (G4's question, answered before it ran) and `ResourceNodeCompletedEvent` closes the
+  scan's loop; the flat 200 grant is gone (S3–S5)
 
 [Full detail](streams/m5-kill-rewards.md) — COMPLETE 2026-08-13, 1 dropped, 2 landed, 2 deferred
 

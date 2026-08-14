@@ -8,6 +8,12 @@ relates:
 
 # M4: Where You Thump Matters
 
+**Code complete 2026-08-13, none of it seen in game.** Every row of the table below landed in one
+pass; [S1–S6](../In-Game-Tests/Thump-Placement.md) are the check, and the exit condition at the
+bottom is unchanged and unmet. What follows first is the original framing, kept because the
+decisions only make sense against it; the record of what was actually built, and the two guesses it
+stands on, is at the end.
+
 Thumping isn't a decision yet. `nodeType` is the literal `20` at both call sites, with the TODO
 next to it saying as much, so every deposit in the world is the same deposit and the ground you
 pick means nothing. This milestone is the scan, the map behind it, and a payout that comes from
@@ -62,3 +68,45 @@ built to fit each other; this one has a hole where the original data was. The sc
 second unknown, since its record has only `Id` mapped and all five entries in its JSON are shells,
 though the comments name two of them: "Scan for resource nodes near the player" and "Scans for
 thumper nodes in a 600 meter radius".
+
+## What landed, 2026-08-13
+
+**Both tables shipped with live values, which the framing above didn't promise.** 46 node types, 67
+yield rows across 42 of them, loaded by `SDBInterface` like any other table. The names alone settle
+what zone 448 should scatter: "Crystite Only - (lvls 1-19)" (242, 40–100 at center), "Tier 1 -
+Rare - Crystite" (241, 10–25), the Tier 1 iron family (233–238), and crystite is item id 10 in the
+rows — the same resource id M3 and M5 already pay. Node type 20, the old hardcoded literal, turns
+out to be "Default, Thumper Sifted Earth - Resource Vein 0", paying one unit of item 30404: **the
+shipped data's own word for barren ground**, so the literal survives as the fallback for a spot no
+deposit covers rather than being deleted.
+
+**The deposit map is explicit positions, not the seeded scatter proposed above.** The spawn-group
+sittings ended offline authoring for content that needs a footing; a deposit only decides things in
+X and Y — the thumper stands on the player's own footing and the overlay projects to the map — so
+the stakes are lower, but a center nobody can stand on is still a deposit nobody can thump. So the
+same doctrine applies: [resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json)
+carries one entry per deposit (center, radius, node type), the `deposit` admin command places one
+where you are standing with the same airborne/`PlacedPosition` guards as `spawngroup`, and the four
+starter deposits sit on already-walked coordinates. [DepositSampler](../../UdpHosts/GameServer/Systems/Resources/DepositSampler.cs)
+does the arithmetic — nearest covering disc, linear center-to-edge blend, composition percentages —
+and is pinned offline by `DepositSamplerTests` on the real 242/239 rows.
+[ResourceMapSim](../../UdpHosts/GameServer/Systems/Resources/ResourceMapSim.cs) holds the per-shard
+state: deposit lookup, scan ids, and each character's latest report so `MapOpened` can re-show it
+and a completion can echo it.
+
+All four protocol messages now carry real data: the scan command sends `FoundResourceAreas`,
+`GeographicalReportRequest` has a handler that reads the ground under the character's feet,
+`MapOpened` resends the latest report instead of hardcoding `Valid = 0`, and `Thumper.OnSuccess`
+sends `ResourceNodeCompletedEvent` with the extracted composition and the report's `ScanId` when
+the owner's last reading was taken in the same deposit. The payout itself is the gradient sample
+scaled by the thumper's own progress bar — which is the figure `SetProgress` kept and nothing read,
+so **G4's partial-yield question is answered in the same stroke** and its entry was rewritten before
+it ever ran. Non-resource rolls are logged and dropped, the cut M3 and M5 made, applied a third
+time. The flat 200-crystite grant is gone with the milestone that needed it.
+
+**The two guesses, both flagged where they bite.** `Unk4` on a scan area is filled with the
+deposit's radius in metres — an overlay needs a size before a shade, but richness is the live
+alternative, and S1 is written to catch blobs rendering at a wrong uniform size. And the scan def's
+new `Range` column is invented: 600m for 34126 straight from its shipped comment, 100m for the
+rest. What nothing here answers is which UI action makes the client send
+`GeographicalReportRequest` at all; S2 goes looking.

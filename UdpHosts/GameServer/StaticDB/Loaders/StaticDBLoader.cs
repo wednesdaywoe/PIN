@@ -1442,6 +1442,19 @@ public class StaticDBLoader : ISDBLoader
             .ToDictionary(row => row.Id);
     }
 
+    public Dictionary<uint, ResourceNodeType> LoadResourceNodeType()
+    {
+        return LoadStaticDB<ResourceNodeType>("dbzonemetadata::ResourceNodeType")
+            .ToDictionary(row => row.Id);
+    }
+
+    public Dictionary<uint, List<ResourceNodeTypeResource>> LoadResourceNodeTypeResource()
+    {
+        return LoadStaticDB<ResourceNodeTypeResource>("dbzonemetadata::ResourceNodeTypeResource")
+            .GroupBy(row => row.NodeTypeId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+    }
+
     public Dictionary<KeyValuePair<uint, uint>, LevelCategoryScalars> LoadLevelCategoryScalars()
     {
         return LoadStaticDB<LevelCategoryScalars>("dbitems::LevelCategoryScalars")

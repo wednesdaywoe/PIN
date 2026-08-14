@@ -19,6 +19,7 @@ using GameServer.Systems.Hazards;
 using GameServer.Systems.Loot;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
+using GameServer.Systems.Resources;
 using GameServer.Systems.Spawning;
 using GameServer.Systems.SystemEvents;
 using GameServer.Systems.WeaponSim;
@@ -64,6 +65,7 @@ public class Shard : IShard
         ProjectileSim = new ProjectileSim(this);
         _shieldSim = new ShieldSim(this);
         Hazards = new HazardSim(this);
+        Resources = new ResourceMapSim(this);
         _killRewards = new KillRewardSim(this);
         Chat = new ChatService(this, EventBus);
         Admin = new AdminService(this);
@@ -86,6 +88,7 @@ public class Shard : IShard
     public ProjectileSim ProjectileSim { get; }
     public WeaponSim WeaponSim { get; }
     public HazardSim Hazards { get; }
+    public ResourceMapSim Resources { get; }
     public ChatService Chat { get; }
     public AdminService Admin { get; }
     public ulong InstanceId { get; }

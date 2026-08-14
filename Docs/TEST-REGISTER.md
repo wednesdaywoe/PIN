@@ -19,6 +19,12 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**The queue's next sitting is [Thump Placement](In-Game-Tests/Thump-Placement.md), S1–S6, written
+2026-08-13 and not yet run.** It checks [M4](PROGRESS.md), which landed the same day: four deposits
+in zone 448, a scan that sends them, a ground report that reads them, and a thumper that pays what
+it stands on. S3–S5 are the milestone's exit condition and their expected ranges cannot overlap, so
+single runs decide.
+
 **[Kill Rewards](In-Game-Tests/Kill-Rewards.md) closed [M5](PROGRESS.md) on 2026-08-13, on its
 second attempt.** A Gaia creature paid 4 crystite and the tester saw it arrive. Two melded resources
 were paid alongside it off the second loot table, which nobody had predicted — 77343/77344/77345
@@ -262,7 +268,16 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   arrive, which also proves the client merges a partial `InventoryUpdate` at all; G5 passed
   unattended. Left: G3, whether the client can call a thumper down without the admin command — "no"
   is a valid answer for as long as [I1](In-Game-Tests/Inventory.md) is open — and G4, what a
-  thumper cut short pays
+  thumper cut short pays. **M4 replaced the payout model after these passed** — a re-run of G2's
+  steps now pays what the ground holds, not a flat 200; the record stands as history and G4 was
+  rewritten for the gradient before ever running
+- [ ] [Thump Placement](In-Game-Tests/Thump-Placement.md) — 0 of 6, written 2026-08-13 as
+  [M4](PROGRESS.md)'s check, none run. Zone 448 now carries four deposits; S1 asks whether the
+  scan's `FoundResourceAreas` draws anything, S2 whether a ground report reads back, S3–S5 are the
+  milestone's exit condition (rich center 40–100 crystite, barren ground ~nothing, poor deposit
+  10–25, ranges that cannot overlap), S6 proves the `deposit` command's authoring loop survives a
+  restart. S1 and S2 carry the two protocol unknowns: `Unk4` (radius is a guess) and whatever UI
+  action sends `GeographicalReportRequest`
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and

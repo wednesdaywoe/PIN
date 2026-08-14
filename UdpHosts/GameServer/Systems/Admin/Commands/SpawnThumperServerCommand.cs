@@ -26,10 +26,6 @@ public class SpawnThumperServerCommand : ServerCommand
     // The def the Coral Forest debug thumper uses, and the only one that has ever been seen working.
     private const uint DefaultBeaconCalldownDefId = 766269;
 
-    // Same literal the real calldown path uses, and the same TODO: nothing resolves a node type from
-    // the ground under it yet. That's M4.
-    private const uint NodeType = 20;
-
     public override void Execute(string[] parameters, ServerCommandContext context)
     {
         var character = context.SourcePlayer?.CharacterEntity;
@@ -49,14 +45,22 @@ public class SpawnThumperServerCommand : ServerCommand
         }
 
         var position = character.Position;
-        context.Shard.EncounterMan.CreateThumper(NodeType, position, character, commandDef);
+
+        // Same resolution the real calldown path uses: the deposit under your feet, or barren ground.
+        var nodeType = context.Shard.Resources.ResolveNodeType(position);
+        context.Shard.EncounterMan.CreateThumper(nodeType, position, character, commandDef);
 
         if (character.PlacedPosition != null)
         {
             SourceFeedback("Warning: you were put here rather than having walked here, so this may be inside the terrain", context);
         }
 
-        SourceFeedback($"Thumper {defId} called down at {position}", context);
+        var deposit = context.Shard.Resources.FindDepositAt(position);
+        SourceFeedback(
+            deposit == null
+                ? $"Thumper {defId} called down at {position}, on barren ground (node type {nodeType})"
+                : $"Thumper {defId} called down at {position}, in deposit [{deposit.Id}] {deposit.Name} (node type {nodeType})",
+            context);
 
         Logger.Information(
             "thumper {DefId} for {Owner} at {Position}, calldown {CalldownTimeMs}ms, landed ability {LandedAbility}, completed ability {CompletedAbility}",

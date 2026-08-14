@@ -160,6 +160,7 @@ public class CustomDBInterface
     private static Dictionary<uint, Dictionary<uint, MeldingRepulsorDef>> _meldingRepulsor;
     private static Dictionary<uint, Dictionary<uint, LgvRaceDef>> _lgvRace;
     private static Dictionary<uint, Dictionary<uint, SpawnGroup>> _spawnGroup;
+    private static Dictionary<uint, Dictionary<uint, ResourceDeposit>> _resourceDeposit;
 
     public static void Init()
     {
@@ -317,6 +318,7 @@ public class CustomDBInterface
         _meldingRepulsor = loader.LoadMeldingRepulsor();
         _lgvRace = loader.LoadLgvRace();
         _spawnGroup = loader.LoadSpawnGroup();
+        _resourceDeposit = loader.LoadResourceDeposit();
     }
 
     // aptgss
@@ -471,6 +473,7 @@ public class CustomDBInterface
     public static Dictionary<uint, MeldingRepulsorDef> GetZoneMeldingRepulsors(uint zoneId) => _meldingRepulsor.GetValueOrDefault(zoneId) ?? [];
     public static Dictionary<uint, LgvRaceDef> GetZoneLgvRaces(uint zoneId) => _lgvRace.GetValueOrDefault(zoneId) ?? [];
     public static Dictionary<uint, SpawnGroup> GetZoneSpawnGroups(uint zoneId) => _spawnGroup.GetValueOrDefault(zoneId) ?? [];
+    public static Dictionary<uint, ResourceDeposit> GetZoneResourceDeposits(uint zoneId) => _resourceDeposit.GetValueOrDefault(zoneId) ?? [];
 
     /// <summary>
     ///     Writes the current spawn groups to disk and re-reads them, so what the server holds and what
@@ -501,6 +504,50 @@ public class CustomDBInterface
     public static uint NextSpawnGroupId(uint zoneId)
     {
         var zone = _spawnGroup.GetValueOrDefault(zoneId);
+        uint id = 1;
+        while (zone != null && zone.ContainsKey(id))
+        {
+            id++;
+        }
+
+        return id;
+    }
+
+    /// <summary>
+    ///     Writes the current deposits to disk and re-reads them, so what the server holds and what the
+    ///     file says can't drift. Only the <c>deposit</c> admin command calls this.
+    /// </summary>
+    public static void SaveResourceDeposits()
+    {
+        var loader = new CustomDBLoader();
+        loader.SaveResourceDeposits(_resourceDeposit.Values.SelectMany(zone => zone.Values));
+        _resourceDeposit = loader.LoadResourceDeposit();
+    }
+
+    /// <summary>Re-reads deposits from disk, discarding the in-memory set — for hand-edited files.</summary>
+    public static void ReloadResourceDeposits()
+    {
+        _resourceDeposit = new CustomDBLoader().LoadResourceDeposit();
+    }
+
+    /// <summary>Adds a deposit to the in-memory set. Call <see cref="SaveResourceDeposits"/> to persist it.</summary>
+    public static void AddResourceDeposit(ResourceDeposit deposit)
+    {
+        if (!_resourceDeposit.TryGetValue(deposit.ZoneId, out var zone))
+        {
+            _resourceDeposit[deposit.ZoneId] = zone = new Dictionary<uint, ResourceDeposit>();
+        }
+
+        zone[deposit.Id] = deposit;
+    }
+
+    public static bool RemoveResourceDeposit(uint zoneId, uint depositId) =>
+        _resourceDeposit.TryGetValue(zoneId, out var zone) && zone.Remove(depositId);
+
+    /// <summary>Lowest deposit id not in use in this zone, so a new deposit never collides with an old one.</summary>
+    public static uint NextResourceDepositId(uint zoneId)
+    {
+        var zone = _resourceDeposit.GetValueOrDefault(zoneId);
         uint id = 1;
         while (zone != null && zone.ContainsKey(id))
         {

@@ -67,6 +67,20 @@ replicate like any other entity. The full loop is defined in AeroMessages:
 Scan with SIN → find areas → query a location → call down a beacon → node completes. That is the
 thumping loop, and the 1962 client still speaks all of it.
 
+Crafting's protocol survives too (checked 2026-08-13 against the client binary and AeroMessages).
+The full Fabrication command set is in both:
+
+| Message | Direction |
+|---------|-----------|
+| `Fabrication_FetchAllRecipes`, `_FetchAllInstances`, `_FetchInstance` | command |
+| `Fabrication_Start`, `_ApplyAction`, `_GenerateResult`, `_Finalize`, `_Claim` | command |
+| a `_Response` event for each of the eight | event |
+| `TrackRecipe`, `ClearTrackedRecipe` | event |
+
+PIN's enums already assign all sixteen ids (Commands 240–247, Events 176–183). Fetch recipes →
+start → apply actions → generate result → finalize → claim is a whole crafting session, and the
+client still speaks that as well.
+
 ### Client UI — thumping yes, crafting no
 
 Present:
@@ -87,22 +101,35 @@ gui/components/MainUI/Panels/Teaser/textures/EN/comingSoon.dds
 That is the "coming soon" card v1.6 put where the crafting screen used to be. The 45 surviving
 panels include `Garage`, `Inventory` and `Tinkering`, but nothing to craft on.
 
+The deleted panel has a name: MPU, the Molecular Printing Unit. `lib/lib_Items.lua` still carries
+the note *"MPU was using this table, until we deleted it"*, and the Sinvironment hub still maps
+its "crafting" page to an `MPU` component that no longer exists. The Salvage panel went the same
+way — `Mainframe.lua` still posts to `Salvage:Main`, and only `salvageIcon.png` is left of it.
+
+The engine half did not go with the Lua. `FirefallClient.exe` still exports the recipe API —
+`GetRecipe`, `GetRecipeIds`, `GetRecipeInfo`, `GetRecipeList` — and surviving code still calls
+it: `Mainframe.lua` keeps a live "CRAFTING FUNCTIONS" section that fetches research recipes via
+`Game.GetRecipeIds("Research")`, `Webframe.lua` keeps a crafting callback, and `lib_WebCache.lua`
+still knows the `/manufacturing/certs` web endpoint.
+
 ## What that means
 
 Thumping is a server-side job. Data, protocol and UI are all present, so it is implementation
 work against a client that is still expecting it — the same shape as everything else in
 [the progress ledger](../PROGRESS.md).
 
-Crafting has one hard blocker, and it is the client, not the data. Nine thousand recipes are
-useless without a screen to pick them on, and that screen was deleted from a binary we cannot
-rebuild.
+Crafting has one hard blocker, and it is the surface, not the data or the protocol. Nine
+thousand recipes are useless without a screen to pick them on. But the screen was Lua, not
+engine code: what v1.6 deleted was the MPU component from the GUI tree, and the binary kept its
+whole half — the Fabrication messages and the recipe API.
 
 The blocker is softer than it sounds. **Firefall's UI is plain-text Lua and XML on disk** —
 `Thumper.lua` is ASCII, panels are registered in `gui/UISets/MainUI.xml`, and the game shipped an
 addon ecosystem that the community wrote against for years. A crafting panel can be authored
-rather than recovered. That is real work, and it is a different kind of work from the rest of PIN
-— client-side Lua against an undocumented UI API rather than C# against a known wire format — but
-it is not blocked on anything lost.
+rather than recovered, and it would not start from zero: the engine's recipe functions are still
+exported and `Mainframe.lua` shows them being called. That is real work, and it is a different
+kind of work from the rest of PIN — client-side Lua against an undocumented UI API rather than
+C# against a known wire format — but it is not blocked on anything lost.
 
 ## Do the recipes still resolve?
 
@@ -142,3 +169,6 @@ Five thousand working recipes is not a foundation problem.
   progression? It is 100% internally consistent, so it can be read straight out.
 - Does the surviving Tinkering panel expose enough of a recipe interface to be repurposed before
   anything new is written?
+- Does `Game.GetRecipeIds` answer from local SDB data, or does the engine fill its recipe list
+  from a `Fabrication_FetchAllRecipes_Response` round-trip? Decides whether a new panel shows
+  recipes before the server implements anything.

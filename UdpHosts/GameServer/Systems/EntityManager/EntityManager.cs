@@ -351,8 +351,10 @@ public class EntityManager
             // Battleframe Station
             SpawnDeployable(395, new Vector3(170.84642f, 243.20822f, 491.71597f), new Quaternion(0f, 0f, 0.92874485f, 0.37071964f));
 
-            // Thumper
-            _shard.EncounterMan.CreateThumper(20, new Vector3(158.3f, 249.3f, 491.93f), aero, SDBInterface.GetResourceNodeBeaconCalldownCommandDef(766269));
+            // Thumper. Its spot is inside the Station Shelf Crystite deposit, so it resolves like any
+            // player calldown would — and still pays nobody, being Aero-owned (G5's regression check).
+            var thumperPosition = new Vector3(158.3f, 249.3f, 491.93f);
+            _shard.EncounterMan.CreateThumper(_shard.Resources.ResolveNodeType(thumperPosition), thumperPosition, aero, SDBInterface.GetResourceNodeBeaconCalldownCommandDef(766269));
 
             // Datapad
             SpawnCarryable(26, new Vector3(160.3f, 250.3f, 491.93f));

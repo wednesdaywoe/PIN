@@ -478,8 +478,8 @@ public class Factory
             //     return new SinLinkRevealCommand(CustomDBInterface.GetSinLinkRevealCommandDef(commandId));
             // case CommandType.SinLinkUnlock:
             //     Zero instances in BaseCommandDef
-            // case CommandType.ResourceNodeScanDef:
-            //     return new ResourceNodeScanDefCommand(CustomDBInterface.GetResourceNodeScanDefCommandDef(commandId));
+            case CommandType.ResourceNodeScanDef:
+                return new ResourceNodeScanDefCommand(CustomDBInterface.GetResourceNodeScanDefCommandDef(commandId));
             case CommandType.ResourceNodeBeaconCalldown:
                 return new ResourceNodeBeaconCalldownCommand(SDBInterface.GetResourceNodeBeaconCalldownCommandDef(commandId));
             // case CommandType.SendTipMessage:

@@ -64,6 +64,8 @@ public class SDBInterface
     private static Dictionary<uint, Ammo> _ammo;
     private static Dictionary<uint, LevelBand> _levelBand;
     private static Dictionary<uint, ResourceNodeBeacon> _resourceNodeBeacon;
+    private static Dictionary<uint, ResourceNodeType> _resourceNodeType;
+    private static Dictionary<uint, List<ResourceNodeTypeResource>> _resourceNodeTypeResource;
     private static Dictionary<KeyValuePair<uint, uint>, LevelCategoryScalars> _levelCategoryScalars;
     private static Dictionary<uint, FrameProgressionLevel> _frameProgressionLevel;
     private static Dictionary<uint, Blueprints> _blueprints;
@@ -328,6 +330,8 @@ public class SDBInterface
         _ammo = loader.LoadAmmo();
         _levelBand = loader.LoadLevelBand();
         _resourceNodeBeacon = loader.LoadResourceNodeBeacon();
+        _resourceNodeType = loader.LoadResourceNodeType();
+        _resourceNodeTypeResource = loader.LoadResourceNodeTypeResource();
         _levelCategoryScalars = loader.LoadLevelCategoryScalars();
         _frameProgressionLevel = loader.LoadFrameProgressionLevel();
         _blueprints = loader.LoadBlueprints();
@@ -617,6 +621,8 @@ public class SDBInterface
     public static Ammo GetAmmo(uint id) => _ammo.GetValueOrDefault(id);
     public static LevelBand GetLevelBand(uint id) => _levelBand.GetValueOrDefault(id);
     public static ResourceNodeBeacon GetResourceNodeBeacon(uint id) => _resourceNodeBeacon.GetValueOrDefault(id);
+    public static ResourceNodeType GetResourceNodeType(uint id) => _resourceNodeType.GetValueOrDefault(id);
+    public static List<ResourceNodeTypeResource> GetResourceNodeTypeResources(uint nodeTypeId) => _resourceNodeTypeResource.GetValueOrDefault(nodeTypeId) ?? [];
     public static LevelCategoryScalars GetLevelCategoryScalar(uint attributeCategory, uint level) => _levelCategoryScalars.GetValueOrDefault(new KeyValuePair<uint, uint>(attributeCategory, level));
     public static FrameProgressionLevel GetFrameProgressionLevel(uint level) => _frameProgressionLevel.GetValueOrDefault(level);
     public static Blueprints GetBlueprint(uint id) => _blueprints.GetValueOrDefault(id);

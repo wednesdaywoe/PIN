@@ -28,8 +28,15 @@ One thing G2 did not do: exercise the aptitude command. The payout is read strai
 `CustomDBInterface` by `Thumper.OnSuccess`, so M3's first cut — the uncommented `case` in
 `Factory.LoadCommand` — is still code that has never run.
 
-Crystite is resource SDB id **10**. The payout is 200 of it, from
-`ModifyOwnerResourcesCommandDef` **50329**, the one row of 145 that carries real values.
+Crystite is resource SDB id **10**.
+
+**M4 replaced the payout model on 2026-08-13, after G1/G2/G5 passed.** The flat 200 from grant
+50329 is gone: a thumper now pays what the ground under it holds, sampled from the shipped yield
+gradient of the deposit it stands in, scaled by its progress bar. The G2 and G5 records below
+describe the old behaviour and stay as history; a re-run of their steps pays deposit-dependent
+amounts instead of 200, and the current expectations live in
+[Thump Placement](Thump-Placement.md). G4 was rewritten for the new model rather than kept as
+history, since it had never run.
 
 **The stream is split at the delivery boundary on purpose**, and the split earned itself. G1 asked
 only whether a resource count can change on screen at all, with no thumper anywhere near it, because
@@ -204,25 +211,32 @@ returned the request to a chain that didn't run, or the ability the client fired
 contains a `ResourceNodeBeaconCalldownCommand`. The request is logged as discarded if a second one
 arrives unconsumed — `grep -a "unconsumed thumper" ~/Games/PIN/logs/GameServer.log`.
 
-## [ ] G4: Collecting early pays the same as waiting
+## [ ] G4: Collecting early pays the fraction it managed
 
-Written as a question, not an assertion, because the code says one thing and retail did another.
-Interacting with a thumper mid-thump sends it straight to `LEAVING`, and `OnSuccess` — where the
-payout lives — runs 12 seconds later regardless of how it got there. So PIN pays the full 200 for a
-thumper you cut short after ten seconds. Retail scaled the yield to how long it ran.
+Rewritten for M4 on 2026-08-13, before ever running. The original entry asked whether the flat
+grant was genuinely flat (it was, by code reading); now `Thumper.OnSuccess` multiplies every rolled
+quantity by the progress bar, so a thumper cut short pays the fraction it mined. That is the answer
+G2 accidentally previewed — the tester collected at `COMPLETED`, when progress was already 1.00,
+and was paid in full.
 
-1. `thumper`
-2. Let it reach `THUMPING` — step 5 of G2's grep confirms it — and wait no longer.
+Run it inside the Station Shelf Crystite deposit (walk to within a few metres of 158.3, 249.3 near
+the Battleframe Station), because a fraction of a 40–100 roll is measurable and a fraction of
+barren ground's single unit is not.
+
+1. Note the crystite count. `thumper` — expect `in deposit [1] Station Shelf Crystite`.
+2. Let it reach `THUMPING` — `grep -a "Thumper .* entered" ~/Games/PIN/logs/GameServer.log | tail -3`
+   confirms it — then wait roughly 2½ minutes, about half the 300-second thumping window.
 3. Interact with it (hold to use).
-4. `grep -a "Thumper .* entered" ~/Games/PIN/logs/GameServer.log | tail -3`
+4. `grep -a "mined node type" ~/Games/PIN/logs/GameServer.log | tail -1` — the line prints
+   `completion 0.xx`, which should sit near 0.50.
 5. `grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log | tail -1`
 
-Pass: it goes to `LEAVING`, and 12 seconds later pays 200 — the same as G2. That confirms the flat
-grant is genuinely flat, which is what this cut of M3 promised, and it is **not** a defect.
+Pass: the payout is about half of a 40–100 center roll — 20–50, and consistent with step 4's
+completion figure (payout ≈ roll × completion). `dbg_inventory` matches.
 
-Record it as a gap rather than a failure if it pays: partial yield needs a progress figure the
-payout can read, `SetProgress` already keeps one, and nothing consumes it. That belongs with M4's
-yield work, not here.
+**Fail, it pays the full roll despite `completion 0.xx`:** the scaling isn't applied on the
+interaction path — `OnInteraction` sets `LEAVING` without a final `SetProgress`, so check what
+`Progress` held when `OnSuccess` read it.
 
 **Fail, it pays twice** — once for the interaction and once when the natural cycle would have
 finished — the state machine is being driven from two places. That would be a real defect.

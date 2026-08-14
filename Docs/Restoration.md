@@ -11,10 +11,12 @@ bring back and what we are deliberately not.
 
 ## What this settles
 
-**Crafting needs a surface, not the original surface.** v1.6 deleted the crafting panel and the
-client cannot be rebuilt, but nothing requires the replacement to look like what was removed.
-Repurposing the surviving `Tinkering` panel, or authoring a minimal one in Lua, are both legitimate
-answers. Fidelity was the expensive constraint and it does not apply.
+**Crafting needs a surface, not the original surface.** v1.6 deleted the crafting panel (the MPU
+component, plain Lua/XML) but left the engine's recipe API and the whole Fabrication protocol in
+the binary, so only the screen is gone and nothing requires its replacement to look like what was
+removed. Repurposing the surviving `Tinkering` panel, or authoring a minimal one in Lua against
+the surviving API, are both legitimate answers. Fidelity was the expensive constraint and it does
+not apply.
 
 **No obligation to the whole recipe set.** 9,228 blueprints exist and 5,052 have a resolvable
 output and ingredient. A curated subset that makes the loop work is a complete answer; shipping all
@@ -50,14 +52,38 @@ present in 1962. Rebuilding CPU/Mass/Power is new construction, not removal, and
 whether 1962's garage still shows three budgets or only an aggregate.
 
 **Checked in game 2026-08-13: the garage shows a power rating and an equipment score, and nothing
-else.** Two aggregates, no CPU, mass or power bars, so the beta budget has no surface left in the
-client — the same shape of problem as the deleted crafting panel, and the same answer applies:
-a replacement surface would have to be authored, not restored. Only `PowerRating` (attribute 1451)
-is modelled server-side, hardcoded to 100 in
+else.** Two aggregates, no CPU, mass or power bars. Only `PowerRating` (attribute 1451) is modelled
+server-side, hardcoded to 100 in
 [CharacterLoadout.cs](../UdpHosts/GameServer/Data/CharacterLoadout.cs) and 681 in
 [CharacterEntity.cs](../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs); equipment score
-appears nowhere in the codebase, so the client is deriving it. That makes the three-budget model a
-deliberate build rather than a reconnection, and it is not on any milestone.
+appears nowhere in the codebase, so the client is deriving it.
+
+**The bars themselves survive, though, in Lua.**
+`gui/components/MainUI/Sinvironment/garage/helpers/SNV_ConstraintsBars.lua` is intact: a three-bar
+widget keyed on exactly `"mass"`, `"power"` and `"cpu"`, with hover preview deltas and an
+over-budget tint, and a header comment documenting the whole API. Nothing in the client requires
+the file, so it's orphaned rather than deleted. The garage still carries the scars around it.
+`BattleframeGarage.lua` computes a `{mass, power, cpu}` delta on every `OnExamine` and then
+discards it, `RecalculateConstraints` survives as a commented-out field, and the skin still defines
+`constraint_preview_higher`, `constraint_preview_lower`, `exceed_constraint` and a
+`constraints_scale` region.
+
+What's gone is the engine half. Item-info field names appear as plain strings in
+`FirefallClient.exe`, so their absence carries weight, and there's no whole-word `mass` or `cpu` in
+the binary at all. Every read of `item_info.constraints` in the garage falls back to zeroes because
+the numbers never arrive.
+
+That looks like a better starting position than the crafting panel, which has no surviving
+surface — but the comparison runs the other way (checked 2026-08-13). Crafting lost only its Lua:
+the full Fabrication command set survives in both the client binary and AeroMessages, and the
+engine still exports `GetRecipeIds`/`GetRecipeInfo`, which `Mainframe.lua` still calls. Missing
+Lua can be authored. The bars are the inverse case — the Lua survived and the engine feed is what
+died, inside a binary we can't rebuild. Thumping still sits above both, with every layer intact.
+The build is real either way, and still not on any milestone, but it's re-wiring a preserved
+widget rather than authoring one. The question it turns on is how three numbers reach a widget
+the engine won't feed. Attribute ids 1151 and 1152 are
+the first place to look, being live percentage stats the client already formats as Power Mod and
+Mass Mod.
 
 **Sources become design references.** The [patch corpus](Wiki/Sources.md) stops being a spec to
 conform to and becomes an argument about what each loop was for and why it worked. Beta-era

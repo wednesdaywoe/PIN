@@ -1,22 +1,27 @@
 [
   {
     "id": 173725,
+    "range": 100,
     "comment": ""
   },
   {
     "id": 176829,
+    "range": 100,
     "comment": "33918. Resource Node Scan Test ; Scan for resource nodes near the player"
   },
   {
     "id": 176833,
+    "range": 100,
     "comment": ""
   },
   {
     "id": 181662,
+    "range": 600,
     "comment": "34126. TEST Dev Resource Scanner ; Scans for thumper nodes in a 600 meter radius"
   },
   {
     "id": 188306,
+    "range": 100,
     "comment": ""
   }
 ]

@@ -12,6 +12,7 @@ using GameServer.Systems.EntityManager;
 using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.ProjectileSim;
+using GameServer.Systems.Resources;
 using GameServer.Systems.Spawning;
 using GameServer.Systems.SystemEvents;
 using GameServer.Systems.WeaponSim;
@@ -38,6 +39,7 @@ public interface IShard : IPacketSender
     ProjectileSim ProjectileSim { get; }
     WeaponSim WeaponSim { get; }
     HazardSim Hazards { get; }
+    ResourceMapSim Resources { get; }
     ChatService Chat { get; }
     AdminService Admin { get; }
     uint ZoneId { get; }

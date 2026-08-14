@@ -15,7 +15,9 @@ using GameServer.Packets;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.customdata;
 using GameServer.Systems.Encounters;
+using GameServer.Systems.Resources;
 using Serilog;
+using static AeroMessages.GSS.V66.Character.Command.GeographicalReportRequest;
 using static AeroMessages.GSS.V66.Character.Command.NonDevDebugCommand;
 using LoadoutVisualType = AeroMessages.GSS.V66.Character.LoadoutConfig_Visual.LoadoutVisualType;
 
@@ -323,15 +325,58 @@ public class BaseController : Base
     [MessageID((byte)Commands.MapOpened)]
     public void MapOpened(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
     {
-        var mapOpened = new GeographicalReportResponse
-        {
-            ScanId = 0,
-            Position = new Vector3 { X = 0, Y = 0, Z = 0 },
-            Valid = 0x00,
-            Composition = []
-        };
+        // Re-show the character's latest ground reading, if they ever took one. The empty
+        // invalid report is what this handler always sent; the client renders it as no report.
+        var character = player.CharacterEntity;
+        var report = client.AssignedShard.Resources.GetLastReport(character.EntityId);
 
-        client.NetChannels[ChannelType.ReliableGss].SendMessage(mapOpened, player.CharacterEntity.EntityId);
+        var mapOpened = report == null
+            ? new GeographicalReportResponse
+            {
+                ScanId = 0,
+                Position = new Vector3 { X = 0, Y = 0, Z = 0 },
+                Valid = 0x00,
+                Composition = []
+            }
+            : new GeographicalReportResponse
+            {
+                ScanId = report.ScanId,
+                Position = report.Position,
+                Valid = 0x01,
+                Composition = report.Composition
+            };
+
+        client.NetChannels[ChannelType.ReliableGss].SendMessage(mapOpened, character.EntityId);
+    }
+
+    [MessageID((byte)Commands.GeographicalReportRequest)]
+    public void GeographicalReportRequest(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<GeographicalReportRequest>();
+        var character = player.CharacterEntity;
+        var position = character.Position;
+
+        // The request carries the client's own verdict on the spot and nothing else; the position is
+        // the character's feet. A spot the client already rejected gets no reading, and barren ground
+        // gets an invalid report, which the client renders as "empty".
+        GeoScanReport report = null;
+        if (request.Feedback == ClientGeographicalReportRequestFeedback.OK)
+        {
+            report = client.AssignedShard.Resources.TakeReport(character.EntityId, position);
+        }
+
+        _logger.Information(
+            "Geo report for {Character} at {Position}: feedback {Feedback}, {Result}",
+            character.EntityId,
+            position,
+            request.Feedback,
+            report == null ? "barren" : $"scan {report.ScanId}, node type {report.NodeTypeId}, {report.Composition.Length} resource(s)");
+
+        var response = report == null
+            ? new GeographicalReportResponse { ScanId = 0, Position = position, Valid = 0x00, Composition = [] }
+            : new GeographicalReportResponse { ScanId = report.ScanId, Position = report.Position, Valid = 0x01, Composition = report.Composition };
+
+        client.NetChannels[ChannelType.ReliableGss].SendMessage(response, character.EntityId);
     }
 
     [MessageID((byte)Commands.RequestTeleport)]

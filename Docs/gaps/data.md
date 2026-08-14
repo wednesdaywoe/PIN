@@ -25,13 +25,17 @@ whenever fidelity wins out over observability. See [M1](../streams/m1-combat-mod
 
 <a id="data-2"></a>
 
-### DATA-2 — Thump node type hardcoded to `20` for every deposit [ ] open, scheduled as M4
+### DATA-2 — Thump node type hardcoded to `20` for every deposit [~] fixed in code 2026-08-13, unverified in game
 
-[ResourceNodeBeaconCalldownCommand.cs:23](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Calldown/ResourceNodeBeaconCalldownCommand.cs#L23)
-resolves `nodeType` to the literal `20` at both call sites, with a TODO next to it. Every deposit
-in the world is currently the same deposit. Fixing this is the headline of
-[M4](../streams/m4-thump-placement.md); recorded here too because it's live, wrong output today,
-not just an unbuilt feature.
+Was: `nodeType` resolved to the literal `20` at both call sites, so every deposit in the world was
+the same deposit. M4 replaced the literal with a lookup —
+[ResourceMapSim.ResolveNodeType](../../UdpHosts/GameServer/Systems/Resources/ResourceMapSim.cs)
+answers with the deposit under the calldown position, out of the per-zone
+[resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json), and
+`20` survives only as what barren ground legitimately is ("Default, Thumper Sifted Earth", whose
+shipped yield is one unit of sifted earth). All three callers resolve: the real calldown, the
+`thumper` admin command, and the zone 448 debug thumper. Closes when
+[S3–S5](../In-Game-Tests/Thump-Placement.md) see distinct payouts in game.
 
 <a id="data-3"></a>
 

@@ -9,6 +9,7 @@ using Shared.Common;
 public class CustomDBLoader
 {
     public const string SpawnGroupPath = "./StaticDB/CustomData/spawn_group.json";
+    public const string ResourceDepositPath = "./StaticDB/CustomData/resource_deposit.json";
 
     private static readonly SnakeCasePropertyNamingPolicy _policy = new SnakeCasePropertyNamingPolicy();
     private readonly JsonSerializerOptions _serializerOptions = new()
@@ -680,7 +681,7 @@ public class CustomDBLoader
 
     public Dictionary<uint, ResourceNodeScanDefCommandDef> LoadResourceNodeScanDefCommandDef()
     {
-        return LoadJSON<ResourceNodeScanDefCommandDef>("./StaticDB/CustomData/Todo/aptgss_ResourceNodeScanDefCommandDef.json")
+        return LoadJSON<ResourceNodeScanDefCommandDef>("./StaticDB/CustomData/aptgss_ResourceNodeScanDefCommandDef.json")
             .ToDictionary(row => row.Id);
     }
 
@@ -909,6 +910,25 @@ public class CustomDBLoader
         return LoadJSON<SpawnGroup>(SpawnGroupPath)
                .GroupBy(row => row.ZoneId)
                .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
+    }
+
+    public Dictionary<uint, Dictionary<uint, ResourceDeposit>> LoadResourceDeposit()
+    {
+        return LoadJSON<ResourceDeposit>(ResourceDepositPath)
+               .GroupBy(row => row.ZoneId)
+               .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
+    }
+
+    /// <summary>
+    ///     Writes every zone's deposits back out, for the same reason <see cref="SaveSpawnGroups"/>
+    ///     exists: the <c>deposit</c> command places content where a player is standing, and a position
+    ///     that only exists in memory is one crash away from being walked again. Writes the deploy
+    ///     directory's copy — copy it back to the repo like spawn_group.json.
+    /// </summary>
+    public void SaveResourceDeposits(IEnumerable<ResourceDeposit> deposits)
+    {
+        var options = new JsonSerializerOptions(_serializerOptions) { WriteIndented = true };
+        File.WriteAllText(ResourceDepositPath, JsonSerializer.Serialize(deposits.OrderBy(d => d.ZoneId).ThenBy(d => d.Id), options));
     }
 
     /// <summary>

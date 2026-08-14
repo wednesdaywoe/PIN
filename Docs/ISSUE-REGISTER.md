@@ -39,7 +39,9 @@ baseline the next pass diffs against.
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
-- [ ] **DATA-2** — Thump `nodeType` hardcoded to `20`, every deposit identical (scheduled as M4)
+- [~] **DATA-2** — Thump `nodeType` hardcoded to `20`, every deposit identical. Fixed in code
+  2026-08-13 by M4 — node type resolves from the deposit under the calldown, barren ground stays
+  20 — unverified in game until [S3–S5](In-Game-Tests/Thump-Placement.md) run
 - [ ] **DATA-3** — `Battleframe.base_health` reads ~1000 in SDB vs. 19192 observed live, no scaling
   logic
 - [ ] **DATA-4** — Splash and ability-projectile range falloff are guessed/unmodeled, unlike the
