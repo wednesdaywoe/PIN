@@ -26,16 +26,47 @@ M1 confirm the combat models                        done
       │    └─> M7 an encounter that plays
       └─> M5 killing something pays                 done
 
-M6 persistence across sessions   current frontier; M3 and M5 landed, so there's something to save
-M8 session stability             independent, but "playable" isn't honest without it
+M6 persistence across sessions   built, unverified; M3 and M5 landed, so there's something to save
+M8 session stability             built, unverified; independent, but "playable" isn't honest without it
 ```
 
 ## Current frontier
 
-**M6, persistence across sessions, is the frontier. Its decision is made and its code is written, and
-it is waiting on a client.** M3 and M5 closed on 2026-08-13 and M4 on 2026-08-14, so there was
-finally something worth saving, and as of 2026-08-14 the GameServer saves it.
-[C1–C7](In-Game-Tests/Persistence.md) are the check and none of them have run.
+**M6 and M8 are both code-complete and both waiting on the same thing, a client.** M6 saves a
+session's gains to disk; M8 makes the server's own reliable messages survive a dropped packet. Between
+them they have thirteen unrun test entries, [C1–C7](In-Game-Tests/Persistence.md) and
+[L1–L6](In-Game-Tests/Reliability.md), and neither milestone closes until the first entry in its
+stream passes on screen.
+
+**M8 was built entirely out of measurements rather than choices, which is the part worth carrying
+forward.** The 2016 capture holds 24 resent packets across 456619, and reading them settled the
+retransmit timeout (322–665ms, median 452, so PIN waits 450), the resend count the header carries
+(3 on all 24, in both directions, none carrying 1 or 2 despite every one being a first resend), that
+a resend is byte-identical to its original (15 of 15 where both survive), and that an ack is
+cumulative rather than per packet (the client acked 60% of the server's reliable packets and the
+session still needed only 24 resends). `CaptureReplay --transport` reproduces all of it. The one
+number retail can't answer is how many attempts to make, because no sequence in the capture is
+resent twice; PIN stops at three, which is where the header's two-bit field stops counting, and logs
+a Warning when it gives up because that is the only record anywhere that a client's copy of
+something is now permanently wrong.
+
+**The inbound half is where the live bug was.** `Channel` decoded a resend correctly and then handed
+it to the controller anyway, so anything the client resent ran twice. It re-acks and drops the
+duplicate now. A resent fragment arriving mid-split also used to hit `SortedDictionary.Add` on a key
+already present, which is an exception on the shard thread and exactly how
+[NET-21](ISSUE-REGISTER.md) killed the server. **The same read opened
+[NET-25](ISSUE-REGISTER.md) and left it open on purpose** — PIN acks the highest sequence it has seen
+rather than the highest with no gap behind it, so a lost client packet is reported back as received
+and never resent, which is NET-1's own failure inbound. Holding the ack at the gap is easy; what to
+do when the gap never fills has no evidence behind it, and stalling a channel for a session is worse
+than losing one message. **[NET-24](ISSUE-REGISTER.md) may fall out of this**:
+its code read cleared the scope-out message itself and moved the suspicion to a channel that acked
+but never resent, and [L6](In-Game-Tests/Reliability.md) is written to say whether that reading was
+right.
+
+**M6's decision is made and its code is written.** M3 and M5 closed on 2026-08-13 and M4 on
+2026-08-14, so there was finally something worth saving, and as of 2026-08-14 the GameServer saves
+it. [C1–C7](In-Game-Tests/Persistence.md) are the check and none of them have run.
 
 **The decision was whether RIN owns the data, and the answer is no, because RIN has never run.** That
 was checked rather than assumed: `start-pin.sh` starts exactly three servers and RIN is not among
@@ -68,11 +99,10 @@ There is no `clientdb.sd2` anywhere on it, so the GameServer can't boot and Mini
 ConstraintSweep, EffectSweep and SdbDocs have nothing to read. The client's own Lua UI source, which
 is what unblocked M4, ships inside the same install. So M6 can be designed, built and unit-tested
 here in full, and only its exit condition waits for a sitting, along with the whole
-[test queue](TEST-REGISTER.md). **M8 is the other milestone shaped this way** — a retransmit queue is
-server-side and unit-testable, and only "test under induced packet loss" needs a client — and
-[NET-24](ISSUE-REGISTER.md)'s code read suspects the stale thumper is
-[NET-1](ISSUE-REGISTER.md) in costume, so M8 may close a live defect rather than only a theoretical
-one.
+[test queue](TEST-REGISTER.md). **M8 turned out to be shaped the same way and was built the same
+day**, and it went further than expected without a client: the capture answers the wire questions a
+sitting would otherwise have had to guess at, so the only thing left needing one is
+[L1](In-Game-Tests/Reliability.md) itself.
 
 **M4: where you thump matters is done, closed 2026-08-14 by
 [S1–S6](In-Game-Tests/Thump-Placement.md) passing in full.** The exit condition was "thump a rich
@@ -463,11 +493,18 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] A failure path, not just `OnSuccess`
 - [ ] Scale payout to defence performance and M4's yield
 
-[Full detail](streams/m8-session-stability.md) — 0 of 3 done
+[Full detail](streams/m8-session-stability.md) — 1 of 3 done, 1 built and unverified,
+[L1–L6](In-Game-Tests/Reliability.md) 0 of 6 run
 
-- [ ] Track sent reliable messages, retransmit on missing ack
-- [ ] Confirm the inbound resend path
-- [ ] Test under induced packet loss
+- [~] Track sent reliable messages, retransmit on missing ack — built, unverified.
+  `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it, resends
+  after 450ms, and gives up loudly after three attempts. Every constant in it was measured off the
+  2016 capture rather than chosen
+- [x] Confirm the inbound resend path — the capture answers it: 24 resent packets, and the 15 whose
+  original also survives are byte-identical to it once the XOR is undone. The read found a live bug
+  next to it, since a recognised resend was decoded and then handled a second time anyway
+- [ ] Test under induced packet loss — [L1](In-Game-Tests/Reliability.md) is the exit condition and
+  needs a client with 5% loss on `lo`
 
 ---
 

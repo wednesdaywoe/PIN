@@ -307,14 +307,12 @@ public class NetworkClient : INetworkClient
                 AssignedShard.MigrateOut((INetworkPlayer)this);
                 break;
             case ControlPacketType.MatrixAck:
-                // TODO: Track reliable packets
                 var matrixAckPackage = packet.Unpack<MatrixAck>();
-                Logger.Verbose("--> {Channel} Ack for {AckForNum} on {ForChannel}.", ChannelType.Control, Utils.SimpleFixEndianness(matrixAckPackage.AckForNum), ChannelType.Matrix);
+                NetChannels[ChannelType.Matrix].Acknowledge(Utils.SimpleFixEndianness(matrixAckPackage.AckForNum));
                 break;
             case ControlPacketType.ReliableGSSAck:
-                // TODO: Track reliable packets
                 var reliableGssAckPackage = packet.Unpack<GSSAck>();
-                Logger.Verbose("--> {Channel} Ack for {AckForNum} on {ForChannel}.", ChannelType.Control, Utils.SimpleFixEndianness(reliableGssAckPackage.AckForNum), ChannelType.ReliableGss);
+                NetChannels[ChannelType.ReliableGss].Acknowledge(Utils.SimpleFixEndianness(reliableGssAckPackage.AckForNum));
                 break;
             case ControlPacketType.TimeSyncRequest:
                 var timeSyncRequestPackage = packet.Unpack<TimeSyncRequest>();

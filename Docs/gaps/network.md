@@ -16,13 +16,39 @@ subsystem; IDs are flat across all of them.
 
 <a id="net-1"></a>
 
-### NET-1 — No retransmit queue [ ] open, scheduled as M8
+### NET-1 — No retransmit queue [~] built 2026-08-14, unverified in game
 
-`Control_PacketAvailable` logs client acks and discards them; nothing tracks what PIN itself sent
-so nothing can resend it. "Reliable" currently means the server acks what the client sends, not
-that the server's own messages survive loss. Invisible on a LAN, and the reason
-[M8](../streams/m8-session-stability.md) has to land before this is shown to anyone over a real
+`Control_PacketAvailable` logged client acks and discarded them; nothing tracked what PIN itself
+sent, so nothing could resend it. "Reliable" meant the server acked what the client sent, not that
+the server's own messages survived loss. Invisible on a LAN, and the reason
+[M8](../streams/m8-session-stability.md) had to land before this was shown to anyone over a real
 connection.
+
+**Built 2026-08-14.** [RetransmitQueue](../../UdpHosts/GameServer/RetransmitQueue.cs) holds every
+Matrix and ReliableGss packet until the client acks it, and `Channel.SendOverdue` sends again what
+hasn't been answered in 450ms. [L1–L6](../In-Game-Tests/Reliability.md) are the check and none have
+run; L1 is the exit condition and needs a session played under induced loss.
+
+**Every constant in it came off the 2016 capture rather than out of the air**, which is what
+`CaptureReplay --transport` was written for. That capture holds 24 resends across 456619
+sub-packets:
+
+- **450ms before resending.** The 15 resends whose original is also in the capture went out 322 to
+  665ms after it, median 452, on a link whose round trip measured about 165ms.
+- **Resend count 3 in the header.** All 24 carry 3, both directions, both reliable channels. Not one
+  carries 1 or 2 despite every one being a first resend, so the two-bit field reads as a marker at
+  its top value rather than as an attempt counter. PIN sends what the client was built to receive.
+- **The same bytes.** All 15 pairs are byte-identical once the XOR is undone, so a resend is the
+  original with a new header and a masked body, not a rebuild.
+- **A cumulative ack.** `NextSeqNum` is `AckForNum + 1` on 36753 of 36759 acks, and the client acked
+  only 60% of the server's reliable packets across a session that needed 24 resends, which is only
+  possible if one ack covers the run behind it.
+
+**The one thing retail cannot answer is how many attempts to make**, because no sequence in the
+capture is resent twice. PIN stops after three, which is where the header's resend field stops
+counting, and logs a Warning when it does: a dropped reliable packet is the only event in the server
+that leaves a client's copy of something permanently wrong, and nothing above the transport layer
+ever finds out.
 
 <a id="net-2"></a>
 
@@ -35,11 +61,28 @@ this gets worse with scale, but it's not scale-gated — it can bite today.
 
 <a id="net-3"></a>
 
-### NET-3 — Inbound resend detection unverified [~] needs confirmation
+### NET-3 — Inbound resend detection [x] confirmed and fixed 2026-08-14
 
-[Channel.cs:93](../../UdpHosts/GameServer/Channel.cs#L93) carries its own TODO about whether its
-resend-detection and XOR-decode logic is actually correct. Nobody has yet constructed a case that
-would prove or disprove it.
+`Channel` carried its own TODO about whether its resend-detection and XOR-decode logic was correct,
+and nobody had constructed a case that would prove or disprove it. The 2016 capture is that case.
+It holds 24 resent packets, and the 15 whose original also survives decode to byte-identical
+payloads once the XOR is undone, so the detection and the table are both right. The TODO is gone and
+the reasoning is in the comment that replaced it.
+
+**Reading it found a live bug next to it.** A recognised resend was decoded and then dispatched like
+any other packet, so anything the client resent ran twice — one trigger pull firing two shots, one
+interaction resolving twice. A resend is only sent when the sender believes its packet went unacked,
+so a resend of a sequence already behind the channel's high-water mark is a lost ack rather than a
+lost packet: PIN now re-acks it, which is what stops the loop, and drops the copy.
+
+**A second fault on the same path could take the shard down.** A resent fragment arriving inside a
+split run hit `SortedDictionary.Add` with a key already in the dictionary, which throws, on the
+shard thread, with no isolation around it — the same shape as [NET-21](#net-21). It's an indexer
+assignment now.
+
+Neither has been seen in game. The capture holds exactly one client-to-server resend across the
+whole session, so this is rare enough that only [L4](../In-Game-Tests/Reliability.md) under induced
+loss is likely to exercise it.
 
 <a id="net-4"></a>
 
@@ -456,3 +499,31 @@ check all used the raw indexer, which throws `KeyNotFoundException`. `Shard.Tick
 `Shard.RunThread` catch nothing — NET-21's fix only wrapped the encounter loop — so an entity removed
 from the network thread part-way through a scope pass could take the whole shard down. All three now
 read it safely.
+
+<a id="net-25"></a>
+
+### NET-25 — An ack claims a packet that never arrived [ ] open, found 2026-08-14
+
+`Channel.Process` acks the highest inbound sequence it has seen, not the highest it has seen with no
+gap behind it. So if the client sends 8, 9 and 10 and 8 is lost, PIN acks 9 and then 10, and the
+client reads that as confirmation that 8 arrived.
+
+**That is the exact mirror of [NET-1](#net-1), on the inbound side, and it survives NET-1's fix.**
+An ack is cumulative — 36753 of the 2016 capture's 36759 acks put `NextSeqNum` at `AckForNum + 1`,
+which is only meaningful if `AckForNum` names the end of an unbroken run — so PIN is telling the
+client that everything up to the number it names got through. Whatever was in packet 8 is lost
+silently, and the client is the only party that could have resent it.
+
+**Found by reading, not by running, and deliberately not fixed the same day.** Fixing it means PIN
+holding its ack at the gap until the missing packet arrives, which needs a record of what was taken
+above the gap so the resends of 9 and 10 aren't run a second time. `DeliveredSequences` is already
+that record, added for the duplicate suppression in [NET-3](#net-3), so the work is small. What is
+missing is the other half of the policy: what to do when the gap never fills. The capture shows
+retail's client acking, never retail's server recovering, so there is no evidence for how long to
+stall before giving up and jumping the ack forward, and a wrong answer here stalls the channel for
+the rest of the session rather than losing one message. That is a worse failure than the one being
+fixed, which is why this is recorded rather than guessed at.
+
+Costs a lost client command — a shot, an interaction, an ability — roughly as often as the link
+drops a reliable packet, which is never on loopback and rarely anywhere else. Every session PIN has
+ever run has been on loopback.

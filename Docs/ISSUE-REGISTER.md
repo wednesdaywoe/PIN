@@ -25,7 +25,28 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 [DATA-17](gaps/data.md#data-17) when the zone's richest deposit turned out to be sitting inside the
 starting station's no-thumping zone and was moved onto ground the client agrees can be thumped, and
 [NET-22](gaps/network.md#net-22) when N8–N13 passed against replicated NPC poses. That is
-4 of 18 DATA closed, 2 of 24 NET, 1 of 3 CLIENT.
+4 of 18 DATA closed, 3 of 25 NET, 1 of 3 CLIENT.
+
+**[NET-3](gaps/network.md#net-3) is the first entry ever closed by the packet capture rather than by
+a sitting or a code read**, and it is worth knowing the shape of it. The entry existed because
+`Channel` carried a TODO asking whether its own resend decoding was right and nobody had a case that
+could answer it. The capture is that case: 24 resent packets, 15 of them with the original alongside,
+all 15 byte-identical once the XOR is undone. Reading it also found two faults sitting next to the
+one being confirmed — a resend that was recognised and then handled a second time anyway, and a
+resent split fragment that threw on the shard thread the way [NET-21](gaps/network.md#net-21) did.
+Neither would have been found by running the code, because neither happens on a link that doesn't
+drop anything. **[NET-1](gaps/network.md#net-1) came out of the same read**, built the same day and
+calibrated entirely off that capture; it stays `[~]` until [L1](In-Game-Tests/Reliability.md) plays a
+session under induced loss.
+
+**[NET-25](gaps/network.md#net-25) is the one that same read opened and left open, on purpose.** PIN
+acks the highest sequence it has seen rather than the highest with no gap behind it, so a lost client
+packet is reported back as received and the client never resends it — NET-1's own failure, inbound,
+and untouched by NET-1's fix. Holding the ack at the gap is a small change. What to do when the gap
+never fills is not, and the capture only ever shows retail's client acking, never retail's server
+recovering, so there is nothing to calibrate the giving-up half against. Stalling a channel for the
+rest of a session is a worse outcome than losing one message, which is the whole reason this is a
+register entry today rather than a commit.
 
 **The two entries opened in the same period are the ones worth reading**, because neither was found
 by reading code: [NET-24](gaps/network.md#net-24), a finished thumper the client leaves standing in
@@ -33,7 +54,9 @@ the world forever while asking for keyframes of it every 5.5 seconds, and
 [DATA-18](gaps/data.md#data-18), the hardcoded ability that sends it away. They come off the same
 `OnInteraction`/`OnUpdate` split, and NET-24's code read makes it a likely costume for
 [NET-1](gaps/network.md#net-1) — one scope-out sent once on a channel that acks but never resends.
-M8 would close it, if that reading is right.
+That channel resends now, so [L6](In-Game-Tests/Reliability.md) is written to settle it either way:
+a count that drops to zero closes NET-24, and one that keeps climbing retires the theory, which is
+worth as much.
 
 **What this register is short of is a re-audit, not entries.** Everything below was mined in one
 sweep on 2026-08-12 across [the progress ledger](PROGRESS.md)'s milestone write-ups, the
@@ -41,8 +64,8 @@ sweep on 2026-08-12 across [the progress ledger](PROGRESS.md)'s milestone write-
 narratives (Charge-Camera and Transport-And-Lifecycle especially), and a grep for
 TODO/hardcoded/guess markers across the codebase. Only entries a sitting touched have been looked at
 since, so the parts of the codebase the test queue hasn't reached are still on their first pass.
-M6 will land the first system PIN has ever written that owns data of its own, which is a category
-this register has no entries in yet.
+M6 landed the first system PIN has ever written that owns data of its own, and this register still
+has no entries in that category, which reflects nothing having run rather than nothing being wrong.
 
 ---
 
@@ -119,12 +142,23 @@ this register has no entries in yet.
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 2 of 24 closed
+[Full detail](gaps/network.md) — 3 of 25 closed
 
-- [ ] **NET-1** — No retransmit queue; "reliable" only acks, never resends (scheduled as M8)
+- [~] **NET-1** — No retransmit queue; "reliable" only acked, never resent. **Built 2026-08-14**,
+  unverified in game: `RetransmitQueue` holds every Matrix and ReliableGss packet until the client
+  acks it and resends after 450ms, giving up loudly after three attempts. Every constant in it was
+  measured off the 2016 capture rather than chosen — 24 resends across 456619 sub-packets say the
+  timeout is 322–665ms (median 452), the header's resend count is always 3, a resend is byte-identical
+  to its original, and an ack is cumulative.
+  [L1–L6](In-Game-Tests/Reliability.md) are the check and L1 is the exit condition
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
   player
-- [~] **NET-3** — Inbound resend detection / XOR decode correctness unverified
+- [x] **NET-3** — Inbound resend detection / XOR decode correctness was unverified, and the 2016
+  capture settled it on 2026-08-14: 24 resent packets, and the 15 whose original also survives decode
+  to byte-identical payloads. Reading it found two live faults beside it — a recognised resend was
+  decoded and then handled a second time, so anything the client resent ran twice, and a resent
+  fragment arriving mid-split threw out of `SortedDictionary.Add` on the shard thread, the same shape
+  as NET-21. Both fixed, neither seen in game
 - [~] **NET-4** — `MTUProbe` received and silently dropped, no response sent
 - [ ] **NET-5** — Oversized UGSS messages needing RGSS split aren't handled
 - [ ] **NET-6** — Physics material id 0 has no fallback, drops hit attribution
@@ -192,6 +226,15 @@ this register has no entries in yet.
   implemented, but the client never sends it, so death ends the session. Found by
   [N16](In-Game-Tests/NPC-Combat.md) on 2026-08-13, the first time the game rather than a command
   killed a player. Suspect `RespawnTimesData`, which `Die` never writes
+
+- [ ] **NET-25** — An ack claims a packet that never arrived. `Channel` acks the highest inbound
+  sequence it has seen rather than the highest with no gap behind it, so a lost client packet is
+  reported to the client as received and never resent — the exact mirror of NET-1 on the inbound
+  side, and it survives NET-1's fix. Found by reading on 2026-08-14 and deliberately not fixed the
+  same day: holding the ack at a gap is easy, and what to do when the gap never fills has no
+  evidence behind it, since a wrong answer stalls the channel for the session rather than losing one
+  message. Costs a lost shot or interaction about as often as the link drops a reliable packet,
+  which on loopback is never
 
 ## Client & Environment — CLIENT
 

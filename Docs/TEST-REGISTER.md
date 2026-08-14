@@ -19,13 +19,27 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**The queue is paused, and for once not because something is blocked.** [M6](PROGRESS.md) is being
-built on a machine with no client installed, so nothing here can run until the work reaches one. Two
-things follow. Everything the next sitting should carry is written down below rather than remembered,
-and [Capture Replay](In-Game-Tests/Capture-Replay.md) is the only stream that still answers anything
-today. It needs one 19MB download and no client at all, which makes the open wire questions
-([NET-10](ISSUE-REGISTER.md), [NET-12](ISSUE-REGISTER.md), [NET-17](ISSUE-REGISTER.md)) the cheapest
-work in the register right now.
+**The queue is paused, and for once not because something is blocked.** [M6](PROGRESS.md) and
+[M8](PROGRESS.md) were both built on a machine with no client installed, so nothing here can run
+until the work reaches one. Two things follow. Everything the next sitting should carry is written
+down below rather than remembered, and [Capture Replay](In-Game-Tests/Capture-Replay.md) is the only
+stream that still answers anything today.
+
+**That stream just paid for itself, and this is the first time it has.** M8's whole implementation
+was calibrated off the 2016 capture instead of off a guess — the retransmit timeout, the resend count
+the header carries, whether a resend is the same bytes, whether an ack is cumulative — and reading it
+closed [NET-3](ISSUE-REGISTER.md) outright and found two live faults nobody would have reproduced,
+because neither happens on a link that doesn't drop packets. The open wire questions
+([NET-10](ISSUE-REGISTER.md), [NET-12](ISSUE-REGISTER.md), [NET-17](ISSUE-REGISTER.md)) are the same
+shape and are still the cheapest work in the register.
+
+**[Reliability Under Loss](In-Game-Tests/Reliability.md) is new and unrun, L1 through L6.** It is the
+only stream in the queue that has to break the network deliberately, with a `tc netem` rule on `lo`
+that the entry spells out and that **survives until it is deleted** — an entry run the next day
+against a forgotten qdisc measures the wrong thing. **L2 is the one to read first when something
+looks wrong**: it counts resend attempts, and a spread across 1, 2 and 3 means the client is
+rejecting PIN's resends rather than the network being bad, which is the one thing in M8 that no
+offline test can settle.
 
 **[Persistence](In-Game-Tests/Persistence.md) is new and unrun, C1 through C7**, written the same day
 M6's code landed rather than after it. **C1 is the milestone's exit condition** and the rest are
@@ -331,6 +345,16 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   in, it's still there. C3 (relog twice, nothing doubles) and C5 (a session that ends without logging
   out) are the two most likely to find something, and C7 checks that a save file which can't be read
   costs a character its progress rather than its ability to log in
+
+## Session stability
+
+- [ ] [Reliability Under Loss](In-Game-Tests/Reliability.md) — 0 of 6 passing, not yet run.
+  [M8](PROGRESS.md)'s check, written as the code landed. **L1 is the exit condition**: play ten
+  minutes under 5% induced loss and nothing ends up invisible, immortal or somewhere it isn't. L2 is
+  the diagnosis to run first and is pure log-reading — a resend that keeps escalating to attempt 3
+  means the client is rejecting the resend encoding, not that the link is bad. **L6 is the one with
+  something riding on it beyond the milestone**: it says whether [NET-24](ISSUE-REGISTER.md), the
+  thumper the client never removes, was [NET-1](ISSUE-REGISTER.md) in costume all along
 
 ## Client prediction
 

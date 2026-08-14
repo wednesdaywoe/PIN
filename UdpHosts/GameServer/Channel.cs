@@ -29,6 +29,12 @@ public class Channel
     private readonly ConcurrentQueue<Memory<byte>> _outgoingPackets;
     private readonly SortedDictionary<ushort, GamePacket> _incomingSplitMessagePackets;
 
+    // Only a sequenced reliable channel has anything to retransmit: an unsequenced one has no way
+    // to name the packet it wants back, and an unreliable one is never acked in the first place.
+    private readonly RetransmitQueue? _retransmits;
+
+    private readonly DeliveredSequences _delivered = new();
+
     private Channel(ChannelType channelType, bool isSequenced, bool isReliable,  bool isGSS, INetworkClient networkClient, ILogger logger)
     {
         Type = channelType;
@@ -43,6 +49,11 @@ public class Channel
         _incomingPackets = new ConcurrentQueue<GamePacket>();
         _outgoingPackets = new ConcurrentQueue<Memory<byte>>();
         _incomingSplitMessagePackets = [];
+
+        if (isSequenced && isReliable)
+        {
+            _retransmits = new RetransmitQueue();
+        }
     }
 
     public delegate void PacketAvailableDelegate(GamePacket packet);
@@ -74,6 +85,19 @@ public class Channel
         _incomingPackets.Enqueue(packet);
     }
 
+    /// <summary>
+    ///     Retire everything a client ack covers. An ack is cumulative, so this clears the whole
+    ///     run up to the sequence it names rather than that one packet.
+    /// </summary>
+    public void Acknowledge(ushort ackForNum)
+    {
+        var retired = _retransmits?.Acknowledge(ackForNum) ?? 0;
+        if (retired > 0)
+        {
+            _logger.Verbose("--> {Channel} ack for {SeqNum} retired {Retired}, {Pending} still unacked", Type, ackForNum, retired, _retransmits!.Pending);
+        }
+    }
+
     public void Process(CancellationToken ct)
     {
         while (_outgoingPackets.TryDequeue(out var qi))
@@ -81,6 +105,8 @@ public class Channel
             _client.Send(qi);
             LastActivity = DateTime.Now;
         }
+
+        SendOverdue();
 
         while (_incomingPackets.TryDequeue(out var packet))
         {
@@ -90,7 +116,9 @@ public class Channel
                 sequenceNumber = Utils.SimpleFixEndianness(packet.Read<ushort>());
             }
 
-            // TODO: Verify if resent message handling works and resolve any issues
+            // Confirmed against the 2016 capture rather than reasoned about: it holds 24 resent
+            // packets, and the 15 whose original also survives decode to byte-identical payloads
+            // once this XOR is undone. All 24 carry a resend count of 3, in both directions.
             if (packet.Header.ResendCount > 0)
             {
                 var xorIndex = packet.Header.ResendCount - 1;
@@ -101,12 +129,34 @@ public class Channel
                 }
 
                 packet = new GamePacket(packet.Header, new ReadOnlyMemory<byte>(data));
-                _logger.Debug("---> Resent packet!!! C:{Channel}: {PacketBytes} bytes", Type, packet.TotalBytes);
+                _logger.Debug("---> Resent packet C:{Channel} SeqNum {SeqNum}: {PacketBytes} bytes", Type, sequenceNumber, packet.TotalBytes);
+
+                // A client only resends what it believes went unacked, so a resend of something
+                // already taken means the ack was lost rather than the packet. Ack it again to stop
+                // the loop, and drop the copy: handing the same message to a controller twice fires
+                // whatever it does twice. Tested against what was actually taken rather than against
+                // LastAck, because LastAck skips over a gap (NET-25) and everything under a gap
+                // would then be read as a duplicate of something never received.
+                if (IsReliable && _delivered.Contains(sequenceNumber))
+                {
+                    _client.SendAck(Type, sequenceNumber, packet.Received);
+                    _logger.Debug("---> Already had C:{Channel} SeqNum {SeqNum}, re-acked without handling it again", Type, sequenceNumber);
+                    LastActivity = DateTime.Now;
+                    continue;
+                }
+            }
+
+            if (IsReliable)
+            {
+                _delivered.Remember(sequenceNumber);
             }
 
             if (InSplitMode)
             {
-                _incomingSplitMessagePackets.Add(sequenceNumber, packet);
+                // Assigned rather than added, because a resent fragment arriving mid-run carries a
+                // sequence number already in the buffer and Add throws on one. An exception here
+                // takes the shard thread with it, which is how NET-21 played out.
+                _incomingSplitMessagePackets[sequenceNumber] = packet;
                 if (!packet.Header.IsSplit)
                 {
                     // Finish split mode
@@ -128,13 +178,13 @@ public class Channel
             {
                 // Enter split mode
                 InSplitMode = true;
-                _incomingSplitMessagePackets.Add(sequenceNumber, packet);
+                _incomingSplitMessagePackets[sequenceNumber] = packet;
                 _client.SendAck(Type, sequenceNumber, packet.Received);
                 LastAck = sequenceNumber;
             }
             else
             {
-                if (IsReliable && (sequenceNumber > LastAck || (sequenceNumber < 0xff && LastAck > 0xff00)))
+                if (IsReliable && Sequence.IsAfter(sequenceNumber, LastAck))
                 {
                     _client.SendAck(Type, sequenceNumber, packet.Received);
                     LastAck = sequenceNumber;
@@ -472,6 +522,34 @@ public class Channel
     }
 
     /// <summary>
+    ///     Send again anything the client hasn't acked in time, and report anything that has run out
+    ///     of attempts. A resend goes straight out rather than back through the outgoing queue,
+    ///     because it already carries the sequence number and header it was built with.
+    /// </summary>
+    private void SendOverdue()
+    {
+        if (_retransmits == null || _retransmits.Pending == 0)
+        {
+            return;
+        }
+
+        foreach (var resend in _retransmits.Due(DateTime.UtcNow))
+        {
+            if (resend.GaveUp)
+            {
+                // Nothing above this layer knows a message was lost, so this line is the only
+                // record that the client's copy of something is now permanently wrong.
+                _logger.Warning("{Channel} SeqNum {SeqNum} went unacked through {Attempts} resends and has been dropped", Type, resend.SequenceNumber, resend.Attempt);
+                continue;
+            }
+
+            _logger.Debug("<- {Channel} resending SeqNum {SeqNum}, attempt {Attempt}, {Pending} unacked", Type, resend.SequenceNumber, resend.Attempt, _retransmits.Pending);
+            _client.Send(resend.Packet);
+            LastActivity = DateTime.Now;
+        }
+    }
+
+    /// <summary>
     ///     Send data to the client
     /// </summary>
     /// <param name="packetData">Memory buffer</param>
@@ -492,8 +570,10 @@ public class Channel
             var t = new Memory<byte>(new byte[length]);
             packetData[..(length - headerLength)].CopyTo(t[headerLength..]);
 
+            ushort sequenceNumber = 0;
             if (IsSequenced)
             {
+                sequenceNumber = CurrentSequenceNumber;
                 if (IsReliable)
                 {
                     _logger.Verbose("<- {Channel} SeqNum =  {SeqNum}", Type, CurrentSequenceNumber);
@@ -509,6 +589,11 @@ public class Channel
             var header = new GamePacketHeader(Type, 0, packetData.Length + headerLength > _maxPacketSize, (ushort)t.Length);
             var headerData = Serializer.WritePrimitive(Utils.SimpleFixEndianness(header.PacketHeader));
             headerData.CopyTo(t);
+
+            // Tracked at the point the bytes are finished rather than when they leave, which on a
+            // GSS channel is up to one network tick later. That makes the timeout slightly early,
+            // never late, which is the harmless direction.
+            _retransmits?.Track(sequenceNumber, t, DateTime.UtcNow);
 
             if (IsGSS)
             {
