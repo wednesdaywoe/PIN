@@ -367,6 +367,15 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   shaped like the one D5h fixed (27 player-reachable), entirely blocked on P0 confirming the
   certificate fix ([NET-19](ISSUE-REGISTER.md), rolled up as [NET-20](ISSUE-REGISTER.md))
 
+## Battleframe constraints
+
+- [x] [Constraints Transport](In-Game-Tests/Constraints-Transport.md) — **1 of 1, closed
+  2026-08-14, same day it was written.** Unknown JSON keys in the `garage_slots` web response
+  survive into Lua in all three shapes (scalar, object, array), so route 2 of
+  [Battleframe Constraints](streams/battleframe-constraints.md) can carry capacity numbers on the
+  existing payload. A JSON `null` drops its key entirely rather than arriving as `nil` — send a
+  value or send nothing. The probes were removed after the run
+
 ## Known to need the client, not yet scheduled
 
 Not tests so much as things that can't be checked offline at all, kept here so they're not mistaken

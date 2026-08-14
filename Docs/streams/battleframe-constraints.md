@@ -171,8 +171,12 @@ capacity" attribute is known. Three routes:
    there's no schema to satisfy.
 3. Author them client-side as Lua constants.
 
-Route 2 is underrated. The fields are already there, the endpoint is already answered, and the
-allocate-surplus system would need `AllocatedPower` anyway.
+Route 2 is underrated, and as of 2026-08-14 it is proven open:
+[W1](../In-Game-Tests/Constraints-Transport.md) showed unknown JSON keys survive the engine's
+JSON→Lua conversion in all three shapes, scalar, object and array. The fields are already there,
+the endpoint is already answered, the allocate-surplus system would need `AllocatedPower` anyway,
+and there is no client-side schema to satisfy. One caveat from the same run: a JSON `null` drops
+its key entirely, so a capacity is a value or an absence, never a null.
 
 ## The sweep, and what it settles
 
@@ -215,14 +219,21 @@ mass move and speed drop.
 
 ## What can't be done from here
 
-Three checks need the machine with the client on it, and the first one decides how much of the rest
-is even reachable:
+Three checks still need a client session, and the first one decides how much of the rest is even
+reachable:
 
 - Whether the engine hands attributes 951 to 953 to Lua in an item's ordinary stat list. One tooltip
-  inspection settles it. If it doesn't, the used half has to travel by route 2 or 3 as well.
+  inspection settles it. If it doesn't, the used half has to travel by route 2 or 3 as well — and
+  route 2 is now proven to work.
 - `SNV_ConstraintsBars.lua`'s actual API, rather than Restoration's summary of it.
 - Whether `RecalculateConstraints` can be un-commented in `BattleframeGarage.lua` without the rest
   of the removed engine half.
+
+A fourth check was here and is answered: unknown JSON keys in the `garage_slots` response survive
+into Lua, in every shape a capacity could take —
+[W1](../In-Game-Tests/Constraints-Transport.md), run 2026-08-14. Route 2 is open. The same run
+showed the client is installed on this machine after all, so none of these checks wait on other
+hardware.
 
 Everything above the exit line is server-side and doesn't wait on any of that. The costing sweep is
 the one exception, and only narrowly: it needs `clientdb.sd2`, which ships with the client, but not
