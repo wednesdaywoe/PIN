@@ -1,3 +1,8 @@
+REMINDER
+add a fourth item to the client-machine checklist at battleframe-constraints.md:218-226 — do unknown JSON keys in garage_slots survive into Lua? One session settles whether route 2 can carry capacities at all, and route 2 is the one you called underrated.
+
+
+
 Notes for researching how Beta worked. 
 
 >From IGN - Jun 18 2016
