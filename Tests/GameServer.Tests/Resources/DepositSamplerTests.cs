@@ -161,6 +161,93 @@ public class DepositSamplerTests
         Assert.Empty(DepositSampler.ToComposition([]));
     }
 
+    [Fact]
+    public void ASingleResourceVeinAdvertisesAllOfItself()
+    {
+        var share = Assert.Single(DepositSampler.AdvertisedShares(CrystiteOnly()));
+
+        Assert.Equal(Crystite, share.ItemId);
+        Assert.Equal(100, share.Percent);
+    }
+
+    [Fact]
+    public void AComboVeinAdvertisesCenterMidpointShares()
+    {
+        // Center midpoints are 11.5 crystite and 24 iron out of 35.5, so the advertisement
+        // rounds to 32% and 68% — and being midpoints, it never varies between requests.
+        var shares = DepositSampler.AdvertisedShares(CrystiteAndIron());
+
+        Assert.Equal(2, shares.Count);
+        Assert.Equal(new DepositShare(Crystite, 32), shares[0]);
+        Assert.Equal(new DepositShare(RawIron, 68), shares[1]);
+    }
+
+    [Fact]
+    public void AVeinWithNothingAtTheCenterAdvertisesNothing()
+    {
+        Assert.Empty(DepositSampler.AdvertisedShares([]));
+    }
+
+    [Fact]
+    public void AnOutpostAdvertisesEveryResourceInReachMostAbundantFirst()
+    {
+        // Two deposits in reach of a 100m outpost and one far outside it. Shares add up across
+        // deposits, so the pure crystite vein (100%) plus the combo's crystite (32%) outweighs the
+        // combo's iron (68%) and crystite leads the readout.
+        var deposits = new List<ResourceDeposit>
+        {
+            Combo(1, x: 50, y: 0, radius: 35),
+            Crystite242(2, x: -40, y: 0, radius: 30),
+            Combo(3, x: 900, y: 0, radius: 35),
+        };
+
+        var items = DepositSampler.ResourcesWithin(deposits, new Vector3(0, 0, 0), 100f, RowsFor);
+
+        Assert.Equal([Crystite, RawIron], items);
+    }
+
+    [Fact]
+    public void AnOutpostWithNothingInReachAdvertisesNothing()
+    {
+        var deposits = new List<ResourceDeposit> { Combo(1, x: 900, y: 0, radius: 35) };
+
+        Assert.Empty(DepositSampler.ResourcesWithin(deposits, new Vector3(0, 0, 0), 100f, RowsFor));
+    }
+
+    [Fact]
+    public void AnOutpostAdvertisesAtMostSixteenResources()
+    {
+        // The observer view has sixteen slots; a zone with more resources in reach must not overrun it.
+        var deposits = new List<ResourceDeposit>();
+        for (uint i = 0; i < 20; i++)
+        {
+            deposits.Add(Deposit(i + 1, x: 0, y: 0, radius: 30, nodeTypeId: 900 + i));
+        }
+
+        var items = DepositSampler.ResourcesWithin(
+            deposits,
+            new Vector3(0, 0, 0),
+            100f,
+            nodeType => [Row(nodeType, itemId: 1000 + nodeType, centerLow: 10, centerHigh: 10)]);
+
+        Assert.Equal(16, items.Count);
+    }
+
+    private static IReadOnlyList<ResourceNodeTypeResource> RowsFor(uint nodeTypeId) => nodeTypeId switch
+    {
+        239 => CrystiteAndIron(),
+        242 => CrystiteOnly(),
+        _ => [],
+    };
+
+    private static ResourceNodeTypeResource Row(uint nodeTypeId, uint itemId, uint centerLow, uint centerHigh) => new()
+    {
+        NodeTypeId = nodeTypeId,
+        ItemId = itemId,
+        CenterLow = centerLow,
+        CenterHigh = centerHigh,
+    };
+
     /// <summary>Node type 242, "Crystite Only - (lvls 1-19)", its one row verbatim.</summary>
     private static List<ResourceNodeTypeResource> CrystiteOnly() =>
     [
@@ -204,13 +291,17 @@ public class DepositSamplerTests
         },
     ];
 
-    private static ResourceDeposit Deposit(uint id, float x, float y, float radius) => new()
+    private static ResourceDeposit Deposit(uint id, float x, float y, float radius, uint nodeTypeId = 242) => new()
     {
         Id = id,
         ZoneId = 448,
         Name = $"test deposit {id}",
-        NodeTypeId = 242,
+        NodeTypeId = nodeTypeId,
         Position = new Vector3(x, y, 0),
         Radius = radius,
     };
+
+    private static ResourceDeposit Crystite242(uint id, float x, float y, float radius) => Deposit(id, x, y, radius);
+
+    private static ResourceDeposit Combo(uint id, float x, float y, float radius) => Deposit(id, x, y, radius, nodeTypeId: 239);
 }

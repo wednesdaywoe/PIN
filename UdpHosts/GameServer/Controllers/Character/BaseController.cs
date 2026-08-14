@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Numerics;
 using AeroMessages.GSS.V66;
 using AeroMessages.GSS.V66.Character;
@@ -281,13 +282,41 @@ public class BaseController : Base
     [MessageID((byte)Commands.ResourceLocationInfosRequest)]
     public void ResourceLocationInfosRequest(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
     {
+        // The map's deposit layer. This request/response pair is the only resource-map exchange in
+        // the 2016 retail capture — the scan-era messages (FoundResourceAreas, GeographicalReport*)
+        // never appear — so this reply is where the client learns deposits exist. Retail answered
+        // with an empty list, because by then resources had been flattened to be identical
+        // everywhere; PIN answers with the deposit map that era threw away. The Unk field names are
+        // capture-informed guesses: position, radius, then (item, percent) shares.
+        var character = player.CharacterEntity;
+        var zoneId = client.AssignedShard.ZoneId;
+
+        var data = CustomDBInterface.GetZoneResourceDeposits(zoneId).Values
+            .Select(deposit => new ResourceLocationInfo
+            {
+                Unk1 = deposit.Position.X,
+                Unk2 = deposit.Position.Y,
+                Unk3 = deposit.Position.Z,
+                Unk4 = (uint)deposit.Radius,
+                Unk5 = DepositSampler.AdvertisedShares(SDBInterface.GetResourceNodeTypeResources(deposit.NodeTypeId))
+                    .Select(share => new ResourceLocationInfoInner { Unk1 = share.ItemId, Unk2 = share.Percent })
+                    .ToArray(),
+            })
+            .ToArray();
+
+        _logger.Information(
+            "Resource locations for {Character}: {Count} deposit(s) in zone {ZoneId}",
+            character.EntityId,
+            data.Length,
+            zoneId);
+
         var resourceLocationInfosResponse = new ResourceLocationInfosResponse
         {
-            Data = [],
+            Data = data,
             Unk = 0x01
         };
 
-        client.NetChannels[ChannelType.ReliableGss].SendMessage(resourceLocationInfosResponse, player.CharacterEntity.EntityId);
+        client.NetChannels[ChannelType.ReliableGss].SendMessage(resourceLocationInfosResponse, character.EntityId);
     }
 
     [MessageID((byte)Commands.FriendsListRequest)]

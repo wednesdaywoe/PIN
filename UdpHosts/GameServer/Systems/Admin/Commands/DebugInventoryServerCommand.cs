@@ -31,6 +31,29 @@ public class DebugInventoryServerCommand : ServerCommand
         var items = inventory.GetItems().ToArray();
         var resources = inventory.GetResources().ToArray();
 
+        // A type id asks about one item, which is the question worth asking: the full listing is a
+        // couple of hundred lines of loadout gear on the wrong machine, and "is my scan hammer here"
+        // drowns in it.
+        if (parameters.Length > 0 && uint.TryParse(parameters[0], out var wanted))
+        {
+            var matches = items.Where(i => i.SdbId == wanted).ToArray();
+            var slotted = inventory.GetLoadoutItemGuids();
+
+            SourceFeedback($"Item {wanted}: {matches.Length} copy/copies of {items.Length} items", context);
+            foreach (var match in matches)
+            {
+                Logger.Information(
+                    "dbg_inventory {TypeId}: guid {Guid:X} in {SubInventory} flags {Flags}{Slotted}",
+                    wanted,
+                    match.GUID,
+                    (InventoryType)match.SubInventory,
+                    (ItemDynamicFlags)match.DynamicFlags,
+                    slotted.Contains(match.GUID) ? ", slotted in a loadout" : string.Empty);
+            }
+
+            return;
+        }
+
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.AppendLine($"Inventory: {items.Length} items, {resources.Length} resources, partial updates {(inventory.EnablePartialUpdates ? "on" : "off")}");
 

@@ -110,3 +110,63 @@ alternative, and S1 is written to catch blobs rendering at a wrong uniform size.
 new `Range` column is invented: 600m for 34126 straight from its shipped comment, 100m for the
 rest. What nothing here answers is which UI action makes the client send
 `GeographicalReportRequest` at all; S2 goes looking.
+
+## What the capture corrected, 2026-08-13
+
+S1's first sitting was the predicted half-pass: five scans, four deposits sent every time, nothing
+drawn. The [2016 retail capture](../In-Game-Tests/Capture-Replay.md) then reframed the milestone's
+protocol picture. **All four messages the framing above is built on are absent from a full live
+session** — `FoundResourceAreas`, `FindNearbyResourceAreas` and both geographical-report directions
+appear zero times in 400,000 messages. They are beta-era scanning; the 2016-era client learned
+where deposits are from a different exchange entirely: it sends `ResourceLocationInfosRequest`
+(2:187) once, and the server answers `ResourceLocationInfosResponse` (2:140) — per deposit a
+position, a radius and an (item, percent) composition list, which is the same shape as
+[resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json) plus
+the node type's shares.
+
+The one recorded retail answer is an empty list. That is not a gap in the capture — it is live
+Firefall's actual 2016 resource model, where deposits had been flattened away and the map had
+nothing to show. PIN had faithfully copied that empty answer into its own handler. The handler now
+answers with the deposit table, shares computed from center-midpoint quantities
+(`DepositSampler.AdvertisedShares`, pinned by tests on the real 242/239 rows): the charter's
+"restore what they threw away" applied to a single message. The scan command keeps sending
+`FoundResourceAreas` — proven server-side, most likely dead client-side — and the field mapping of
+`ResourceLocationInfo` (`Unk1/2/3` = x/y/z, `Unk4` = radius, inner `Unk2` = percent) is a
+capture-informed guess the empty retail body could not confirm; S1's re-run is the check.
+
+## What the client's own UI source settled, 2026-08-13
+
+**S1 passed the same evening**: the station outpost's radar reads `Crystite, Iron Ore`. Deposits are
+visible on the map for the first time, by retail's own live mechanism.
+
+The re-run half-passed the same way: the request arrived, PIN answered with four deposits, nothing
+drew. The answer was not in the protocol at all. **The 1962 client ships its entire interface as
+loose, uncompiled Lua**, and reading it ended three open questions at once — the method is written
+up in [Client UI Source](../Client-UI-Source.md), and it belongs ahead of capture replay whenever
+the question is "what does the client do with this", not "what went over the wire".
+
+The map never had one resource layer. It has three, and PIN had been feeding the one that is
+switched off:
+
+- **The layer a player actually sees is the outpost radar.**
+  `Panels/WorldMap/WorldMap_ResourceScans.lua` draws one disc per outpost and captions it from that
+  outpost's own resource list — which is `Outpost::ObserverView.NearbyResourceItems_0..15`, sixteen
+  item-id slots PIN never set. Every radar therefore read empty. `OutpostEntity` now fills them from
+  the deposits within the outpost's radius, most abundant first
+  (`DepositSampler.ResourcesWithin`). In zone 448 exactly one outpost qualifies: the station, id 17,
+  radius 485m, reaching all four deposits, advertising crystite and raw iron.
+- **The heat-blob overlay is real but disabled.** `HUD/Heatmap/Heatmap.lua` is the consumer of
+  `ResourceLocationInfosResponse`, and its `ON_HEATMAP_UPDATED` binding is commented out in the
+  shipped XML, with a second trap behind it: the default filter is the string `"none"`, compared
+  against item ids, so it matches nothing and scores every plot at zero heat. Two lines in the
+  install re-enable it. Its `DequeuePlots` reads `plot.x/y/z`, `plot.radius` and
+  `plot.composition[i].{itemTypeId, percent}` — **which confirms the `ResourceLocationInfo` field
+  order the capture could not**, so the guess flagged above is now settled.
+- **The scan-report card is alive and bound.** `HUD/ResourceScans/ResourceScans.lua` renders
+  `GeographicalReportResponse` as a world-space card with an icon and percentage per resource, and
+  renders the invalid answer as one of four failure messages. S2 is blocked on the trigger, not the
+  drawing: no Lua sends the request, and the shipped data carries a "Scan Hammer" item plus a "Scan
+  Hammer ability", which matches the tester's memory of how a survey was taken.
+
+The lesson generalises past resources. Any milestone that ends in "the client should draw this" can
+be checked against the component that would draw it before a line of server code is written.

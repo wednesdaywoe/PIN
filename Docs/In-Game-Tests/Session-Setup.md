@@ -161,9 +161,11 @@ the client keeps `/`-prefixed input for itself, so anything starting with `/` ne
 | `listeffects` | `list_effects`, `apt_status`, `apt_list` | |
 | `cancelfm <commandId>` | — | cancel a ForcedMovement by command id |
 | `createitem <typeId>` | `create_item`, `giveitem`, `give_item` | second argument is quantity, resources only |
-| `dbg_inventory [resend]` | `dbg_inv` | prints the server's items and resources; `resend` pushes the full inventory again |
+| `removeitem <typeId\|guid\|loose>` | `remove_item`, `delitem` | `loose` drops everything no loadout is using — the clutter a test session makes; add `force` to take slotted items too |
+| `equipitem <typeId> [slot]` | `equip_item`, `equip` | slots an item you already own into the loadout you are wearing; default slot is `Secondary`, run it bare to list the slot names |
+| `dbg_inventory [typeId\|resend]` | `dbg_inv` | bare prints everything to the client console; a type id logs just that item's guid, sub-inventory and flags to the server log; `resend` pushes the full inventory again, which is the update the client is known to accept |
 | `tp <x> <y> <z>` | `teleport` | z is up |
-| `pflags` | `pflag`, `float` | toggles `cheat_float`; this is how you get to a measured distance |
+| `pflags [flag]` | `pflag`, `float` | toggles a named permission flag, `pflags list` to see them; bare `pflags` still toggles `cheat_float`, which is how you get to a measured distance |
 | `cflags [value]` | `cflag` | sets CombatFlags |
 | `rment` | `killall` | removes every entity except player characters — use between tests |
 | `emote <id>` | — | remote views only |

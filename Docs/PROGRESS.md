@@ -48,9 +48,19 @@ question died on the drawing board — and the flat 200-crystite grant is gone.
 [S1–S6](In-Game-Tests/Thump-Placement.md) are the check; S3–S5 are the exit condition, and the
 ranges (40–100 rich, 10–25 poor, ~nothing barren) cannot overlap, so single runs decide. The two
 invented values are flagged in the stream doc: `Unk4` on a scan area (radius, by guess) and the
-scan def's `Range` column (600m from a shipped comment, 100m elsewhere). What no code answers is
-which UI action makes the client send `GeographicalReportRequest`; S2 goes looking. Full detail in
+scan def's `Range` column (600m from a shipped comment, 100m elsewhere). Full detail in
 [streams/m4-thump-placement.md](streams/m4-thump-placement.md).
+
+**Two S1 sittings later, the visible half was rebuilt from the client's own interface source.** The
+1962 client ships its whole UI as loose, uncompiled Lua, which is a better oracle than a packet
+capture for "what does the client do with this" — the method and the resource findings are in
+[Client UI Source](Client-UI-Source.md). It settled that the map's resource layer is the **outpost
+radar**, captioned from sixteen `NearbyResourceItems` slots on the outpost's own view that PIN never
+set, which is why the tester saw empty radars; `OutpostEntity` now fills them from the deposits
+within each outpost's radius. It also confirmed the `ResourceLocationInfo` field order the capture
+could not, and showed the heat-blob overlay is disabled in the shipped UI rather than missing — two
+lines re-enable it. `GeographicalReportResponse`'s renderer turns out to be alive and bound, so S2
+is blocked on the trigger (a Scan Hammer) rather than on a dead message.
 
 **M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.md).** A
 Gaia creature died and paid 4 crystite, logged as `paid 4 of resource 10`, and the tester saw it
@@ -320,10 +330,17 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [~] Per-zone resource map ("what's near here") — four deposits on walked ground in
   `resource_deposit.json`, plus the `deposit` command to author more in game; discs not yet seen
   from a client (S6)
-- [~] Wire the scan command, send `FoundResourceAreas` — sends every deposit in range; whether the
-  client draws it, and what `Unk4` should really carry, is S1
+- [x] Show deposits on the map — **passed 2026-08-13, S1**: the station outpost's radar reads
+  `Crystite, Iron Ore`. Three sittings to find the layer that actually draws.
+  `FoundResourceAreas` is beta-era and ignored; `ResourceLocationInfosResponse` carries the deposit
+  table but its consumer is disabled in the shipped UI (re-enabled by a two-line client patch,
+  [Client UI Source](Client-UI-Source.md)); the layer a player sees is the **outpost radar**, fed by
+  `Outpost::ObserverView.NearbyResourceItems`, which `OutpostEntity` now fills from the deposits in
+  reach. Zone 448's station advertises crystite and raw iron (S1)
 - [~] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0` — handler reads the ground
-  underfoot, `MapOpened` re-sends the latest report; the client-side trigger is unknown (S2)
+  underfoot, `MapOpened` re-sends the latest report, and the client's `ResourceScans` component is
+  alive and bound to draw the answer. Blocked on the trigger, not the drawing: no UI code sends the
+  request, and the shipped data's "Scan Hammer" item and ability are the likely gate (S2)
 - [~] Resolve node type from position instead of the literal `20` — all three call sites resolve;
   20 survives as what barren ground is ([DATA-2](ISSUE-REGISTER.md) fixed in code)
 - [~] Sample the gradient where the thumper landed and pay that out — payout scales with the

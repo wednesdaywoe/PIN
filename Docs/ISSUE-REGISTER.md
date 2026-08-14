@@ -103,7 +103,18 @@ baseline the next pass diffs against.
   by design
 - [ ] **NET-16** — Predicted effects reach the owning client twice, likely diverging from retail
 - [~] **NET-17** — `LocalEffectsData.Entity` semantics (initiator vs. target) unconfirmed
-- [~] **NET-18** — `createitem`'s wire-format fix unverified against the original delivery symptom
+- [~] **NET-18** — `createitem` makes the item; whether the client ever shows it is unproven.
+  2026-08-13 with the Scan Hammer (56826): toast fired, no item found, and `dbg_inventory` then
+  proved the server side is fine — 246 items before, **247 after**, logged as
+  `createitem 56826 as item, item type Weapon, x1`. So this is a display or lookup question, not a
+  creation one, and it has two live suspects that the next sitting can separate:
+  (a) the partial `InventoryUpdate` is declined — PIN's fresh item differed from the 2016 capture's
+  only live single-item add (82337) in exactly one field, `DynamicFlags = IsBound`, now matched and
+  untested; (b) nothing is wrong and a Weapon simply lands in the **Gear** sub-inventory among the
+  246 pieces every hardcoded loadout brings, where it is indistinguishable from clutter.
+  `dbg_inventory <typeId>` now answers (b) directly and `equipitem <typeId> [slot]` bypasses the
+  browsing entirely by slotting it server-side — the Scan Hammer was equipped that way the same
+  evening, so (b) is looking likely. `removeitem` undoes a session's mistakes
 - [~] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) await confirmation
 - [~] **NET-20** — The 47-effect Prediction Sweep is almost entirely unverified
 - [x] **NET-21** — An encounter throwing from `Tick` killed the whole shard thread; the Coral Forest

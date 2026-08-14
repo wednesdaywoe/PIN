@@ -41,6 +41,7 @@ The log lines this stream reads:
 
 ```
 grep -a "Resource scan" ~/Games/PIN/logs/GameServer.log
+grep -a "Resource locations" ~/Games/PIN/logs/GameServer.log
 grep -a "Geo report" ~/Games/PIN/logs/GameServer.log
 grep -a "mined node type" ~/Games/PIN/logs/GameServer.log
 grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log
@@ -49,52 +50,104 @@ grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log
 A thumper still takes up to seven and a half minutes; the state-transition budget is in
 [Resource Payout](Resource-Payout.md).
 
-## [ ] S1: A scan comes back with the zone's deposits
+## [x] S1: The map shows where the resources are
 
-The scan chain has never run — `ResourceNodeScanDefCommand` was a stub until M4, and the `case`
-constructing it was commented out. The two named test abilities from the shipped def comments are
-33918 ("Scan for resource nodes near the player") and 34126 ("Scans for thumper nodes in a 600 meter
-radius"). Both send `FoundResourceAreas`; what the client draws with it is the unknown this entry
-exists to see.
+**Passed 2026-08-13 on the third sitting**: the station outpost's radar reads
+`Crystite, Iron Ore` — the zone's deposits, named on the map, from the layer the client actually
+draws. (86668 is "Iron Ore" on screen; the shipped tables call it raw iron, and the deposit table
+above uses the data's name.) The heat-blob overlay was not reported on either way; it is a bonus
+layer and the entry does not turn on it.
+
+**Two half-passes came first, and reading the client's own interface source ended the guessing.**
+The full account is in [Client UI Source](../Client-UI-Source.md); the short version is that the map
+never had one resource layer, it had three, and PIN was feeding the only one that is switched off.
+
+| What draws it | Fed by | State |
+|---------------|--------|-------|
+| A radar disc per outpost, with a resource readout | that outpost entity's own `NearbyResourceItems` | alive — **this is the layer a player sees** |
+| Heat blobs, one per deposit | `ResourceLocationInfosResponse` (2:140) | its draw event is commented out in the shipped UI; PIN's install re-enables it |
+| A scan report card in the world | `GeographicalReportResponse` (2:139) | alive, and S2's business |
+
+The first sitting proved the server chain and drew nothing, because `FoundResourceAreas` is a
+beta-era message this client ignores. The second answered `ResourceLocationInfosRequest` with the
+real deposit table and still drew nothing, because `Heatmap.xml` never binds the event that would
+consume it. The radars the tester saw were the outpost layer, empty because PIN left all sixteen
+`NearbyResourceItems` slots unset on every outpost. Zone 448's station outpost (id 17, radius 485m)
+reaches all four deposits, so it is the one that should now read out.
 
 1. Log in to zone 448. Stay near the Battleframe Station.
-2. `ability 34126`
-3. `grep -a "Resource scan" ~/Games/PIN/logs/GameServer.log` — expect
-   `Resource scan 181662 by <your entity id>: 4 deposit(s) within 600m`.
-4. Open the map and look for an overlay — blobs, rings, anything near the four centers in the table
-   above.
-5. `ability 33918` and repeat the grep — expect the same 4 deposits within 100m (the range check is
-   flat and every disc edge is inside 100+radius of the station).
+2. Open the full map and turn on the resource view (Tab).
+3. Look at the radar disc over the station: expect a readout naming **Crystite** and **Raw Iron**
+   instead of an empty one. Every other outpost in the zone has no deposit in reach and correctly
+   stays empty.
+4. Look for heat blobs near the four centers in the table above — the client-side patch feeds these
+   from `ResourceLocationInfosResponse`. `grep -a "Resource locations" ~/Games/PIN/logs/GameServer.log`
+   should show `4 deposit(s) in zone 448`; the client asks once, at player-ready, not on opening the
+   map.
+5. `ability 34126`, then `grep -a "Resource scan" ~/Games/PIN/logs/GameServer.log` — expect
+   `Resource scan 181662 by <your entity id>: 4 deposit(s) within 600m` and **no change on screen**.
+   The scan message is dead in this client generation; the grep only proves the server half.
 
-Pass: the log line counts 4 both times, and the client draws *something* it didn't draw before.
+Pass: the station's radar names crystite and raw iron. That alone is the milestone's "you can see
+where the resources are", because it is retail's own live mechanism.
 
-**Half-pass is a real outcome here**: the server sending 4 areas and the client drawing nothing
-still proves the chain end to end on the server side, and says the overlay wants something else —
-likely `Unk4`, which PIN fills with the radius in metres on an explicit guess. Record what the map
-shows either way; if blobs render at a wrong-looking uniform size, the radius guess is the first
-suspect (see the remark in `ResourceNodeScanDefCommand`).
+**The blobs are a bonus, and their absence is diagnostic**: readout working but no blob means either
+the client-side heatmap patch did not take (the two files are listed in
+[Client UI Source](../Client-UI-Source.md)) or `ResourceLocationInfo`'s field order is wrong after
+all. The order is taken from the heatmap's own Lua, which reads `plot.x/y/z`, `plot.radius` and
+`plot.composition[i].{itemTypeId, percent}`, so wrong-but-plausible is unlikely.
 
-**Fail, no log line:** the ability's chain didn't reach the command. `grep -a "ability 34126"` for
-the admin command's own output, then check the chain id printed by `ability` — the def comments'
-ability-to-command mapping (33918→176829, 34126→181662) is recovered, not confirmed.
+**Fail, the radar is still empty:** the outpost view is built once when the outpost spawns, so a
+stale deploy still shows unset slots — check the build stamp at the head of the log first. If the
+build is current, the slots are being written but not reaching the client, which is a view-scoping
+problem rather than a resource one.
+
+Sitting record, 2026-08-13, second sitting: `ResourceLocationInfosRequest` confirmed arriving once
+at 21:44 and answered with 4 deposits; nothing drawn; tester reports "empty radars" on the map's
+resource view, which is what identified the outpost layer as the real one.
+
+<details>
+<summary>First sitting, 2026-08-13 — the scan-message dead end</summary>
+
+`ability 34126` ran five times, the log counted `4 deposit(s) within 600m` every time, and the
+client drew nothing anywhere. The 2016 retail capture ([Capture-Replay](Capture-Replay.md)) then
+showed that **the scan-era messages never appear in a live session** — not `FoundResourceAreas`,
+not `GeographicalReportRequest`, not one of that family, in 400,000 messages. They are beta-era
+scanning, and the entry moved to `ResourceLocationInfosRequest`/`Response`, which retail answered
+with an empty list because resources had been flattened everywhere by then. PIN answered it with
+the real deposit table — correct, and still invisible, which is what the second sitting found out.
+
+</details>
 
 ## [ ] S2: The ground says what is under it
 
 `GeographicalReportRequest` finally has a handler. The client sends it carrying only its own verdict
 on the spot (`OK`, `NOTHUMPINGZONE`, `INVALIDSURFACE`); the server reads the ground under your feet
-and answers with a composition, or with an invalid (empty) report off a deposit. **How the client UI
-triggers the request is unknown** — likely the survey/scan option in the thumper calldown flow.
-Finding the trigger is part of the entry.
+and answers with a composition, or with an invalid (empty) report off a deposit. **The trigger is an
+equipped Scan Hammer**, per the client's own tutorial text; no interface code sends the request, so
+the client's native code does, and this entry now supplies the hammer rather than hunting for a
+button.
 
-1. Stand on the station shelf, within 30m of 158.3, 249.3 — the G2 thumper site is the center.
-2. Trigger a geological report however the client offers it (calldown UI, map, scanner). If S1's
-   scan made the map show deposits, try clicking one.
-3. `grep -a "Geo report" ~/Games/PIN/logs/GameServer.log` — expect
+1. `createitem 56811` then **`equipitem 56811 GearAuxWeapon`**. 56811 is the Scan Hammer's
+   **ability module**, granting ability 34503 "Scan Hammer"; `GearAuxWeapon` is the loadout slot the
+   client calls ability slot 5, which is bound to **G** by default. The weapon 56826 is the model you
+   hold and grants no ability — equipping that instead is what the 2026-08-13 sitting did, and G
+   stayed a plain melee swing.
+2. Stand on the station shelf, within 30m of 158.3, 249.3 — the G2 thumper site is the center.
+3. **Press G.** `grep -a "ActivateAbility Slot 5" ~/Games/PIN/logs/GameServer.log` proves the press
+   arrived; the server now also logs `nothing slotted in GearAuxWeapon` when the slot is empty and
+   `is slotted but is not an ability module` when the wrong item is in it, so a dead key names its
+   own cause.
+4. `grep -a "HandleActivateAbility: Ability 34503" ~/Games/PIN/logs/GameServer.log` — the scan
+   ability ran. If the press arrives and this does not, the module is not resolving.
+5. If no report follows, `pflags detect_resources` and retry — that permission gates the client's
+   resource-scanning HUD, and turning it on also makes the client re-ask for the deposit list.
+6. `grep -a "Geo report" ~/Games/PIN/logs/GameServer.log` — expect
    `feedback OK, scan 1, node type 242, 1 resource(s)`.
-4. Walk somewhere no deposit covers (100m+ from every center in the table) and trigger another.
-   Expect the grep to end in `barren`.
-5. Open the map. `MapOpened` now re-sends your latest report instead of a hardcoded empty one —
-   note whether the map shows the reading taken in step 2/4.
+7. Walk somewhere no deposit covers (100m+ from every center in the table) and scan again. Expect
+   the grep to end in `barren`.
+8. Open the map. `MapOpened` now re-sends your latest report instead of a hardcoded empty one —
+   note whether the map shows the reading taken in step 6/7.
 
 Pass: the two greps say deposit then barren, and the client renders the deposit reading as a
 non-empty report (composition percentages, however it draws them).
@@ -102,6 +155,19 @@ non-empty report (composition percentages, however it draws them).
 **Not runnable is a valid outcome** if no UI action sends the request — mark `[-]`, note it, and the
 server half stays covered by the grep in S3's setup. The handler also fires on whatever the client
 does send, so the grep after any session says whether the message ever arrived at all.
+
+**What the client's interface source says, 2026-08-13** ([Client UI Source](../Client-UI-Source.md)):
+the receiving half of this entry is alive and well. `HUD/ResourceScans/ResourceScans.lua` is fully
+bound and draws a world-space report card — an icon per resource with its percentage — plus a map
+marker, straight off `GeographicalReportResponse`. It also handles the invalid answer, which it
+shows as one of "thumping prohibited", "invalid surface", "thumper nearby" or an empty report.
+
+So the entry is not blocked on rendering, it is blocked on the trigger. **No Lua anywhere sends the
+request**, which means the client's own code sends it — and the tester's recollection is that it
+took an equipped Scan Hammer and an ability press. The shipped data agrees: it carries a "Scan
+Hammer" item, a "Scan Hammer ability", and tutorial text reading "Equip your scan hammer" and "Use
+the Scan Hammer to find a valid thumping spot". Getting one into a character's hands is the next
+piece of work, and until then a `[-]` here is about equipment, not about a dead message.
 
 ## [ ] S3: Thumping the rich center pays center values
 

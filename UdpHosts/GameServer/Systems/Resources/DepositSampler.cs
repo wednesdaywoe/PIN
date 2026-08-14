@@ -10,6 +10,9 @@ namespace GameServer.Systems.Resources;
 /// <summary>One resource rolled out of a spot in a deposit.</summary>
 public readonly record struct DepositYield(uint ItemId, ushort Quality, uint Quantity);
 
+/// <summary>One resource's advertised share of a deposit, before anyone thumps it.</summary>
+public readonly record struct DepositShare(uint ItemId, byte Percent);
+
 /// <summary>
 ///     The arithmetic of a deposit: which one covers a spot, how far from its heart the spot is, and
 ///     what the shipped gradient pays there.
@@ -121,6 +124,76 @@ public static class DepositSampler
         }
 
         return composition;
+    }
+
+    /// <summary>
+    ///     What a deposit claims to hold before anyone samples it: each resource's share of the node
+    ///     type's center-midpoint quantities. This is the advertisement the map draws, not a roll —
+    ///     the same deposit always shows the same shares.
+    /// </summary>
+    public static List<DepositShare> AdvertisedShares(IReadOnlyList<ResourceNodeTypeResource> rows)
+    {
+        float total = 0;
+        foreach (var row in rows)
+        {
+            total += (row.CenterLow + row.CenterHigh) / 2f;
+        }
+
+        if (total <= 0)
+        {
+            return [];
+        }
+
+        var shares = new List<DepositShare>(rows.Count);
+        foreach (var row in rows)
+        {
+            var mid = (row.CenterLow + row.CenterHigh) / 2f;
+            var percent = (byte)Math.Clamp(Math.Round(mid / total * 100f), 0, 100);
+            if (percent == 0)
+            {
+                continue;
+            }
+
+            shares.Add(new DepositShare(row.ItemId, percent));
+        }
+
+        return shares;
+    }
+
+    /// <summary>
+    ///     Every resource on offer inside a circle, most abundant first. This is what an outpost's map
+    ///     radar advertises: the 1962 client's world map draws one disc per outpost and fills its
+    ///     readout from the outpost's own <c>NearbyResourceItems</c>, so individual deposits are never
+    ///     named to the client — only the resources they add up to within reach of the outpost.
+    /// </summary>
+    /// <param name="rowsFor">Resolves a node type to its yield rows; the caller owns the SDB lookup.</param>
+    /// <param name="limit">The observer view carries sixteen slots and no more.</param>
+    public static List<uint> ResourcesWithin(
+        IEnumerable<ResourceDeposit> deposits,
+        Vector3 center,
+        float radius,
+        Func<uint, IReadOnlyList<ResourceNodeTypeResource>> rowsFor,
+        int limit = 16)
+    {
+        var abundance = new Dictionary<uint, int>();
+
+        foreach (var deposit in deposits)
+        {
+            if (DistanceXY(deposit.Position, center) > radius + deposit.Radius)
+            {
+                continue;
+            }
+
+            foreach (var share in AdvertisedShares(rowsFor(deposit.NodeTypeId)))
+            {
+                abundance[share.ItemId] = abundance.GetValueOrDefault(share.ItemId) + share.Percent;
+            }
+        }
+
+        var items = new List<uint>(abundance.Keys);
+        items.Sort((a, b) => abundance[b] != abundance[a] ? abundance[b].CompareTo(abundance[a]) : a.CompareTo(b));
+
+        return items.Count > limit ? items.GetRange(0, limit) : items;
     }
 
     /// <summary>Flat distance, the only kind a deposit measures. Public because the scan's range check must agree with it — zone 448's basin floor is 91m below the station shelf, and a 3D reading would push deposits a short walk away out of range.</summary>

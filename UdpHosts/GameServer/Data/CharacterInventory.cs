@@ -154,7 +154,11 @@ public class CharacterInventory
             GUID = guid,
             SubInventory = GetInventoryTypeByItemTypeId(sdbId),
             Durability = 1000,
-            DynamicFlags = 0,
+
+            // The one item the 2016 capture shows being added to a live inventory — 82337, arriving
+            // on its own in a partial update — carries IsBound and nothing else. PIN sent no flags
+            // at all, which is the only field where a fresh item differed from the real thing.
+            DynamicFlags = (byte)ItemDynamicFlags.IsBound,
             TimestampEpoch = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Modules = [],
             Unk1 = 0,
@@ -173,6 +177,53 @@ public class CharacterInventory
         _items.Add(guid, item);
         SendItemUpdate(guid);
         return guid;
+    }
+
+    /// <summary>
+    ///     Item guids that a loadout slots, and so cannot be thrown away without leaving a battleframe
+    ///     with a hole where a weapon used to be.
+    /// </summary>
+    public HashSet<ulong> GetLoadoutItemGuids()
+    {
+        var guids = new HashSet<ulong>();
+        foreach (var loadout in _loadouts.Values)
+        {
+            foreach (var config in loadout.LoadoutConfigs)
+            {
+                foreach (var item in config.Items)
+                {
+                    guids.Add(item.ItemGUID);
+                }
+            }
+        }
+
+        return guids;
+    }
+
+    /// <summary>
+    ///     Drops items and tells the client by resending the whole inventory. There is no "this item
+    ///     is gone" message in the protocol PIN implements, and a partial update can only ever add or
+    ///     restate an item, so a full update with <c>ClearExistingData</c> is what a removal looks
+    ///     like on the wire.
+    /// </summary>
+    /// <returns>How many items were actually removed.</returns>
+    public int RemoveItems(IEnumerable<ulong> guids)
+    {
+        var removed = 0;
+        foreach (var guid in guids)
+        {
+            if (_items.Remove(guid))
+            {
+                removed++;
+            }
+        }
+
+        if (removed > 0)
+        {
+            SendFullInventory();
+        }
+
+        return removed;
     }
 
     public void AddResource(uint sdbId, uint quantity)

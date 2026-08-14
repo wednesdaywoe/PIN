@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AeroMessages.GSS.V66.Character;
 using AeroMessages.GSS.V66.Character.Command;
 using AeroMessages.GSS.V66.Character.Event;
+using GameServer.Data;
 using GameServer.Entities.Character;
 using GameServer.Enums.GSS.Character;
 using GameServer.Extensions;
@@ -175,6 +177,23 @@ public class CombatController : Base
                 {
                     abilityId = abilityModule.AbilityChainId;
                 }
+                else
+                {
+                    // A slot holds an item id, and only some items are ability modules. Equipping a
+                    // weapon into an ability slot lands here: the key press arrives, resolves to
+                    // nothing, and looks from the client exactly like a key that does nothing.
+                    _logger.Warning(
+                        "ActivateAbility Slot {Slot}: item {ModuleId} is slotted but is not an ability module",
+                        abilitySlot,
+                        moduleId);
+                }
+            }
+            else
+            {
+                _logger.Information(
+                    "ActivateAbility Slot {Slot}: nothing slotted in {LoadoutSlot}",
+                    abilitySlot,
+                    CharacterLoadout.AbilityToLoadoutSlotMap.GetValueOrDefault((AbilitySlotType)abilitySlot));
             }
         }
 
