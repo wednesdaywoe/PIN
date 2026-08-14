@@ -30,7 +30,8 @@ var registry = MessageRegistry.Build();
 Console.WriteLine($"client {client}  <->  server {server}   ({datagrams.Count} datagrams)");
 Console.WriteLine($"registry: {registry.GssCount} GSS (controller, message) pairs from AeroMessages\n");
 
-var replay = new SessionReplay(registry, deserialize: !options.NoDeserialize);
+var transport = options.Transport ? new TransportReport() : null;
+var replay = new SessionReplay(registry, deserialize: !options.NoDeserialize) { Transport = transport };
 var histogram = new Dictionary<(byte Controller, byte Message, string Name), int>();
 var unknownBytes = new Dictionary<(byte Controller, byte Message), int>();
 var shown = 0;
@@ -62,6 +63,8 @@ Console.WriteLine($"  framing failures     {stats.FramingFailures}");
 Console.WriteLine($"  sub-packets          {stats.SubPackets}");
 Console.WriteLine($"  resent (XOR undone)  {stats.ResentPackets}");
 Console.WriteLine($"  split fragments      {stats.SplitFragments} -> {stats.SplitsReassembled} reassembled");
+
+transport?.Write();
 
 Console.WriteLine("\n=== channels ===");
 foreach (var (channel, count) in stats.ByChannel.OrderByDescending(kv => kv.Value))
@@ -215,6 +218,8 @@ internal sealed class Options
 
     public bool NoDeserialize { get; init; }
 
+    public bool Transport { get; init; }
+
     public bool Matches(DecodedMessage message)
         => (Controller == null || message.ControllerId == Controller)
            && (Message == null || message.MessageId == Message)
@@ -238,6 +243,7 @@ internal static class CommandLine
         var dump = 0;
         var top = 25;
         var noDeserialize = false;
+        var transport = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -251,6 +257,7 @@ internal static class CommandLine
                 case "--top": top = int.Parse(args[++i]); break;
                 case "--direction": direction = args[++i] is "c2s" ? CaptureReplay.Direction.ClientToServer : CaptureReplay.Direction.ServerToClient; break;
                 case "--no-deserialize": noDeserialize = true; break;
+                case "--transport": transport = true; break;
                 default:
                     if (path != null)
                     {
@@ -284,7 +291,8 @@ internal static class CommandLine
                    Direction = direction,
                    DumpCount = dump,
                    TopCount = top,
-                   NoDeserialize = noDeserialize
+                   NoDeserialize = noDeserialize,
+                   Transport = transport
                };
     }
 
@@ -309,6 +317,7 @@ internal static class CommandLine
                             --top <n>                Rows in the summary histogram (default 25)
                             --server <ip>            Override server detection
                             --no-deserialize         Framing and histogram only, skip Aero
+                            --transport              Report resends, resend delays and ack behaviour instead of guessing them
 
                           Examples:
                             CaptureReplay capture.pcapng

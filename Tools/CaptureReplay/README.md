@@ -24,6 +24,7 @@ dotnet run --project Tools/CaptureReplay -- <capture.pcapng[.gz]> [options]
 | `--top <n>` | Rows in the summary histogram (default 25) |
 | `--server <ip>` | Override server detection |
 | `--no-deserialize` | Framing and histogram only |
+| `--transport` | Resends, resend delays and ack behaviour, underneath the messages |
 
 With no filter it prints framing health, the channel mix, a `(controller, message)` histogram, and
 the pairs that have no AeroMessages definition.
@@ -79,6 +80,33 @@ recordings frame perfectly but their message ids have drifted, so a name the too
 two is a guess against the wrong version, and roughly a quarter of their bodies fail the
 exact-consumption check as a result. They are useful for framing-level and Control/Matrix
 questions, not for reading message contents.
+
+## Reading the transport
+
+`--transport` ignores the messages and reports the layer they ride on: per direction and channel,
+how many packets and how many of them were resends, then every resend with the delay since its
+original and whether the bytes match, then the ack traffic on Control.
+
+It exists because PIN had no outbound reliability at all and building one meant picking a timeout,
+a resend encoding and an ack rule. Rather than guess three times, run this:
+
+```
+dotnet run --project Tools/CaptureReplay -- "2016-11-15 - Gameplay.pcapng" --no-deserialize --transport
+```
+
+The 2016 session answers all three. It carries 24 resends across 456,619 sub-packets:
+
+| Question | Answer |
+|----------|--------|
+| How long before resending? | 322–665ms after the original, median 452, on a link whose round trip measures about 165ms |
+| What resend count goes in the header? | 3, on all 24, both directions, both reliable channels. None carries 1 or 2 despite every one being a first resend |
+| Is a resend the same bytes? | Yes. 15 have their original in the capture too, and all 15 are byte-identical once the XOR is undone |
+| Is an ack cumulative? | Yes. `NextSeqNum` is `AckForNum + 1` on 36,753 of 36,759, and the client acked only 60% of the server's reliable packets across a session needing 24 resends |
+
+Two things the report can say that a live server can't. A resend whose original is also in the
+capture means the data arrived and the *ack* was lost, and 15 of the 24 are that case. And the
+capture was taken at the client, so "the original never reached the capture point" is a genuine
+network drop rather than a missing record.
 
 ## Known gaps
 

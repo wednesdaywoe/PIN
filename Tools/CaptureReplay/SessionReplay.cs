@@ -92,6 +92,12 @@ public sealed class SessionReplay
     public ReplayStats Stats { get; } = new();
 
     /// <summary>
+    ///     Optional transport-layer observer. Set it and every sub-packet is reported to it,
+    ///     including the Control traffic that carries no GSS message and is otherwise dropped here.
+    /// </summary>
+    public TransportReport Transport { get; init; }
+
+    /// <summary>
     ///     Picks the busiest UDP flow and calls the endpoint that receives the POKE the server.
     ///     Falls back to whichever side sent fewer datagrams, since a game server talks far more
     ///     than the client it is serving.
@@ -203,6 +209,8 @@ public sealed class SessionReplay
                 body[i] ^= mask;
             }
         }
+
+        Transport?.Observe(datagram.Timestamp, direction, header, sequenced, sequenceNumber, body);
 
         var key = (direction, header.Channel);
 

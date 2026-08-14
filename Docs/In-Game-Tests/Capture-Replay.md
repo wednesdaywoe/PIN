@@ -130,6 +130,24 @@ effect slot with its effect id, source entity and time — the write PIN never s
 [D5h](Charge-Camera.md). 17 of them in the 2016 session, and they are the reference for the
 [prediction sweep](Prediction-Sweep.md).
 
+**What retail's transport did, which is a different layer from all of the above.** `--transport`
+skips the messages and reads the framing: what got resent, how long the sender waited, and how the
+far side acked.
+
+```
+dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \
+    --no-deserialize --transport
+```
+
+The whole of [M8](../streams/m8-session-stability.md) was calibrated off this on 2026-08-14, and it
+is the first time this stream has decided an implementation rather than confirmed one. 24 resends
+across 456619 sub-packets give the retransmit timeout (322–665ms, median 452), the resend count the
+header carries (3 on all 24, never 1 or 2), that a resend is byte-identical to its original (15 of 15
+where both survive), and that an ack is cumulative rather than per packet (60% of the server's
+reliable packets acked, 24 resends in the session). It also closed
+[NET-3](../ISSUE-REGISTER.md) outright: the XOR decode PIN had been carrying a TODO about is correct,
+and the 15 pairs are the proof.
+
 ## What it does not answer
 
 [H1](Hostility.md) and [R1](Damage-Decay.md) are not capture questions and are still client work.
