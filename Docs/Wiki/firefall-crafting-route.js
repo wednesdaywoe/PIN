@@ -1,15 +1,16 @@
 /* firefall-crafting-route.js
  *
- * Systems page for the beta crafting economy: resource aspects, refining,
+ * Systems page for the beta crafting economy: resource stats, refining,
  * component-based recipes, quality propagation, and the four crafting stages.
  *
  * Drop-in route module in the same shape as firefall-timeline-route.js and
  * firefall-constraints-route.js. Namespaced .cft-* throughout.
  *
- * The join with the constraints page is the resource aspect list. Resources
- * are graded on Power, Mass and CPU-Cores, which are the same three budgets a
- * frame spends against, so picking materials at the terminal is the constraint
- * tradeoff made at manufacture time. Neither page is complete without the other.
+ * The join with the constraints page is the resource stat list. Resources are
+ * graded on five slots, three of them Power, Mass and CPU-Cores, the same
+ * budgets a frame spends against. Picking materials at the terminal is the
+ * constraint tradeoff made at manufacture time, so neither page is complete
+ * without the other.
  *
  * Era anchor: 0.7. Modules get a footer only, as the thing that replaced this.
  */
@@ -87,15 +88,15 @@
     {
       claim: 'Resources are graded on three aspects: Power, Mass and CPU-Cores.',
       source: 'Patch 0.6',
-      status: 'Contested',
-      body: 'By 0.7 the notes also name per-material stats that are not any of the three: Regenics for resilience, Xenografts for thermal resistance, Biopolymers for toughness, Aluminum for malleability. Either resources carry named stats on top of the three aspects, or the names are flavour labels for aspect values and the vocabulary drifted. The two readings differ in how many axes a crafter optimises across, so this is worth settling before the recipe tables get authored.',
-      src: ['notes', '0.6 / 0.7.1688']
+      status: 'Settled',
+      body: 'By 0.7 the notes also name per-material stats that are none of the three: Regenics for resilience, Xenografts for thermal resistance, Biopolymers for toughness, Aluminum for malleability. The client database settles which reading is right. dbitems::ResourceStat holds five rows, and dbitems::Resource_Stat_Names keys a localised name to a resource type plus a stat index, a table that exists only so one slot can show a different name on each material. Malleability on Aluminum and toughness on Biopolymer are the same slot wearing two labels, so the drift was deliberate rather than sloppy. A crafter optimises across five fixed axes whatever the terminal calls them, which makes the 0.6 claim wrong in both directions: five, not three, and not three plus one per material. The arithmetic agrees, since three budgets plus four named stats would need seven slots and there are five.',
+      src: ['dump', '5 rows']
     },
     {
       claim: 'A component keys to one constraint type, which drives its output quality.',
       source: 'Patch 0.7.1688',
       status: 'Ambiguous',
-      body: 'One line reads "changed the constraint type of the component Personal Health Sensor from Power to Mass", which sounds like the budget it charges. Another reads "fixed Shield Energizer to accept Mass as its stat over Power, this will now affect the output depending on the resource quality input", which makes the same field drive output. Both may be true if constraint type does double duty, charging one budget and selecting which resource aspect is read.',
+      body: 'One line reads "changed the constraint type of the component Personal Health Sensor from Power to Mass", which sounds like the budget it charges. Another reads "fixed Shield Energizer to accept Mass as its stat over Power, this will now affect the output depending on the resource quality input", which makes the same field drive output. Both may be true if constraint type does double duty, charging one budget and selecting which resource stat is read. The database at least keeps the two readings apart, since dbitems::Blueprint_Resources carries resource_stat and item_attribute as separate columns on the same row: an ingredient names both the slot it reads and the item stat it steers.',
       src: ['notes', '0.7.1688']
     },
     {
@@ -115,8 +116,9 @@
   ];
 
   var OPEN = [
-    'Which resource is best at which aspect. The notes say each resource in a family is best at one, but never publish the table.',
-    'Whether quality is a single number per resource unit or a vector across aspects.',
+    'What the five stat slots are called. dbitems::ResourceStat stores the names as localisation ids, so one pass over a full clientdb.sd2 prints them and closes this.',
+    'Which resource is best at which slot. The notes say each resource in a family is best at one, but never publish the table.',
+    'Whether quality is a single number per resource unit or a value in each slot. Blueprints pick one slot per ingredient, which only means anything if the resource carries a value in all five, but that is an inference and has not been read off the data.',
     'How component quality combines when an item takes several components. Averaged, weighted, or independent per steered attribute.',
     'What permanent repair costs. Beta never resolved it.',
     'The full nanoprint tree. Only scattered components survive in the notes.',
@@ -183,6 +185,7 @@
 
     '.cft-conf{border-left:2px solid var(--cft-am-dim);padding:.15rem 0 .15rem 1rem;margin:0 0 1.35rem;}',
     '.cft-conf--no{border-left-color:#c05a5a;}',
+    '.cft-conf--yes{border-left-color:var(--cft-jade);}',
     '.cft-conf-claim{color:#dde8eb;font-style:italic;margin:0 0 .3rem;}',
     '.cft-conf-meta{font-family:"Orbitron",monospace;font-size:.6rem;letter-spacing:.14em;',
     'text-transform:uppercase;color:var(--cft-ink-dim);margin:0 0 .5rem;}',
@@ -218,9 +221,15 @@
     // section header repeating it just reads as a stutter.
     return h('One system, not two') +
       '<p class="cft-lede">Crafting and the constraint economy are one system. Resources are ' +
-      'graded on three aspects, Power, Mass and CPU-Cores, which are the same three budgets a ' +
-      'battleframe spends against. Choosing materials at the terminal is the constraint tradeoff, ' +
-      'made at the moment of manufacture.' + prov('notes', '0.6') + '</p>' +
+      'graded on five stat slots' + prov('dump', '5 rows') + ', three of them Power, Mass and ' +
+      'CPU-Cores, the same budgets a battleframe spends against.' + prov('notes', '0.6') + ' ' +
+      'Choosing materials at the terminal is the constraint tradeoff, made at the moment of ' +
+      'manufacture.</p>' +
+
+      '<p>The terminal may not call them that. A stat slot carries a different display name on ' +
+      'each material, so the same axis reads as malleability on Aluminum and toughness on ' +
+      'Biopolymer. The slots are fixed and there are five of them; only the labels move.' +
+      prov('dump') + '</p>' +
 
       '<p>That is the load-bearing fact for anyone reconstructing this. Beta crafting is not a ' +
       'parallel progression track bolted onto the frame; it is the mechanism by which the ' +
@@ -237,7 +246,7 @@
   function secChain() {
     return h('The chain') +
       '<div class="cft-chain">' +
-      '<div class="cft-step"><b>Raw</b><span>Thumped or gathered. Carries aspect values that ' +
+      '<div class="cft-step"><b>Raw</b><span>Thumped or gathered. Carries per-slot values that ' +
       'persist into everything downstream.</span></div>' +
       '<div class="cft-step"><b>Refined</b><span>Split into Seed Crystite, refined resources, ' +
       'and occasionally a Crystite Hybrid.</span></div>' +
@@ -249,7 +258,7 @@
 
       '<p>The propagation rule is stated plainly: the quality of the resources used determines ' +
       'the quality of the component crafted, and the higher the component\u2019s quality, the ' +
-      'better it affects its related attribute.' + prov('notes', '0.6') + ' Aspect stats of raw ' +
+      'better it affects its related attribute.' + prov('notes', '0.6') + ' Stat values of raw ' +
       'resources persist into their refined versions, so nothing is lost at the refining step.</p>' +
 
       '<p>Depth exists so that each component is a separate steering wheel. A Plasma Cannon I ' +
@@ -286,7 +295,7 @@
       '<th>Group</th><th>Family</th><th>Resources</th>' +
       '</tr></thead><tbody>' + rows.join('') + '</tbody></table>' +
 
-      '<p style="margin-top:1.2rem">Each resource in a family is best at one specific aspect. ' +
+      '<p style="margin-top:1.2rem">Each resource in a family is best at one specific slot. ' +
       'The notes say so repeatedly but never publish which is best at what, so that table has to ' +
       'be authored.' + prov('notes', '0.6') + '</p>' +
 
@@ -367,7 +376,8 @@
 
   function secConflicts() {
     var cards = CONFLICTS.map(function (c) {
-      var mod = c.status === 'Superseded' ? '' : (c.status === 'Contested' ? ' cft-conf--no' : '');
+      var mod = c.status === 'Contested' ? ' cft-conf--no'
+        : (c.status === 'Settled' ? ' cft-conf--yes' : '');
       return '<div class="cft-conf' + mod + '">' +
         '<p class="cft-conf-claim">\u201c' + esc(c.claim) + '\u201d</p>' +
         '<p class="cft-conf-meta">' + esc(c.source) + ' &nbsp;\u00b7&nbsp; <b>' + esc(c.status) + '</b>' +

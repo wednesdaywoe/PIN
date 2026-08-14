@@ -4,7 +4,7 @@ import re, sys, os
 html = open('index.html', encoding='utf-8').read()
 for name in ('data.js', 'dump-1962.js',
              'firefall-timeline-route.js', 'firefall-constraints-route.js',
-             'firefall-crafting-route.js'):
+             'firefall-crafting-route.js', 'firefall-guide-route.js'):
     body = open(name, encoding='utf-8').read()
     # The HTML parser ends a script element at the first </script it sees, even
     # inside a comment or a string. The route modules quote their own script

@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Firefall 1.6 — Implementation Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ===========================================================================
    DESIGN TOKENS
@@ -15,8 +18,13 @@
   --void:#05090c;  --deep:#08121a;  --panel:#0b1a22;  --panel-hi:#0f2530;
   --cyan:#38dce6;  --cyan-mid:rgba(56,220,230,.34); --cyan-low:rgba(56,220,230,.10);
   --amber:#f2a01e; --text:#cfdcdd;  --mute:#728b91;   --dim:#4a6169;
-  --jade:#5fd35f;  --rust:#d4593a;  --violet:#9b6bc9;
+  --jade:#5fd35f;  --jade-mid:rgba(95,211,95,.4);   --jade-low:rgba(95,211,95,.09);
+  --rust:#d4593a;  --violet:#9b6bc9; --violet-mid:rgba(155,107,201,.4);
   --ch:14px;                                    /* chamfer size */
+  /* Orbitron is the closest free face to Firefall's own UI type. The route
+     modules ask for it by name in their own CSS, so it is loaded here rather
+     than left to each of them. */
+  --f-display:'Orbitron','Rajdhani','Roboto Condensed',system-ui,sans-serif;
   --f-ui:'Ubuntu','Roboto Condensed','Segoe UI',system-ui,sans-serif;
   --f-mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace;
 }
@@ -61,7 +69,7 @@ a:hover{color:#8df1f7;text-shadow:0 0 12px rgba(56,220,230,.5)}
 .rail::-webkit-scrollbar-thumb{background:var(--cyan-mid)}
 
 .brand{padding:2px 0 16px}
-.brand b{display:block;font-size:22px;font-weight:700;letter-spacing:.26em;color:var(--text);
+.brand b{display:block;font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:.30em;color:var(--text);
   text-shadow:0 0 22px rgba(56,220,230,.35)}
 .brand span{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;
   color:var(--amber);text-transform:uppercase;margin-top:5px}
@@ -81,11 +89,14 @@ a:hover{color:#8df1f7;text-shadow:0 0 12px rgba(56,220,230,.5)}
 #q:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 14px rgba(56,220,230,.22)}
 
 /* --- Type --------------------------------------------------------------- */
-h1{font-size:30px;font-weight:700;letter-spacing:.03em;color:var(--text);line-height:1.14}
+/* h1 and h3 read as chapter headings on the display face; h2 stays on the mono
+   face because it is doing system-label duty, not titling anything. */
+h1{font-family:var(--f-display);font-size:30px;font-weight:700;letter-spacing:.01em;
+  color:var(--text);line-height:1.14}
 h2{font-family:var(--f-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
   color:var(--amber);margin:34px 0 12px;display:flex;align-items:center;gap:12px}
 h2::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--cyan-mid),transparent)}
-h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px}
+h3{font-family:var(--f-display);font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px}
 p{margin-bottom:12px;max-width:74ch}
 .lede{color:var(--mute);font-size:15.5px}
 .eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan)}
@@ -165,6 +176,55 @@ td.v.null{color:var(--rust);opacity:.75}
 .tl .what{font-size:13.5px;color:var(--text);margin-top:2px}
 .tl .what a{border-bottom:1px dotted var(--cyan-mid)}
 
+/* --- Lore timeline (#/timeline) ----------------------------------------- *
+   From firefall-timeline-route.js. Namespaced .ltl so it never collides with
+   the patch-history .tl above: that one is a list of deltas, this one is the
+   story, and they want different marks. Violet marks the two things the game
+   showed and never explained; jade marks the one place the tide turned.       */
+.pnl.veil{background:var(--violet-mid)}
+.pnl.veil>.in{background:linear-gradient(160deg,#130d1c 0%,var(--panel) 70%)}
+.pnl.hold{background:var(--jade-mid)}
+.pnl.hold>.in{background:linear-gradient(160deg,#0c1a12 0%,var(--panel) 72%)}
+
+.tab.v{background:var(--violet-mid)}  .tab.v>span{color:var(--violet)}
+.tab.j{background:var(--jade-mid)}    .tab.j>span{color:var(--jade)}
+.note.won{border-left-color:var(--jade);background:var(--jade-low)}
+.note.won .eyebrow{color:var(--jade)}
+
+.tml-legend{display:flex;flex-wrap:wrap;gap:18px;margin:16px 0 6px;font-family:var(--f-mono);
+  font-size:11px;letter-spacing:.06em;color:var(--mute)}
+.tml-legend span{display:inline-flex;align-items:center;gap:9px}
+.tml-legend i{width:10px;height:10px;transform:rotate(45deg);background:var(--void);border:1px solid var(--cyan)}
+.tml-legend i.pivot{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(242,160,30,.6)}
+.tml-legend i.enigma{border-color:var(--violet);box-shadow:0 0 10px rgba(155,107,201,.5)}
+.tml-legend i.won{border-color:var(--jade);box-shadow:0 0 10px rgba(95,211,95,.5)}
+
+.ltl{list-style:none;position:relative;margin:22px 0 0;padding-left:36px}
+.ltl::before{content:'';position:absolute;left:9px;top:12px;bottom:12px;width:1px;
+  background:linear-gradient(180deg,transparent,var(--cyan-mid) 6%,var(--cyan-mid) 94%,transparent)}
+.ltl>li{position:relative;padding-bottom:28px}
+.ltl>li:last-child{padding-bottom:0}
+.ltl>li::before{content:'';position:absolute;left:-31px;top:9px;width:12px;height:12px;
+  background:var(--void);border:1px solid var(--cyan);transform:rotate(45deg)}
+.ltl>li.pivot::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 14px rgba(242,160,30,.65)}
+.ltl>li.enigma::before{border-color:var(--violet);box-shadow:0 0 14px rgba(155,107,201,.5)}
+.ltl>li.won::before{border-color:var(--jade);box-shadow:0 0 14px rgba(95,211,95,.5)}
+.ltl .when{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+.ltl>li.enigma .when{color:var(--violet)}
+.ltl>li.won .when{color:var(--jade)}
+.ltl h3{font-family:var(--f-display);font-weight:600;margin-bottom:7px}
+.ltl .aside{font-size:12.5px;color:var(--mute);margin-top:10px;padding-left:12px;border-left:1px solid var(--cyan-mid)}
+.ltl>li.enigma .aside{border-left-color:var(--violet-mid)}
+.ltl>li.won .aside{border-left-color:var(--jade-mid)}
+
+/* --- Route module hosting (#/constraints, #/crafting) -------------------- *
+   The modules zero the top margin on their first section header, which is
+   right when that header is the top of the page. Under the shell's h1 it needs
+   the same gap the wiki's own h2 takes. Their stylesheets are injected into
+   <head> at first render, so they land after this block and win on order —
+   hence the #view prefix to take it back on specificity.                      */
+#view .cst-h:first-child,#view .cft-h:first-child,#view .gd-sec:first-child{margin-top:26px}
+
 /* --- Coverage rows ------------------------------------------------------ */
 .cov{display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid rgba(56,220,230,.08)}
 .cov b{flex:1;font-weight:500;font-size:14px}
@@ -231,6 +291,12 @@ td.v.null{color:var(--rust);opacity:.75}
   <main id="view"><!-- rendered --></main>
 </div>
 
+<!-- The view table has to exist on window before the route modules load, and it
+     has to be the same object the main script uses. A top-level `const V` in
+     that script would be a separate binding that shadows window.V for every
+     script after it, so the modules' pages would exist and nothing could route
+     to them. Declared here, bound below. -->
+<script>window.V = window.V || {}; window.ROUTES = window.ROUTES || {};</script>
 <script>
 /* inlined from data.js */
 /* ==========================================================================
@@ -866,6 +932,2090 @@ const DUMP = {"build":"1962","generated":"prod-1962, built 2016-05-05","attribut
 
 </script>
 <script>
+/* inlined from firefall-timeline-route.js */
+/* ==========================================================================
+   FIREFALL WIKI — TIMELINE ROUTE (drop-in)
+   --------------------------------------------------------------------------
+   Adds a #/timeline page to the existing reference wiki. Static lore, so the
+   view is a plain template string — it doesn't read from DATA like the entity
+   views do. Uses the wiki's own helpers (pnl, and the shared .pnl/.tab/.note
+   classes) so it inherits the house style.
+
+   THREE SMALL WIRING STEPS — all in index.html:
+
+   1. FONT  — add Orbitron and a display token (project standard going forward).
+        In <head>:
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+        In :root, add:
+          --f-display:'Orbitron','Rajdhani','Roboto Condensed',system-ui,sans-serif;
+        Then point the display faces at it (h1 and entity titles read as
+        Firefall chapter headings this way; leave h2 on the mono face — it's
+        doing system-label duty):
+          h1{font-family:var(--f-display);letter-spacing:.01em}
+          h3{font-family:var(--f-display)}
+          .brand b{font-family:var(--f-display);letter-spacing:.30em}
+
+   2. CSS   — paste the STYLE ADDITIONS block into the wiki's <style>.
+
+   3. ROUTE — paste the V.timeline function in with the other V.* views, add
+        one nav link, and register one route (see ROUTER + NAV at the bottom).
+   ========================================================================== */
+
+
+/* ======================= STYLE ADDITIONS (into <style>) ===================
+   The wiki already defines --jade, --violet, --rust and --cyan-low. These add
+   the tint/edge variants the timeline needs, plus a namespaced .ltl timeline
+   so it never collides with the existing patch-history .tl.
+
+:root{
+  --jade-mid:rgba(95,211,95,.4);  --jade-low:rgba(95,211,95,.09);
+  --violet-mid:rgba(155,107,201,.4);
+}
+
+.pnl.veil{background:var(--violet-mid)}
+.pnl.veil>.in{background:linear-gradient(160deg,#130d1c 0%,var(--panel) 70%)}
+.pnl.hold{background:var(--jade-mid)}
+.pnl.hold>.in{background:linear-gradient(160deg,#0c1a12 0%,var(--panel) 72%)}
+
+.tab.v{background:var(--violet-mid)}  .tab.v>span{color:var(--violet)}
+.tab.j{background:var(--jade-mid)}    .tab.j>span{color:var(--jade)}
+.note.won{border-left-color:var(--jade);background:var(--jade-low)}
+.note.won .eyebrow{color:var(--jade)}
+
+.tml-legend{display:flex;flex-wrap:wrap;gap:18px;margin:16px 0 6px;font-family:var(--f-mono);
+  font-size:11px;letter-spacing:.06em;color:var(--mute)}
+.tml-legend span{display:inline-flex;align-items:center;gap:9px}
+.tml-legend i{width:10px;height:10px;transform:rotate(45deg);background:var(--void);border:1px solid var(--cyan)}
+.tml-legend i.pivot{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(242,160,30,.6)}
+.tml-legend i.enigma{border-color:var(--violet);box-shadow:0 0 10px rgba(155,107,201,.5)}
+.tml-legend i.won{border-color:var(--jade);box-shadow:0 0 10px rgba(95,211,95,.5)}
+
+.ltl{list-style:none;position:relative;margin:22px 0 0;padding-left:36px}
+.ltl::before{content:'';position:absolute;left:9px;top:12px;bottom:12px;width:1px;
+  background:linear-gradient(180deg,transparent,var(--cyan-mid) 6%,var(--cyan-mid) 94%,transparent)}
+.ltl>li{position:relative;padding-bottom:28px}
+.ltl>li:last-child{padding-bottom:0}
+.ltl>li::before{content:'';position:absolute;left:-31px;top:9px;width:12px;height:12px;
+  background:var(--void);border:1px solid var(--cyan);transform:rotate(45deg)}
+.ltl>li.pivot::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 14px rgba(242,160,30,.65)}
+.ltl>li.enigma::before{border-color:var(--violet);box-shadow:0 0 14px rgba(155,107,201,.5)}
+.ltl>li.won::before{border-color:var(--jade);box-shadow:0 0 14px rgba(95,211,95,.5)}
+.ltl .when{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+.ltl>li.enigma .when{color:var(--violet)}
+.ltl>li.won .when{color:var(--jade)}
+.ltl h3{font-family:var(--f-display);font-weight:600;margin-bottom:7px}
+.ltl .aside{font-size:12.5px;color:var(--mute);margin-top:10px;padding-left:12px;border-left:1px solid var(--cyan-mid)}
+.ltl>li.enigma .aside{border-left-color:var(--violet-mid)}
+.ltl>li.won .aside{border-left-color:var(--jade-mid)}
+
+======================= END STYLE ADDITIONS ============================= */
+
+
+/* ============================ THE VIEW ==================================== */
+V.timeline = () => `
+  <div class="crumb"><a href="#/">Home</a> / Timeline</div>
+  <h1>Timeline of the World</h1>
+  <p class="lede">The road from a rock falling out of the sky to the war you fought as a recruit.
+  Dates before the crash are approximate — the record never agreed with itself, and the game was in
+  no hurry to settle it. Some entries are things the game showed you and then refused to explain;
+  those are marked apart on purpose.</p>
+
+  <div class="tml-legend">
+    <span><i></i> Event</span>
+    <span><i class="pivot"></i> Inciting incident</span>
+    <span><i class="enigma"></i> Never explained</span>
+    <span><i class="won"></i> Ground reclaimed</span>
+  </div>
+
+  <h2>Before the eye of the storm</h2>
+  <ul class="ltl">
+    <li>
+      <div class="when">c. 2178 · The Firefall</div><h3>Fire falls from the sky</h3>
+      <p>An asteroid tracked as a near miss is caught by the Moon's gravity and comes down instead.
+      The impact throws the world into a nine-year winter; the old powers, the United States among
+      them, do not survive it. The game takes its name from this — the fire that rained down — though
+      by the time you play it is generations gone and half legend.</p>
+    </li>
+    <li>
+      <div class="when">The dark age · after the impact</div><h3>Crystite is found in the ash</h3>
+      <p>Survivors pull a blue crystalline mineral from the impact debris that gives up more energy
+      than anything before it. <b>Crystite</b> becomes the thing the rebuilt world runs on — its
+      power, its currency, and eventually its undoing. Everything downstream traces back to it.</p>
+    </li>
+    <li>
+      <div class="when">A generation on · The Crystite Wars</div><h3>The scramble becomes a war</h3>
+      <p>A power source that good is also a prize worth killing for. Control of Crystite fractures the
+      recovering world into open conflict — the fire everyone was rebuilt out of, and the one no one
+      wants to light again.</p>
+    </li>
+    <li>
+      <div class="when">The peace · The Accord</div><h3>The nations fold into one</h3>
+      <p>To keep humanity from burning its second chance the way it burned the first, the surviving
+      states merge into <b>the Accord</b> — a single government whose founding job is to keep Crystite
+      from starting another war. It is the flag you fight under, and it has been overstretched from
+      the day it was raised.</p>
+    </li>
+    <li>
+      <div class="when">The reach outward · Alpha Prime</div><h3>The Arclight is built</h3>
+      <p>The richest Crystite lies off-world, at <b>Alpha Prime</b> in the Alpha Centauri system. To
+      hold that supply line the Accord builds the <b>CMS Arclight</b> — the largest ship ever made,
+      able to fold space itself and cross the gulf in a single jump.</p>
+      <p class="aside">The ships that ran that route brought back more than cargo. Some of the
+      wildlife you fight in the wastes never evolved on Earth.</p>
+    </li>
+  </ul>
+
+  <h2>The crash</h2>
+  <ul class="ltl">
+    <li class="pivot">
+      <div class="tab"><span>Inciting incident</span></div>
+      <div class="when">c. 2233 · The maiden fold</div><h3>The Arclight comes down</h3>
+      ${pnl(`<p>On its first fold, something fails. The jump tears — and something comes through the
+        tear with the ship. Unable to complete the fold, the Arclight falls back toward the world it
+        never finished leaving and comes down along the Brazilian coast.</p>
+        <p>Its hull is still there. Half-submerged off <b>Copacabana</b>, too vast to move and too
+        strange to pull apart, it sits on the horizon of everything that follows. Every job you take,
+        every line you hold, happens in the shadow of that wreck. This is where the game begins.</p>`, 'lit')}
+      <p class="aside">The officer who rode it down lived. The people he was bringing home did not.
+      He commands the Accord's war now.</p>
+    </li>
+  </ul>
+
+  <h2>What came out of it</h2>
+  <ul class="ltl">
+    <li class="enigma">
+      <div class="tab v"><span>Never explained</span></div>
+      <div class="when">After the crash · The Melding</div><h3>The Melding</h3>
+      ${pnl(`<p>Out of the tear came the <b>Melding</b>: an energy storm the colour of Crystite that
+        spread across the sky and did not stop. It rewrites whatever it touches — stone, forest,
+        animal, person — and swallowed nearly the entire planet. Only the eye of it stayed clear.</p>
+        <p>What it is, whether it thinks, whether it wants anything — no one who claimed to know was
+        ever proven right. Walk too far in and the world distorts, then dims, then kills you. That is
+        the whole of what the game will confirm.</p>`, 'veil')}
+    </li>
+    <li class="enigma">
+      <div class="tab v"><span>Never explained</span></div>
+      <div class="when">Shortly after · The Chosen</div><h3>The Chosen</h3>
+      ${pnl(`<p>Then the storm gave up an enemy. The <b>Chosen</b> walked out of the Melding armed,
+        organised, and fixed on one purpose: the end of humankind. They field war-machines the size
+        of buildings and they do not negotiate.</p>
+        <p>Where they come from, what they were before, why they hate — the game never tells you, and
+        the people fighting them never find out. They are simply the thing the storm sent.</p>`, 'veil')}
+    </li>
+  </ul>
+
+  <h2>Where you come in</h2>
+  <ul class="ltl">
+    <li>
+      <div class="when">Present day · New Eden</div><h3>The eye of the storm</h3>
+      <p>What's left of humanity holds a strip of survivable Brazil called <b>New Eden</b>, ringed by
+      the Melding on every side. The Accord — gutted since the crash, far too few — cannot hold the
+      line with soldiers alone.</p>
+      <p>So it opens the <b>ARES Initiative</b> and hands power armour to anyone who will fight. A
+      <b>Battleframe</b>: health that knits itself back together, jets to put you over the wreckage,
+      wings to glide the rest. That's you — not the first to wear the number, not the last, just the
+      one holding it now.</p>
+    </li>
+  </ul>
+
+  <h2>The war you fought</h2>
+  <ul class="ltl">
+    <li>
+      <div class="when">Razor's Edge · The Razorwind threat</div><h3>The Chosen get a name</h3>
+      <p>The faceless mass sharpens into tribes, and the one thrown at you first is the
+      <b>Razorwind</b>. <b>Dredge</b>, an outpost the Accord cannot afford to lose, comes under a
+      Titan-led siege that takes a full platoon to hold. At <b>Jericho</b> you stand over a
+      <b>Melding Repulsor</b> — the technology that physically holds the storm at bay — and defend it
+      against wave after wave.</p>
+      <p class="aside">Naming a tribe is not understanding one. You learn how a Razorwind fights.
+      You never learn what it is.</p>
+    </li>
+    <li class="won">
+      <div class="tab j"><span>Ground reclaimed</span></div>
+      <div class="when">Razor's Edge → Devil's Due · The War Effort</div><h3>Into Devil's Tusk</h3>
+      ${pnl(`<p>Down the coast lies <b>Devil's Tusk</b>, a lava-scarred zone the Melding took long ago
+        — and buried beneath it, a <b>pre-Melding weapons research facility</b> the Accord means to
+        reach first. The battlecruiser <b>U.A.S. Vanguard</b> anchors offshore to force the issue.</p>
+        <p>Here you do the one thing that happens nowhere else in the game: you push the Melding
+        <i>back</i>. <b>Dark Crystite</b> torn from the zone is refined into cores that feed a
+        collective <b>War Effort</b>, and as the cores stack up the storm-line recedes and lost ground
+        returns. A leaderboard keeps count of who bled most to move it.</p>`, 'hold')}
+      <p class="aside">Every other front is a holding action. This is the only map where the arrow
+      points the Accord's way.</p>
+    </li>
+    <li>
+      <div class="when">Devil's Due · The Chosen Prison</div><h3>The prison on the coast</h3>
+      <p>The Accord learns its missing people are held in a <b>Chosen Prison</b> inside the zone, and
+      the campaign builds to a battle in three parts: pull the captured scientists out under fire;
+      then weather an all-out Chosen assault, working the coastal anti-air guns to knock Chosen ships
+      out of the sky while a strike team flies transports into the prison itself — racing to free the
+      prisoners before the Vanguard is lost beneath them.</p>
+      <div class="note won"><span class="eyebrow">From here on</span>
+      <p>This is as far as the shipped story reached before the servers went dark in 2017. Everything
+      else the wiki documents — frames, weapons, thumping, the fight for Devil's Tusk — lives inside
+      these last few entries. The timeline ends where the game ran out.</p></div>
+    </li>
+  </ul>`;
+
+
+/* ======================= ROUTER + NAV (one line each) =====================
+
+   ROUTER — wherever the hash is dispatched to a view (the switch/lookup that
+   already handles '#/eras', '#/perks', etc.), add the timeline case, e.g.:
+
+       case 'timeline': return V.timeline();
+   or, if it's a map:
+       timeline: V.timeline,
+
+   NAV — add a link in the rail nav list alongside Eras/Perks, e.g.:
+
+       <a href="#/timeline">Timeline</a>
+
+   Nothing else changes. The view is self-contained and reads no DATA.
+   ========================================================================== */
+
+</script>
+<script>
+/* inlined from firefall-constraints-route.js */
+/* firefall-constraints-route.js
+ *
+ * Systems page for the beta constraint economy: Mass, Power, CPU/Cores, the
+ * thirty-node progression trees, and surplus power allocation.
+ *
+ * Drop-in route module in the same shape as firefall-timeline-route.js.
+ * Everything is namespaced .cst-* so it can't collide with .tl or .ltl.
+ *
+ * WIRING (three steps, see notes at the bottom of this file):
+ *   1. <script src="firefall-constraints-route.js"><\/script> after data.js
+ *   2. Add 'constraints' to the nav/router table
+ *   3. Repoint the --cst-* palette vars at the wiki globals if you'd rather
+ *      not carry a second copy of the colors
+ *
+ * Era anchor: this page documents 0.7. Where 1.6 data is cited it's cited as
+ * an artifact of a dead system, not as a current figure.
+ */
+(function (global) {
+  'use strict';
+
+  var V = global.V = global.V || {};
+
+  // ---------------------------------------------------------------------
+  // Provenance
+  // ---------------------------------------------------------------------
+  // Four kinds match the rest of the wiki. 'derived' is new. Most of the good
+  // figures on this page are arithmetic over other recovered figures, and
+  // labelling those as 'build' would overstate them: nobody ever saw the
+  // number on screen. If you'd rather not add a fifth kind, map derived to
+  // notes and lose the distinction.
+  var PROV = {
+    dump:    { label: 'dump',    title: 'Build 1962 client database' },
+    notes:   { label: 'notes',   title: 'Official patch notes' },
+    build:   { label: 'build',   title: 'Read off a client build directly' },
+    legacy:  { label: 'legacy',  title: 'Superseded-era source, kept for the record' },
+    derived: { label: 'derived', title: 'Computed from other recovered figures' }
+  };
+
+  function prov(kind, detail) {
+    var p = PROV[kind] || PROV.notes;
+    var text = detail ? p.label + ' ' + detail : p.label;
+    return '<span class="cst-prov cst-prov--' + kind + '" title="' +
+      esc(p.title) + '">' + esc(text) + '</span>';
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ---------------------------------------------------------------------
+  // Data
+  // ---------------------------------------------------------------------
+
+  // Cost is indexed on node position, not on which tree the node sits in.
+  // CPU 6, Mass 7 and Mass 8 form a clean doubling run across two different
+  // trees, which is what pins this down.
+  //
+  // Nodes 3-5 and 9-10 have never been seen. They carry interpolated values
+  // rather than blanks, anchored on the recovered rows instead of on one global
+  // fit: 3-5 bridge the 8,000 -> 70,000 gap at a constant 1.72x per step, and
+  // 9-10 continue the 2.0x step measured across 6 -> 8. Crystite and group
+  // resource are bridged the same way and land on the 1:1.25 ratio every
+  // recovered row holds. est marks them, so the table greys them and the chip
+  // reads 'derived'. They are the shape of the curve, not readings off a client
+  // — anything that needs a real number still needs the capture.
+  var COST_LADDER = [
+    { idx: 1,  xp: '4,000',     cy: '100',    res: 'none',   src: ['build', '0.7.1683'] },
+    { idx: 2,  xp: '8,000',     cy: '200',    res: 'none',   src: ['build', '0.7.1683'] },
+    { idx: 3,  xp: '13,800',    cy: '300',    res: '375',    src: ['derived'], est: true },
+    { idx: 4,  xp: '23,700',    cy: '450',    res: '560',    src: ['derived'], est: true },
+    { idx: 5,  xp: '40,700',    cy: '670',    res: '840',    src: ['derived'], est: true },
+    { idx: 6,  xp: '70,000',    cy: '1,000',  res: '1,250',  src: ['build', '0.7.1679'] },
+    { idx: 7,  xp: '150,000',   cy: '2,000',  res: '2,500',  src: ['build', '0.7.1679'] },
+    { idx: 8,  xp: '300,000',   cy: '4,000',  res: '5,000',  src: ['build', '0.7.1683'] },
+    { idx: 9,  xp: '600,000',   cy: '8,000',  res: '10,000', src: ['derived'], est: true },
+    { idx: 10, xp: '1,200,000', cy: '16,000', res: '20,000', src: ['derived'], est: true }
+  ];
+
+  var KNOWN_NODES = [
+    {
+      tree: 'Power', idx: 1, name: 'Standard Crystite Reactor',
+      grants: 'Power +20',
+      note: 'No group resource. XP and Crystite only.',
+      src: ['build', '0.7.1683']
+    },
+    {
+      tree: 'Power', idx: 2, name: 'Upgraded Energizing Array',
+      grants: 'Power +20',
+      note: 'No group resource.',
+      src: ['build', '0.7.1683']
+    },
+    {
+      tree: 'CPU', idx: 1, name: 'Standard SmartGel',
+      grants: 'Cores +1 (assumed)',
+      note: 'Name recovered from an ability requirement line, not from the node itself.',
+      src: ['build', '0.7.1679']
+    },
+    {
+      tree: 'CPU', idx: 6, name: 'Advanced SmartGel',
+      grants: 'Cores +1, Energy +30',
+      note: 'First node seen to pay into two pools at once.',
+      src: ['build', '0.7.1679']
+    },
+    {
+      tree: 'Mass', idx: 7, name: 'Low Density Servos',
+      grants: 'Mass +200, Pilot Token +1, speed ceiling 100%',
+      note: 'Token matches the 5/7/9/10 schedule.',
+      src: ['build', '0.7.1679']
+    },
+    {
+      tree: 'Mass', idx: 8, name: 'Ultra Density Optimization',
+      grants: 'Mass +200, speed ceiling 110%',
+      note: 'Carries a fourth requirement line beyond the resource, almost certainly a crafted item. Name not legible in the capture.',
+      src: ['build', '0.7.1683']
+    }
+  ];
+
+  // Capacity at a known unlock count. None of these are base values except
+  // the Engineer's cores.
+  var FRAMES = [
+    {
+      name: 'R-40 "Raptor"', role: 'Recon',
+      unlocks: '18 / 30', mass: '1400', pwr: '800', cpu: '13',
+      src: ['build', '0.7.1679']
+    },
+    {
+      name: 'E-10 Accord Engineer', role: 'Engineer',
+      unlocks: '8 / 30', mass: '1000', pwr: '500', cpu: '8',
+      src: ['build', '0.7.1683']
+    }
+  ];
+
+  var ALLOCATION = [
+    { slot: 'Signature Weapon',  item: 'R36 Assault Rifle II',        stage: 'II',   cap: 100, put: 44,  bonus: '+4.4%' },
+    { slot: 'Secondary Weapon',  item: 'Recovered Grenade Launcher II', stage: 'II', cap: 100, put: 100, bonus: '+10.0%' },
+    { slot: 'Ability 1',         item: 'Recovered SIN Beacon I',      stage: 'I',    cap: 50,  put: 50,  bonus: '+5.0%' },
+    { slot: 'Ability 2',         item: 'Resonating Bolts I',          stage: 'I',    cap: 50,  put: 50,  bonus: '+5.0%' },
+    { slot: 'Ability 3',         item: 'Stock Power Field',           stage: '-',    cap: 0,   put: 0,   bonus: '-' },
+    { slot: 'H.K.M.',            item: 'Accord Artillery Strike I',   stage: 'I',    cap: 50,  put: 50,  bonus: '+5.0%' }
+  ];
+
+  var CONFLICTS = [
+    {
+      claim: 'Battleframes come in five tiers, each unlocking new mechanics.',
+      source: 'IGN interview with Scott Youngblood',
+      status: 'Superseded',
+      body: 'Patch 0.6 removed tiers and moved frame unlocks to Pilot Tokens. Build 1545 still lists frames as "Accord Assaultframe / Assault 1" and "Tigerclaw Assaultframe / Assault 2", so the article describes roughly the 0.5 client. Its stated publication date is also wrong by about three years.',
+      src: ['legacy', null]
+    },
+    {
+      claim: 'Frames over their power output deal less damage; frames with excess deal more.',
+      source: 'Cameron Winston, Red 5 progression post',
+      status: 'Superseded',
+      body: 'Patch 0.6.1637 states there is no longer any damage penalty associated with Power, and replaces the automatic bonus with manual surplus allocation. The post describes the system as it stood at 0.6 launch.',
+      src: ['legacy', null]
+    },
+    {
+      claim: 'The progression resource is unique to each battleframe.',
+      source: 'Cameron Winston, Red 5 progression post',
+      status: 'Superseded',
+      body: 'True at 0.6 launch. Patch 0.7.1665 changed it to a resource group per tree: Mineral for Mass, Gas for Power, Organics for CPU. Node tooltips at 0.7 confirm the group scheme.',
+      src: ['legacy', null]
+    },
+    {
+      claim: 'You start with 8 cores and each ability costs 2.',
+      source: 'Cameron Winston, Red 5 progression post',
+      status: 'Confirmed',
+      body: 'The Engineer displays CPU 8/8 with an untouched CPU tree. The Raptor displays 13 with five CPU nodes bought. Both resolve to a base of 8, on frames of different weight classes, so the base looks universal rather than class-scaled.',
+      src: ['derived', null]
+    },
+    {
+      claim: 'Max movement speed is capped by Mass unlocks at 90/100/110/120%.',
+      source: 'Patch 0.6.1637',
+      status: 'Partly right',
+      body: 'That ladder is the ceiling, not the output. Displayed speed tracks how full the mass budget is: the Raptor at 49% loaded shows 100%, the Engineer at 88% loaded shows 80%. The notes describe only half the model.',
+      src: ['build', '0.7.1679 / 0.7.1683']
+    },
+    {
+      claim: '1.6 "power rating" and "cores" are the same stats renamed.',
+      source: 'Common assumption',
+      status: 'False',
+      body: 'Update 1.6 introduced an additive gear score called power rating (a frame reads 320.50, a single weapon module 11) and a set of five chassis equipment pieces called cores. Neither has any relationship to the 0.7 Power budget or CPU cores beyond the word. Match on field identity, never on display name.',
+      src: ['dump', null]
+    }
+  ];
+
+  var OPEN = [
+    'Node grants for indices 3 to 6 and 9 to 10 in each tree.',
+    'Measured XP and Crystite costs for indices 3 to 5 and 9 to 10. The ladder interpolates them and a capture has never confirmed one.',
+    'Whether group resource starts at node 3, later, or only from node 6. The ladder assumes node 3.',
+    'The exact shape of the speed falloff curve. Two load-ratio samples is not a curve.',
+    'Base Mass and Power for all thirteen remaining frames. Only cores are solved.',
+    'Whether allocated surplus is stored per item or per saved loadout.',
+    'What Energy is exactly. It is a separate pool from Power and almost certainly the ability and jet reservoir, but nothing states it.',
+    'Whether the crafted-item gate applies only at node 10 or from node 8 onward.'
+  ];
+
+  // ---------------------------------------------------------------------
+  // Styles
+  // ---------------------------------------------------------------------
+  // Local palette so the file drops in standalone. Repoint these at the wiki
+  // globals if you want one source of truth for the colors.
+  var CSS = [
+    '.cst{--cst-cy:#5ad7e8;--cst-cy-dim:#2b7d88;--cst-am:#f2a63b;',
+    '--cst-am-dim:#8a5f22;--cst-ink:#c8d6da;--cst-ink-dim:#7d8f95;',
+    '--cst-bg:#0a1114;--cst-panel:#0e181c;--cst-panel-2:#121f24;',
+    '--cst-line:#1d323a;--cst-jade:#4fd9a4;--cst-violet:#a98cf0;',
+    '--cst-chamfer:10px;color:var(--cst-ink);}',
+
+    // Chamfered panel. Outer clip makes the corner cut, inner element inset by
+    // 1px gives the hairline edge without a border fighting the clip.
+    '.cst-panel{position:relative;background:var(--cst-line);',
+    'clip-path:polygon(var(--cst-chamfer) 0,100% 0,100% calc(100% - var(--cst-chamfer)),',
+    'calc(100% - var(--cst-chamfer)) 100%,0 100%,0 var(--cst-chamfer));',
+    'padding:1px;margin:0 0 1.6rem;}',
+    '.cst-panel>.cst-panel-in{background:var(--cst-panel);',
+    'clip-path:polygon(calc(var(--cst-chamfer) - 1px) 0,100% 0,100% calc(100% - var(--cst-chamfer) + 1px),',
+    'calc(100% - var(--cst-chamfer) + 1px) 100%,0 100%,0 calc(var(--cst-chamfer) - 1px));',
+    'padding:1.15rem 1.3rem;}',
+
+    // Section header: amber mono label, cyan rule running out to the margin.
+    '.cst-h{display:flex;align-items:center;gap:.85rem;margin:2.4rem 0 1rem;}',
+    '.cst-h:first-child{margin-top:0;}',
+    '.cst-h span{font-family:"Orbitron",monospace;font-size:.78rem;',
+    'letter-spacing:.22em;text-transform:uppercase;color:var(--cst-am);',
+    'white-space:nowrap;}',
+    '.cst-h:after{content:"";flex:1;height:1px;background:linear-gradient(',
+    '90deg,var(--cst-cy),rgba(90,215,232,0));}',
+
+    '.cst-sub{font-family:"Orbitron",monospace;font-size:.7rem;',
+    'letter-spacing:.18em;text-transform:uppercase;color:var(--cst-cy);',
+    'margin:1.4rem 0 .5rem;}',
+
+    '.cst p{line-height:1.62;margin:0 0 .9rem;max-width:74ch;}',
+    '.cst-lede{font-size:1.02rem;color:#dde8eb;}',
+
+    // Provenance chip.
+    '.cst-prov{display:inline-block;font-family:"Orbitron",monospace;',
+    'font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;',
+    'padding:.13em .5em;margin-left:.45em;vertical-align:.12em;',
+    'border:1px solid currentColor;border-radius:1px;opacity:.85;',
+    'white-space:nowrap;cursor:help;}',
+    '.cst-prov--dump{color:var(--cst-cy);}',
+    '.cst-prov--notes{color:var(--cst-am);}',
+    '.cst-prov--build{color:var(--cst-jade);}',
+    '.cst-prov--legacy{color:var(--cst-ink-dim);}',
+    '.cst-prov--derived{color:var(--cst-violet);}',
+
+    // Tables.
+    '.cst-t{width:100%;border-collapse:collapse;font-size:.88rem;margin:.2rem 0 .4rem;}',
+    '.cst-t th{font-family:"Orbitron",monospace;font-size:.62rem;',
+    'letter-spacing:.15em;text-transform:uppercase;color:var(--cst-cy);',
+    'text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--cst-line);',
+    'font-weight:500;}',
+    '.cst-t td{padding:.5rem .7rem;border-bottom:1px solid rgba(29,50,58,.55);',
+    'vertical-align:top;}',
+    '.cst-t tr:last-child td{border-bottom:0;}',
+    '.cst-t .cst-num{font-variant-numeric:tabular-nums;white-space:nowrap;}',
+    // Interpolated rows read as secondary at a glance, before anyone gets to
+    // the chip. Index and source stay upright so the row still scans.
+    '.cst-t .cst-est td{color:var(--cst-ink-dim);font-style:italic;}',
+    '.cst-t .cst-est td:first-child,.cst-t .cst-est td:last-child{font-style:normal;}',
+
+    // The surplus ledger. This is the one place worth spending some ink,
+    // because the arithmetic is the whole argument.
+    '.cst-ledger{background:var(--cst-panel-2);padding:1rem 1.2rem;',
+    'font-family:"Orbitron",monospace;font-size:.82rem;line-height:2;',
+    'font-variant-numeric:tabular-nums;margin:.4rem 0 1rem;}',
+    '.cst-ledger .cst-l{display:flex;justify-content:space-between;gap:2rem;}',
+    '.cst-ledger .cst-l span:first-child{color:var(--cst-ink-dim);}',
+    '.cst-ledger .cst-rule{height:1px;background:var(--cst-line);margin:.4rem 0;}',
+    '.cst-ledger .cst-tot{color:var(--cst-am);}',
+    '.cst-ledger .cst-ok{color:var(--cst-jade);}',
+
+    // Conflict cards.
+    '.cst-conf{border-left:2px solid var(--cst-am-dim);padding:.15rem 0 .15rem 1rem;',
+    'margin:0 0 1.35rem;}',
+    '.cst-conf--ok{border-left-color:var(--cst-jade);}',
+    '.cst-conf--no{border-left-color:#c05a5a;}',
+    '.cst-conf-claim{color:#dde8eb;font-style:italic;margin:0 0 .3rem;}',
+    '.cst-conf-meta{font-family:"Orbitron",monospace;font-size:.6rem;',
+    'letter-spacing:.14em;text-transform:uppercase;color:var(--cst-ink-dim);',
+    'margin:0 0 .5rem;}',
+    '.cst-conf-meta b{color:var(--cst-am);font-weight:500;}',
+    '.cst-conf--ok .cst-conf-meta b{color:var(--cst-jade);}',
+    '.cst-conf--no .cst-conf-meta b{color:#d97b7b;}',
+    '.cst-conf p{margin:0;font-size:.9rem;color:var(--cst-ink);}',
+
+    '.cst-ul{margin:0 0 1rem;padding-left:1.1rem;max-width:74ch;}',
+    '.cst-ul li{line-height:1.6;margin-bottom:.4rem;}',
+
+    // Chart. Both scales are in the DOM; only the selected one is displayed.
+    '.cst-chart{margin:.2rem 0 1.4rem;}',
+    '.cst-chart svg{display:block;width:100%;height:auto;overflow:visible;}',
+    '.cst-chart[data-scale="log"] .cst-c-lin,',
+    '.cst-chart[data-scale="lin"] .cst-c-log{display:none;}',
+    '.cst-chart-head{display:flex;align-items:center;justify-content:space-between;',
+    'gap:1rem;flex-wrap:wrap;margin-bottom:.7rem;}',
+    '.cst-legend{display:flex;gap:1.1rem;flex-wrap:wrap;align-items:center;',
+    'font-size:.76rem;color:var(--cst-ink-dim);}',
+    '.cst-legend span{display:inline-flex;align-items:center;gap:.42em;}',
+    '.cst-legend i{width:12px;height:2px;display:inline-block;}',
+    '.cst-seg{display:flex;gap:.35rem;}',
+    '.cst-seg button{font-family:"Orbitron",monospace;font-size:.6rem;letter-spacing:.14em;',
+    'text-transform:uppercase;padding:.4em .85em;cursor:pointer;background:transparent;',
+    'color:var(--cst-ink-dim);border:1px solid var(--cst-line);}',
+    '.cst-seg button:hover{color:var(--cst-ink);}',
+    '.cst-seg button[aria-pressed="true"]{color:var(--cst-cy);border-color:var(--cst-cy);}',
+    '.cst-tick{font-family:"Orbitron",monospace;font-size:9.5px;fill:var(--cst-ink-dim);}',
+    '.cst-endlabel{font-family:"Orbitron",monospace;font-size:10px;font-weight:500;}',
+
+    '.cst-note{font-size:.85rem;color:var(--cst-ink-dim);max-width:74ch;}',
+
+    '@media (max-width:640px){',
+    '.cst-t{font-size:.8rem;}.cst-t th,.cst-t td{padding:.4rem .45rem;}',
+    '.cst-ledger{font-size:.72rem;}',
+    '.cst-ledger .cst-l{gap:1rem;}}'
+  ].join('');
+
+  function injectCSS() {
+    if (document.getElementById('cst-styles')) return;
+    var s = document.createElement('style');
+    s.id = 'cst-styles';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  // ---------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------
+  function h(label) {
+    return '<div class="cst-h"><span>' + esc(label) + '</span></div>';
+  }
+
+  function panel(inner) {
+    return '<div class="cst-panel"><div class="cst-panel-in">' + inner + '</div></div>';
+  }
+
+  function srcChip(src) {
+    return src ? prov(src[0], src[1]) : '';
+  }
+
+  // ---------------------------------------------------------------------
+  // Cost curve
+  // ---------------------------------------------------------------------
+  // Emitted as an SVG string during render, so there is no post-insert hook to
+  // miss. Both scales are drawn and CSS shows one, which is why the toggle only
+  // has to flip an attribute: re-rendering the route the way the weapon pages
+  // do would scroll the reader back to the top, away from the chart they just
+  // clicked. Hover text rides on <title> children, so it costs no listeners and
+  // screen readers get it too.
+
+  var SERIES = [
+    { key: 'xp',  label: 'XP',       color: 'var(--cst-cy)' },
+    { key: 'cy',  label: 'Crystite', color: 'var(--cst-am)' },
+    { key: 'res', label: 'Resource', color: 'var(--cst-jade)' }
+  ];
+
+  // The ladder stores display strings. Charting wants numbers, and 'none' is
+  // an absent cost rather than a zero one.
+  function num(v) {
+    return (v == null || v === 'none') ? null : Number(String(v).replace(/,/g, ''));
+  }
+
+  function svgEl(tag, attrs, inner) {
+    var s = '<' + tag;
+    for (var k in attrs) if (attrs[k] != null) s += ' ' + k + '="' + attrs[k] + '"';
+    return inner == null ? s + '/>' : s + '>' + inner + '</' + tag + '>';
+  }
+
+  function tickLabel(v) {
+    if (v >= 1000000) return (v / 1000000) + 'M';
+    if (v >= 1000) return (v / 1000) + 'k';
+    return String(v);
+  }
+
+  function curveSvg(scale) {
+    var W = 940, H = 380, L = 58, R = 92, T = 14, B = 40;
+    var iw = W - L - R, ih = H - T - B;
+    var x = function (i) { return +(L + (i - 1) / 9 * iw).toFixed(1); };
+    var y, ticks;
+    if (scale === 'log') {
+      var lo = Math.log10(80), hi = Math.log10(2000000);
+      y = function (v) { return +(T + ih - (Math.log10(v) - lo) / (hi - lo) * ih).toFixed(1); };
+      ticks = [100, 1000, 10000, 100000, 1000000];
+    } else {
+      y = function (v) { return +(T + ih - v / 1250000 * ih).toFixed(1); };
+      ticks = [0, 250000, 500000, 750000, 1000000, 1250000];
+    }
+
+    var out = '';
+    ticks.forEach(function (t) {
+      out += svgEl('line', { x1: L, x2: L + iw, y1: y(t), y2: y(t),
+        stroke: 'var(--cst-line)', 'stroke-width': 1 });
+      out += svgEl('text', { x: L - 9, y: y(t) + 3.5, 'text-anchor': 'end',
+        'class': 'cst-tick' }, tickLabel(t));
+    });
+    out += svgEl('line', { x1: L, x2: L + iw, y1: T + ih, y2: T + ih,
+      stroke: 'var(--cst-ink-dim)', 'stroke-width': 1 });
+    COST_LADDER.forEach(function (n) {
+      out += svgEl('text', { x: x(n.idx), y: T + ih + 20, 'text-anchor': 'middle',
+        'class': 'cst-tick' }, n.idx);
+    });
+    out += svgEl('text', { x: L + iw / 2, y: H - 2, 'text-anchor': 'middle',
+      'class': 'cst-tick' }, 'Node');
+
+    var ends = [];
+    SERIES.forEach(function (s) {
+      var pts = COST_LADDER.filter(function (n) { return num(n[s.key]) != null; });
+      // Segment at a time rather than one polyline, so a stretch that leans on
+      // an interpolated endpoint can go dashed on its own.
+      for (var i = 0; i < pts.length - 1; i++) {
+        var a = pts[i], b = pts[i + 1], est = a.est || b.est;
+        out += svgEl('line', {
+          x1: x(a.idx), y1: y(num(a[s.key])), x2: x(b.idx), y2: y(num(b[s.key])),
+          stroke: s.color, 'stroke-width': 2, 'stroke-linecap': 'round',
+          'stroke-dasharray': est ? '5 5' : null, opacity: est ? '.75' : null
+        });
+      }
+      pts.forEach(function (n) {
+        out += svgEl('circle', {
+          cx: x(n.idx), cy: y(num(n[s.key])), r: 4.5,
+          fill: n.est ? 'var(--cst-panel)' : s.color,
+          stroke: s.color, 'stroke-width': 2
+        }, svgEl('title', {}, 'Node ' + n.idx + ' — ' + s.label + ' ' +
+          (n.est ? '~' : '') + n[s.key] + (n.est ? ' (derived)' : '')));
+      });
+      var last = pts[pts.length - 1];
+      ends.push({ y: y(num(last[s.key])), color: s.color, label: s.label });
+    });
+
+    ends.sort(function (a, b) { return a.y - b.y; });
+    for (var j = 1; j < ends.length; j++) {
+      if (ends[j].y - ends[j - 1].y < 14) ends[j].y = ends[j - 1].y + 14;
+    }
+    ends.forEach(function (e) {
+      out += svgEl('text', { x: L + iw + 11, y: e.y + 3.5, 'class': 'cst-endlabel',
+        fill: e.color }, e.label);
+    });
+
+    return svgEl('svg', {
+      viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'class': 'cst-c-' + scale,
+      'aria-label': 'Cost per node for XP, Crystite and group resource, nodes 1 to 10, ' +
+        (scale === 'log' ? 'logarithmic' : 'linear') + ' scale'
+    }, out);
+  }
+
+  function ratioSvg() {
+    var W = 940, H = 190, L = 58, R = 92, T = 18, B = 32;
+    var iw = W - L - R, ih = H - T - B;
+    var y = function (v) { return +(T + ih - v / 2.4 * ih).toFixed(1); };
+    var rows = [];
+    for (var i = 1; i < COST_LADDER.length; i++) {
+      var a = COST_LADDER[i - 1], b = COST_LADDER[i];
+      rows.push({ from: a.idx, to: b.idx, r: num(b.xp) / num(a.xp), est: a.est || b.est });
+    }
+
+    var out = '';
+    [1, 1.5, 2].forEach(function (t) {
+      out += svgEl('line', { x1: L, x2: L + iw, y1: y(t), y2: y(t),
+        stroke: 'var(--cst-line)', 'stroke-width': 1 });
+      out += svgEl('text', { x: L - 9, y: y(t) + 3.5, 'text-anchor': 'end',
+        'class': 'cst-tick' }, t.toFixed(1) + '×');
+    });
+    out += svgEl('line', { x1: L, x2: L + iw, y1: T + ih, y2: T + ih,
+      stroke: 'var(--cst-ink-dim)', 'stroke-width': 1 });
+
+    var bw = iw / 9 - 14;
+    rows.forEach(function (r, i) {
+      var bx = +(L + (iw / 9) * i + 7).toFixed(1), mid = +(bx + bw / 2).toFixed(1);
+      out += svgEl('rect', {
+        x: bx, y: y(r.r), width: +bw.toFixed(1), height: +(T + ih - y(r.r)).toFixed(1),
+        fill: r.est ? 'none' : 'var(--cst-cy)', stroke: 'var(--cst-cy)',
+        'stroke-width': r.est ? 2 : 0, 'stroke-dasharray': r.est ? '5 5' : null
+      }, svgEl('title', {}, 'Node ' + r.from + ' to ' + r.to + ': ' + r.r.toFixed(2) +
+        '×' + (r.est ? ' (derived)' : '')));
+      out += svgEl('text', { x: mid, y: y(r.r) - 6, 'text-anchor': 'middle',
+        'class': 'cst-tick' }, r.r.toFixed(2) + '×');
+      out += svgEl('text', { x: mid, y: T + ih + 17, 'text-anchor': 'middle',
+        'class': 'cst-tick' }, r.from + '→' + r.to);
+    });
+
+    return svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img',
+      'aria-label': 'XP multiplier from each node to the next' }, out);
+  }
+
+  function chartBlock() {
+    return '<div class="cst-chart" data-scale="log">' +
+      '<div class="cst-chart-head"><div class="cst-legend">' +
+      SERIES.map(function (s) {
+        return '<span><i style="background:' + s.color + '"></i>' + esc(s.label) + '</span>';
+      }).join('') +
+      '<span>solid = recovered, dashed = derived</span></div>' +
+      '<div class="cst-seg">' +
+      '<button type="button" aria-pressed="true" onclick="cstToggleScale(this,\'log\')">Log</button>' +
+      '<button type="button" aria-pressed="false" onclick="cstToggleScale(this,\'lin\')">Linear</button>' +
+      '</div></div>' +
+      curveSvg('log') + curveSvg('lin') +
+      '</div>';
+  }
+
+  // Reached from the inline handler on the scale buttons.
+  global.cstToggleScale = function (btn, scale) {
+    var wrap = btn.closest('.cst-chart');
+    if (!wrap) return;
+    wrap.setAttribute('data-scale', scale);
+    var bs = wrap.querySelectorAll('.cst-seg button');
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].setAttribute('aria-pressed', bs[i] === btn ? 'true' : 'false');
+    }
+  };
+
+  // ---------------------------------------------------------------------
+  // Sections
+  // ---------------------------------------------------------------------
+
+  function secIntro() {
+    return h('The level-less system') +
+      '<p class="cst-lede">Firefall\u2019s beta has no character level. Experience is a ' +
+      'currency that sits in your wallet next to Organic, Mineral and Gas, and you spend ' +
+      'it on nodes in three per-frame progression trees.' + prov('build', '0.7.1679') + '</p>' +
+
+      '<p>That inversion is the whole design. A level is one number that only goes up, so ' +
+      'the only lever for pacing it is how fast it climbs, and stretching the curve at the ' +
+      'top is exactly what Red 5 said had driven players off. Once XP is spendable there is ' +
+      'no curve left to stretch. Every session\u2019s earnings have somewhere to go the ' +
+      'moment you get them, and "how far along am I" stops being a rank and becomes a ' +
+      'question of which things you bought.</p>' +
+
+      '<p>The three trees are Mass, Power and CPU. Each is a budget your equipment spends ' +
+      'against, and each has ten nodes that raise the budget and gate what you\u2019re ' +
+      'allowed to equip. Thirty nodes total, which is what the counter under the frame ' +
+      'portrait is reporting when it reads 18/30.' + prov('derived') + '</p>';
+  }
+
+  function secTrees() {
+    var rows = COST_LADDER.map(function (n) {
+      var t = n.est ? '~' : '';
+      return '<tr class="' + (n.est ? 'cst-est' : '') + '"><td class="cst-num">' + n.idx +
+        '</td><td class="cst-num">' + t + n.xp +
+        '</td><td class="cst-num">' + t + n.cy +
+        '</td><td class="cst-num">' + (n.res === 'none' ? n.res : t + n.res) +
+        '</td><td>' + srcChip(n.src) + '</td></tr>';
+    }).join('');
+
+    var nodeRows = KNOWN_NODES.map(function (n) {
+      return '<tr><td class="cst-num">' + esc(n.tree) + ' ' + n.idx +
+        '</td><td>' + esc(n.name) +
+        '</td><td>' + esc(n.grants) +
+        '</td><td>' + esc(n.note) + srcChip(n.src) + '</td></tr>';
+    }).join('');
+
+    return h('The three trees') +
+
+      '<p>Cost is a function of node position, not of which tree the node sits in. ' +
+      'CPU 6, Mass 7 and Mass 8 run 1,000 / 2,000 / 4,000 Crystite and 1,250 / 2,500 / ' +
+      '5,000 group resource across two different trees. Clean doubling that ignores the ' +
+      'tree boundary means one ladder covers all thirty nodes.' + prov('derived') + '</p>' +
+
+      '<p>Nodes 1 and 2 cost only XP and Crystite with no group resource at all, which is ' +
+      'the "first unlocks earned purely through experience" promise showing up in the ' +
+      'client. The resource requirement switches on somewhere before node 6.' +
+      prov('build', '0.7.1683') + '</p>' +
+
+      panel(
+        '<div class="cst-sub">Cost by node index</div>' +
+        chartBlock() +
+        '<table class="cst-t"><thead><tr>' +
+        '<th>Node</th><th>XP</th><th>Crystite</th><th>Group resource</th><th>Source</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<p class="cst-note">Group resource is Mineral for Mass, Gas for Power and Organics ' +
+        'for CPU.' + prov('notes', '0.7.1665') + ' The greyed rows are interpolated rather ' +
+        'than read. Nodes 3 to 5 bridge the 8,000 to 70,000 gap at 1.72&times; a step; 9 and ' +
+        '10 carry on the 2.0&times; doubling that holds firmly across 6 to 8. Both land on ' +
+        'the recovered anchors exactly and keep the 1:1.25 Crystite-to-resource ratio every ' +
+        'measured row has. Fitting one exponential across all five recovered points instead ' +
+        'overshoots node 6 by 17% and undershoots node 8 by 9%, which is why the bridges are ' +
+        'anchored locally rather than globally.</p>' +
+
+        '<p class="cst-note" style="margin-top:.7rem">Resource appearing at node 3 is the ' +
+        'softest assumption in the table. What is known is that nodes 1 and 2 have none and ' +
+        'node 6 has 1,250; it could switch on anywhere between, or not exist below 6 at all.</p>'
+      ) +
+
+      panel(
+        '<div class="cst-sub">Step multiplier</div>' +
+        ratioSvg() +
+        '<p class="cst-note" style="margin:.7rem 0 0">Each node’s XP over the node before ' +
+        'it. Flat bars would mean a pure exponential, and these are not flat. Both recovered ' +
+        'ends sit at 2.0&times; or above while the interpolated middle sits at 1.72&times;, so ' +
+        'the curve appears to slacken through the part nobody has seen. That dip is an ' +
+        'artifact of the method rather than a finding: any four steps whose product is 8.75 ' +
+        'join 8,000 to 70,000, and spreading the shortfall evenly is merely the least ' +
+        'assuming of them. It is also the least likely in one specific way — if the real ' +
+        'ladder held 2.0&times; on three of those four steps, the remaining one is 1.09&times;, ' +
+        'very nearly free. A rung that cheap would be a deliberate breather, and this ' +
+        'interpolation would hide it completely.</p>'
+      ) +
+
+      '<div class="cst-sub">Recovered nodes</div>' +
+      '<table class="cst-t"><thead><tr>' +
+      '<th>Node</th><th>Name</th><th>Grants</th><th>Notes</th>' +
+      '</tr></thead><tbody>' + nodeRows + '</tbody></table>' +
+
+      '<p style="margin-top:1.2rem">Pilot Tokens come at the 5th, 7th, 9th and 10th node of ' +
+      'each tree.' + prov('notes', '0.6') + ' Twelve tokens for a fully maxed frame against ' +
+      'a ten-token price for a new one, so completing a frame buys the next with a little ' +
+      'left over. That is the engine behind keeping a stable of frames, and it is deliberately ' +
+      'tight rather than generous. The 10th node also wants a crafted item unique to the ' +
+      'frame.' + prov('notes', '0.6') + '</p>';
+  }
+
+  function secMass() {
+    return h('Mass') +
+
+      '<p>Mass does two jobs. The capacity number is your budget for equipping heavy gear. ' +
+      'How full that budget is sets your movement speed.</p>' +
+
+      '<p>The patch notes describe speed as a four-step ladder tied to unlock count, ' +
+      '90 / 100 / 110 / 120%.' + prov('notes', '0.6.1637') + ' The client says that ladder is ' +
+      'the ceiling, not the output. Displayed speed tracks load ratio:</p>' +
+
+      panel(
+        '<div class="cst-ledger">' +
+        '<div class="cst-l"><span>Raptor &nbsp; 691 / 1400</span><span>49% loaded &rarr; speed 100%</span></div>' +
+        '<div class="cst-l"><span>Engineer &nbsp; 880 / 1000</span><span>88% loaded &rarr; speed 80%</span></div>' +
+        '</div>' +
+        '<p class="cst-note" style="margin:0">Two samples, two frames, two builds.' +
+        prov('build', '0.7.1679 / 0.7.1683') + ' Enough to rule out the step model, not ' +
+        'enough to fit the curve.</p>'
+      ) +
+
+      '<p>This is a better system than the note implies. Running light pays continuously, so ' +
+      'shaving thirty mass off a build is always worth something instead of only mattering ' +
+      'when it crosses a threshold. It also explains why hovering Mass Tech 8 flips the ' +
+      'Engineer\u2019s readout from 80% to 110%: the node adds 200 capacity, which drops him ' +
+      'from 88% loaded to 73%, and raises the ceiling at the same time.</p>' +
+
+      '<p>Worth replicating from the UI: hovering an unbought node live-previews its effect ' +
+      'on the displayed caps. The Raptor\u2019s header reads 691/1600 under a Mass Tech 7 ' +
+      'hover and 691/1400 otherwise. That is what makes the trees legible without a respec.' +
+      prov('build', '0.7.1679') + '</p>';
+  }
+
+  function secPower() {
+    var rows = ALLOCATION.map(function (r) {
+      var capTxt = r.cap ? r.put + ' / ' + r.cap : '\u2013 / \u2013';
+      return '<tr><td>' + esc(r.slot) +
+        '</td><td>' + esc(r.item) +
+        '</td><td class="cst-num">' + esc(r.stage) +
+        '</td><td class="cst-num">' + capTxt +
+        '</td><td class="cst-num">' + esc(r.bonus) + '</td></tr>';
+    }).join('');
+
+    return h('Power and surplus allocation') +
+
+      '<p>Power is the centrepiece, and it is the part both surviving dev sources get ' +
+      'wrong. There is no damage penalty for running your budget close, and no automatic ' +
+      'bonus for running it lean.' + prov('notes', '0.6.1637') + ' Whatever headroom you have ' +
+      'is a pool you place by hand.</p>' +
+
+      '<p>Surplus is capacity minus consumption. Open the Allocate Surplus button under the ' +
+      'Power tree and you get a slider per eligible slot.</p>' +
+
+      panel(
+        '<div class="cst-sub">The ledger balances</div>' +
+        '<div class="cst-ledger">' +
+        '<div class="cst-l"><span>Power capacity</span><span>800</span></div>' +
+        '<div class="cst-l"><span>Consumed by equipped gear</span><span>446</span></div>' +
+        '<div class="cst-rule"></div>' +
+        '<div class="cst-l cst-tot"><span>Surplus</span><span>354</span></div>' +
+        '<div class="cst-l"><span>Placed across five slots</span><span>294</span></div>' +
+        '<div class="cst-l"><span>Held back</span><span>60</span></div>' +
+        '<div class="cst-rule"></div>' +
+        '<div class="cst-l cst-ok"><span>294 + 60</span><span>354 \u2713</span></div>' +
+        '</div>' +
+        '<p class="cst-note" style="margin:0">Two frames of the same session nine seconds ' +
+        'apart show 104 unallocated and then 60, with the signature weapon slider reading ' +
+        '44/100 and the cursor still on it. The books balance in both states.' +
+        prov('build', '0.7.1679') + '</p>'
+      ) +
+
+      '<div class="cst-sub">Conversion and caps</div>' +
+      '<p>Ten power buys one percent bonus damage.' + prov('notes', '0.6.1637') +
+      ' The cap per slot is fifty per crafting Stage, and the Roman numeral in an item\u2019s ' +
+      'name is that Stage.</p>' +
+
+      '<table class="cst-t"><thead><tr>' +
+      '<th>Slot</th><th>Item</th><th>Stage</th><th>Placed / cap</th><th>Bonus</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+
+      '<p style="margin-top:1.2rem">Stock gear has no Stage, so it has no cap, so it reads ' +
+      'as a dash and can absorb nothing. The Engineer confirms the rule from the other ' +
+      'direction: an all-stock loadout at 450/500 reports 50 unallocated power and has ' +
+      'nowhere to put any of it.' + prov('build', '0.7.1683') + '</p>' +
+
+      '<p>Eligible slots are the two weapons, the three abilities and the HKM. Plating, ' +
+      'servos, jumpjets and the passive module never appear in the dialog.' +
+      prov('notes', '0.6.1637') + '</p>' +
+
+      '<p>Why it matters for the rebuild: under the old automatic rule, headroom was a hidden ' +
+      'stat with no decision in it. Making it placeable turns leftover budget into an ' +
+      'authored choice, so two pilots with identical frames, identical gear and an identical ' +
+      '354 surplus can end up with different damage profiles. It also couples progression to ' +
+      'crafting twice over, since a Stage II weapon both performs better and soaks twice the ' +
+      'surplus. One design constraint falls out of that: a full Stage IV loadout can absorb ' +
+      'up to 1,200 placed power across six slots, so if the Power ladder only ever grows ' +
+      'enough to equip your gear, the allocation game quietly dies at endgame. The ladder has ' +
+      'to outrun consumption.</p>';
+  }
+
+  function secCores() {
+    return h('CPU and Cores') +
+
+      '<p>Cores are ability slots. Every frame starts with 8 and each ability costs 2, so a ' +
+      'stock loadout of four abilities exactly fills a fresh frame.' + prov('derived') + '</p>' +
+
+      '<p>The base is confirmed twice over. The Engineer shows CPU 8/8 with an untouched CPU ' +
+      'tree. The Raptor shows 13 with five CPU nodes bought, and 8 + 5 = 13. Two frames of ' +
+      'different weight classes landing on the same base means cores are universal, unlike ' +
+      'Mass and Power.' + prov('build', '0.7.1679 / 0.7.1683') + '</p>' +
+
+      '<p>CPU nodes pay into two pools. Advanced SmartGel grants Cores +1 and Energy +30, ' +
+      'Energy being the separate reservoir abilities and jets draw on.' + prov('build', '0.7.1679') +
+      '</p>' +
+
+      '<p>The tree is also a certification system, not just a budget. The Recovered SIN Beacon ' +
+      'lists "Requires CPU Tech 1 - Standard SmartGel" as a hard requirement, and Stage I gear ' +
+      'needs progression unlocks to equip at all.' + prov('notes', '0.6.1637') + ' Jumpjet ' +
+      'visual effects also change as you climb the CPU tree, and completing all ten nodes of ' +
+      'a tree on an advanced frame unlocks that frame\u2019s warpaint.' + prov('notes', '0.7.1665') +
+      ' The trees carry the cosmetic payoff that levels used to.</p>';
+  }
+
+  function secItems() {
+    return h('What equipment costs') +
+
+      '<p>Build 1962 still defines Mass, Power and CPU as stats 951, 952 and 953, and 1,125 ' +
+      'items still carry values for them, stored as negatives.' + prov('dump') + ' The system ' +
+      'was switched off at the presentation layer rather than deleted, the same way beta ' +
+      'crafting was.</p>' +
+
+      '<p>Read that table with care. Across all 1,125 rows there are only seven distinct Mass ' +
+      'values, Power is exactly half of Mass in 1,006 of 1,015 tuned rows, and a plating with ' +
+      '1,100 health costs the same as one with 2,100. What survived at scale is a late-era ' +
+      'pricing formula, and nothing was ever tuned against a live constraint economy after ' +
+      '0.7, because nothing read the field.' + prov('dump') + '</p>' +
+
+      '<div class="cst-sub">The stage ladder is probably real</div>' +
+      '<p>The 1962 Mass values run 48 / 64 / 80 / 120 by crafting tier. The one beta ability ' +
+      'cost read off a 0.7 client, the Stage I Recovered SIN Beacon, is Mass 48. Same number, ' +
+      'same rung, and beta had four crafting stages. So the rungs look inherited from beta ' +
+      'even though the per-item spread around them was flattened later.' + prov('derived') + '</p>' +
+
+      '<p>The beta samples support that reading from both sides. The SIN Beacon sits on the ' +
+      'ladder at 48 but carries Power 58, which is nowhere near the Mass/2 rule. Five Regulation ' +
+      'items in 1962 sit at Mass 88 / Power 45, off the ladder entirely and off the formula, and ' +
+      'one of them carries Cores 2 to complete the triple. Those are hand-authored beta rows ' +
+      'that passed through every rebalance untouched.' + prov('dump') + '</p>' +
+
+      '<div class="cst-sub">Stock against crafted</div>' +
+      '<p>Stock gear has infinite durability, no Stage, and takes no surplus. Crafted and ' +
+      'recovered gear is quality-rated, degrades, and is allocation-eligible. That split is why ' +
+      'crafted quality matters rather than just crafted tier: a better roll can be lighter or ' +
+      'cheaper on a constraint, not only stronger.' + prov('build', '0.7.1679') + '</p>' +
+
+      '<p>The bracketed number beside prefixed items, [643] or [912], is a per-instance rolled ' +
+      'quality. Every prefixed item carries one and no stock item does, which is why it will ' +
+      'never turn up in the item table: it is a property of the instance, not the template.' +
+      prov('derived') + '</p>';
+  }
+
+  function secFrames() {
+    var rows = FRAMES.map(function (f) {
+      return '<tr><td>' + esc(f.name) + '<br><span class="cst-note">' + esc(f.role) + '</span>' +
+        '</td><td class="cst-num">' + esc(f.unlocks) +
+        '</td><td class="cst-num">' + esc(f.mass) +
+        '</td><td class="cst-num">' + esc(f.pwr) +
+        '</td><td class="cst-num">' + esc(f.cpu) +
+        '</td><td>' + srcChip(f.src) + '</td></tr>';
+    }).join('');
+
+    return h('Frame capacities') +
+
+      '<p>These are capacities at a known unlock count, not base values. Only the ' +
+      'Engineer\u2019s core figure is a true base, because his CPU tree is untouched.</p>' +
+
+      '<table class="cst-t"><thead><tr>' +
+      '<th>Frame</th><th>Unlocks</th><th>Mass</th><th>Power</th><th>Cores</th><th>Source</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+
+      '<p style="margin-top:1.2rem">Mass and Power clearly differ by frame while cores do not. ' +
+      'Solving the bases needs the grant ladder, which is only partly recovered, so they stay ' +
+      'underdetermined for now. One useful constraint: Power nodes 1 and 2 both grant +20, and ' +
+      'if all ten did the same the whole tree would only contribute 200. That cannot explain ' +
+      'the Raptor\u2019s 800 against the Engineer\u2019s 500 unless the frames start far apart ' +
+      'or the later grants escalate. Both are worth testing against any third sample.' +
+      prov('derived') + '</p>' +
+
+      '<p class="cst-note">The remaining thirteen frames have no sample at all. Those numbers ' +
+      'are honest design work rather than reconstruction, and belong in BUILD_OVERRIDES with ' +
+      'the rationale attached.</p>';
+  }
+
+  function secConflicts() {
+    var cards = CONFLICTS.map(function (c) {
+      var mod = c.status === 'Confirmed' ? ' cst-conf--ok'
+        : (c.status === 'False' ? ' cst-conf--no' : '');
+      return '<div class="cst-conf' + mod + '">' +
+        '<p class="cst-conf-claim">\u201c' + esc(c.claim) + '\u201d</p>' +
+        '<p class="cst-conf-meta">' + esc(c.source) + ' &nbsp;\u00b7&nbsp; <b>' +
+        esc(c.status) + '</b>' + srcChip(c.src) + '</p>' +
+        '<p>' + esc(c.body) + '</p></div>';
+    }).join('');
+
+    return h('Where the sources disagree') +
+      '<p>Three written accounts of this system survive and they describe three different ' +
+      'versions of it. None is wrong so much as differently dated.</p>' +
+      cards;
+  }
+
+  function secUnits() {
+    return h('Units, as archaeology') +
+
+      '<p>Older builds show what the constraints used to be, and the units are the ' +
+      'interesting part.</p>' +
+
+      '<table class="cst-t"><thead><tr>' +
+      '<th>Build</th><th>Caps</th><th>Sample cost</th>' +
+      '</tr></thead><tbody>' +
+      '<tr><td class="cst-num">1409</td>' +
+      '<td class="cst-num">Mass 6435 kg, Power 3815 GW, CPU in mL</td>' +
+      '<td>Accord Bio Needler: CPU 190 mL, PWR 106 GW, MASS 547 kg</td></tr>' +
+      '<tr><td class="cst-num">1545</td>' +
+      '<td class="cst-num">all three normalised to 1000.00</td>' +
+      '<td>Accord Plating: CPU 0.50 mL, Power 0.49 GW, Capacity 7.38 kg</td></tr>' +
+      '<tr><td class="cst-num">0.7</td>' +
+      '<td class="cst-num">per-frame, unitless</td>' +
+      '<td>Recovered SIN Beacon I: Mass 48, Power 58, Cores 2</td></tr>' +
+      '</tbody></table>' +
+
+      '<p style="margin-top:1.2rem">CPU measured in millilitres is the detail worth keeping. ' +
+      'SmartGel is a literal coolant fluid, which is why every CPU node is named for a gel ' +
+      'grade and why the flavour text talks about cooling agents and data throughput. When 0.6 ' +
+      'renamed CPU to Cores it converted a continuous 1000-unit fluid volume into 8 discrete ' +
+      'slots. That is a change of kind, not a rename, and it is why a dev post can say an ' +
+      'ability costs 2 cores while the 0.5 client was charging 190 mL for a rifle.' +
+      prov('build', '1409 / 1545') + '</p>' +
+
+      '<p>Build 1545 also settles the tier question on screen. Its frame list reads "Accord ' +
+      'Assaultframe / Assault 1" and "Tigerclaw Assaultframe / Assault 2".' +
+      prov('build', '1545') + '</p>';
+  }
+
+  function secOpen() {
+    return h('Still open') +
+      '<ul class="cst-ul">' +
+      OPEN.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') +
+      '</ul>' +
+      '<p class="cst-note">Node grants, node costs and frame bases never shipped to the ' +
+      'client. All sixty certificates survive in 1962 with their names and flavour text in ' +
+      'five languages, but every payload column on them is zero, so the numbers lived ' +
+      'server-side alongside the spawn tables.' + prov('dump') + ' Certificates 11 to 20 exist ' +
+      'as unnamed blanks in each tree, which says Red 5 meant to double the trees and never ' +
+      'did. That is real design intent, but it postdates the 0.7 anchor and never shipped, so ' +
+      'it belongs on the Eras page as context rather than here as a figure.</p>';
+  }
+
+  // ---------------------------------------------------------------------
+  // Route
+  // ---------------------------------------------------------------------
+  V.constraints = function () {
+    injectCSS();
+    return '<div class="cst">' +
+      secIntro() +
+      secTrees() +
+      secMass() +
+      secPower() +
+      secCores() +
+      secItems() +
+      secFrames() +
+      secConflicts() +
+      secUnits() +
+      secOpen() +
+      '</div>';
+  };
+
+  // Best-effort self-registration. If the wiki's router table has a different
+  // name this is a no-op and you wire it by hand, same as the timeline module.
+  if (global.ROUTES && !global.ROUTES.constraints) {
+    global.ROUTES.constraints = {
+      title: 'Constraints & Progression',
+      view: V.constraints
+    };
+  }
+
+})(typeof window !== 'undefined' ? window : this);
+
+/* ---------------------------------------------------------------------------
+ * WIRING
+ *
+ * 1. Script tag, after data.js and before the router boots:
+ *      <script src="firefall-constraints-route.js"><\/script>
+ *
+ * 2. Router. The module tries to register itself into window.ROUTES under the
+ *    key 'constraints'. If your table lives somewhere else, add it manually:
+ *      constraints: { title: 'Constraints & Progression', view: V.constraints }
+ *    Then add a nav entry pointing at #/constraints.
+ *
+ * 3. Fonts. Uses Orbitron for headers, labels and the ledger, same as the rest
+ *    of the wiki. Already loaded, so nothing to add.
+ *
+ * 4. Palette. The .cst block declares its own --cst-* vars so the file drops in
+ *    standalone. Repoint them at the wiki globals if you'd rather have one
+ *    source of truth for the colors.
+ *
+ * 5. Provenance. This page uses a fifth kind, 'derived', for figures computed
+ *    from other recovered figures rather than read off a source. Several of the
+ *    best numbers here are arithmetic, and calling those 'build' would claim
+ *    somebody saw them on screen. If you don't want a fifth kind, map derived
+ *    to notes in PROV and drop the .cst-prov--derived rule.
+ * ------------------------------------------------------------------------- */
+
+</script>
+<script>
+/* inlined from firefall-crafting-route.js */
+/* firefall-crafting-route.js
+ *
+ * Systems page for the beta crafting economy: resource stats, refining,
+ * component-based recipes, quality propagation, and the four crafting stages.
+ *
+ * Drop-in route module in the same shape as firefall-timeline-route.js and
+ * firefall-constraints-route.js. Namespaced .cft-* throughout.
+ *
+ * The join with the constraints page is the resource stat list. Resources are
+ * graded on five slots, three of them Power, Mass and CPU-Cores, the same
+ * budgets a frame spends against. Picking materials at the terminal is the
+ * constraint tradeoff made at manufacture time, so neither page is complete
+ * without the other.
+ *
+ * Era anchor: 0.7. Modules get a footer only, as the thing that replaced this.
+ */
+(function (global) {
+  'use strict';
+
+  var V = global.V = global.V || {};
+
+  var PROV = {
+    dump:    { label: 'dump',    title: 'Build 1962 client database' },
+    notes:   { label: 'notes',   title: 'Official patch notes' },
+    build:   { label: 'build',   title: 'Read off a client build directly' },
+    legacy:  { label: 'legacy',  title: 'Superseded-era source, kept for the record' },
+    derived: { label: 'derived', title: 'Computed from other recovered figures' }
+  };
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function prov(kind, detail) {
+    var p = PROV[kind] || PROV.notes;
+    var text = detail ? p.label + ' ' + detail : p.label;
+    return '<span class="cft-prov cft-prov--' + kind + '" title="' +
+      esc(p.title) + '">' + esc(text) + '</span>';
+  }
+
+  // -------------------------------------------------------------------
+  // Data
+  // -------------------------------------------------------------------
+
+  // Groups map one-to-one onto the progression trees. Whatever you thump
+  // gates both what you can build and which tree you can climb.
+  var RESOURCES = [
+    {
+      group: 'Mineral', tree: 'Mass tree',
+      families: [
+        { name: 'Metal',     items: ['Copper', 'Iron', 'Aluminum'] },
+        { name: 'Composite', items: ['Carbon', 'Silicate', 'Ceramic'] }
+      ]
+    },
+    {
+      group: 'Gas', tree: 'Power tree',
+      families: [
+        { name: 'Reactive', items: ['Methine', 'Octine'] },
+        { name: 'Inert',    items: ['Nitrine', 'Radine'] }
+      ]
+    },
+    {
+      group: 'Organic', tree: 'CPU tree',
+      families: [
+        { name: 'Biomaterial', items: ['Petrochem', 'Biopolymer', 'Xenograft'] },
+        { name: 'Enzyme',      items: ['Toxin', 'Regenic', 'Anabolic'] }
+      ]
+    }
+  ];
+
+  // Every component recovered from the notes, with what it steers where known.
+  var COMPONENTS = [
+    { name: 'Plasma Cannon Barrel I', item: 'Plasma Cannon I', steers: 'AOE radius', src: ['notes', '0.6'] },
+    { name: 'Plasma Reactor I',       item: 'Plasma Cannon I', steers: 'Damage',     src: ['notes', '0.6'] },
+    { name: 'Personal Health Sensor', item: 'Repairing Nanites', steers: 'Resilience, keyed to Mass as of 0.7.1688', src: ['notes', '0.7.1688'] },
+    { name: 'Shield Energizer',       item: 'Overseer', steers: 'Keyed to Mass as of 0.7.1688', src: ['notes', '0.7.1688'] },
+    { name: 'Flame Applicator',       item: 'Immolate', steers: 'Thermal resistance', src: ['notes', '0.7.1688'] },
+    { name: 'Stasis Field Unit',      item: 'Stasis Field', steers: 'Toughness', src: ['notes', '0.7.1688'] },
+    { name: 'Health Propagator',      item: 'Supply Station', steers: 'Malleability', src: ['notes', '0.7.1688'] },
+    { name: 'Energy Generator',       item: 'Burn Jets, Afterburner, Emergency Response', steers: 'Recharge, based on Power', src: ['notes', '0.7.1688'] },
+    { name: 'Instant Healing System', item: 'Supply Station', steers: 'Healing, keyed to Mass as of 0.7.1688', src: ['notes', '0.7.1688'] },
+    { name: 'Deployable Power Relays II', item: 'Deployable Shield II-IV', steers: 'Unknown', src: ['notes', '0.7.1694'] }
+  ];
+
+  var CONFLICTS = [
+    {
+      claim: 'Resources are graded on three aspects: Power, Mass and CPU-Cores.',
+      source: 'Patch 0.6',
+      status: 'Settled',
+      body: 'By 0.7 the notes also name per-material stats that are none of the three: Regenics for resilience, Xenografts for thermal resistance, Biopolymers for toughness, Aluminum for malleability. The client database settles which reading is right. dbitems::ResourceStat holds five rows, and dbitems::Resource_Stat_Names keys a localised name to a resource type plus a stat index, a table that exists only so one slot can show a different name on each material. Malleability on Aluminum and toughness on Biopolymer are the same slot wearing two labels, so the drift was deliberate rather than sloppy. A crafter optimises across five fixed axes whatever the terminal calls them, which makes the 0.6 claim wrong in both directions: five, not three, and not three plus one per material. The arithmetic agrees, since three budgets plus four named stats would need seven slots and there are five.',
+      src: ['dump', '5 rows']
+    },
+    {
+      claim: 'A component keys to one constraint type, which drives its output quality.',
+      source: 'Patch 0.7.1688',
+      status: 'Ambiguous',
+      body: 'One line reads "changed the constraint type of the component Personal Health Sensor from Power to Mass", which sounds like the budget it charges. Another reads "fixed Shield Energizer to accept Mass as its stat over Power, this will now affect the output depending on the resource quality input", which makes the same field drive output. Both may be true if constraint type does double duty, charging one budget and selecting which resource stat is read. The database at least keeps the two readings apart, since dbitems::Blueprint_Resources carries resource_stat and item_attribute as separate columns on the same row: an ingredient names both the slot it reads and the item stat it steers.',
+      src: ['notes', '0.7.1688']
+    },
+    {
+      claim: 'Five families of three resources, fifteen total.',
+      source: 'Patch 0.6',
+      status: 'Superseded',
+      body: 'The 0.6.1637 rename lists six families across three groups, four of three and two of two, sixteen resources in all. The count changed during the reorganisation.',
+      src: ['notes', '0.6.1637']
+    },
+    {
+      claim: 'Stage 2 items will almost always have superior performance than Stage 1.',
+      source: 'Patch 0.6.1621',
+      status: 'Design tension',
+      body: 'Taken literally this flattens the horizontal promise. If stage dominates material quality then the material hunt is decorative and the ladder is vertical again with extra steps. The notes gesture at the fix in the same breath, promising that more powerful gear is more constraint-hungry, and the surplus caps give it somewhere to land: a Stage IV item absorbs 200 allocated power against a Stage I item\u2019s 50, so stage can buy headroom instead of raw output.',
+      src: ['notes', '0.6.1621']
+    }
+  ];
+
+  var OPEN = [
+    'What the five stat slots are called. dbitems::ResourceStat stores the names as localisation ids, so one pass over a full clientdb.sd2 prints them and closes this.',
+    'Which resource is best at which slot. The notes say each resource in a family is best at one, but never publish the table.',
+    'Whether quality is a single number per resource unit or a value in each slot. Blueprints pick one slot per ingredient, which only means anything if the resource carries a value in all five, but that is an inference and has not been read off the data.',
+    'How component quality combines when an item takes several components. Averaged, weighted, or independent per steered attribute.',
+    'What permanent repair costs. Beta never resolved it.',
+    'The full nanoprint tree. Only scattered components survive in the notes.',
+    'Whether the Stage I to IV progression changes which attributes a component can steer, or only how far.'
+  ];
+
+  // -------------------------------------------------------------------
+  // Styles
+  // -------------------------------------------------------------------
+  var CSS = [
+    '.cft{--cft-cy:#5ad7e8;--cft-am:#f2a63b;--cft-am-dim:#8a5f22;',
+    '--cft-ink:#c8d6da;--cft-ink-dim:#7d8f95;--cft-panel:#0e181c;',
+    '--cft-panel-2:#121f24;--cft-line:#1d323a;--cft-jade:#4fd9a4;',
+    '--cft-violet:#a98cf0;--cft-chamfer:10px;color:var(--cft-ink);}',
+
+    '.cft-panel{position:relative;background:var(--cft-line);',
+    'clip-path:polygon(var(--cft-chamfer) 0,100% 0,100% calc(100% - var(--cft-chamfer)),',
+    'calc(100% - var(--cft-chamfer)) 100%,0 100%,0 var(--cft-chamfer));',
+    'padding:1px;margin:0 0 1.6rem;}',
+    '.cft-panel>.cft-panel-in{background:var(--cft-panel);',
+    'clip-path:polygon(calc(var(--cft-chamfer) - 1px) 0,100% 0,100% calc(100% - var(--cft-chamfer) + 1px),',
+    'calc(100% - var(--cft-chamfer) + 1px) 100%,0 100%,0 calc(var(--cft-chamfer) - 1px));',
+    'padding:1.15rem 1.3rem;}',
+
+    '.cft-h{display:flex;align-items:center;gap:.85rem;margin:2.4rem 0 1rem;}',
+    '.cft-h:first-child{margin-top:0;}',
+    '.cft-h span{font-family:"Orbitron",monospace;font-size:.78rem;',
+    'letter-spacing:.22em;text-transform:uppercase;color:var(--cft-am);white-space:nowrap;}',
+    '.cft-h:after{content:"";flex:1;height:1px;background:linear-gradient(',
+    '90deg,var(--cft-cy),rgba(90,215,232,0));}',
+
+    '.cft-sub{font-family:"Orbitron",monospace;font-size:.7rem;letter-spacing:.18em;',
+    'text-transform:uppercase;color:var(--cft-cy);margin:1.4rem 0 .5rem;}',
+
+    '.cft p{line-height:1.62;margin:0 0 .9rem;max-width:74ch;}',
+    '.cft-lede{font-size:1.02rem;color:#dde8eb;}',
+
+    '.cft-prov{display:inline-block;font-family:"Orbitron",monospace;font-size:.58rem;',
+    'letter-spacing:.13em;text-transform:uppercase;padding:.13em .5em;margin-left:.45em;',
+    'vertical-align:.12em;border:1px solid currentColor;border-radius:1px;opacity:.85;',
+    'white-space:nowrap;cursor:help;}',
+    '.cft-prov--dump{color:var(--cft-cy);}',
+    '.cft-prov--notes{color:var(--cft-am);}',
+    '.cft-prov--build{color:var(--cft-jade);}',
+    '.cft-prov--legacy{color:var(--cft-ink-dim);}',
+    '.cft-prov--derived{color:var(--cft-violet);}',
+
+    '.cft-t{width:100%;border-collapse:collapse;font-size:.88rem;margin:.2rem 0 .4rem;}',
+    '.cft-t th{font-family:"Orbitron",monospace;font-size:.62rem;letter-spacing:.15em;',
+    'text-transform:uppercase;color:var(--cft-cy);text-align:left;padding:.5rem .7rem;',
+    'border-bottom:1px solid var(--cft-line);font-weight:500;}',
+    '.cft-t td{padding:.5rem .7rem;border-bottom:1px solid rgba(29,50,58,.55);vertical-align:top;}',
+    '.cft-t tr:last-child td{border-bottom:0;}',
+    '.cft-t .cft-dim{color:var(--cft-ink-dim);}',
+
+    // The refining chain. Four stages, arrow-separated, wrapping on narrow.
+    '.cft-chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:.5rem;margin:.3rem 0 .9rem;}',
+    '.cft-step{flex:1 1 120px;background:var(--cft-panel-2);padding:.7rem .8rem;',
+    'border-top:2px solid var(--cft-am-dim);}',
+    '.cft-step b{display:block;font-family:"Orbitron",monospace;font-size:.62rem;',
+    'letter-spacing:.13em;text-transform:uppercase;color:var(--cft-am);',
+    'font-weight:500;margin-bottom:.35rem;}',
+    '.cft-step span{font-size:.8rem;line-height:1.45;color:var(--cft-ink-dim);}',
+
+    '.cft-conf{border-left:2px solid var(--cft-am-dim);padding:.15rem 0 .15rem 1rem;margin:0 0 1.35rem;}',
+    '.cft-conf--no{border-left-color:#c05a5a;}',
+    '.cft-conf--yes{border-left-color:var(--cft-jade);}',
+    '.cft-conf-claim{color:#dde8eb;font-style:italic;margin:0 0 .3rem;}',
+    '.cft-conf-meta{font-family:"Orbitron",monospace;font-size:.6rem;letter-spacing:.14em;',
+    'text-transform:uppercase;color:var(--cft-ink-dim);margin:0 0 .5rem;}',
+    '.cft-conf-meta b{color:var(--cft-am);font-weight:500;}',
+    '.cft-conf p{margin:0;font-size:.9rem;}',
+
+    '.cft-ul{margin:0 0 1rem;padding-left:1.1rem;max-width:74ch;}',
+    '.cft-ul li{line-height:1.6;margin-bottom:.4rem;}',
+    '.cft-note{font-size:.85rem;color:var(--cft-ink-dim);max-width:74ch;}',
+
+    '@media (max-width:640px){.cft-t{font-size:.8rem;}',
+    '.cft-t th,.cft-t td{padding:.4rem .45rem;}.cft-step{flex:1 1 100%;}}'
+  ].join('');
+
+  function injectCSS() {
+    if (document.getElementById('cft-styles')) return;
+    var s = document.createElement('style');
+    s.id = 'cft-styles';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  function h(label) { return '<div class="cft-h"><span>' + esc(label) + '</span></div>'; }
+  function panel(inner) { return '<div class="cft-panel"><div class="cft-panel-in">' + inner + '</div></div>'; }
+  function srcChip(src) { return src ? prov(src[0], src[1]) : ''; }
+
+  // -------------------------------------------------------------------
+  // Sections
+  // -------------------------------------------------------------------
+
+  function secIntro() {
+    // Not 'Crafting' — the wiki shell puts that above as the page title, and a
+    // section header repeating it just reads as a stutter.
+    return h('One system, not two') +
+      '<p class="cft-lede">Crafting and the constraint economy are one system. Resources are ' +
+      'graded on five stat slots' + prov('dump', '5 rows') + ', three of them Power, Mass and ' +
+      'CPU-Cores, the same budgets a battleframe spends against.' + prov('notes', '0.6') + ' ' +
+      'Choosing materials at the terminal is the constraint tradeoff, made at the moment of ' +
+      'manufacture.</p>' +
+
+      '<p>The terminal may not call them that. A stat slot carries a different display name on ' +
+      'each material, so the same axis reads as malleability on Aluminum and toughness on ' +
+      'Biopolymer. The slots are fixed and there are five of them; only the labels move.' +
+      prov('dump') + '</p>' +
+
+      '<p>That is the load-bearing fact for anyone reconstructing this. Beta crafting is not a ' +
+      'parallel progression track bolted onto the frame; it is the mechanism by which the ' +
+      'constraint budgets acquire interesting numbers. Remove constraints and crafted items have ' +
+      'nothing meaningful left to vary, which is exactly what happened at 1.0 and exactly why a ' +
+      'whole separate module economy had to be invented to replace it.</p>' +
+
+      '<p>The design was modelled on Star Wars Galaxies. Better gear needs rarer materials, but ' +
+      'rarity alone is not the answer, because what a material is good at matters more than how ' +
+      'scarce it is. A very rare resource can be the wrong choice for the stat you are trying to ' +
+      'push.' + prov('legacy') + '</p>';
+  }
+
+  function secChain() {
+    return h('The chain') +
+      '<div class="cft-chain">' +
+      '<div class="cft-step"><b>Raw</b><span>Thumped or gathered. Carries per-slot values that ' +
+      'persist into everything downstream.</span></div>' +
+      '<div class="cft-step"><b>Refined</b><span>Split into Seed Crystite, refined resources, ' +
+      'and occasionally a Crystite Hybrid.</span></div>' +
+      '<div class="cft-step"><b>Component</b><span>Each one steers a different attribute of the ' +
+      'finished item. Quality of input sets quality of component.</span></div>' +
+      '<div class="cft-step"><b>Item</b><span>Assembled from components at a Molecular Printer. ' +
+      'Takes real time to build.</span></div>' +
+      '</div>' +
+
+      '<p>The propagation rule is stated plainly: the quality of the resources used determines ' +
+      'the quality of the component crafted, and the higher the component\u2019s quality, the ' +
+      'better it affects its related attribute.' + prov('notes', '0.6') + ' Stat values of raw ' +
+      'resources persist into their refined versions, so nothing is lost at the refining step.</p>' +
+
+      '<p>Depth exists so that each component is a separate steering wheel. A Plasma Cannon I ' +
+      'takes a Plasma Cannon Barrel I and a Plasma Reactor I; the barrel drives AOE radius and ' +
+      'the reactor drives damage. Two independent material choices, two independent outcomes on ' +
+      'the same weapon.' + prov('notes', '0.6') + '</p>' +
+
+      '<div class="cft-sub">Crystite Hybrids</div>' +
+      '<p>Refining yields a hybrid at 0.1% per unit, so a thousand units guarantees one and the ' +
+      'remainder carries a proportional chance of another. Hybrids power the more advanced ' +
+      'recipes.' + prov('notes', '0.6') + ' Coloured hybrids come from creature drops, Aranha, ' +
+      'Thrasher, Hisser and Culex DNA plus Chosen Tech pieces, and gate Stage 2 recipes and ' +
+      'above.' + prov('notes', '0.6.1621') + '</p>';
+  }
+
+  function secResources() {
+    var rows = [];
+    RESOURCES.forEach(function (g) {
+      g.families.forEach(function (f, i) {
+        rows.push('<tr>' +
+          (i === 0 ? '<td rowspan="' + g.families.length + '">' + esc(g.group) +
+            '<br><span class="cft-note">' + esc(g.tree) + '</span></td>' : '') +
+          '<td>' + esc(f.name) + '</td>' +
+          '<td>' + f.items.map(esc).join(', ') + '</td></tr>');
+      });
+    });
+
+    return h('Resources') +
+      '<p>Sixteen resources in six families across three groups, as of the 0.6.1637 rename. The ' +
+      'groups are the same three that gate the progression trees, so what you thump determines ' +
+      'both what you can build and which tree you can climb.' + prov('notes', '0.6.1637') + '</p>' +
+
+      '<table class="cft-t"><thead><tr>' +
+      '<th>Group</th><th>Family</th><th>Resources</th>' +
+      '</tr></thead><tbody>' + rows.join('') + '</tbody></table>' +
+
+      '<p style="margin-top:1.2rem">Each resource in a family is best at one specific slot. ' +
+      'The notes say so repeatedly but never publish which is best at what, so that table has to ' +
+      'be authored.' + prov('notes', '0.6') + '</p>' +
+
+      '<p>Nanoprints ask for group-level materials at Stage I and get more specific as the stages ' +
+      'climb.' + prov('notes', '0.6.1637') + ' That is a good pacing device: early crafting takes ' +
+      'anything you happen to have, and the material hunt narrows into something targeted only ' +
+      'once you know what you are doing.</p>' +
+
+      '<p class="cft-note">Every resource was renamed in 0.6.1637, away from descriptive names ' +
+      'like Bio-Organic Smartgel toward plain ones like Xenograft. Sources written before that ' +
+      'patch use the old vocabulary, so a name that appears nowhere in the resource table is ' +
+      'probably a pre-1637 alias rather than a missing item.</p>';
+  }
+
+  function secComponents() {
+    var rows = COMPONENTS.map(function (c) {
+      return '<tr><td>' + esc(c.name) +
+        '</td><td class="cft-dim">' + esc(c.item) +
+        '</td><td>' + esc(c.steers) + srcChip(c.src) + '</td></tr>';
+    }).join('');
+
+    return h('Components') +
+      '<p>Every component recovered from the notes. This is a fraction of the real tree, but it ' +
+      'is enough to show the pattern: one component, one steered attribute, one constraint ' +
+      'keying.</p>' +
+
+      '<table class="cft-t"><thead><tr>' +
+      '<th>Component</th><th>Feeds</th><th>Steers</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+
+      '<p style="margin-top:1.2rem">Patch 0.7.1688 is worth reading in full if you are authoring ' +
+      'this. It reassigns four separate components between Power and Mass in a single build, which ' +
+      'establishes that the constraint keying was a hand-placed design lever still being tuned two ' +
+      'builds before the end of beta, not an emergent property of a formula.' + prov('notes', '0.7.1688') +
+      '</p>' +
+
+      '<p>The semantic pattern behind those reassignments is consistent: things that are physically ' +
+      'bulky key to Mass, things that project or sustain an effect key to Power. Health sensors and ' +
+      'healing systems moved to Mass. Fuel chargers became Energy Generators running off Power. The ' +
+      'two beta item samples bracket the same axis, with an ammunition-loading Scrambler at 88 mass ' +
+      'against 45 power and a deployable Beacon at 48 mass against 58 power.' + prov('derived') + '</p>';
+  }
+
+  function secStages() {
+    return h('Stages') +
+      '<p>Four stages per item were planned from the start; 0.6 shipped the first two and all four ' +
+      'exist by 0.7, with Stage IV abilities appearing in the crafting fix lists.' +
+      prov('notes', '0.6 / 0.7.1694') + ' Higher stages mean more complex recipes, more powerful ' +
+      'output, and explicitly more constraint hunger.</p>' +
+
+      panel(
+        '<div class="cft-sub">Why stage matters twice</div>' +
+        '<p style="margin:0 0 .6rem">Stage is the Roman numeral in an item\u2019s name, and it sets ' +
+        'the surplus allocation cap at fifty per stage. A Stage I ability absorbs 50 placed power; ' +
+        'a Stage IV weapon absorbs 200.' + prov('notes', '0.6.1637') + '</p>' +
+        '<p class="cft-note" style="margin:0">That gives stage somewhere to go other than raw ' +
+        'output. If higher stages buy headroom rather than damage, the material hunt stays ' +
+        'load-bearing instead of being flattened by a vertical ladder.</p>'
+      );
+  }
+
+  function secDurability() {
+    return h('Durability and repair') +
+      '<p>Crafted equipment degrades. Ten percent on death and respawn in the open world, plus ' +
+      'ongoing decay from general use. A HUD warning fires at 50%, repairs happen at the Garage, ' +
+      'and items can break beyond repair.' + prov('notes', '0.6.1621') + '</p>' +
+
+      '<p>Repairs were free of Crystite, and the notes flag that as temporary. Beta ended without ' +
+      'resolving what permanent looked like.' + prov('notes', '0.6.1621') + '</p>' +
+
+      '<p>This is the one genuinely unfinished corner of the system, and it is the corner where ' +
+      'modules were later solving a real problem. Without sockets, a good roll is a wasting asset ' +
+      'and the only way to refresh it is to craft another. Whether that reads as a healthy reason ' +
+      'to return to the terminal or as a tax on attachment depends entirely on how expensive the ' +
+      'repair curve is and how much of a roll\u2019s quality survives it. Worth deciding ' +
+      'deliberately rather than inheriting.</p>';
+  }
+
+  function secConflicts() {
+    var cards = CONFLICTS.map(function (c) {
+      var mod = c.status === 'Contested' ? ' cft-conf--no'
+        : (c.status === 'Settled' ? ' cft-conf--yes' : '');
+      return '<div class="cft-conf' + mod + '">' +
+        '<p class="cft-conf-claim">\u201c' + esc(c.claim) + '\u201d</p>' +
+        '<p class="cft-conf-meta">' + esc(c.source) + ' &nbsp;\u00b7&nbsp; <b>' + esc(c.status) + '</b>' +
+        srcChip(c.src) + '</p><p>' + esc(c.body) + '</p></div>';
+    }).join('');
+
+    return h('Unsettled') + cards;
+  }
+
+  function secAfter() {
+    return h('What replaced it') +
+      '<p>Crafting was temporarily disabled in Update 1.6 pending a new system that never arrived, ' +
+      'with research points, Crystite and research time refunded, and thumping reduced to yielding ' +
+      'Crystite only.' + prov('notes', '1.6') + '</p>' +
+
+      '<p>The replacement arrived earlier than that, at 1.0, in the form of socketed modules. Both ' +
+      'systems answer the same question, which is how two copies of one weapon differ, but they ' +
+      'answer it in opposite places. Crafting authors the variance before the item exists, through ' +
+      'material choice, and the result is fixed. Modules author it afterward, through swappable ' +
+      'drops, reversible for a fee.</p>' +
+
+      '<p>They do not compose. Variance arriving from two directions reads as noise from both. And ' +
+      'a 0.7-anchored reconstruction has less need of sockets than it looks, because surplus power ' +
+      'allocation is already a reversible, rearrangeable layer sitting on top of fixed gear. The ' +
+      'thing modules were for is largely already there.</p>' +
+
+      '<p class="cft-note">Careful with the word in the dump. In beta, module means a piece of ' +
+      'equipment: Burn Jets is called a module, the ultimate slot is the Hyper-Kinesis Module, ' +
+      'Passive Module is a slot category, and coloured crystite hybrid modules are crafting ' +
+      'components. None of those are sockets. Matching on the display name will pair beta slot ' +
+      'names against 1.0 socketables.' + prov('notes', '0.5.1494 / 0.6') + '</p>';
+  }
+
+  function secOpen() {
+    return h('Still open') +
+      '<ul class="cft-ul">' +
+      OPEN.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') +
+      '</ul>';
+  }
+
+  // -------------------------------------------------------------------
+  // Route
+  // -------------------------------------------------------------------
+  V.crafting = function () {
+    injectCSS();
+    return '<div class="cft">' +
+      secIntro() + secChain() + secResources() + secComponents() +
+      secStages() + secDurability() + secConflicts() + secAfter() + secOpen() +
+      '</div>';
+  };
+
+  if (global.ROUTES && !global.ROUTES.crafting) {
+    global.ROUTES.crafting = { title: 'Crafting', view: V.crafting };
+  }
+
+})(typeof window !== 'undefined' ? window : this);
+
+/* ---------------------------------------------------------------------------
+ * WIRING
+ *
+ * Same three steps as the constraints module. Script tag after data.js, a
+ * router entry under the key 'crafting', a nav link to #/crafting.
+ *
+ * Uses the same fifth provenance kind, 'derived'. If you already mapped that
+ * away on the constraints page, do the same here in PROV.
+ *
+ * Cross-links worth adding by hand once both pages are live:
+ *   - Constraints, "What equipment costs" -> here, for where item costs come from
+ *   - Here, "Components" -> Constraints, for what the three budgets do
+ *   - Eras -> here, for the 1.6 disabling
+ * ------------------------------------------------------------------------- */
+
+</script>
+<script>
+/* inlined from firefall-guide-route.js */
+/* firefall-guide-route.js
+ *
+ * New player guide. Drop-in route module, namespaced .gd-*.
+ *
+ * This page deliberately breaks the house epistemics. The reference pages
+ * label every figure with provenance and surface conflicts instead of
+ * resolving them. A guide can't do that. It has to be decisive exactly where
+ * the reference is honest about uncertainty, pick one answer, and never
+ * mention there was a choice. No chips, no build numbers, no patch citations.
+ *
+ * Where this page states something the reference marks unsettled, that's a
+ * design decision the rebuild owes an answer to. Those spots are commented.
+ *
+ * Voice rules: second person, short sentences, no noun used before it's
+ * defined. Resources, quality and crafting get the most room because that's
+ * where beta lost people.
+ */
+(function (global) {
+  'use strict';
+
+  var V = global.V = global.V || {};
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // -------------------------------------------------------------------
+  // Styles
+  // -------------------------------------------------------------------
+  // Shares the wiki's palette and chamfer but runs looser: bigger body copy,
+  // more air, numerals instead of rule-headers. Should read as a different
+  // kind of document wearing the same clothes.
+  var CSS = [
+    '.gd{--gd-cy:#5ad7e8;--gd-am:#f2a63b;--gd-am-dim:#8a5f22;',
+    '--gd-ink:#d3dfe3;--gd-ink-dim:#84979d;--gd-panel:#0e181c;',
+    '--gd-panel-2:#121f24;--gd-line:#1d323a;--gd-jade:#4fd9a4;',
+    '--gd-rose:#e08a7a;--gd-chamfer:10px;',
+    'color:var(--gd-ink);font-size:1.02rem;line-height:1.72;}',
+
+    '.gd p{margin:0 0 1.05rem;max-width:70ch;}',
+    '.gd strong{color:#eaf2f4;font-weight:600;}',
+    '.gd em{color:var(--gd-cy);font-style:normal;}',
+
+    // Section head: oversized numeral, title beside it, hairline under.
+    '.gd-sec{display:flex;align-items:baseline;gap:.9rem;margin:3.2rem 0 1.2rem;',
+    'padding-bottom:.6rem;border-bottom:1px solid var(--gd-line);}',
+    '.gd-sec:first-child{margin-top:0;}',
+    '.gd-sec i{font-family:"Orbitron",monospace;font-style:normal;font-size:1.7rem;',
+    'line-height:1;color:var(--gd-am-dim);min-width:1.6em;}',
+    '.gd-sec h3{margin:0;font-family:"Orbitron",monospace;font-size:1.02rem;',
+    'font-weight:500;letter-spacing:.04em;color:var(--gd-am);}',
+
+    '.gd-lede{font-size:1.14rem;line-height:1.68;color:#eaf2f4;max-width:64ch;',
+    'margin:0 0 1.6rem;}',
+
+    '.gd-mini{font-family:"Orbitron",monospace;font-size:.68rem;letter-spacing:.18em;',
+    'text-transform:uppercase;color:var(--gd-cy);margin:1.8rem 0 .5rem;}',
+
+    // Callouts. Jade = do this. Rose = the mistake everyone makes.
+    '.gd-call{position:relative;background:var(--gd-line);padding:1px;',
+    'margin:1.4rem 0;clip-path:polygon(var(--gd-chamfer) 0,100% 0,',
+    '100% calc(100% - var(--gd-chamfer)),calc(100% - var(--gd-chamfer)) 100%,',
+    '0 100%,0 var(--gd-chamfer));}',
+    '.gd-call>div{background:var(--gd-panel);padding:1rem 1.2rem;',
+    'clip-path:polygon(calc(var(--gd-chamfer) - 1px) 0,100% 0,',
+    '100% calc(100% - var(--gd-chamfer) + 1px),calc(100% - var(--gd-chamfer) + 1px) 100%,',
+    '0 100%,0 calc(var(--gd-chamfer) - 1px));}',
+    '.gd-call p{margin:0 0 .6rem;font-size:.96rem;}',
+    '.gd-call p:last-child{margin-bottom:0;}',
+    '.gd-call b{display:block;font-family:"Orbitron",monospace;font-size:.62rem;',
+    'letter-spacing:.16em;text-transform:uppercase;margin-bottom:.5rem;font-weight:500;}',
+    '.gd-call--do{background:linear-gradient(180deg,var(--gd-jade),var(--gd-line) 60%);}',
+    '.gd-call--do b{color:var(--gd-jade);}',
+    '.gd-call--trap{background:linear-gradient(180deg,var(--gd-rose),var(--gd-line) 60%);}',
+    '.gd-call--trap b{color:var(--gd-rose);}',
+
+    // Worked example: monospace-flavoured, stepped.
+    '.gd-work{background:var(--gd-panel-2);padding:1.1rem 1.3rem;margin:1.3rem 0;',
+    'border-left:2px solid var(--gd-cy);}',
+    '.gd-work p{font-size:.95rem;margin:0 0 .55rem;}',
+    '.gd-work p:last-child{margin-bottom:0;}',
+    '.gd-work .gd-choice{display:flex;gap:.8rem;align-items:baseline;',
+    'padding:.4rem 0;border-bottom:1px solid rgba(29,50,58,.6);}',
+    '.gd-work .gd-choice:last-of-type{border-bottom:0;}',
+    '.gd-work .gd-choice span:first-child{font-family:"Orbitron",monospace;',
+    'font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;',
+    'color:var(--gd-am);min-width:11ch;}',
+    '.gd-work .gd-choice span:last-child{font-size:.92rem;}',
+
+    '.gd-t{width:100%;border-collapse:collapse;font-size:.92rem;margin:1rem 0 1.2rem;}',
+    '.gd-t th{font-family:"Orbitron",monospace;font-size:.62rem;letter-spacing:.15em;',
+    'text-transform:uppercase;color:var(--gd-cy);text-align:left;font-weight:500;',
+    'padding:.5rem .7rem;border-bottom:1px solid var(--gd-line);}',
+    '.gd-t td{padding:.55rem .7rem;border-bottom:1px solid rgba(29,50,58,.55);}',
+    '.gd-t tr:last-child td{border-bottom:0;}',
+
+    '.gd-traps{list-style:none;padding:0;margin:1rem 0 0;}',
+    '.gd-traps li{padding:.75rem 0 .75rem 1.6rem;position:relative;',
+    'border-bottom:1px solid rgba(29,50,58,.55);max-width:70ch;font-size:.96rem;}',
+    '.gd-traps li:last-child{border-bottom:0;}',
+    '.gd-traps li:before{content:"\\2715";position:absolute;left:0;top:.85rem;',
+    'color:var(--gd-rose);font-size:.7rem;}',
+    '.gd-traps b{color:#eaf2f4;font-weight:600;}',
+
+    '@media (max-width:640px){.gd{font-size:.98rem;}',
+    '.gd-sec i{font-size:1.35rem;}.gd-lede{font-size:1.06rem;}',
+    '.gd-work .gd-choice{flex-direction:column;gap:.1rem;}}'
+  ].join('');
+
+  function injectCSS() {
+    if (document.getElementById('gd-styles')) return;
+    var s = document.createElement('style');
+    s.id = 'gd-styles';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  function sec(n, title) {
+    return '<div class="gd-sec"><i>' + esc(n) + '</i><h3>' + esc(title) + '</h3></div>';
+  }
+  function callDo(title, body) {
+    return '<div class="gd-call gd-call--do"><div><b>' + esc(title) + '</b>' + body + '</div></div>';
+  }
+  function callTrap(title, body) {
+    return '<div class="gd-call gd-call--trap"><div><b>' + esc(title) + '</b>' + body + '</div></div>';
+  }
+
+  // -------------------------------------------------------------------
+  // Sections
+  // -------------------------------------------------------------------
+
+  function s1() {
+    return sec('01', 'There are no levels') +
+      '<p class="gd-lede">You will earn XP constantly and it will never make you level up. ' +
+      'XP here is money. You spend it.</p>' +
+
+      '<p>Everything your battleframe can do, you bought. It gets faster, tougher and more ' +
+      'capable because you chose to spend on it, in an order you picked. Nobody is holding ' +
+      'better content behind a number you have to grind toward.</p>' +
+
+      '<p>This changes what a short session is worth. Twenty minutes that ends with you buying ' +
+      'something is real progress, permanently. There is no half-finished level bar to come back ' +
+      'to and no point at which the next rank stops feeling reachable.</p>' +
+
+      '<p>It also means <strong>XP sitting in your wallet is doing nothing.</strong> It is not ' +
+      'accumulating toward anything. It is cash in a drawer. Spend it.</p>';
+  }
+
+  function s2() {
+    return sec('02', 'Your first hour') +
+      '<p>Open your frame. You will see three horizontal tracks, and under each one a bar showing ' +
+      'a number over another number. Those are your three budgets. The tracks are how you raise ' +
+      'them.</p>' +
+
+      '<p>Each track has ten steps. <strong>The first several cost only XP and Crystite</strong> ' +
+      'and no gathered materials at all, which is the game giving you a stretch where mistakes ' +
+      'are cheap.</p>' +
+
+      callDo('Do this now',
+        '<p>Buy the early steps as soon as you can afford them. All of them, in any order. Do not ' +
+        'research, do not plan, do not save up for something better.</p>' +
+        '<p>You cannot build a bad frame this early, and every step you own makes the next choice ' +
+        'clearer because you will have felt what it changed.</p>') +
+
+      '<p>Later steps get expensive and start demanding gathered materials, and that is where ' +
+      'planning starts to matter. Not yet.</p>';
+  }
+
+  function s3() {
+    return sec('03', 'Your three budgets') +
+      '<p>Everything you equip costs you from three pools at once. The three do not punish you ' +
+      'the same way, and understanding the difference is most of what separates a good frame from ' +
+      'a heavy one.</p>' +
+
+      '<table class="gd-t"><thead><tr><th>Budget</th><th>What it does</th><th>What going deep costs you</th></tr></thead><tbody>' +
+      '<tr><td><strong>Mass</strong></td><td>Physical bulk of your gear</td>' +
+      '<td>Speed. The fuller your mass budget, the slower you move. Not a cliff, a slope.</td></tr>' +
+      '<tr><td><strong>Power</strong></td><td>Energy your gear draws</td>' +
+      '<td>Nothing directly. But whatever you do not spend becomes bonus damage, so spending it is ' +
+      'giving something up.</td></tr>' +
+      '<tr><td><strong>Cores</strong></td><td>Ability slots</td>' +
+      '<td>Nothing. It is a hard limit. Each ability takes two, and you either fit or you do not.</td></tr>' +
+      '</tbody></table>' +
+
+      '<p>Mass is the one new players get wrong. Your mass capacity is <em>not a target to fill.</em> ' +
+      'It is a ceiling to stay comfortably under. A frame loaded to nearly full moves noticeably ' +
+      'worse than one at half, and in a game where you are jetting and strafing constantly, that ' +
+      'is felt in every fight.</p>' +
+
+      callTrap('The heavy frame trap',
+        '<p>You find a better plating. It fits. You equip it. You do this four more times over a ' +
+        'week and never notice you have traded away a fifth of your movement speed.</p>' +
+        '<p>Check your speed reading whenever you change gear. If it has dropped, something you ' +
+        'equipped is not worth what it cost you.</p>');
+  }
+
+  function s4() {
+    return sec('04', 'Claim your surplus') +
+      '<p>Your power budget has leftovers, and the leftovers do nothing at all until you tell ' +
+      'them where to go.</p>' +
+
+      '<p>Find the <strong>Allocate Surplus</strong> button under your Power track. It opens a ' +
+      'panel with a slider for each weapon and each ability. Drag them.</p>' +
+
+      '<p>Every ten points of power you place buys one percent more damage on that item. There is ' +
+      'no downside, no cost, and nothing you were otherwise using. It is free, and the game will ' +
+      'never once remind you to do it.</p>' +
+
+      callDo('Fifteen seconds, up to ten percent',
+        '<p>Do a full pass now. Do another every time you change gear, because your surplus ' +
+        'changes when your equipment does.</p>') +
+
+      '<p>Two things will confuse you the first time.</p>' +
+
+      '<p><strong>Stock gear cannot take any.</strong> Those sliders stay greyed out. That is not ' +
+      'a bug, it is what stock gear is: reliable, free, and not upgradeable.</p>' +
+
+      '<p><strong>Each slot has its own ceiling</strong>, set by how advanced the item is. A Mark I ' +
+      'ability holds 50 points. A Mark II weapon holds 100. This is the quiet reason to care about ' +
+      'crafting better gear: it does not just perform better, it <em>holds more of your surplus.</em></p>';
+  }
+
+  function s5() {
+    return sec('05', 'Where materials come from') +
+      '<p>You gather by dropping a thumper, a mining rig that punches into the ground, pulls up ' +
+      'raw material, and attracts everything hostile within a wide radius while it works. You ' +
+      'defend it until it finishes.</p>' +
+
+      '<p>Everything you pull up belongs to one of three groups.</p>' +
+
+      '<table class="gd-t"><thead><tr><th>Group</th><th>Families</th><th>Feeds</th></tr></thead><tbody>' +
+      '<tr><td><strong>Mineral</strong></td><td>Metal, Composite</td><td>Your Mass track</td></tr>' +
+      '<tr><td><strong>Gas</strong></td><td>Reactive, Inert</td><td>Your Power track</td></tr>' +
+      '<tr><td><strong>Organic</strong></td><td>Biomaterial, Enzyme</td><td>Your Cores track</td></tr>' +
+      '</tbody></table>' +
+
+      '<p>That last column matters more than it looks. The same three groups that build your gear ' +
+      'also pay for your progression steps. If you have been climbing your Mass track, you are ' +
+      'burning Mineral, and you will need to go get more of it specifically. Gathering is never ' +
+      'generic.</p>' +
+
+      '<p>Inside each family sit the actual materials, and they are not interchangeable. Iron and ' +
+      'Copper are both Metals, both Minerals, and they behave completely differently. You do not ' +
+      'need to memorise the tree. You need to know it exists, so that when a recipe asks for ' +
+      'Aluminum you understand that Iron is not close enough.</p>' +
+
+      '<div class="gd-mini">Raw and refined</div>' +
+      '<p>What comes out of the ground is <strong>raw</strong>. You cannot build with raw. Take it ' +
+      'to a Molecular Printer and refine it first.</p>' +
+
+      '<p>Refining gives you three things back: Seed Crystite, which is currency; refined ' +
+      'resources, which are the actual building material; and occasionally a <strong>Crystite ' +
+      'Hybrid</strong>, a rare ingredient every advanced recipe wants. Hybrids turn up roughly ' +
+      'once per thousand units refined, so they accumulate quietly in the background. Do not hunt ' +
+      'them. Refine everything and they arrive.</p>' +
+
+      callTrap('The one that gets everybody',
+        '<p>You gather for an hour, open the printer, and the recipe tells you that you have zero ' +
+        'of a material you are visibly carrying a thousand units of.</p>' +
+        '<p>You have it raw. Refine it. This is the single most common first-week confusion in the ' +
+        'game and it costs people entire sessions.</p>');
+  }
+
+  function s6() {
+    return sec('06', 'Quality, and why rare is not better') +
+      '<p class="gd-lede">This is the part that makes Firefall different from every other game ' +
+      'you have crafted in. It is worth ten minutes of your attention.</p>' +
+
+      '<p><strong>Two chunks of Iron are not the same chunk of Iron.</strong></p>' +
+
+      '<p>Every unit of every material carries hidden values describing what it is good for. One ' +
+      'batch might be excellent for Mass and poor for Power. The next batch, pulled from a ' +
+      'different place, can be the reverse. The name on the stack tells you almost nothing about ' +
+      'what is in it.</p>' +
+
+      '<p>Which leads to the thing that costs new players the most:</p>' +
+
+      '<p class="gd-lede" style="color:var(--gd-am)">Rare does not mean good. Rare means ' +
+      'different.</p>' +
+
+      '<p>A rare material is not an upgrade to a common one. It is another material with its own ' +
+      'strengths. If you are building something that cares about Power, and your rare find happens ' +
+      'to be poor at Power, then a common material that is excellent at Power will build you a ' +
+      'better item. Every time. Without exception.</p>' +
+
+      '<p>Stop asking <em>what is the best thing I own.</em> Start asking <em>what is the best ' +
+      'thing I own for this specific part.</em></p>' +
+
+      callDo('You do not have to memorise any of it',
+        '<p>When you choose materials for a part, the printer sorts your inventory best to worst ' +
+        '<em>for that part</em>. The top of the list is the right answer.</p>' +
+        '<p>So the skill is not knowing the table. The skill is knowing the table exists, and ' +
+        'saving your good material for the parts that deserve it.</p>');
+  }
+
+  function s7() {
+    return sec('07', 'Building something') +
+      '<p>Items are assembled from parts you build separately. A Plasma Cannon is not one recipe ' +
+      'you pour materials into. It is two components, each built from refined resources, then ' +
+      'combined.</p>' +
+
+      '<p>Here is the sentence that makes the whole system click:</p>' +
+
+      '<p class="gd-lede" style="color:var(--gd-am)">Each component controls a different part of ' +
+      'the finished item.</p>' +
+
+      '<p>So you are never crafting a <em>good</em> Plasma Cannon. You are deciding what kind of ' +
+      'Plasma Cannon you want, by choosing which component gets your best material.</p>' +
+
+      '<div class="gd-work">' +
+      '<p><strong>Worked example: one Plasma Cannon, three outcomes</strong></p>' +
+      '<p>The Barrel sets blast radius. The Reactor sets damage. You have one genuinely good ' +
+      'material and one mediocre one.</p>' +
+      '<div class="gd-choice"><span>Good &rarr; Reactor</span><span>Hits hard, tight blast. A ' +
+      'precision weapon.</span></div>' +
+      '<div class="gd-choice"><span>Good &rarr; Barrel</span><span>Wide blast, softer hit. A crowd ' +
+      'weapon.</span></div>' +
+      '<div class="gd-choice"><span>Split evenly</span><span>Mediocre at both. A weapon with no ' +
+      'reason to exist.</span></div>' +
+      '<p style="margin-top:.7rem">The third one is what most new players build, because ' +
+      'spreading your good materials evenly across every part feels fair and balanced. It is ' +
+      'neither. It is how you spend rare material on nothing.</p>' +
+      '</div>' +
+
+      '<p>Decide what you want the item to be <em>before</em> you start gathering. Then concentrate ' +
+      'everything good into the one or two components that steer it.</p>' +
+
+      '<div class="gd-mini">Stages</div>' +
+      '<p>Items come in four stages, marked I to IV. Higher stages use more components, want ' +
+      'better materials and Crystite Hybrids, and take longer to build.</p>' +
+
+      '<p>Stage I recipes ask for a whole group. Any Mineral will do. Later stages get specific ' +
+      'and start naming exact materials. That is deliberate pacing: you learn the shape of the ' +
+      'system while it is forgiving, and it starts demanding precision only once you know what ' +
+      'you are doing.</p>' +
+
+      '<div class="gd-mini">It takes real time</div>' +
+      '<p>Building is not instant. A finished item takes roughly as long as a thumper run, which ' +
+      'is the point. Queue it, go play, come back. If a recipe wants something you do not have, ' +
+      'tell the printer to track it and the game will point you at where to find it.</p>';
+  }
+
+  function s8() {
+    return sec('08', 'Gear wears out') +
+      '<p>Crafted equipment degrades. It takes a hit every time you die in the open world, and ' +
+      'wears down steadily from ordinary use. You will get a warning when something drops to half ' +
+      'condition. Repairs happen at the Garage.</p>' +
+
+      '<p>Which is why the least glamorous advice in this guide is also the most useful:</p>' +
+
+      '<p><strong>Do not throw away your stock gear.</strong> It never breaks, never degrades, ' +
+      'never needs repairing, and costs nothing. It is worse than a good crafted item and better ' +
+      'than a broken one, and it is exactly what you want equipped while your good gear is being ' +
+      'fixed.</p>' +
+
+      '<p>Keep a full stock loadout. Treat it as your floor.</p>';
+  }
+
+  function s9() {
+    return sec('09', 'Collecting frames') +
+      '<p>You unlock new battleframes with Pilot Tokens, and tokens come from progression steps ' +
+      'deep in a frame\u2019s tracks, at the fifth, seventh, ninth and tenth step of each one.</p>' +
+
+      '<p>Do the arithmetic, because it drives everything about how you should play. Three tracks ' +
+      'paying four tokens each is <strong>twelve tokens from one fully finished frame</strong>. A ' +
+      'new frame costs ten.</p>' +
+
+      '<p>So finishing a frame buys the next one outright, with a little left over. But a frame you ' +
+      'abandoned at step four paid you nothing at all, because the first token is at step five.</p>' +
+
+      callTrap('Spreading yourself thin',
+        '<p>Three frames climbed halfway give you no tokens, no deep unlocks, and three frames that ' +
+        'are all slightly disappointing.</p>' +
+        '<p>Pick one and take it deep. The game is built to reward that, and the frame you finish ' +
+        'pays for the next one.</p>');
+  }
+
+  function s10() {
+    var traps = [
+      ['Hoarding XP.', 'It looks like progress. It is cash in a drawer.'],
+      ['Filling your mass budget.', 'It is a ceiling, not a target. Every point you spend costs you speed.'],
+      ['Never touching Allocate Surplus.', 'Free damage, sitting unclaimed, possibly for weeks.'],
+      ['Salvaging your stock gear.', 'It is the only thing you own that cannot break.'],
+      ['Crafting with the rarest thing you have.', 'Wrong question. Ask what is best for the part, not what is scarcest.'],
+      ['Spreading good materials across every component.', 'You get an item that is mediocre at everything.'],
+      ['Trying to build with raw resources.', 'Refine first. Always.'],
+      ['Climbing three tracks evenly on three frames.', 'Nothing pays out until step five. Go deep on one.']
+    ];
+    return sec('10', 'Eight ways to waste a week') +
+      '<ul class="gd-traps">' +
+      traps.map(function (t) {
+        return '<li><b>' + esc(t[0]) + '</b> ' + esc(t[1]) + '</li>';
+      }).join('') +
+      '</ul>';
+  }
+
+  // -------------------------------------------------------------------
+  // Route
+  // -------------------------------------------------------------------
+  V.guide = function () {
+    injectCSS();
+    return '<div class="gd">' +
+      s1() + s2() + s3() + s4() + s5() + s6() + s7() + s8() + s9() + s10() +
+      '</div>';
+  };
+
+  if (global.ROUTES && !global.ROUTES.guide) {
+    global.ROUTES.guide = { title: 'New Player Guide', view: V.guide };
+  }
+
+})(typeof window !== 'undefined' ? window : this);
+
+/* ---------------------------------------------------------------------------
+ * WIRING
+ *
+ * Script tag after data.js, router entry under 'guide', nav link to #/guide.
+ * No provenance system needed, this page deliberately has none.
+ *
+ * DECISIONS THIS PAGE MAKES THAT THE REFERENCE LEAVES OPEN
+ *
+ * Each of these is stated flatly here because a guide can't hedge. Each is
+ * also a thing the rebuild owes a real answer to. If any of them get settled
+ * differently, this page needs editing.
+ *
+ *   Section 05  Says materials within a family are meaningfully different and
+ *               a recipe asking for Aluminum won't take Iron. True of later
+ *               stages per the notes. Stage I asks at group level, so the
+ *               claim is over-tight early on. Kept because the alternative is
+ *               teaching an exception before the rule.
+ *
+ *   Section 06  Says every unit carries hidden per-stat values that vary by
+ *               where it was gathered. Resources are graded on five slots,
+ *               three of them Power, Mass and CPU-Cores, and quality
+ *               propagates. Nothing says quality varies by gathering location.
+ *               That's an inference from the SWG lineage. If quality turns out
+ *               to be fixed per resource type, this section is wrong and the
+ *               whole material hunt is a different activity.
+ *
+ *               The section names only Mass and Power as example stats, which
+ *               stays true under the five-slot reading. Leave it that way. The
+ *               other three have no recovered names yet.
+ *
+ *   Section 07  Assigns Barrel to blast radius and Reactor to damage, which is
+ *               straight from the notes, and then generalises to "each
+ *               component steers one attribute". The generalisation holds
+ *               across every component in the record.
+ *
+ *   Section 09  Assumes the ten-token frame price rather than the seven-token
+ *               sale price seen late in beta.
+ * ------------------------------------------------------------------------- */
+
+</script>
+<script>
 /* ===========================================================================
    HELPERS
    =========================================================================== */
@@ -1021,7 +3171,17 @@ function diffBlock(ov){
 /* ===========================================================================
    VIEWS
    =========================================================================== */
-const V = {};
+const V = window.V;   /* already carries the route modules' views — see the head */
+
+/* The 0.7 systems modules self-register into ROUTES with a title, and render
+   their own section headers but no page furniture. Wrap each so the shell adds
+   the crumb and h1 every other page carries; the module stays drop-in for a
+   standalone page that has neither. #/timeline emits its own and is not in
+   ROUTES, so it passes through here untouched. */
+Object.entries(window.ROUTES).forEach(([key, r]) => {
+  V[key] = () => `<div class="crumb"><a href="#/">Home</a> / ${esc(r.title)}</div>
+    <h1>${esc(r.title)}</h1>${r.view()}`;
+});
 
 V.home = () => {
   const allStats = DATA.abilities.concat(DATA.weapons);
@@ -1071,6 +3231,24 @@ V.home = () => {
   <h2>Systems</h2>
   <div class="grid g2">${DATA.systems.map(s => `<a class="tile" href="#/system/${s.id}">${pnl(
     `<b>${esc(s.name)}</b><p>${esc(s.body[0].p.slice(0,110))}…</p>`)}</a>`).join('')}</div>
+
+  <h2>Beta 0.7 systems</h2>
+  <p class="lede">Two economies 1.0 removed, reconstructed from the beta patch notes and client builds.
+  They describe a different game to everything above — kept on their own pages so no figure from one
+  era is mistaken for the other. <a href="#/eras">On eras →</a></p>
+  <div class="grid g2">
+    <a class="tile" href="#/constraints">${pnl(
+      `<span class="eyebrow">0.7</span><b style="margin-top:4px">Constraints &amp; progression</b>
+       <p>No character level. Mass, Power and CPU budgets, and thirty nodes of spendable XP.</p>`)}</a>
+    <a class="tile" href="#/crafting">${pnl(
+      `<span class="eyebrow">0.7</span><b style="margin-top:4px">Crafting</b>
+       <p>Resource stats, refining, components and quality. Five graded slots, spent at manufacture.</p>`)}</a>
+  </div>
+
+  <div class="note"><span class="eyebrow">Or start here</span>
+  <p>The <a href="#/guide">new player guide</a> walks the same beta game for someone who wants to play it
+  rather than rebuild it. It states one answer wherever these pages record several — deliberately, and its
+  own notes list every place it does.</p></div>
 
   <h2>Patch chain</h2>
   <p class="lede">The base state plus four ordered deltas. Every entity page derives its own history
@@ -1473,10 +3651,13 @@ V.eras = () => `<div class="crumb"><a href="#/">Home</a> / Eras</div>
   <h2>The anchor</h2>
   <div class="note"><span class="eyebrow">Numbers from 1962, design from 0.7</span>
   <p>The dump is build 1962 and measures the 1.6/1.7 game, so every figure on this wiki that carries a
-  ${tag('dump')} label describes that game. The beta systems cannot be recovered from data — the resource
-  taxonomy, quality aspects, purity and blending left no trace in the client database. They have to be
-  reconstructed from the patch notes, and every reconstruction is recorded as a decision rather than
-  presented as a finding.</p></div>
+  ${tag('dump')} label describes that game. Most beta systems cannot be recovered from data. The resource
+  taxonomy, purity and blending left no trace in the client database and have to be reconstructed from the
+  patch notes, and every reconstruction is recorded as a decision rather than presented as a finding.</p>
+  <p>Resource grading is the exception. <span class="mono">dbitems::ResourceStat</span> and
+  <span class="mono">dbitems::Resource_Stat_Names</span> both shipped in 1962 with rows in them, and between
+  them they settle how many stats a material has and why the notes call them different things on different
+  materials. Neither table is loaded by the server yet.</p></div>
 
   <div class="note warn"><span class="eyebrow">One qualification</span>
   <p>Some pre-1.6 weapon templates survived the rebuild and are still in the 1962 database beside their
@@ -1518,8 +3699,11 @@ V.search = term => {
 function buildNav(){
   const link = (h,t,n) => `<a href="${h}" data-h="${h}">${t}${n!=null?`<small>${n}</small>`:''}</a>`;
   $('#nav').innerHTML =
-    `<div class="nav-h">Reference</div>
+    `<div class="nav-h">Guide</div>
+     ${link('#/guide','New player guide')}
+     <div class="nav-h">Reference</div>
      ${link('#/','Overview')}
+     ${link('#/timeline','Timeline')}
      ${link('#/eras','Eras &amp; anchor')}
      ${link('#/gaps','Gaps &amp; conflicts')}
      <div class="nav-h">Build 1962</div>
@@ -1530,6 +3714,9 @@ function buildNav(){
      ${DATA.archetypes.map(a => link(`#/archetype/${a.id}`, a.name, 3)).join('')}
      <div class="nav-h">Systems</div>
      ${DATA.systems.map(s => link(`#/system/${s.id}`, s.name)).join('')}
+     <div class="nav-h">Beta 0.7 systems</div>
+     ${link('#/constraints','Constraints')}
+     ${link('#/crafting','Crafting')}
      <div class="nav-h">Patch chain</div>
      ${DATA.patches.map(p => link(`#/patch/${p.id}`, p.id, p.entries.length||null)).join('')}`;
 }

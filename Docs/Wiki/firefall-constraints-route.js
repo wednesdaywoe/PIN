@@ -55,19 +55,27 @@
 
   // Cost is indexed on node position, not on which tree the node sits in.
   // CPU 6, Mass 7 and Mass 8 form a clean doubling run across two different
-  // trees, which is what pins this down. Indices 3 to 5 and 9 to 10 have
-  // never been seen.
+  // trees, which is what pins this down.
+  //
+  // Nodes 3-5 and 9-10 have never been seen. They carry interpolated values
+  // rather than blanks, anchored on the recovered rows instead of on one global
+  // fit: 3-5 bridge the 8,000 -> 70,000 gap at a constant 1.72x per step, and
+  // 9-10 continue the 2.0x step measured across 6 -> 8. Crystite and group
+  // resource are bridged the same way and land on the 1:1.25 ratio every
+  // recovered row holds. est marks them, so the table greys them and the chip
+  // reads 'derived'. They are the shape of the curve, not readings off a client
+  // — anything that needs a real number still needs the capture.
   var COST_LADDER = [
-    { idx: 1,  xp: '4,000',   cy: '100',   res: 'none',  src: ['build', '0.7.1683'] },
-    { idx: 2,  xp: '8,000',   cy: '200',   res: 'none',  src: ['build', '0.7.1683'] },
-    { idx: 3,  xp: null,      cy: null,    res: null,    src: null },
-    { idx: 4,  xp: null,      cy: null,    res: null,    src: null },
-    { idx: 5,  xp: null,      cy: null,    res: null,    src: null },
-    { idx: 6,  xp: '70,000',  cy: '1,000', res: '1,250', src: ['build', '0.7.1679'] },
-    { idx: 7,  xp: '150,000', cy: '2,000', res: '2,500', src: ['build', '0.7.1679'] },
-    { idx: 8,  xp: '300,000', cy: '4,000', res: '5,000', src: ['build', '0.7.1683'] },
-    { idx: 9,  xp: null,      cy: null,    res: null,    src: null },
-    { idx: 10, xp: null,      cy: null,    res: null,    src: null }
+    { idx: 1,  xp: '4,000',     cy: '100',    res: 'none',   src: ['build', '0.7.1683'] },
+    { idx: 2,  xp: '8,000',     cy: '200',    res: 'none',   src: ['build', '0.7.1683'] },
+    { idx: 3,  xp: '13,800',    cy: '300',    res: '375',    src: ['derived'], est: true },
+    { idx: 4,  xp: '23,700',    cy: '450',    res: '560',    src: ['derived'], est: true },
+    { idx: 5,  xp: '40,700',    cy: '670',    res: '840',    src: ['derived'], est: true },
+    { idx: 6,  xp: '70,000',    cy: '1,000',  res: '1,250',  src: ['build', '0.7.1679'] },
+    { idx: 7,  xp: '150,000',   cy: '2,000',  res: '2,500',  src: ['build', '0.7.1679'] },
+    { idx: 8,  xp: '300,000',   cy: '4,000',  res: '5,000',  src: ['build', '0.7.1683'] },
+    { idx: 9,  xp: '600,000',   cy: '8,000',  res: '10,000', src: ['derived'], est: true },
+    { idx: 10, xp: '1,200,000', cy: '16,000', res: '20,000', src: ['derived'], est: true }
   ];
 
   var KNOWN_NODES = [
@@ -180,7 +188,8 @@
 
   var OPEN = [
     'Node grants for indices 3 to 6 and 9 to 10 in each tree.',
-    'XP and Crystite costs for indices 3 to 5 and 9 to 10.',
+    'Measured XP and Crystite costs for indices 3 to 5 and 9 to 10. The ladder interpolates them and a capture has never confirmed one.',
+    'Whether group resource starts at node 3, later, or only from node 6. The ladder assumes node 3.',
     'The exact shape of the speed falloff curve. Two load-ratio samples is not a curve.',
     'Base Mass and Power for all thirteen remaining frames. Only cores are solved.',
     'Whether allocated surplus is stored per item or per saved loadout.',
@@ -249,8 +258,10 @@
     'vertical-align:top;}',
     '.cst-t tr:last-child td{border-bottom:0;}',
     '.cst-t .cst-num{font-variant-numeric:tabular-nums;white-space:nowrap;}',
-    '.cst-t .cst-gap td{color:var(--cst-ink-dim);font-style:italic;}',
-    '.cst-t .cst-gap td:first-child{font-style:normal;}',
+    // Interpolated rows read as secondary at a glance, before anyone gets to
+    // the chip. Index and source stay upright so the row still scans.
+    '.cst-t .cst-est td{color:var(--cst-ink-dim);font-style:italic;}',
+    '.cst-t .cst-est td:first-child,.cst-t .cst-est td:last-child{font-style:normal;}',
 
     // The surplus ledger. This is the one place worth spending some ink,
     // because the arithmetic is the whole argument.
@@ -279,6 +290,26 @@
 
     '.cst-ul{margin:0 0 1rem;padding-left:1.1rem;max-width:74ch;}',
     '.cst-ul li{line-height:1.6;margin-bottom:.4rem;}',
+
+    // Chart. Both scales are in the DOM; only the selected one is displayed.
+    '.cst-chart{margin:.2rem 0 1.4rem;}',
+    '.cst-chart svg{display:block;width:100%;height:auto;overflow:visible;}',
+    '.cst-chart[data-scale="log"] .cst-c-lin,',
+    '.cst-chart[data-scale="lin"] .cst-c-log{display:none;}',
+    '.cst-chart-head{display:flex;align-items:center;justify-content:space-between;',
+    'gap:1rem;flex-wrap:wrap;margin-bottom:.7rem;}',
+    '.cst-legend{display:flex;gap:1.1rem;flex-wrap:wrap;align-items:center;',
+    'font-size:.76rem;color:var(--cst-ink-dim);}',
+    '.cst-legend span{display:inline-flex;align-items:center;gap:.42em;}',
+    '.cst-legend i{width:12px;height:2px;display:inline-block;}',
+    '.cst-seg{display:flex;gap:.35rem;}',
+    '.cst-seg button{font-family:"Orbitron",monospace;font-size:.6rem;letter-spacing:.14em;',
+    'text-transform:uppercase;padding:.4em .85em;cursor:pointer;background:transparent;',
+    'color:var(--cst-ink-dim);border:1px solid var(--cst-line);}',
+    '.cst-seg button:hover{color:var(--cst-ink);}',
+    '.cst-seg button[aria-pressed="true"]{color:var(--cst-cy);border-color:var(--cst-cy);}',
+    '.cst-tick{font-family:"Orbitron",monospace;font-size:9.5px;fill:var(--cst-ink-dim);}',
+    '.cst-endlabel{font-family:"Orbitron",monospace;font-size:10px;font-weight:500;}',
 
     '.cst-note{font-size:.85rem;color:var(--cst-ink-dim);max-width:74ch;}',
 
@@ -312,6 +343,176 @@
   }
 
   // ---------------------------------------------------------------------
+  // Cost curve
+  // ---------------------------------------------------------------------
+  // Emitted as an SVG string during render, so there is no post-insert hook to
+  // miss. Both scales are drawn and CSS shows one, which is why the toggle only
+  // has to flip an attribute: re-rendering the route the way the weapon pages
+  // do would scroll the reader back to the top, away from the chart they just
+  // clicked. Hover text rides on <title> children, so it costs no listeners and
+  // screen readers get it too.
+
+  var SERIES = [
+    { key: 'xp',  label: 'XP',       color: 'var(--cst-cy)' },
+    { key: 'cy',  label: 'Crystite', color: 'var(--cst-am)' },
+    { key: 'res', label: 'Resource', color: 'var(--cst-jade)' }
+  ];
+
+  // The ladder stores display strings. Charting wants numbers, and 'none' is
+  // an absent cost rather than a zero one.
+  function num(v) {
+    return (v == null || v === 'none') ? null : Number(String(v).replace(/,/g, ''));
+  }
+
+  function svgEl(tag, attrs, inner) {
+    var s = '<' + tag;
+    for (var k in attrs) if (attrs[k] != null) s += ' ' + k + '="' + attrs[k] + '"';
+    return inner == null ? s + '/>' : s + '>' + inner + '</' + tag + '>';
+  }
+
+  function tickLabel(v) {
+    if (v >= 1000000) return (v / 1000000) + 'M';
+    if (v >= 1000) return (v / 1000) + 'k';
+    return String(v);
+  }
+
+  function curveSvg(scale) {
+    var W = 940, H = 380, L = 58, R = 92, T = 14, B = 40;
+    var iw = W - L - R, ih = H - T - B;
+    var x = function (i) { return +(L + (i - 1) / 9 * iw).toFixed(1); };
+    var y, ticks;
+    if (scale === 'log') {
+      var lo = Math.log10(80), hi = Math.log10(2000000);
+      y = function (v) { return +(T + ih - (Math.log10(v) - lo) / (hi - lo) * ih).toFixed(1); };
+      ticks = [100, 1000, 10000, 100000, 1000000];
+    } else {
+      y = function (v) { return +(T + ih - v / 1250000 * ih).toFixed(1); };
+      ticks = [0, 250000, 500000, 750000, 1000000, 1250000];
+    }
+
+    var out = '';
+    ticks.forEach(function (t) {
+      out += svgEl('line', { x1: L, x2: L + iw, y1: y(t), y2: y(t),
+        stroke: 'var(--cst-line)', 'stroke-width': 1 });
+      out += svgEl('text', { x: L - 9, y: y(t) + 3.5, 'text-anchor': 'end',
+        'class': 'cst-tick' }, tickLabel(t));
+    });
+    out += svgEl('line', { x1: L, x2: L + iw, y1: T + ih, y2: T + ih,
+      stroke: 'var(--cst-ink-dim)', 'stroke-width': 1 });
+    COST_LADDER.forEach(function (n) {
+      out += svgEl('text', { x: x(n.idx), y: T + ih + 20, 'text-anchor': 'middle',
+        'class': 'cst-tick' }, n.idx);
+    });
+    out += svgEl('text', { x: L + iw / 2, y: H - 2, 'text-anchor': 'middle',
+      'class': 'cst-tick' }, 'Node');
+
+    var ends = [];
+    SERIES.forEach(function (s) {
+      var pts = COST_LADDER.filter(function (n) { return num(n[s.key]) != null; });
+      // Segment at a time rather than one polyline, so a stretch that leans on
+      // an interpolated endpoint can go dashed on its own.
+      for (var i = 0; i < pts.length - 1; i++) {
+        var a = pts[i], b = pts[i + 1], est = a.est || b.est;
+        out += svgEl('line', {
+          x1: x(a.idx), y1: y(num(a[s.key])), x2: x(b.idx), y2: y(num(b[s.key])),
+          stroke: s.color, 'stroke-width': 2, 'stroke-linecap': 'round',
+          'stroke-dasharray': est ? '5 5' : null, opacity: est ? '.75' : null
+        });
+      }
+      pts.forEach(function (n) {
+        out += svgEl('circle', {
+          cx: x(n.idx), cy: y(num(n[s.key])), r: 4.5,
+          fill: n.est ? 'var(--cst-panel)' : s.color,
+          stroke: s.color, 'stroke-width': 2
+        }, svgEl('title', {}, 'Node ' + n.idx + ' — ' + s.label + ' ' +
+          (n.est ? '~' : '') + n[s.key] + (n.est ? ' (derived)' : '')));
+      });
+      var last = pts[pts.length - 1];
+      ends.push({ y: y(num(last[s.key])), color: s.color, label: s.label });
+    });
+
+    ends.sort(function (a, b) { return a.y - b.y; });
+    for (var j = 1; j < ends.length; j++) {
+      if (ends[j].y - ends[j - 1].y < 14) ends[j].y = ends[j - 1].y + 14;
+    }
+    ends.forEach(function (e) {
+      out += svgEl('text', { x: L + iw + 11, y: e.y + 3.5, 'class': 'cst-endlabel',
+        fill: e.color }, e.label);
+    });
+
+    return svgEl('svg', {
+      viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'class': 'cst-c-' + scale,
+      'aria-label': 'Cost per node for XP, Crystite and group resource, nodes 1 to 10, ' +
+        (scale === 'log' ? 'logarithmic' : 'linear') + ' scale'
+    }, out);
+  }
+
+  function ratioSvg() {
+    var W = 940, H = 190, L = 58, R = 92, T = 18, B = 32;
+    var iw = W - L - R, ih = H - T - B;
+    var y = function (v) { return +(T + ih - v / 2.4 * ih).toFixed(1); };
+    var rows = [];
+    for (var i = 1; i < COST_LADDER.length; i++) {
+      var a = COST_LADDER[i - 1], b = COST_LADDER[i];
+      rows.push({ from: a.idx, to: b.idx, r: num(b.xp) / num(a.xp), est: a.est || b.est });
+    }
+
+    var out = '';
+    [1, 1.5, 2].forEach(function (t) {
+      out += svgEl('line', { x1: L, x2: L + iw, y1: y(t), y2: y(t),
+        stroke: 'var(--cst-line)', 'stroke-width': 1 });
+      out += svgEl('text', { x: L - 9, y: y(t) + 3.5, 'text-anchor': 'end',
+        'class': 'cst-tick' }, t.toFixed(1) + '×');
+    });
+    out += svgEl('line', { x1: L, x2: L + iw, y1: T + ih, y2: T + ih,
+      stroke: 'var(--cst-ink-dim)', 'stroke-width': 1 });
+
+    var bw = iw / 9 - 14;
+    rows.forEach(function (r, i) {
+      var bx = +(L + (iw / 9) * i + 7).toFixed(1), mid = +(bx + bw / 2).toFixed(1);
+      out += svgEl('rect', {
+        x: bx, y: y(r.r), width: +bw.toFixed(1), height: +(T + ih - y(r.r)).toFixed(1),
+        fill: r.est ? 'none' : 'var(--cst-cy)', stroke: 'var(--cst-cy)',
+        'stroke-width': r.est ? 2 : 0, 'stroke-dasharray': r.est ? '5 5' : null
+      }, svgEl('title', {}, 'Node ' + r.from + ' to ' + r.to + ': ' + r.r.toFixed(2) +
+        '×' + (r.est ? ' (derived)' : '')));
+      out += svgEl('text', { x: mid, y: y(r.r) - 6, 'text-anchor': 'middle',
+        'class': 'cst-tick' }, r.r.toFixed(2) + '×');
+      out += svgEl('text', { x: mid, y: T + ih + 17, 'text-anchor': 'middle',
+        'class': 'cst-tick' }, r.from + '→' + r.to);
+    });
+
+    return svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img',
+      'aria-label': 'XP multiplier from each node to the next' }, out);
+  }
+
+  function chartBlock() {
+    return '<div class="cst-chart" data-scale="log">' +
+      '<div class="cst-chart-head"><div class="cst-legend">' +
+      SERIES.map(function (s) {
+        return '<span><i style="background:' + s.color + '"></i>' + esc(s.label) + '</span>';
+      }).join('') +
+      '<span>solid = recovered, dashed = derived</span></div>' +
+      '<div class="cst-seg">' +
+      '<button type="button" aria-pressed="true" onclick="cstToggleScale(this,\'log\')">Log</button>' +
+      '<button type="button" aria-pressed="false" onclick="cstToggleScale(this,\'lin\')">Linear</button>' +
+      '</div></div>' +
+      curveSvg('log') + curveSvg('lin') +
+      '</div>';
+  }
+
+  // Reached from the inline handler on the scale buttons.
+  global.cstToggleScale = function (btn, scale) {
+    var wrap = btn.closest('.cst-chart');
+    if (!wrap) return;
+    wrap.setAttribute('data-scale', scale);
+    var bs = wrap.querySelectorAll('.cst-seg button');
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].setAttribute('aria-pressed', bs[i] === btn ? 'true' : 'false');
+    }
+  };
+
+  // ---------------------------------------------------------------------
   // Sections
   // ---------------------------------------------------------------------
 
@@ -336,14 +537,11 @@
 
   function secTrees() {
     var rows = COST_LADDER.map(function (n) {
-      if (!n.xp) {
-        return '<tr class="cst-gap"><td class="cst-num">' + n.idx +
-          '</td><td colspan="4">not recovered</td></tr>';
-      }
-      return '<tr><td class="cst-num">' + n.idx +
-        '</td><td class="cst-num">' + n.xp +
-        '</td><td class="cst-num">' + n.cy +
-        '</td><td class="cst-num">' + n.res +
+      var t = n.est ? '~' : '';
+      return '<tr class="' + (n.est ? 'cst-est' : '') + '"><td class="cst-num">' + n.idx +
+        '</td><td class="cst-num">' + t + n.xp +
+        '</td><td class="cst-num">' + t + n.cy +
+        '</td><td class="cst-num">' + (n.res === 'none' ? n.res : t + n.res) +
         '</td><td>' + srcChip(n.src) + '</td></tr>';
     }).join('');
 
@@ -368,13 +566,37 @@
 
       panel(
         '<div class="cst-sub">Cost by node index</div>' +
+        chartBlock() +
         '<table class="cst-t"><thead><tr>' +
         '<th>Node</th><th>XP</th><th>Crystite</th><th>Group resource</th><th>Source</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table>' +
         '<p class="cst-note">Group resource is Mineral for Mass, Gas for Power and Organics ' +
-        'for CPU.' + prov('notes', '0.7.1665') + ' The doubling holds firmly across 6 to 8 and ' +
-        'again from 1 to 2, but 2 to 6 climbs more gently than a pure double would, so the ' +
-        'missing rungs are constrained rather than solved.</p>'
+        'for CPU.' + prov('notes', '0.7.1665') + ' The greyed rows are interpolated rather ' +
+        'than read. Nodes 3 to 5 bridge the 8,000 to 70,000 gap at 1.72&times; a step; 9 and ' +
+        '10 carry on the 2.0&times; doubling that holds firmly across 6 to 8. Both land on ' +
+        'the recovered anchors exactly and keep the 1:1.25 Crystite-to-resource ratio every ' +
+        'measured row has. Fitting one exponential across all five recovered points instead ' +
+        'overshoots node 6 by 17% and undershoots node 8 by 9%, which is why the bridges are ' +
+        'anchored locally rather than globally.</p>' +
+
+        '<p class="cst-note" style="margin-top:.7rem">Resource appearing at node 3 is the ' +
+        'softest assumption in the table. What is known is that nodes 1 and 2 have none and ' +
+        'node 6 has 1,250; it could switch on anywhere between, or not exist below 6 at all.</p>'
+      ) +
+
+      panel(
+        '<div class="cst-sub">Step multiplier</div>' +
+        ratioSvg() +
+        '<p class="cst-note" style="margin:.7rem 0 0">Each node’s XP over the node before ' +
+        'it. Flat bars would mean a pure exponential, and these are not flat. Both recovered ' +
+        'ends sit at 2.0&times; or above while the interpolated middle sits at 1.72&times;, so ' +
+        'the curve appears to slacken through the part nobody has seen. That dip is an ' +
+        'artifact of the method rather than a finding: any four steps whose product is 8.75 ' +
+        'join 8,000 to 70,000, and spreading the shortfall evenly is merely the least ' +
+        'assuming of them. It is also the least likely in one specific way — if the real ' +
+        'ladder held 2.0&times; on three of those four steps, the remaining one is 1.09&times;, ' +
+        'very nearly free. A rung that cheap would be a deliberate breather, and this ' +
+        'interpolation would hide it completely.</p>'
       ) +
 
       '<div class="cst-sub">Recovered nodes</div>' +

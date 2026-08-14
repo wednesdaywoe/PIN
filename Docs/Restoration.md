@@ -159,7 +159,16 @@ Build 1962 shipped **both** resource models, which means the choice is real rath
 | Later resources | Copper, Iron, Aluminum, Carbon, Ceramic, Methine (ids 77703+) |
 | Total | 111 `dbitems::ResourceItem` rows, all quality 1 |
 | `dbitems::ResourceStat` | 5 rows — the five-stat structure that made beta resources gradeable |
+| `dbitems::Resource_Stat_Names` | `(resource_type, stat_index) → localised name`, so one slot shows a different name on each material |
+| `dbitems::Blueprint_Resources` | carries `resource_stat` and `item_attribute` separately: which slot an ingredient reads, and which item stat it steers |
 | `dbzonemetadata::ResourceNodeType` | 46 named node types, explicitly level-banded: *"Tier 1 (lvls 1-19) Resource Vein - Iron"*, *"Tier 2 (lvls 20-29) Resource Vein - Tungsten & Iron"* |
+
+Those last two settle a beta-notes conflict worth knowing about before recipes get authored. The
+0.7 notes name material stats the 0.6 notes never mention, like malleability on Aluminum and
+toughness on Biopolymer, which reads as though resources grew extra axes. They didn't.
+`Resource_Stat_Names` exists so one slot can show a different name on each material, so those are
+labels on five fixed axes rather than new ones. What the five are actually called is still open,
+since the names are localisation ids and resolving them needs a full `clientdb.sd2`.
 
 So the shipped data supports the graded-material economy the beta had *and* the level-banded vein
 model retail moved to. Both are readable; neither is imposed. The open decisions:

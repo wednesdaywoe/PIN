@@ -223,7 +223,7 @@ td.v.null{color:var(--rust);opacity:.75}
    the same gap the wiki's own h2 takes. Their stylesheets are injected into
    <head> at first render, so they land after this block and win on order —
    hence the #view prefix to take it back on specificity.                      */
-#view .cst-h:first-child,#view .cft-h:first-child{margin-top:26px}
+#view .cst-h:first-child,#view .cft-h:first-child,#view .gd-sec:first-child{margin-top:26px}
 
 /* --- Coverage rows ------------------------------------------------------ */
 .cov{display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid rgba(56,220,230,.08)}
@@ -302,6 +302,7 @@ td.v.null{color:var(--rust);opacity:.75}
 <script src="firefall-timeline-route.js"></script>
 <script src="firefall-constraints-route.js"></script>
 <script src="firefall-crafting-route.js"></script>
+<script src="firefall-guide-route.js"></script>
 <script>
 /* ===========================================================================
    HELPERS
@@ -529,8 +530,13 @@ V.home = () => {
        <p>No character level. Mass, Power and CPU budgets, and thirty nodes of spendable XP.</p>`)}</a>
     <a class="tile" href="#/crafting">${pnl(
       `<span class="eyebrow">0.7</span><b style="margin-top:4px">Crafting</b>
-       <p>Resource aspects, refining, components and quality — the same three budgets, spent at manufacture.</p>`)}</a>
+       <p>Resource stats, refining, components and quality. Five graded slots, spent at manufacture.</p>`)}</a>
   </div>
+
+  <div class="note"><span class="eyebrow">Or start here</span>
+  <p>The <a href="#/guide">new player guide</a> walks the same beta game for someone who wants to play it
+  rather than rebuild it. It states one answer wherever these pages record several — deliberately, and its
+  own notes list every place it does.</p></div>
 
   <h2>Patch chain</h2>
   <p class="lede">The base state plus four ordered deltas. Every entity page derives its own history
@@ -933,10 +939,13 @@ V.eras = () => `<div class="crumb"><a href="#/">Home</a> / Eras</div>
   <h2>The anchor</h2>
   <div class="note"><span class="eyebrow">Numbers from 1962, design from 0.7</span>
   <p>The dump is build 1962 and measures the 1.6/1.7 game, so every figure on this wiki that carries a
-  ${tag('dump')} label describes that game. The beta systems cannot be recovered from data — the resource
-  taxonomy, quality aspects, purity and blending left no trace in the client database. They have to be
-  reconstructed from the patch notes, and every reconstruction is recorded as a decision rather than
-  presented as a finding.</p></div>
+  ${tag('dump')} label describes that game. Most beta systems cannot be recovered from data. The resource
+  taxonomy, purity and blending left no trace in the client database and have to be reconstructed from the
+  patch notes, and every reconstruction is recorded as a decision rather than presented as a finding.</p>
+  <p>Resource grading is the exception. <span class="mono">dbitems::ResourceStat</span> and
+  <span class="mono">dbitems::Resource_Stat_Names</span> both shipped in 1962 with rows in them, and between
+  them they settle how many stats a material has and why the notes call them different things on different
+  materials. Neither table is loaded by the server yet.</p></div>
 
   <div class="note warn"><span class="eyebrow">One qualification</span>
   <p>Some pre-1.6 weapon templates survived the rebuild and are still in the 1962 database beside their
@@ -978,7 +987,9 @@ V.search = term => {
 function buildNav(){
   const link = (h,t,n) => `<a href="${h}" data-h="${h}">${t}${n!=null?`<small>${n}</small>`:''}</a>`;
   $('#nav').innerHTML =
-    `<div class="nav-h">Reference</div>
+    `<div class="nav-h">Guide</div>
+     ${link('#/guide','New player guide')}
+     <div class="nav-h">Reference</div>
      ${link('#/','Overview')}
      ${link('#/timeline','Timeline')}
      ${link('#/eras','Eras &amp; anchor')}
