@@ -236,6 +236,24 @@ trap cleanup EXIT INT TERM HUP
 # config scanner tries to Assembly.Load any Serilog.* dll it finds in the
 # folder -- a shared publish dir makes one server's dependency crash another,
 # since it is absent from that server's own deps.json.
+# Every start truncates the logs, so a restart in the middle of a sitting used to destroy the
+# transcript of everything tested before it -- and a test whose log is gone did not happen, however
+# well it went on screen. Move the outgoing logs aside first, named for when they were last written.
+mkdir -p logs/previous
+for name in "${SERVERS[@]}"; do
+    [ -s "logs/$name.log" ] || continue
+    mv "logs/$name.log" "logs/previous/$name-$(date -r "logs/$name.log" +%Y%m%d-%H%M%S).log"
+done
+
+# Bounded history, same as the build archive: keep the newest few per server.
+for name in "${SERVERS[@]}"; do
+    mapfile -t stale < <(find logs/previous -name "$name-*.log" -printf '%T@ %p\n' 2>/dev/null \
+        | sort -rn | tail -n +11 | cut -d' ' -f2-)
+    for old in "${stale[@]:-}"; do
+        [ -n "$old" ] && rm -f "$old"
+    done
+done
+
 for name in "${SERVERS[@]}"; do
     echo "==> Starting $name"
     # Seed the log with the build banner rather than truncating to empty, so a

@@ -22,7 +22,7 @@ covers what's missing and what order to fix it in.
 M1 confirm the combat models                        done
  └─> M2 NPCs that fight back                        done
       ├─> M3 resources come out of the ground       done
-      │    ├─> M4 where you thump matters           code complete, awaiting S1-S6 in game
+      │    ├─> M4 where you thump matters           S1-S2 passed, S3-S5 are the exit condition
       │    └─> M7 an encounter that plays
       └─> M5 killing something pays                 done
 
@@ -32,8 +32,10 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M4: where you thump matters is code complete as of 2026-08-13, and nothing of it has been seen in
-game.** The milestone that was "the one with no ground truth to check against" turned out to be
+**M4: where you thump matters has its visible half confirmed — S1 and S2 both pass — and the three
+entries that decide the milestone are unrun.** A player can now see where the zone's resources are
+and read what is under their feet; nobody has yet thumped a rich deposit and a poor one and compared
+the piles, which is the exit condition. The milestone that was "the one with no ground truth to check against" turned out to be
 half-shipped after all: `dbzonemetadata::ResourceNodeType` and `ResourceNodeTypeResource` carry 46
 node types and 67 live yield rows — the center-to-rim gradient is real data, crystite is item 10 in
 it, and node type 20, the literal every thumper used, is the data's own name for barren ground
@@ -69,6 +71,16 @@ is a valid ground reading. Ten scans that evening produced seven `NOTHUMPINGZONE
 spots were 78–182m from any deposit, so `barren` was correct each time. Deposit 1 has been moved onto
 one of those accepted coordinates ([DATA-17](ISSUE-REGISTER.md), closed), and a barren reading now
 names the nearest deposit and its distance.
+
+**S2 passed the next day, and the sitting destroyed its own evidence.** Every server start truncated
+`logs/GameServer.log`, so beginning S6 — a restart, by definition — took the transcript of
+everything tested before it, and a passing entry had to be recorded on the tester's word rather than
+on a grep. Outgoing logs now move to `logs/previous/<server>-<stamp>.log`, ten kept per server. The
+same restart also reinstalls, and the install is an rsync out of the build output over a deployment
+where `deposit add` and `spawngroup add` write their own JSON — so a plain `./start-pin.sh` deletes
+exactly the in-game placement S6 exists to measure. The repo still wins on purpose, since keeping
+the local file would mean quietly running stale data, but the outgoing copy is kept under
+`builds/authored/` and the deploy warns; S6 runs with `--no-build`.
 
 **M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.md).** A
 Gaia creature died and paid 4 crystite, logged as `paid 4 of resource 10`, and the tester saw it
@@ -330,8 +342,8 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Fill in the grant defs that matter — needs the client's ability data, same gap as
   [DATA-5](gaps/data.md#data-5)
 
-[Full detail](streams/m4-thump-placement.md) — code complete 2026-08-13, awaiting
-[S1–S6](In-Game-Tests/Thump-Placement.md) in game
+[Full detail](streams/m4-thump-placement.md) — code complete 2026-08-13,
+[S1–S6](In-Game-Tests/Thump-Placement.md) 2 of 6 passed, S3–S5 are the exit condition
 
 - [x] Load node type and yield tables — live data, 46 types and 67 gradient rows; the sampler is
   pinned offline by `DepositSamplerTests` on the real rows
@@ -345,11 +357,12 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
   [Client UI Source](Client-UI-Source.md)); the layer a player sees is the **outpost radar**, fed by
   `Outpost::ObserverView.NearbyResourceItems`, which `OutpostEntity` now fills from the deposits in
   reach. Zone 448's station advertises crystite and raw iron (S1)
-- [~] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0` — **the loop runs**: the Scan
-  Hammer's ability module (56811, ability 34503) in `GearAuxWeapon` puts the scan on **G**, the
-  animation plays, and the client sends the request the 2016 capture never contains. No valid reading
-  yet — the station shelf is a no-thumping zone and deposit 1 sits inside it
-  ([DATA-17](ISSUE-REGISTER.md)), so the re-run moves to the basin (S2)
+- [x] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0` — **passed 2026-08-14, S2**,
+  on the tester's word after a restart truncated the log. The Scan Hammer's ability module (56811,
+  ability 34503) in `GearAuxWeapon` puts the scan on **G**, the animation plays, and the client
+  sends the request the 2016 capture never contains once. The first attempt read barren everywhere
+  because deposit 1 sat inside the station's no-thumping zone
+  ([DATA-17](ISSUE-REGISTER.md), closed by moving it)
 - [~] Resolve node type from position instead of the literal `20` — all three call sites resolve;
   20 survives as what barren ground is ([DATA-2](ISSUE-REGISTER.md) fixed in code)
 - [~] Sample the gradient where the thumper landed and pay that out — payout scales with the

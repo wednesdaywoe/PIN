@@ -64,6 +64,26 @@ be attributed to it.
 Builds are deterministic — the same source rebuilt gives the same hash — so the number identifies
 the source, not just the file.
 
+### Restarting mid-sitting
+
+Every start truncates `logs/`, so a restart used to destroy the transcript of everything tested
+before it — which cost a whole M4 run on 2026-08-14. **The outgoing logs are now moved aside first**,
+into `~/Games/PIN/logs/previous/<server>-<YYYYMMDD-HHMMSS>.log`, ten kept per server. Grep them the
+same way, and note that the plain `logs/*.log` greps quoted throughout these streams read the
+current run only:
+
+```
+grep -a "Geo report" ~/Games/PIN/logs/previous/GameServer-*.log
+```
+
+A restart also **re-deploys by default**, and the install is a plain copy out of the build output.
+Anything authored from inside the game — a `deposit add`, a `spawngroup add`, both of which write
+their JSON in the deployment because the server knows nothing about a repo — is therefore
+overwritten by the repo's copy. The repo still wins on purpose, since keeping the local file would
+silently run stale data, but the outgoing one is now kept in
+`~/Games/PIN/builds/authored/` and the deploy says so loudly. **To restart without re-deploying,
+`./start-pin.sh --no-build`** — that is the only way an in-game placement survives one.
+
 ### Running an older build
 
 `./start-pin.sh --no-build` runs what is installed without touching it. This is the only mode in

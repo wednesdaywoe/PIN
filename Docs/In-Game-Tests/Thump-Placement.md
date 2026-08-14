@@ -53,6 +53,12 @@ grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log
 A thumper still takes up to seven and a half minutes; the state-transition budget is in
 [Resource Payout](Resource-Payout.md).
 
+**Restarting mid-sitting used to destroy the transcript**, which is how the 2026-08-14 run lost its
+own evidence. Outgoing logs are now moved to `~/Games/PIN/logs/previous/<server>-<stamp>.log`; the
+greps above read the current run only, so add `previous/GameServer-*.log` when reading back across a
+restart. And a restart re-deploys unless told not to — see
+[Session Setup](Session-Setup.md#restarting-mid-sitting), which S6 turns on.
+
 ## [x] S1: The map shows where the resources are
 
 **Passed 2026-08-13 on the third sitting**: the station outpost's radar reads
@@ -122,7 +128,28 @@ the real deposit table — correct, and still invisible, which is what the secon
 
 </details>
 
-## [~] S2: The ground says what is under it
+## [x] S2: The ground says what is under it
+
+**Passed 2026-08-14, tester-reported, and the confirming log did not survive the sitting.** The
+run was restarted with a plain `./start-pin.sh` to begin S6, which truncated `GameServer.log` and
+took the transcript of everything before it with it. That is fixed for future sittings — outgoing
+logs are kept in `logs/previous/` — but this entry's own record is a report rather than a grep, and
+it is marked passed on the tester's word.
+
+What the surviving post-restart fragment does show, and it is not nothing: **the Scan Hammer fires
+reliably** — seven presses in twenty seconds, each one `ActivateAbility Slot 5` followed by
+`Ability 34503 starting Chain 884633`, so the trigger found on 2026-08-13 is not a one-off. And the
+barren diagnostic added the same day works in game:
+
+```
+[08:24:01 INF] Geo report ... at <-312.34647, 488.43283, 401.17035>: feedback OK, barren;
+               nearest is [4] North Flats Crystite and Iron at 408m, radius 35m
+```
+
+That is a correct barren reading 408m out, and it names where to walk instead of only saying no.
+
+<details>
+<summary>How the trigger was found, 2026-08-13</summary>
 
 **The trigger is found and the whole loop runs, 2026-08-13.** With ability module 56811 in
 `GearAuxWeapon`, pressing **G** plays the Scan Hammer animation, fires ability 34503, and the client
@@ -149,7 +176,9 @@ client itself said `OK` to**, 67m from the station and reachable on foot
 ([DATA-17](../ISSUE-REGISTER.md), now closed). And a barren reading now names the nearest deposit
 and its distance, so a miss says which way to walk instead of only that you missed.
 
-### The re-run
+</details>
+
+### How to run it again
 
 `GeographicalReportRequest` finally has a handler. The client sends it carrying only its own verdict
 on the spot (`OK`, `NOTHUMPINGZONE`, `INVALIDSURFACE`); the server reads the ground under your feet
@@ -284,12 +313,20 @@ editor. This is the entry that proves new zone content doesn't need this repo.
 4. `thumper`, and confirm the feedback says `in deposit [<new id>]`.
 5. Collect it early (this is allowed here — the point is the deposit, not the payout size), or
    `deposit remove <id>` and skip to 6 if seven minutes is too long.
-6. Restart the server. `deposit list` again.
+6. Restart with **`./start-pin.sh --no-build`**. Then `deposit list` again.
 
 Pass: the deposit exists after the restart with the same id, position and radius — it was written to
 `StaticDB/CustomData/resource_deposit.json` in the deploy directory at `add` time, not at shutdown.
 Copy it back to the repo if it should stay:
 `cp ~/Games/PIN/GameServer/StaticDB/CustomData/resource_deposit.json ~/Github/PIN/UdpHosts/GameServer/StaticDB/CustomData/`
 
-**Fail, gone after restart:** the save wrote somewhere else or threw — `grep -ai "exception"
-~/Games/PIN/logs/GameServer.log` around the `add` timestamp.
+**`--no-build` is not optional, and skipping it is what happened on 2026-08-14.** A plain
+`./start-pin.sh` re-deploys, and the install is an rsync out of the build output — so the repo's
+four-deposit file lands on top of whatever the game just wrote, and the placement is gone for a
+reason that has nothing to do with what this entry measures. The deploy now keeps the outgoing file
+in `~/Games/PIN/builds/authored/` and warns on the way past, so a rebuild-restart is recoverable
+rather than silent, but it still fails the entry. The copy-back above is the durable move and is
+best done right after the `add`, not at the end of the sitting.
+
+**Fail, gone after a `--no-build` restart:** the save wrote somewhere else or threw — `grep -ai
+"exception" ~/Games/PIN/logs/previous/GameServer-*.log` around the `add` timestamp.

@@ -19,11 +19,19 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**The queue's next sitting is [Thump Placement](In-Game-Tests/Thump-Placement.md), S1–S6, written
-2026-08-13 and not yet run.** It checks [M4](PROGRESS.md), which landed the same day: four deposits
-in zone 448, a scan that sends them, a ground report that reads them, and a thumper that pays what
-it stands on. S3–S5 are the milestone's exit condition and their expected ranges cannot overlap, so
-single runs decide.
+**[Thump Placement](In-Game-Tests/Thump-Placement.md) is mid-run, 2 of 6.** It checks
+[M4](PROGRESS.md): four deposits in zone 448, a scan that sends them, a ground report that reads
+them, and a thumper that pays what it stands on. S1 and S2 are passed — the map names the zone's
+resources, and a ground report reads back under an equipped Scan Hammer. **S3–S5 are the
+milestone's exit condition**, unrun, and their expected ranges cannot overlap, so single runs
+decide.
+
+**A restart no longer destroys a sitting's log.** S2 passed on 2026-08-14 and its transcript did
+not survive: every start truncated `logs/`, and the restart S6 asks for took the evidence of
+everything before it. Outgoing logs now move to `~/Games/PIN/logs/previous/<server>-<stamp>.log`,
+ten kept per server, so a mid-sitting restart costs nothing. The same restart also reinstalls, which
+is a second trap S6 walks into — [Session Setup](In-Game-Tests/Session-Setup.md#restarting-mid-sitting)
+has both.
 
 **[Kill Rewards](In-Game-Tests/Kill-Rewards.md) closed [M5](PROGRESS.md) on 2026-08-13, on its
 second attempt.** A Gaia creature paid 4 crystite and the tester saw it arrive. Two melded resources
@@ -271,13 +279,18 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   thumper cut short pays. **M4 replaced the payout model after these passed** — a re-run of G2's
   steps now pays what the ground holds, not a flat 200; the record stands as history and G4 was
   rewritten for the gradient before ever running
-- [ ] [Thump Placement](In-Game-Tests/Thump-Placement.md) — 0 of 6, written 2026-08-13 as
-  [M4](PROGRESS.md)'s check, none run. Zone 448 now carries four deposits; S1 asks whether the
-  scan's `FoundResourceAreas` draws anything, S2 whether a ground report reads back, S3–S5 are the
-  milestone's exit condition (rich center 40–100 crystite, barren ground ~nothing, poor deposit
-  10–25, ranges that cannot overlap), S6 proves the `deposit` command's authoring loop survives a
-  restart. S1 and S2 carry the two protocol unknowns: `Unk4` (radius is a guess) and whatever UI
-  action sends `GeographicalReportRequest`
+- [~] [Thump Placement](In-Game-Tests/Thump-Placement.md) — 2 of 6, [M4](PROGRESS.md)'s check.
+  **S1 passed 2026-08-13**: the map's resource layer names the zone's deposits, off the outpost
+  radar rather than the two overlays that looked like the obvious candidates. **S2 passed
+  2026-08-14 on the tester's word, with its log lost** — the sitting was restarted with a plain
+  `./start-pin.sh`, which truncated `GameServer.log`; outgoing logs are kept in `logs/previous/`
+  from that day on, so this is the last entry that can happen to. Both protocol unknowns S1 and S2
+  carried are settled: `ResourceLocationInfo`'s field order was confirmed twice, and the request
+  nothing in the UI sends turns out to come from the client's own code behind an equipped Scan
+  Hammer. S3–S5 are the milestone's exit condition (rich center 40–100 crystite, barren ground
+  ~nothing, poor deposit 10–25, ranges that cannot overlap) and are unrun; S6 proves the `deposit`
+  command's authoring loop survives a restart and **needs `--no-build`**, since a rebuild-restart
+  reinstalls the repo's copy of the file it writes
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and

@@ -180,3 +180,26 @@ switched off:
 
 The lesson generalises past resources. Any milestone that ends in "the client should draw this" can
 be checked against the component that would draw it before a line of server code is written.
+
+## S2 passed, and the sitting lost its own log
+
+**2026-08-14: a ground report reads back.** The trigger is ability module 56811 in `GearAuxWeapon`,
+which puts ability 34503 "Scan Hammer" on the **G** key; the client's own code then sends
+`GeographicalReportRequest` — a message the 400,000-message 2016 capture contains not one of. Two
+milestone unknowns closed with it: the field order the capture could not settle, and the "what UI
+action sends this" question, whose answer is that no UI action does.
+
+**The record for it is a report rather than a grep, because the restart that followed truncated the
+log.** Every start wrote `logs/GameServer.log` from empty, so beginning S6 — which is a restart by
+definition — destroyed the transcript of everything tested before it. That is a tooling failure with
+a real cost: under this project's own doctrine a result without a log is not a result, and this one
+had to be recorded on the tester's word instead.
+
+Both halves are fixed. `start-pin.sh` moves the outgoing logs to
+`logs/previous/<server>-<YYYYMMDD-HHMMSS>.log` before truncating, ten kept per server. And
+`deploy.sh` no longer overwrites in-game-authored static data silently: `deposit add` and
+`spawngroup add` write their JSON inside the deployment, the install is an rsync out of the build
+output, and a plain `./start-pin.sh` therefore deployed the repo's copy straight over a deposit
+placed by walking — which is S6's entire subject matter. The repo still wins, deliberately, because
+preserving the local file would mean silently testing stale data; but the outgoing file is now kept
+under `builds/authored/` and the deploy says where it went. S6 runs with `--no-build`.

@@ -37,6 +37,11 @@ ARCHIVE=$PIN_HOME/builds
 ARCHIVE_KEEP=10
 INFO=$PIN_HOME/BUILD-INFO
 
+# Static data a session can author from inside the game, which therefore lives in the deployment
+# and not only in the repo. See the archive step before the install.
+AUTHORED_ARCHIVE=$PIN_HOME/builds/authored
+AUTHORED=(StaticDB/CustomData/resource_deposit.json StaticDB/CustomData/spawn_group.json)
+
 # name : project directory under the repo : deploy directory under here
 SERVERS=(
     "GameServer:UdpHosts/GameServer:GameServer"
@@ -119,6 +124,32 @@ if [ -f "$outgoing" ]; then
         [ -n "$old" ] && rm -f "$old" "${old/.dll./.pdb.}"
     done
 fi
+
+# The same problem one layer up. `deposit add` and `spawngroup add` write their JSON inside the
+# deployment, because the server knows nothing about a repo and the running game is the editor. The
+# install below is a plain rsync out of the build output, so it overwrites them -- and start-pin.sh
+# installs by default, which means a plain restart destroys a deposit placed by walking before
+# anyone gets to copy it back. Repo still wins, because a preserved local copy would silently run
+# stale data instead; but never lose the authored one quietly.
+mkdir -p "$AUTHORED_ARCHIVE"
+for path in "${AUTHORED[@]}"; do
+    deployed=$PIN_HOME/GameServer/$path
+    incoming=$REPO/UdpHosts/GameServer/bin/$CONFIGURATION/$FRAMEWORK/$path
+    [ -f "$deployed" ] || continue
+    [ "$(hash_of "$deployed")" = "$(hash_of "$incoming")" ] && continue
+
+    kept=$AUTHORED_ARCHIVE/$(basename "$path").$(date -r "$deployed" +%Y%m%d-%H%M%S)
+    cp -p "$deployed" "$kept"
+    echo "!! $(basename "$path") in the deployment differs from the repo's copy and is about to be" >&2
+    echo "   overwritten. Kept it as ${kept#"$PIN_HOME"/}. If that holds content authored in game," >&2
+    echo "   merge it into $REPO/UdpHosts/GameServer/$path and deploy again." >&2
+done
+
+# Bounded history, same as the build archive.
+mapfile -t stale < <(find "$AUTHORED_ARCHIVE" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | tail -n +$((ARCHIVE_KEEP + 1)) | cut -d' ' -f2-)
+for old in "${stale[@]:-}"; do
+    [ -n "$old" ] && rm -f "$old"
+done
 
 say "==> Installing into $PIN_HOME"
 declare -A dll_hash
