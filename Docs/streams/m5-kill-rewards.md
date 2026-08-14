@@ -51,11 +51,16 @@ the obvious input for scaling anything that wants to be harder-is-worth-more.
 
 | Work | Where |
 |------|-------|
-| Load the three loot tables and `dbitems::ResourceItem` | [StaticDBLoader](../../UdpHosts/GameServer/StaticDB/Loaders/StaticDBLoader.cs), [SDBInterface](../../UdpHosts/GameServer/StaticDB/SDBInterface.cs) |
+| Load the three loot tables | [StaticDBLoader](../../UdpHosts/GameServer/StaticDB/Loaders/StaticDBLoader.cs), [SDBInterface](../../UdpHosts/GameServer/StaticDB/SDBInterface.cs) |
 | Walk a loot table down through its subtables | [LootRoller](../../UdpHosts/GameServer/Systems/Loot/LootRoller.cs), behind [ILootTableSource](../../UdpHosts/GameServer/Systems/Loot/ILootTableSource.cs) so it tests without a client db |
 | Pay the killer on `CharacterDiedEvent` | [KillRewardSim](../../UdpHosts/GameServer/Systems/Loot/KillRewardSim.cs) |
 
-Exit: kill a monster, watch crystite go up.
+Exit: kill a monster, watch crystite go up. **Met 2026-08-13 by
+[K1](../In-Game-Tests/Kill-Rewards.md)** — a Gaia creature paid 4 crystite, the bottom band of "Small
+Crystite Drops (2-20)", and the tester saw it arrive.
+
+The melded resources off `loot_table2_id` are paid too, which nobody predicted: 77343/77344/77345
+carry the `Resource` flag, so a kill can pay something even when the crystite roll misses.
 
 ## What is deliberately not built
 

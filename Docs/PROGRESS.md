@@ -24,7 +24,7 @@ M1 confirm the combat models                        done
       ├─> M3 resources come out of the ground       done
       │    ├─> M4 where you thump matters           <- open, unblocked
       │    └─> M7 an encounter that plays
-      └─> M5 killing something pays                 <- built, unverified in game
+      └─> M5 killing something pays                 done
 
 M6 persistence across sessions   wants M3 and M5 landed, so there's something worth saving
 M8 session stability             independent, but "playable" isn't honest without it
@@ -32,8 +32,9 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M5 is built and has never been seen in game, and it is not the milestone that was written down.**
-It was XP first, loot second. It is now crystite and no XP (decision 2026-08-13, user-chosen).
+**M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.md).** A
+Gaia creature died and paid 4 crystite, logged as `paid 4 of resource 10`, and the tester saw it
+arrive. It is not the milestone that was written down. It was XP first, loot second. It is now crystite and no XP (decision 2026-08-13, user-chosen).
 Levelling is inert in PIN — level is a hardcoded 45 and power comes entirely from the loadout — and
 the intent is to keep the beta's level-less model. **XP is a separate question from levels and this
 doc originally ran them together**: the beta had XP as a currency you spent on upgrading your frame,
@@ -105,8 +106,14 @@ item half is still the same open protocol question it was.
 
 **M4 is the remaining frontier and it is the one with no ground truth to check against**: the client
 only ever learned deposit positions by scanning, so nothing shipped with them and the distribution
-has to be invented. It is now also the only unbuilt thing between here and a loop that closes,
-pending K1 confirming M5 in game.
+has to be invented. With M5 closed it is the last unbuilt thing between here and a loop that closes,
+apart from M6 keeping any of it across a logout.
+
+Three milestones closed on 2026-08-13, which is worth being wary of rather than pleased about. M5's
+own check found a defect that produced a completely convincing log — the reward system ran end to
+end, said what it had done, and did the wrong thing with it — and that only surfaced because a line
+written for a different entry printed the id it was declining to pay. The queue's value is in what
+it catches, and it is catching things at a rate that suggests it is not catching everything.
 
 Two log lines went in to make any of this readable: what `RewardWithResource` paid and **to how many
 participants**, and every thumper state change. Both earned their place immediately. Two thumpers
@@ -294,16 +301,16 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0`
 - [ ] Resolve node type from position instead of the literal `20`
 
-[Full detail](streams/m5-kill-rewards.md) — 1 dropped, 2 landed but unverified in game, 2 open
+[Full detail](streams/m5-kill-rewards.md) — COMPLETE 2026-08-13, 1 dropped, 2 landed, 2 deferred
 
 - [x] ~~Award XP on kill~~ — dropped 2026-08-13, because nothing consumes XP, not because levels
   are out. Beta XP was a spendable currency and fits the level-less model; it needs the spending
   half first, which is its own milestone. `xp_resource_id` is set on 2 of 3109 monsters, so there
   is nothing to size a payout from either
-- [~] Load the loot tables and roll a kill's — `LootRoller` over `dbitems::LootTable`, tested
-  offline, no client has seen it
-- [~] Pay the killer the resources that dropped — `KillRewardSim` on `CharacterDiedEvent`, crystite
-  only, waiting on [K1](In-Game-Tests/Kill-Rewards.md)
+- [x] Load the loot tables and roll a kill's — `LootRoller` over `dbitems::LootTable`, tested
+  offline and seen in game
+- [x] Pay the killer the resources that dropped — `KillRewardSim` on `CharacterDiedEvent`, crystite
+  and the melded resources, seen by [K1](In-Game-Tests/Kill-Rewards.md) on 2026-08-13
 - [ ] Work out the client's drop protocol, then spawn the items the same tables already roll
 - [ ] Pick up a drop and put it in the bag
 
@@ -336,6 +343,9 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
   [G2](In-Game-Tests/Resource-Payout.md). Closed on a calldown made by an admin command, because the
   retail route needs an item and item delivery is I1's problem; G3 reopens the question when it is
   fixed
+- **M5: Killing something pays** — COMPLETE 2026-08-13, on [K1](In-Game-Tests/Kill-Rewards.md).
+  Crystite only. The item half of the same loot tables is deferred to whatever answers the drop
+  protocol, and K2's rate measurement is still open
 
 ---
 

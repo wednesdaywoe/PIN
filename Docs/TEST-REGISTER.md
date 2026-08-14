@@ -19,23 +19,34 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**[Kill Rewards](In-Game-Tests/Kill-Rewards.md) is the queue's newest stream, and K1 failed on its
-first run in the most ordinary way available: the wrong table.** 21 kills rolled crystite ten times
-and paid it zero times, because the resource-or-item check asked `dbitems::ResourceItem` — a table
-that exists, has 111 rows, and lists gatherable materials from id 75537 up rather than the contents
-of the resource pane. Crystite is id 10 and is not in it. The check is now the `Resource` flag on
-`RootItem`, which `createitem` has always used and [G1](In-Game-Tests/Resource-Payout.md) confirmed.
+**[Kill Rewards](In-Game-Tests/Kill-Rewards.md) closed [M5](PROGRESS.md) on 2026-08-13, on its
+second attempt.** A Gaia creature paid 4 crystite and the tester saw it arrive. Two melded resources
+were paid alongside it off the second loot table, which nobody had predicted — 77343/77344/77345
+carry the `Resource` flag, so a kill can pay something even when the crystite roll misses.
 
-**What made it a one-pass diagnosis was a log line written for a different entry.** K3 asked for
-rolled-but-unpaid items to be named in the log, on the argument that "nothing arrived" and "nothing
-was owed" have to be distinguishable — the same argument the thumper's participant count settled.
-The output was `rolled item 10 x2, not paid`, and item 10 is crystite, so the log said exactly what
-was wrong without anyone having to reproduce anything.
+**K1's first attempt failed in the most ordinary way available: the wrong table.** 21 kills rolled
+crystite ten times and paid it zero times, because the resource-or-item check asked
+`dbitems::ResourceItem` — a table that exists, has 111 rows, and lists gatherable materials from id
+75537 up rather than the contents of the resource pane. Crystite is id 10 and is not in it. The check
+is now the `Resource` flag on `RootItem`, which `createitem` has always used and
+[G1](In-Game-Tests/Resource-Payout.md) confirmed.
 
-The same session promoted [DATA-16](ISSUE-REGISTER.md)'s basis-points guess to confirmed, on a table
-reached from monster 528 rather than somewhere distant. Carry the rate into the re-run: table 25 is
-reached a quarter of the time, so **three kills in four pay nothing and that is correct**. The failed
-run measured 48% over 21 kills, which is suggestive and too small to act on — K2 wants 40 or more.
+**What made it a one-pass diagnosis was a log line written for a different entry**, and that is the
+part worth carrying forward. K3 asked for rolled-but-unpaid items to be named in the log, on the
+argument that "nothing arrived" and "nothing was owed" have to be distinguishable — the same argument
+the thumper's participant count settled. The output was `rolled item 10 x2, not paid`, and item 10 is
+crystite, so the log stated the bug without anyone reproducing anything. **Neither of K1's own
+failure branches applied.** The server was not quietly right while the screen was wrong, and the log
+was not silent; it was fluent and wrong, which is the failure mode a test entry is worst at
+anticipating.
+
+That session also promoted [DATA-16](ISSUE-REGISTER.md)'s basis-points guess to confirmed, on a table
+reached from monster 528 rather than somewhere distant.
+
+**K2 is open and the two sessions disagree.** 48% then 8% against an expected 25%, on 21 and 12
+kills. Both are noise at that size, so nothing has been measured yet — it wants 40 kills in one
+post-fix sitting. Carry the rate in regardless: table 25 is reached a quarter of the time, so
+**three kills in four pay nothing and that is correct**.
 
 **[Resource Payout](In-Game-Tests/Resource-Payout.md) went 3 of 5 on the day it was written,
 2026-08-13, and closed [M3](PROGRESS.md).** A thumper called down at a player's feet ran its full
@@ -237,15 +248,14 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Resources
 
-- [!] [Kill Rewards](In-Game-Tests/Kill-Rewards.md) — 0 of 5, written and first run 2026-08-13.
-  The check on [M5](PROGRESS.md), which is now crystite rather than XP. **K1 failed and the failure
-  was in PIN, one line of it**: 21 kills rolled crystite ten times and paid it zero times, because
-  the resource-or-item check consulted `dbitems::ResourceItem` — the gatherable-materials list,
-  which does not contain crystite. Fixed to the `Resource` flag on `RootItem` and not re-run. The
-  same session confirmed [DATA-16](ISSUE-REGISTER.md)'s basis-points guess on a table that is on the
-  kill path. **Read the rate before re-running**: a small creature should pay about one kill in
-  four, so a dry kill is the expected case; the failed run measured 48%, which wants 40 kills before
-  it means anything
+- [~] [Kill Rewards](In-Game-Tests/Kill-Rewards.md) — 1 of 5 passing, written and run 2026-08-13.
+  **K1 passed on the second attempt and closed [M5](PROGRESS.md)**: a Gaia creature paid 4 crystite
+  and the tester saw it arrive. The first attempt failed inside PIN — 21 kills rolled crystite ten
+  times and paid it zero times, because the resource-or-item check consulted `dbitems::ResourceItem`,
+  the gatherable-materials list, which does not contain crystite. That session also confirmed
+  [DATA-16](ISSUE-REGISTER.md)'s basis-points guess on a table that is on the kill path. **K2 is
+  still open and the two sessions disagree** — 48% then 8% against an expected 25%, on 21 and 12
+  kills, which is noise at both ends; it wants 40 kills in one post-fix sitting
 - [~] [Resource Payout](In-Game-Tests/Resource-Payout.md) — 3 of 5 passing, all on 2026-08-13.
   **G2 is [M3](PROGRESS.md)'s exit condition and it passed**: a thumper ran its cycle and paid 200
   crystite to one participant. G1 proved a resource count climbs on screen as partial updates
