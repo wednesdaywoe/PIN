@@ -306,3 +306,53 @@ still alive, and your own crystite is unchanged.
 
 **Fail, you were paid 200 by a thumper you never called:** ownership isn't reaching the participant
 set correctly and G2's result means less than it looks like.
+
+## [ ] G6: A finished thumper leaves the world, and stops being asked about
+
+The check on [NET-24](../ISSUE-REGISTER.md). Until 2026-08-14 a thumper that ran its full cycle paid
+out, vanished from the shard, and **stayed standing on screen** — while the client asked for a fresh
+keyframe of the dead entity every ~5.5 seconds for the rest of the session. One 32-minute sitting
+logged 648 of those across four finished thumpers, and the server's whole response was a warning.
+
+Three changes went in on the strength of a code read alone, and this entry is what tells us which of
+them mattered:
+
+- a failed keyframe request for a **view** now answers with the scope-out that removal should already
+  have delivered, instead of only logging
+- successful keyframe requests log at Debug, so the loop can be dated. **This is the measurement the
+  entry exists for** — the old log recorded only failures, so nothing could tell "the client has been
+  asking all along" from "it started asking when the entity died"
+- a queued scope-in whose entity died in the meantime is dropped rather than handing the client a
+  fresh copy of something already removed
+
+Run the server at Debug. The lines:
+
+```
+grep -a "KeyframeRequest" ~/Games/PIN/logs/GameServer.log
+grep -a "Dropped a queued scope-in" ~/Games/PIN/logs/GameServer.log
+grep -a "entered LEAVING\|mined node type" ~/Games/PIN/logs/GameServer.log
+```
+
+1. Call a thumper down and let it run the whole cycle. Collect at `COMPLETED` — that is the path all
+   four affected thumpers took, and the one a cut-short thumper does not.
+2. Watch the spot for a minute after the payout. Note whether the model is still there.
+3. Grep the three lines above. Note the timestamp of the **first** `KeyframeRequest` naming the
+   thumper's entity id, and whether it is before or after `mined node type`.
+
+Pass: the model goes, and no `KeyframeRequest` names that entity id more than a second or two after
+it was removed.
+
+**Pass on the model but the requests continue:** the client is ignoring a scope-out it is now being
+sent twice. That moves the fault into the client and makes
+[Client UI Source](../Client-UI-Source.md) the next place to read — the resource-node components are
+the only remaining oracle for what makes the client drop a node.
+
+**The requests start well before the payout:** the loop is desync recovery, not a removal artifact,
+and the thumper's view deltas going out on `UnreliableGss` are the suspect — a full cycle sends about
+106 of them against roughly 7 for a thumper cut short at 4%, which is the shape of the split the
+2026-08-14 sitting saw. `Character_CombatView` is already pinned to `ReliableGss` for the same
+reason. Do not make that change before this reading; it is the thing being measured.
+
+**The requests start at the payout and stop after one scope-out:** the first scope-out was lost, and
+NET-24 is [NET-1](../gaps/network.md#net-1) — a reliable channel that acks but never resends — in
+costume. That is the one outcome that closes this entry and reopens a bigger one.

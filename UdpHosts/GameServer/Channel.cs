@@ -263,7 +263,22 @@ public class Channel
         }
 
         // Generate and send
-        var controllerId = (Enums.GSS.Controllers)aeroMsgAttr.ControllerId;
+        return SendViewScopeOut(entityId, (Enums.GSS.Controllers)aeroMsgAttr.ControllerId);
+    }
+
+    /// <summary>
+    ///     Send a GSS View ScopeOut/Remove message for a view given its typecode rather than an instance.
+    /// </summary>
+    /// <remarks>
+    ///     The generic overload reads the typecode off the view object, which a caller only has while the
+    ///     entity is alive. Telling a client to drop an entity the shard has already removed is exactly
+    ///     the case with nothing left to reflect on, so the typecode is passed in instead.
+    /// </remarks>
+    /// <param name="entityId">Id of the entity the View represents</param>
+    /// <param name="controllerId">Typecode of the view being removed</param>
+    /// <returns>true if the operation succeeded, false in all other cases</returns>
+    public bool SendViewScopeOut(ulong entityId, Enums.GSS.Controllers controllerId)
+    {
         var messageData = new Memory<byte>([]);
         return SendPacketMemory(entityId, 6, controllerId, ref messageData);
     }

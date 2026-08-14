@@ -476,8 +476,17 @@ public class EntityManager
 
             foreach (var entity in entities)
             {
+                // Entities.Values is a snapshot and Remove drops the entity before its scope set, so an
+                // entity removed from another thread part-way through this pass arrives here with no set
+                // left. The indexer threw KeyNotFoundException for that, and nothing between here and
+                // Shard.RunThread catches anything -- the same way an encounter throwing from its own
+                // Tick used to take the whole shard down (NET-21).
+                if (!_scopedPlayersByEntity.TryGetValue(entity.EntityId, out var currentlyScoped))
+                {
+                    continue;
+                }
+
                 float distanceThreshold = entity.GetScopeRange();
-                var currentlyScoped = _scopedPlayersByEntity[entity.EntityId];
                 var entityPosition = entity.Position;
                 foreach (var player in players)
                 {
@@ -1129,7 +1138,17 @@ public class EntityManager
             return;
         }
 
-        _scopedPlayersByEntity[entity.EntityId].Add(player);
+        // A scope-in can outlive the entity it is for: the queue drains one per 20ms, and Remove takes
+        // the scope set with it. Sending the keyframe regardless would hand the client a fresh copy of
+        // something the shard has already forgotten, which is NET-24's symptom arriving by a second
+        // route -- a client holding an entity nothing will ever scope out again.
+        if (!_scopedPlayersByEntity.TryGetValue(entity.EntityId, out var scopedPlayers))
+        {
+            _logger.Debug("Dropped a queued scope-in of {EntityId} for {Player}: the entity is gone", entity.EntityId, player.PlayerId);
+            return;
+        }
+
+        scopedPlayers.Add(player);
 
         if (entity is CharacterEntity character)
         {
@@ -1396,7 +1415,13 @@ public class EntityManager
             return;
         }
 
-        _scopedPlayersByEntity[entity.EntityId].Remove(player);
+        // Unlike ScopeIn this carries on when the set has gone. OnRemovedEntity scopes out before the set
+        // is dropped so it is normally still there, but a caller arriving after it still needs the client
+        // told -- the message is the point, the bookkeeping is not.
+        if (_scopedPlayersByEntity.TryGetValue(entity.EntityId, out var scopedPlayers))
+        {
+            scopedPlayers.Remove(player);
+        }
 
         if (entity is CharacterEntity character)
         {

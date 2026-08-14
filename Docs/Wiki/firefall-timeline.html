@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firefall — Timeline of the World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===========================================================================
+   DESIGN TOKENS
+   Carried over from the 1.6 reference wiki: cyan edge glow and hex panel fills
+   from the frame-select card, amber mono headers from the credits screen, body
+   text at rgb(207,220,221). Display face is Orbitron — the close match to
+   Firefall's own UI type. Violet, the wiki's ultimate colour, marks the two
+   things the game never explained; jade marks the one place the tide turned.
+   =========================================================================== */
+:root{
+  --void:#05090c;  --deep:#08121a;  --panel:#0b1a22;  --panel-hi:#0f2530;
+  --cyan:#38dce6;  --cyan-mid:rgba(56,220,230,.34); --cyan-low:rgba(56,220,230,.10);
+  --amber:#f2a01e; --text:#cfdcdd;  --mute:#728b91;   --dim:#4a6169;
+  --jade:#5fd35f;  --jade-mid:rgba(95,211,95,.4); --jade-low:rgba(95,211,95,.09);
+  --rust:#d4593a;  --violet:#9b6bc9; --violet-mid:rgba(155,107,201,.4);
+  --ch:14px;                                    /* chamfer size */
+  --f-display:'Orbitron','Rajdhani','Roboto Condensed',system-ui,sans-serif;
+  --f-ui:'Ubuntu','Roboto Condensed','Segoe UI',system-ui,sans-serif;
+  --f-mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--void); color:var(--text); font-family:var(--f-ui);
+  font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(56,220,230,.07), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'%3E%3Cpath d='M28 0 56 16v32L28 64 0 48V16z' fill='none' stroke='%2338dce6' stroke-opacity='.045'/%3E%3C/svg%3E");
+  background-attachment:fixed;
+}
+a{color:var(--cyan);text-decoration:none}
+a:hover{color:#8df1f7;text-shadow:0 0 12px rgba(56,220,230,.5)}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.wrap{max-width:820px;margin:0 auto;padding:30px 22px 80px}
+
+/* --- Masthead ----------------------------------------------------------- */
+.brand{display:flex;align-items:baseline;gap:12px;margin-bottom:22px}
+.brand b{font-family:var(--f-display);font-weight:800;font-size:16px;letter-spacing:.30em;color:var(--text)}
+.brand span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.crumb{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--dim);margin-bottom:12px}
+.crumb a{color:var(--mute)}
+
+h1{font-family:var(--f-display);font-weight:700;font-size:29px;line-height:1.16;letter-spacing:.01em;margin-bottom:12px}
+h2{font-family:var(--f-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--amber);margin:40px 0 14px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--cyan-mid),transparent)}
+h3{font-family:var(--f-display);font-weight:600;font-size:16px;color:var(--text);margin-bottom:7px;letter-spacing:.02em}
+p{margin-bottom:12px;max-width:74ch}
+.lede{color:var(--mute);font-size:15.5px}
+.eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan)}
+.mono{font-family:var(--f-mono)}
+
+/* --- Chamfered panel: two nested clips so the 1px edge follows the cut ---- */
+.pnl{background:var(--cyan-mid);padding:1px;
+  clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch));}
+.pnl>.in{background:var(--panel);
+  clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch));
+  padding:18px 22px;}
+.pnl.hex>.in{background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='39' viewBox='0 0 34 39'%3E%3Cpath d='M17 0 34 10v19L17 39 0 29V10z' fill='none' stroke='%2338dce6' stroke-opacity='.10'/%3E%3C/svg%3E");}
+.pnl.lit{background:linear-gradient(150deg,var(--cyan) 0%,var(--cyan-mid) 22%,var(--cyan-mid) 78%,var(--cyan) 100%)}
+.pnl.veil{background:var(--violet-mid)}
+.pnl.veil>.in{background:linear-gradient(160deg,#130d1c 0%,var(--panel) 70%);}
+.pnl.hold{background:var(--jade-mid)}
+.pnl.hold>.in{background:linear-gradient(160deg,#0c1a12 0%,var(--panel) 72%);}
+
+/* --- Notch tab: the label tag from the Biotech frame card ---------------- */
+.tab{display:inline-flex;align-items:center;gap:10px;background:var(--cyan-mid);padding:1px;
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);margin-bottom:10px}
+.tab>span{background:var(--deep);padding:4px 16px;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber)}
+.tab.v{background:var(--violet-mid)}   .tab.v>span{color:var(--violet)}
+.tab.j{background:var(--jade-mid)}      .tab.j>span{color:var(--jade)}
+
+/* --- Legend ------------------------------------------------------------- */
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin:16px 0 6px;font-family:var(--f-mono);
+  font-size:11px;letter-spacing:.06em;color:var(--mute)}
+.legend span{display:inline-flex;align-items:center;gap:9px}
+.dia{width:10px;height:10px;transform:rotate(45deg);background:var(--void);border:1px solid var(--cyan)}
+.dia.pivot{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(242,160,30,.6)}
+.dia.enigma{border-color:var(--violet);box-shadow:0 0 10px rgba(155,107,201,.5)}
+.dia.won{border-color:var(--jade);box-shadow:0 0 10px rgba(95,211,95,.5)}
+
+/* --- The timeline: spine + diamond nodes (the wiki's .tl, scaled up) ----- */
+.tl{list-style:none;position:relative;margin:22px 0 0;padding-left:36px}
+.tl::before{content:'';position:absolute;left:9px;top:12px;bottom:12px;width:1px;
+  background:linear-gradient(180deg,transparent,var(--cyan-mid) 6%,var(--cyan-mid) 94%,transparent)}
+.tl>li{position:relative;padding-bottom:28px}
+.tl>li:last-child{padding-bottom:0}
+.tl>li::before{content:'';position:absolute;left:-31px;top:9px;width:12px;height:12px;
+  background:var(--void);border:1px solid var(--cyan);transform:rotate(45deg);transition:box-shadow .2s}
+.tl>li.pivot::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 14px rgba(242,160,30,.65)}
+.tl>li.enigma::before{border-color:var(--violet);box-shadow:0 0 14px rgba(155,107,201,.5)}
+.tl>li.won::before{border-color:var(--jade);box-shadow:0 0 14px rgba(95,211,95,.5)}
+.when{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:8px}
+.tl>li.enigma .when{color:var(--violet)}
+.tl>li.won .when{color:var(--jade)}
+.tl p:last-child{margin-bottom:0}
+.aside{font-size:12.5px;color:var(--mute);margin-top:10px;padding-left:12px;border-left:1px solid var(--cyan-mid)}
+.tl>li.enigma .aside{border-left-color:var(--violet-mid)}
+.tl>li.won .aside{border-left-color:var(--jade-mid)}
+
+/* --- Callout (the wiki's .note) ----------------------------------------- */
+.note{border-left:2px solid var(--cyan);background:var(--cyan-low);padding:12px 16px;margin:16px 0}
+.note.won{border-left-color:var(--jade);background:var(--jade-low)}
+.note .eyebrow{display:block;margin-bottom:5px}
+.note.won .eyebrow{color:var(--jade)}
+.note p:last-child{margin-bottom:0}
+
+.foot{margin-top:48px;padding-top:18px;border-top:1px solid rgba(56,220,230,.1);
+  font-size:12px;color:var(--dim);font-family:var(--f-mono);line-height:1.7}
+
+/* --- Restrained scroll reveal, reduced-motion safe ---------------------- */
+.tl>li{opacity:1}
+@media (prefers-reduced-motion:no-preference){
+  .reveal .tl>li{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+  .reveal .tl>li.in{opacity:1;transform:none}
+}
+@media (max-width:620px){
+  h1{font-size:23px}
+  .wrap{padding:22px 16px 60px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><b>FIREFALL</b><span>World Reference</span></div>
+  <div class="crumb"><a href="#">Home</a> / Timeline</div>
+
+  <h1>Timeline of the World</h1>
+  <p class="lede">The road from a rock falling out of the sky to the war you fought as a recruit.
+  Dates before the crash are approximate — the record never agreed with itself, and the game was in no
+  hurry to settle it. Some entries below are things the game showed you and then refused to explain;
+  those are marked apart on purpose.</p>
+
+  <div class="legend">
+    <span><i class="dia"></i> Event</span>
+    <span><i class="dia pivot"></i> Inciting incident</span>
+    <span><i class="dia enigma"></i> Never explained</span>
+    <span><i class="dia won"></i> Ground reclaimed</span>
+  </div>
+
+  <h2>Before the eye of the storm</h2>
+  <ul class="tl">
+
+    <li>
+      <div class="when">c. 2178 · The Firefall</div>
+      <h3>Fire falls from the sky</h3>
+      <p>An asteroid tracked as a near miss is caught by the Moon's gravity and comes down instead.
+      The impact throws the world into a <span class="mono">nine-year winter</span>; the old powers,
+      the United States among them, do not survive it. The game takes its name from this — the fire
+      that rained down — though by the time you play, it is generations gone and half legend.</p>
+    </li>
+
+    <li>
+      <div class="when">The dark age · after the impact</div>
+      <h3>Crystite is found in the ash</h3>
+      <p>In the debris of the impact, survivors find a blue crystalline mineral that gives up more
+      energy than anything before it. <b>Crystite</b> becomes the thing the whole rebuilt world runs
+      on — its power, its currency, and, eventually, its undoing. Everything downstream on this
+      timeline traces back to the moment someone worked out what it could do.</p>
+    </li>
+
+    <li>
+      <div class="when">A generation on · The Crystite Wars</div>
+      <h3>The scramble becomes a war</h3>
+      <p>A power source that good is also a prize worth killing for. Control of Crystite fractures the
+      recovering world into open conflict — the Crystite Wars, referenced ever after as the fire
+      everyone was rebuilt out of, and the one no one wants to light again.</p>
+    </li>
+
+    <li>
+      <div class="when">The peace · The Accord</div>
+      <h3>The nations fold into one</h3>
+      <p>To keep humanity from burning its second chance the way it burned the first, the surviving
+      states merge into <b>the Accord</b> — a single government whose founding job is to keep Crystite
+      from starting another war. It is the flag you fight under, and it has been overstretched from
+      the day it was raised.</p>
+    </li>
+
+    <li>
+      <div class="when">The reach outward · Alpha Prime</div>
+      <h3>The Arclight is built</h3>
+      <p>The richest Crystite lies off-world, at <b>Alpha Prime</b> in the Alpha Centauri system. To
+      hold that supply line the Accord builds the <b>CMS Arclight</b> — the largest ship ever made,
+      able to fold space itself and cross the gulf in a single jump.</p>
+      <p class="aside">The ships that ran the Alpha Prime route brought back more than cargo. Some of
+      the wildlife you'll fight in the wastes never evolved on Earth.</p>
+    </li>
+  </ul>
+
+  <h2>The crash</h2>
+  <ul class="tl">
+    <li class="pivot">
+      <div class="tab"><span>Inciting incident</span></div>
+      <div class="when">c. 2233 · The maiden fold</div>
+      <h3>The Arclight comes down</h3>
+      <div class="pnl lit"><div class="in">
+        <p>On its first fold, something fails. The jump tears — and something comes through the tear
+        with the ship. Unable to complete the fold, the Arclight falls back toward the world it never
+        finished leaving and comes down along the Brazilian coast.</p>
+        <p>Its hull is still there. Half-submerged off <b>Copacabana</b>, too vast to move and too
+        strange to pull apart, it sits on the horizon of everything that follows. Every job you take,
+        every line you hold, happens in the shadow of that wreck. This is where the game begins.</p>
+      </div></div>
+      <p class="aside">The officer who rode it down lived. The people he was bringing home did not.
+      He commands the Accord's war now — a man steering the survivors of a disaster he was at the
+      helm of.</p>
+    </li>
+  </ul>
+
+  <h2>What came out of it</h2>
+  <ul class="tl">
+
+    <li class="enigma">
+      <div class="tab v"><span>Never explained</span></div>
+      <div class="when">After the crash · The Melding</div>
+      <h3>The Melding</h3>
+      <div class="pnl veil"><div class="in">
+        <p>Out of the tear came the <b>Melding</b>: an energy storm the color of Crystite that spread
+        across the sky and did not stop. It rewrites whatever it touches — stone, forest, animal,
+        person — and it swallowed nearly the entire planet. Only the eye of it stayed clear.</p>
+        <p>What it is, whether it thinks, whether it wants anything at all — no one who claimed to know
+        was ever proven right. Walk too far into it and the world distorts, then dims, then kills you.
+        That is the whole of what the game will confirm.</p>
+      </div></div>
+    </li>
+
+    <li class="enigma">
+      <div class="tab v"><span>Never explained</span></div>
+      <div class="when">Shortly after · The Chosen</div>
+      <h3>The Chosen</h3>
+      <div class="pnl veil"><div class="in">
+        <p>Then the storm gave up an enemy. The <b>Chosen</b> walked out of the Melding armed,
+        organized, and fixed on a single purpose: the end of humankind. They field war-machines the
+        size of buildings and they do not negotiate.</p>
+        <p>Where they come from, what they were before, why they hate — the game never tells you, and
+        the people fighting them never find out. They are simply the thing the storm sent.</p>
+      </div></div>
+    </li>
+  </ul>
+
+  <h2>Where you come in</h2>
+  <ul class="tl">
+    <li>
+      <div class="when">Present day · New Eden</div>
+      <h3>The eye of the storm</h3>
+      <p>What's left of humanity holds a strip of survivable Brazil called <b>New Eden</b>, ringed by
+      the Melding on every side. The Accord — gutted since the crash, far too few — cannot hold the
+      line with soldiers alone.</p>
+      <p>So it opens the <b>ARES Initiative</b> and hands power armor to anyone who will fight. A
+      <b>Battleframe</b>: health that knits itself back together, jets to put you over the wreckage,
+      wings to glide the rest. That's you — not the first to wear the number, not the last, just the
+      one holding it now.</p>
+    </li>
+  </ul>
+
+  <h2>The war you fought</h2>
+  <ul class="tl">
+
+    <li>
+      <div class="when">Razor's Edge · The Razorwind threat</div>
+      <h3>The Chosen get a name</h3>
+      <p>The faceless mass sharpens into tribes, and the one thrown at you first is the
+      <b>Razorwind</b>. From your opening day ARES points you at them. <b>Dredge</b>, an outpost the
+      Accord cannot afford to lose, comes under a Titan-led siege that takes a full platoon to hold.
+      At <b>Jericho</b> you stand over a <b>Melding Repulsor</b> — the technology that physically holds
+      the storm at bay — and defend it against wave after wave.</p>
+      <p class="aside">Naming a tribe is not the same as understanding one. You learn how a Razorwind
+      fights. You never learn what it is.</p>
+    </li>
+
+    <li class="won">
+      <div class="tab j"><span>Ground reclaimed</span></div>
+      <div class="when">Razor's Edge → Devil's Due · The War Effort</div>
+      <h3>Into Devil's Tusk</h3>
+      <div class="pnl hold"><div class="in">
+        <p>Down the coast lies <b>Devil's Tusk</b>, a lava-scarred zone the Melding took long ago — and
+        buried beneath it, a <b>pre-Melding weapons research facility</b> the Accord means to reach
+        first. The battlecruiser <b>U.A.S. Vanguard</b> anchors offshore to force the issue.</p>
+        <p>Here you do the one thing that happens nowhere else in the game: you push the Melding
+        <i>back</i>. <b>Dark Crystite</b> torn from the zone is refined into cores that feed a
+        collective <b>War Effort</b>, and as the cores stack up the storm-line recedes and lost ground
+        returns. A leaderboard keeps count of who bled most to move it.</p>
+      </div></div>
+      <p class="aside">Every other front in the game is a holding action. This is the only map where
+      the arrow points the Accord's way.</p>
+    </li>
+
+    <li>
+      <div class="when">Devil's Due · The Chosen Prison</div>
+      <h3>The prison on the coast</h3>
+      <p>The Accord learns its missing people are being held in a <b>Chosen Prison</b> inside the zone,
+      and the campaign builds to a battle in three parts: pull the captured scientists out under fire;
+      then weather an all-out Chosen assault, working the coastal anti-air guns to knock Chosen ships
+      out of the sky while a strike team flies transports into the prison itself — racing to free the
+      prisoners before the Vanguard is lost beneath them.</p>
+      <div class="note won"><span class="eyebrow">From here on</span>
+      <p>This is as far as the shipped story reached before the servers went dark in 2017. Everything
+      the reference wiki documents — the frames, the weapons, thumping, the fight for Devil's Tusk —
+      lives inside these last few entries. The timeline ends where the game you played ran out.</p></div>
+    </li>
+  </ul>
+
+  <div class="foot">
+    FIREFALL · Timeline of the World — reconstructed from surviving sources and shipped patch notes,
+    in-game canon only.<br>
+    The planned reboot is deliberately excluded. The Melding and the Chosen are left as the game left
+    them: unexplained. Devil's Tusk is the only ground it let you take back.
+  </div>
+</div>
+
+<script>
+/* Restrained reveal — only if the visitor hasn't asked for reduced motion. */
+(function(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.body.classList.add('reveal');
+  var items = document.querySelectorAll('.tl > li');
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+  items.forEach(function(li){ io.observe(li); });
+})();
+</script>
+</body>
+</html>

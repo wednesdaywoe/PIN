@@ -239,13 +239,33 @@ public class NetworkClient : INetworkClient
                 foreach (var request in query.EntityRequests)
                 {
                     Enums.GSS.Controllers typecode = (Enums.GSS.Controllers)(request.Entity & 0x00000000000000FFul);
-                    AssignedShard.Entities.TryGetValue(request.Entity & 0xffffffffffffff00, out IEntity entity);
+                    ulong requestedEntityId = request.Entity & 0xffffffffffffff00;
+                    AssignedShard.Entities.TryGetValue(requestedEntityId, out IEntity entity);
                     if (entity != null)
                     {
+                        // A request that succeeds is the only way to tell "the client has been asking about
+                        // this all along" from "it started asking when the entity died", and until this line
+                        // existed only the failures were above Verbose -- so no log could separate them.
+                        Logger.Debug("KeyframeRequest for {Entity} ({TypeCode})", request.Entity, typecode);
                         AssignedShard.EntityMan.KeyframeRequest(this, Player, entity, typecode, request.Checksum);
+                    }
+                    else if (typecode.ToString().EndsWith("View", StringComparison.Ordinal))
+                    {
+                        // The client is holding an entity this shard has forgotten and will re-ask every few
+                        // seconds for the rest of the session unless something tells it otherwise (NET-24).
+                        // Warning at it was the entire old response: one 32-minute sitting logged 648 of these
+                        // across four finished thumpers without sending a byte back. The scope-out is the same
+                        // message removal should already have delivered, so re-sending it costs one packet per
+                        // stale request and ends the loop whichever way the first one went missing -- dropped
+                        // on a channel that acks but never resends (NET-1), or raced past by a keyframe this
+                        // thread answered while the shard tick was removing the entity.
+                        Logger.Warning("KeyframeRequest for {Entity} ({TypeCode}) which no longer exists, scoping it out", request.Entity, typecode);
+                        NetChannels[ChannelType.ReliableGss].SendViewScopeOut(requestedEntityId, typecode);
                     }
                     else
                     {
+                        // Controllers are removed with a different message carrying a player id, and nothing
+                        // has been seen asking for a dead one, so that stays a report rather than a guess.
                         Logger.Warning("KeyframeRequest failed to find {Entity} ({TypeCode})", request.Entity, typecode);
                     }
                 }

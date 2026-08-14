@@ -402,3 +402,53 @@ No session has been shown to end because of this. The 2026-08-14 client did quit
 outstanding, seventeen seconds after the second one began, but it quit cleanly — its own log reads
 `Application shutdown called: no error` — which is not what a client killed by a network fault
 writes.
+
+**A code read on 2026-08-14 cleared the message itself and moved the suspicion to the channel.**
+The scope-out PIN sends is the right one: msg 6 with an empty body on the entity's only view. The
+2016 capture has no ResourceNode traffic at all, so it cannot answer this directly, but it does carry
+`Deployable_ObserverView msg 6, ~0 byte body` — and a deployable is a single-view entity like a
+thumper, so one empty msg 6 on the sole view is how retail removed one. Nothing else in the server
+ever sends a message naming a thumper's entity id; the only three are the keyframe, the view deltas
+and that scope-out.
+
+**So the likeliest reading is that NET-24 is [NET-1](#net-1) in costume.** That scope-out is sent
+once, on a channel that acks inbound packets and has no outbound tracking whatsoever —
+`Channel` only ever calls `SendAck`, and `NetworkClient.NetworkTick`'s own comment promises a
+"reliable retransmission" that does not exist. Lose that one packet and nothing ever says it again.
+
+**The client's `AddView(Observer)` at state 7 reframes the timeline.** Only a keyframe makes the
+client add a view, and only `ScopeIn` or an answered `KeyframeRequest` sends one — so that line is
+the server *answering a request* during `LEAVING`. The request loop was therefore already running
+before removal, and the failures only become visible in the log once the entity is gone. The ~5.5s
+cadence is the client's own retry, not something removal started.
+
+That also gives the full-cycle-versus-cut-short split a mechanism instead of a coincidence. Thumper
+view deltas flush on `UnreliableGss`, and a full cycle sends about 106 of them — 100 from
+`SetProgress` alone, at 3s intervals across 300s of thumping — against roughly 7 for a collection at
+4%. Fifteen times the exposure to a silent drop, on a view whose `StateInfo` only changes at
+transitions and is never re-sent. `Character_CombatView` is already pinned to `ReliableGss` with a
+comment about the client latching the last value it saw; thumper state is the same kind of field.
+**That change is deliberately not made yet** — [G6](../In-Game-Tests/Resource-Payout.md) is written
+to measure whether deltas are being lost before anything is tuned on the guess that they are.
+
+**What landed on 2026-08-14**, none of it verified in game:
+
+- A failed keyframe request for a *view* now answers with the scope-out for that typecode instead of
+  only logging. The server had established, 648 times in one sitting, that a client was holding an
+  entity it did not have, and replied with a log line. Re-sending costs one packet per stale request
+  and ends the loop whichever way the first one was lost — dropped, or raced past by a keyframe the
+  network thread answered while the shard tick was removing the entity. Controller typecodes still
+  just warn: they are removed by a different message and nothing has been seen asking for a dead one.
+- **Successful keyframe requests now log at Debug.** They were Verbose while failures were Warning, so
+  no log could separate "asking all along" from "started when it died" — the one reading that
+  discriminates the hypotheses above.
+- A queued scope-in whose entity died before the queue reached it is dropped. `_queuedScopeIn` drains
+  one per 20ms and `Remove` takes the scope set with it, so this handed clients fresh copies of
+  removed entities — NET-24's symptom arriving by a second route.
+
+The same pass fixed a latent shard kill next door. `GetScopedPlayers` reads the scope map with
+`TryGetValue` and documents a missing key as normal, but `ScopeIn`, `ScopeOut` and the periodic scope
+check all used the raw indexer, which throws `KeyNotFoundException`. `Shard.Tick` and
+`Shard.RunThread` catch nothing — NET-21's fix only wrapped the encounter loop — so an entity removed
+from the network thread part-way through a scope pass could take the whole shard down. All three now
+read it safely.

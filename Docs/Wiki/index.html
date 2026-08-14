@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firefall 1.6 — Implementation Reference</title>
+<style>
+/* ===========================================================================
+   DESIGN TOKENS
+   Palette pulled from the game UI: the cyan edge glow and hex-fill panels of
+   the frame-select card, the amber section headers from the credits screen,
+   and rgb(207,220,221) — the body text colour the 1.6 notes set inline.
+   =========================================================================== */
+:root{
+  --void:#05090c;  --deep:#08121a;  --panel:#0b1a22;  --panel-hi:#0f2530;
+  --cyan:#38dce6;  --cyan-mid:rgba(56,220,230,.34); --cyan-low:rgba(56,220,230,.10);
+  --amber:#f2a01e; --text:#cfdcdd;  --mute:#728b91;   --dim:#4a6169;
+  --jade:#5fd35f;  --rust:#d4593a;  --violet:#9b6bc9;
+  --ch:14px;                                    /* chamfer size */
+  --f-ui:'Ubuntu','Roboto Condensed','Segoe UI',system-ui,sans-serif;
+  --f-mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--void); color:var(--text); font-family:var(--f-ui);
+  font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(56,220,230,.07), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'%3E%3Cpath d='M28 0 56 16v32L28 64 0 48V16z' fill='none' stroke='%2338dce6' stroke-opacity='.045'/%3E%3C/svg%3E");
+  background-attachment:fixed;
+}
+a{color:var(--cyan);text-decoration:none}
+a:hover{color:#8df1f7;text-shadow:0 0 12px rgba(56,220,230,.5)}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* --- Chamfered panel: two nested clips so the 1px edge follows the cut ---- */
+.pnl{background:var(--cyan-mid);padding:1px;
+  clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch));}
+.pnl>.in{background:var(--panel);
+  clip-path:polygon(var(--ch) 0,100% 0,100% calc(100% - var(--ch)),calc(100% - var(--ch)) 100%,0 100%,0 var(--ch));
+  padding:20px 24px;}
+.pnl.lit{background:linear-gradient(150deg,var(--cyan) 0%,var(--cyan-mid) 22%,var(--cyan-mid) 78%,var(--cyan) 100%)}
+.pnl.hex>.in{background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='39' viewBox='0 0 34 39'%3E%3Cpath d='M17 0 34 10v19L17 39 0 29V10z' fill='none' stroke='%2338dce6' stroke-opacity='.10'/%3E%3C/svg%3E");}
+
+/* --- Signature: the segmented tick bar from the HUD health / jet gauges --- */
+.ticks{display:flex;gap:3px;align-items:flex-end;height:16px}
+.ticks i{width:5px;height:100%;background:var(--dim);transform:skewX(-20deg);
+  transition:background .18s,box-shadow .18s}
+.ticks i.on{background:var(--cyan);box-shadow:0 0 7px rgba(56,220,230,.75)}
+.ticks.amber i.on{background:var(--amber);box-shadow:0 0 7px rgba(242,160,30,.7)}
+.ticks.jade  i.on{background:var(--jade);box-shadow:0 0 7px rgba(95,211,95,.6)}
+.ticks.tall{height:26px}
+.ticks.tall i{width:6px}
+
+/* --- Layout ------------------------------------------------------------- */
+.wrap{display:grid;grid-template-columns:246px minmax(0,1fr);gap:26px;
+  max-width:1240px;margin:0 auto;padding:26px 22px 90px}
+.rail{position:sticky;top:26px;align-self:start;max-height:calc(100vh - 52px);overflow-y:auto}
+.rail::-webkit-scrollbar{width:6px}
+.rail::-webkit-scrollbar-thumb{background:var(--cyan-mid)}
+
+.brand{padding:2px 0 16px}
+.brand b{display:block;font-size:22px;font-weight:700;letter-spacing:.26em;color:var(--text);
+  text-shadow:0 0 22px rgba(56,220,230,.35)}
+.brand span{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;
+  color:var(--amber);text-transform:uppercase;margin-top:5px}
+
+.nav-h{font-family:var(--f-mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--amber);margin:18px 0 7px;padding-left:2px}
+.nav-h:first-child{margin-top:0}
+.nav a{display:block;padding:4px 10px;font-size:13.5px;color:var(--text);
+  border-left:2px solid transparent;transition:all .16s}
+.nav a:hover{border-left-color:var(--cyan);background:var(--cyan-low);padding-left:14px;text-shadow:none}
+.nav a.on{border-left-color:var(--amber);color:var(--amber);background:rgba(242,160,30,.07)}
+.nav a small{float:right;font-family:var(--f-mono);font-size:10px;color:var(--dim)}
+
+#q{width:100%;background:var(--deep);border:1px solid var(--cyan-mid);color:var(--text);
+  font-family:var(--f-ui);font-size:13px;padding:8px 12px;border-radius:999px;margin-bottom:6px}
+#q::placeholder{color:var(--dim)}
+#q:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 14px rgba(56,220,230,.22)}
+
+/* --- Type --------------------------------------------------------------- */
+h1{font-size:30px;font-weight:700;letter-spacing:.03em;color:var(--text);line-height:1.14}
+h2{font-family:var(--f-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--amber);margin:34px 0 12px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--cyan-mid),transparent)}
+h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px}
+p{margin-bottom:12px;max-width:74ch}
+.lede{color:var(--mute);font-size:15.5px}
+.eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan)}
+.mono{font-family:var(--f-mono)}
+
+/* --- Entity header card: the frame-select panel, notch tab and all ------- */
+.card-h{position:relative;margin-bottom:8px}
+.tab{display:inline-flex;align-items:center;gap:10px;background:var(--cyan-mid);padding:1px;
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);margin-left:16px}
+.tab>span{background:var(--deep);padding:5px 22px;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber)}
+
+/* --- Badges ------------------------------------------------------------- */
+.b{display:inline-block;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;padding:2.5px 8px;border:1px solid;vertical-align:middle}
+.b-doc{color:var(--mute);border-color:var(--dim)}
+.b-partial{color:var(--amber);border-color:rgba(242,160,30,.5);background:rgba(242,160,30,.07)}
+.b-verified{color:var(--jade);border-color:rgba(95,211,95,.5);background:rgba(95,211,95,.07)}
+.b-built{color:var(--cyan);border-color:var(--cyan-mid);background:var(--cyan-low)}
+.b-missing{color:var(--rust);border-color:rgba(212,89,58,.6);background:rgba(212,89,58,.09)}
+.b-ult{color:var(--violet);border-color:rgba(155,107,201,.55);background:rgba(155,107,201,.09)}
+
+/* --- Grids -------------------------------------------------------------- */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(212px,1fr))}
+.tile{display:block;color:var(--text)}
+.tile:hover{color:var(--text);text-shadow:none}
+.tile:hover .pnl{background:var(--cyan)}
+.tile:hover .in{background:var(--panel-hi)}
+.tile .in{padding:14px 16px}
+.tile b{display:block;font-size:15px;font-weight:600;margin-bottom:3px}
+.tile p{font-size:12.5px;color:var(--mute);margin:0;line-height:1.5}
+
+/* --- Ability node: the circular HUD slot -------------------------------- */
+.slots{display:flex;flex-wrap:wrap;gap:14px}
+.slot{width:112px;text-align:center;color:var(--text)}
+.slot:hover{color:var(--cyan);text-shadow:none}
+.disc{width:60px;height:60px;margin:0 auto 7px;border-radius:50%;
+  border:2px solid var(--cyan-mid);background:radial-gradient(circle at 50% 35%,var(--panel-hi),var(--deep));
+  display:grid;place-items:center;font-family:var(--f-mono);font-size:17px;color:var(--dim);
+  transition:all .2s}
+.slot:hover .disc{border-color:var(--cyan);box-shadow:0 0 20px rgba(56,220,230,.35);color:var(--cyan)}
+.slot.ult .disc{border-color:rgba(155,107,201,.6)}
+.slot.ult:hover .disc{border-color:var(--violet);box-shadow:0 0 20px rgba(155,107,201,.4);color:var(--violet)}
+.slot em{display:block;font-style:normal;font-size:12.5px;line-height:1.35}
+
+/* --- Stat table --------------------------------------------------------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:7px 12px;border-bottom:1px solid rgba(56,220,230,.10)}
+th{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--amber);font-weight:400}
+td.k{color:var(--mute);width:44%}
+td.v{font-family:var(--f-mono);color:var(--text)}
+td.v.null{color:var(--rust);opacity:.75}
+
+/* --- Callouts ----------------------------------------------------------- */
+.note{border-left:2px solid var(--cyan);background:var(--cyan-low);padding:12px 16px;margin:14px 0}
+.note.warn{border-left-color:var(--amber);background:rgba(242,160,30,.06)}
+.note.dead{border-left-color:var(--rust);background:rgba(212,89,58,.06)}
+.note .eyebrow{margin-bottom:5px;display:block}
+.note.warn .eyebrow{color:var(--amber)}
+.note.dead .eyebrow{color:var(--rust)}
+.note p:last-child{margin-bottom:0}
+.strike{text-decoration:line-through;color:var(--dim)}
+
+/* --- Patch timeline ----------------------------------------------------- */
+.tl{list-style:none;position:relative;padding-left:26px;margin-top:10px}
+.tl::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:1px;
+  background:linear-gradient(180deg,var(--cyan-mid),transparent)}
+.tl li{position:relative;padding-bottom:16px}
+.tl li::before{content:'';position:absolute;left:-24px;top:7px;width:9px;height:9px;
+  background:var(--void);border:1px solid var(--cyan);transform:rotate(45deg)}
+.tl li.rework::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(242,160,30,.6)}
+.tl li.fix::before{border-color:var(--dim)}
+.tl .when{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.tl .what{font-size:13.5px;color:var(--text);margin-top:2px}
+.tl .what a{border-bottom:1px dotted var(--cyan-mid)}
+
+/* --- Coverage rows ------------------------------------------------------ */
+.cov{display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid rgba(56,220,230,.08)}
+.cov b{flex:1;font-weight:500;font-size:14px}
+.cov .pct{font-family:var(--f-mono);font-size:12px;color:var(--mute);width:62px;text-align:right}
+
+.crumb{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--dim);margin-bottom:10px}
+.crumb a{color:var(--mute)}
+.foot{margin-top:44px;padding-top:18px;border-top:1px solid rgba(56,220,230,.1);
+  font-size:12px;color:var(--dim);font-family:var(--f-mono)}
+
+
+/* --- Provenance: every number says where it came from --------------------- */
+.src{display:inline-block;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;padding:2px 7px;border:1px solid;margin-left:8px;vertical-align:middle}
+.src-dump{color:var(--jade);border-color:rgba(95,211,95,.45);background:rgba(95,211,95,.07)}
+.src-notes{color:var(--amber);border-color:rgba(242,160,30,.4);background:rgba(242,160,30,.06)}
+.src-build{color:var(--violet);border-color:rgba(155,107,201,.5);background:rgba(155,107,201,.09)}
+.src-legacy{color:var(--rust);border-color:rgba(212,89,58,.45);background:rgba(212,89,58,.07)}
+
+.roles{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.roles button{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  padding:6px 14px;background:var(--deep);color:var(--mute);border:1px solid var(--cyan-mid);cursor:pointer}
+.roles button:hover{color:var(--text)}
+.roles button.on{color:var(--void);background:var(--cyan);border-color:var(--cyan);font-weight:600}
+
+.diff{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+.diff>div{padding:12px 16px}
+.diff .was{background:rgba(212,89,58,.05);border-left:2px solid rgba(212,89,58,.5)}
+.diff .arrow{display:grid;place-items:center;color:var(--dim);font-family:var(--f-mono);padding:0 14px}
+.diff .now{background:rgba(155,107,201,.06);border-left:2px solid var(--violet)}
+.diff .eyebrow{display:block;margin-bottom:4px}
+
+.rowlist{max-height:420px;overflow-y:auto;border:1px solid rgba(56,220,230,.12)}
+.rowlist::-webkit-scrollbar{width:6px}
+.rowlist::-webkit-scrollbar-thumb{background:var(--cyan-mid)}
+.rowlist table{font-size:12.5px}
+.rowlist th{position:sticky;top:0;background:var(--deep);z-index:1}
+.ing{font-family:var(--f-mono);font-size:12px;color:var(--mute)}
+.ing b{color:var(--text);font-weight:500}
+
+.stat-measured td.v{color:var(--jade)}
+.kpi{display:flex;gap:26px;flex-wrap:wrap;margin:14px 0}
+.kpi div{min-width:96px}
+.kpi b{display:block;font-family:var(--f-mono);font-size:23px;color:var(--amber);line-height:1.15}
+.kpi span{font-size:11.5px;color:var(--mute)}
+
+@media (max-width:860px){
+  .diff{grid-template-columns:1fr}
+  .diff .arrow{padding:6px 0}
+  .wrap{grid-template-columns:1fr;gap:18px;padding:16px 14px 60px}
+  .rail{position:static;max-height:none}
+  h1{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="rail">
+    <div class="brand"><b>FIREFALL</b><span>1.6 · Build Reference</span></div>
+    <input id="q" type="search" placeholder="Search entities…" autocomplete="off">
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main id="view"><!-- rendered --></main>
+</div>
+
+<script src="data.js"></script>
+<script src="dump-1962.js"></script>
+<script>
+/* ===========================================================================
+   HELPERS
+   =========================================================================== */
+const $  = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const byId = (arr,id) => arr.find(x => x.id === id);
+const pnl  = (body, cls='') => `<div class="pnl ${cls}"><div class="in">${body}</div></div>`;
+const badge = s => `<span class="b b-${s}">${s}</span>`;
+const titleCase = s => s.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()).trim();
+
+/* Tier words are the only frame stats the notes give us. Map them to segments
+   so the gauge itself communicates that these are ordinal, not measured. */
+const TIER = { 'Low':1, 'Standard':2, 'High':3, 'Very High':4 };
+function ticks(lit, total=4, cls=''){
+  return `<div class="ticks ${cls}">` +
+    Array.from({length:total},(_,i)=>`<i class="${i<lit?'on':''}"></i>`).join('') + `</div>`;
+}
+function tierRow(label, word){
+  return `<div class="cov"><b>${label}</b>${ticks(TIER[word]||0,4)}
+    <span class="pct">${esc(word)}</span></div>`;
+}
+
+/* Null stat fields are the to-do list. Count them everywhere. */
+function coverage(entity){
+  const s = entity.stats || {};
+  const total = Object.keys(s).length;
+  const filled = Object.values(s).filter(v => v !== null && v !== undefined).length;
+  return { filled, total, pct: total ? Math.round(100*filled/total) : 0 };
+}
+function statTable(stats){
+  const rows = Object.entries(stats).map(([k,v]) => {
+    const empty = v === null || v === undefined;
+    return `<tr><td class="k">${esc(titleCase(k))}</td>
+      <td class="v ${empty?'null':''}">${empty ? '— unfilled' : esc(v)}</td></tr>`;
+  }).join('');
+  return `<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* The delta pipeline: an entity's history is every patch entry pointing at it,
+   in patch order. History is never stored on the entity — always derived. */
+function historyFor(ids){
+  const set = new Set([].concat(ids));
+  const out = [];
+  DATA.patches.forEach(p => p.entries.forEach(e => {
+    if (e.ref && set.has(e.ref)) out.push({ patch:p, entry:e });
+  }));
+  return out;
+}
+function timeline(items, showRef=false){
+  if (!items.length) return `<p class="lede">Unchanged across all four 1.6 patches.</p>`;
+  return `<ul class="tl">` + items.map(({patch,entry}) => {
+    const ref = showRef && entry.ref ? ` <a href="#/find/${entry.ref}">${esc(nameOf(entry.ref))}</a> —` : '';
+    return `<li class="${entry.type}"><div class="when">${esc(patch.id)} · ${esc(entry.type)}</div>
+      <div class="what">${ref} ${esc(entry.text)}</div></li>`;
+  }).join('') + `</ul>`;
+}
+function nameOf(id){
+  const e = byId(DATA.abilities,id) || byId(DATA.weapons,id) || byId(DATA.perks,id) || byId(DATA.frames,id);
+  return e ? e.name : id;
+}
+function routeFor(id){
+  if (byId(DATA.abilities,id)) return `#/ability/${id}`;
+  if (byId(DATA.weapons,id))   return `#/weapon/${id}`;
+  if (byId(DATA.frames,id))    return `#/frame/${id}`;
+  if (byId(DATA.perks,id))     return `#/perks`;
+  return '#/gaps';
+}
+
+
+/* ===========================================================================
+   DUMP INTEGRATION
+   The hand-authored data says what things do; the build-1962 dump says what
+   they measured. They are kept apart on purpose. Where both have something to
+   say the page shows both and labels each, because a number from a patch note
+   and a number from the client database are not the same kind of fact.
+   =========================================================================== */
+const SRC = { dump:'build 1962', notes:'patch notes', build:'your build', legacy:'pre-1.6' };
+const tag = k => `<span class="src src-${k}">${SRC[k]}</span>`;
+
+const dumpWeapon  = id => (typeof DUMP !== 'undefined' ? DUMP.weaponMatch[id]  : null);
+const dumpAbility = id => (typeof DUMP !== 'undefined' ? DUMP.abilityMatch[id] : null);
+
+/* A deviation is recorded, never substituted. BUILD_OVERRIDES lives in data.js
+   so it survives regenerating the dump. */
+const override = id => (typeof BUILD_OVERRIDES !== 'undefined' ? BUILD_OVERRIDES[id] : null);
+
+function fmt(v){
+  if (v === null || v === undefined || v === '') return null;
+  if (Array.isArray(v)) return `${trim(v[0])} – ${trim(v[1])}`;
+  return typeof v === 'number' ? trim(v) : esc(v);
+}
+const trim = n => typeof n === 'number'
+  ? (Number.isInteger(n) ? n : Math.round(n*100)/100).toLocaleString() : n;
+
+/* The dump's own attribute names, not the schema I guessed at before it
+   arrived. Where a guessed field has a measured counterpart it is dropped;
+   what is left over is genuinely unmeasured. */
+const MEASURED_BY = {
+  cooldown:'Recharge', damage:'Base Damage', radius:'Effect Radius',
+  duration:'Duration', dps:'Base Damage', energyCost:'Energy Drain',
+  chargeRequired:'Charge Speed', knockback:'Knockback Potency'
+};
+
+function measuredTable(stats){
+  return `<table class="stat-measured"><thead><tr><th>Attribute</th><th>Value at build 1962</th></tr></thead>
+  <tbody>${stats.map(st => `<tr><td class="k">${esc(st.name)}</td>
+    <td class="v">${fmt(st.value) ?? '—'}</td></tr>`).join('')}</tbody></table>`;
+}
+
+function templateTable(tmpl){
+  const skip = new Set(['id','name','Items']);
+  const rows = Object.entries(tmpl).filter(([k,v]) => !skip.has(k) && v !== null && v !== 0 && v !== '')
+    .map(([k,v]) => `<tr><td class="k">${esc(k)}</td><td class="v">${fmt(v)}</td></tr>`).join('');
+  return `<table><thead><tr><th>Template field</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function tierTable(tiers){
+  if (!tiers.length) return `<p class="lede">No named player items use this template.</p>`;
+  return `<div class="rowlist"><table><thead><tr>
+    <th>Item</th><th>Level</th><th>Quality</th><th>Damage</th><th>Clip</th><th>ms/burst</th><th>Range</th>
+    </tr></thead><tbody>${tiers.map(t => `<tr>
+      <td>${esc(t.name)}</td><td class="v">${fmt(t.level) ?? '—'}</td>
+      <td class="v">${fmt(t.quality) ?? '—'}</td><td class="v">${fmt(t.damage) ?? '—'}</td>
+      <td class="v">${fmt(t.clip) ?? '—'}</td><td class="v">${fmt(t.msBurst) ?? '—'}</td>
+      <td class="v">${fmt(t.range) ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* Where the notes and the dump disagree, say so rather than picking a winner. */
+function conflicts(hand, dump){
+  const out = [];
+  if (!dump) return out;
+  const t = dump.roles && dump.roles.pve && dump.roles.pve.tmpl;
+  if (t && hand.stats){
+    const pairs = [['magazine','Clip'], ['ammoCapacity','Max ammo'], ['range','Range']];
+    pairs.forEach(([h,d]) => {
+      if (hand.stats[h] != null && t[d] != null && Number(hand.stats[h]) !== Number(t[d]))
+        out.push(`${titleCase(h)}: the notes say ${hand.stats[h]}, the template says ${t[d]}.`);
+    });
+  }
+  return out;
+}
+
+function diffBlock(ov){
+  return `<h2>Your build</h2>
+  <div class="diff">
+    <div class="was"><span class="eyebrow" style="color:var(--rust)">As shipped</span>${esc(ov.shipped)}</div>
+    <div class="arrow">→</div>
+    <div class="now"><span class="eyebrow" style="color:var(--violet)">Your decision</span>${esc(ov.build)}</div>
+  </div>
+  <div class="note"><span class="eyebrow">Why</span><p>${esc(ov.rationale)}</p></div>`;
+}
+
+/* ===========================================================================
+   VIEWS
+   =========================================================================== */
+const V = {};
+
+V.home = () => {
+  const allStats = DATA.abilities.concat(DATA.weapons);
+  const tot = allStats.reduce((a,e)=>a+coverage(e).total,0);
+  const fil = allStats.reduce((a,e)=>a+coverage(e).filled,0);
+  const pct = Math.round(100*fil/tot);
+
+  const arch = DATA.archetypes.map(a => {
+    const fs = DATA.frames.filter(f => f.archetype === a.id);
+    return `<a class="tile" href="#/archetype/${a.id}">${pnl(
+      `<span class="eyebrow" style="color:${a.accent}">${esc(a.role)}</span>
+       <b style="margin-top:4px">${esc(a.name)}</b>
+       <p>${fs.map(f=>esc(f.name)).join(' · ')}</p>`)}</a>`;
+  }).join('');
+
+  return `
+  <h1>Firefall 1.6 — implementation reference</h1>
+  <p class="lede">Every battleframe, weapon, ability and system in Update 1.6, reconstructed from the
+  three-part update notes and the four patches that followed. Built to answer
+  "what does this do <em>now</em>, and what do I still need to measure" rather than "what changed on which day."</p>
+
+  ${pnl(`
+    <span class="eyebrow">Data coverage</span>
+    <div class="cov" style="border:0;padding-top:10px">
+      <b>Numeric fields recovered from source</b>
+      ${ticks(Math.max(1,Math.round(pct/5)), 20, 'amber tall')}
+      <span class="pct">${fil}/${tot}</span>
+    </div>
+    <p style="font-size:13px;color:var(--mute);margin:6px 0 0">
+      ${pct}% filled. The 1.6 notes carry almost no numbers — the ${fil} values present were
+      recovered from patch notes that happened to state a before-and-after.
+      <a href="#/gaps">See what's missing →</a></p>
+  `, 'hex')}
+
+  <div class="kpi">
+    <div><b>${DUMP.counts.playerWeapons}</b><span>player weapons</span></div>
+    <div><b>${DUMP.counts.abilitiesCarded}</b><span>abilities with a card</span></div>
+    <div><b>${DUMP.counts.recipes.toLocaleString()}</b><span>recipes</span></div>
+    <div><b>${DUMP.counts.attributesUsed}</b><span>live attributes</span></div>
+  </div>
+  <p style="font-size:13px;color:var(--mute)">Measured figures come from a build-1962 client database
+  (prod-1962, 2016-05-05) and describe the 1.6/1.7 game. <a href="#/eras">Why that matters →</a></p>
+
+  <h2>Archetypes</h2>
+  <div class="grid g3">${arch}</div>
+
+  <h2>Systems</h2>
+  <div class="grid g2">${DATA.systems.map(s => `<a class="tile" href="#/system/${s.id}">${pnl(
+    `<b>${esc(s.name)}</b><p>${esc(s.body[0].p.slice(0,110))}…</p>`)}</a>`).join('')}</div>
+
+  <h2>Patch chain</h2>
+  <p class="lede">The base state plus four ordered deltas. Every entity page derives its own history
+  by filtering these, so a change is written once and appears everywhere it applies.</p>
+  <div class="grid g2">${DATA.patches.map(p => `<a class="tile" href="#/patch/${p.id}">${pnl(
+    `<span class="eyebrow">${esc(p.date)}</span><b style="margin-top:4px">${esc(p.name)}</b>
+     <p>${esc(p.summary)}</p>`)}</a>`).join('')}</div>`;
+};
+
+V.archetype = id => {
+  const a = byId(DATA.archetypes, id);
+  if (!a) return V.home();
+  const frames = DATA.frames.filter(f => f.archetype === id);
+  return `<div class="crumb"><a href="#/">Home</a> / Archetype</div>
+  <h1>${esc(a.name)}</h1>
+  <p class="lede">Base role: ${esc(a.role)}. One Accord frame branching into two advanced frames at level 20.</p>
+  <h2>Frames</h2>
+  <div class="grid g2">${frames.map(f => `<a class="tile" href="#/frame/${f.id}">${pnl(
+    `<span class="eyebrow">${f.tier === 'accord' ? 'Accord' : 'Advanced'} · ${esc(f.role)}</span>
+     <b style="margin-top:4px">${esc(f.name)}</b><p>${esc(f.blurb)}</p>`)}</a>`).join('')}</div>`;
+};
+
+V.frame = id => {
+  const f = byId(DATA.frames, id);
+  if (!f) return V.home();
+  const a = byId(DATA.archetypes, f.archetype);
+  const w = byId(DATA.weapons, f.primary);
+  const abils = f.abilities.map(x => byId(DATA.abilities, x)).filter(Boolean);
+  const hist = historyFor([f.primary, ...f.abilities]);
+
+  const slots = abils.map((ab,i) => `<a class="slot ${ab.slot==='ultimate'?'ult':''}" href="#/ability/${ab.id}">
+      <div class="disc">${ab.slot==='ultimate' ? '★' : i+1}</div>
+      <em>${esc(ab.name)}</em></a>`).join('');
+
+  return `<div class="crumb"><a href="#/">Home</a> / <a href="#/archetype/${a.id}">${esc(a.name)}</a> / Frame</div>
+  <div class="card-h">
+    <div class="tab"><span>${esc(a.name)} · ${esc(f.role)}</span></div>
+    ${pnl(`
+      <h1 style="color:var(--amber);font-size:26px">${esc(f.name)} ${badge(f.status)}</h1>
+      <p style="margin:8px 0 16px">${esc(f.blurb)}</p>
+      ${tierRow('Health', f.tiers.health)}
+      ${tierRow('Movement speed', f.tiers.speed)}
+      ${tierRow('Jet energy', f.tiers.jet)}
+      ${tierRow('Jet recharge', f.tiers.jetRecharge)}
+      <p style="font-size:12px;color:var(--dim);margin:10px 0 0">
+        Tier words are all the notes give. The word→value mapping is unrecovered.</p>
+    `, 'lit hex')}
+  </div>
+
+  ${f.notes ? `<div class="note"><span class="eyebrow">Designer intent</span><p>${esc(f.notes)}</p></div>` : ''}
+
+  <h2>Signature weapon</h2>
+  <a class="tile" href="#/weapon/${w.id}">${pnl(
+    `<span class="eyebrow">${esc(w.damageType)}</span><b style="margin-top:4px">${esc(w.name)}</b>
+     <p>${esc(w.desc)}</p>`)}</a>
+
+  <h2>Ability kit</h2>
+  <div class="slots">${slots}</div>
+
+  <h2>Change history</h2>
+  ${timeline(hist, true)}`;
+};
+
+V.ability = id => {
+  const ab = byId(DATA.abilities, id);
+  if (!ab) return V.home();
+  const d = dumpAbility(id), ov = override(id);
+  const frames = ab.frames.map(x => byId(DATA.frames,x)).filter(Boolean);
+
+  /* Drop guessed fields that the dump actually measured. What survives is the
+     honest remainder: things nothing in any source has a number for. */
+  const measuredNames = new Set((d ? d.stats : []).map(x => x.name));
+  const unmeasured = Object.fromEntries(Object.entries(ab.stats)
+    .filter(([k,v]) => v === null && !measuredNames.has(MEASURED_BY[k] || '')));
+
+  const variants = ab.frameVariants ? `
+    <h2>Per-frame variants</h2>
+    <table><thead><tr><th>Frame</th><th>Modification</th></tr></thead><tbody>
+    ${Object.entries(ab.frameVariants).map(([k,v]) =>
+      `<tr><td class="k"><a href="#/frame/${k}">${esc(nameOf(k))}</a></td><td>${esc(v)}</td></tr>`).join('')}
+    </tbody></table>` : '';
+
+  const dead = ab.descSuperseded ? `
+    <div class="note dead"><span class="eyebrow">Superseded by ${esc(ab.supersededBy)}</span>
+    <p class="strike">${esc(ab.descSuperseded)}</p>
+    <p style="font-size:12.5px;color:var(--mute);margin:8px 0 0">Kept visible because the base notes still
+    describe it this way — anyone reading Part 1 alone will implement the wrong thing.</p></div>` : '';
+
+  const dumpBlock = !d ? `<h2>Measured</h2>
+    <p class="lede">No ability chain in build 1962 matches this name.</p>` : `
+    <h2>Measured ${tag('dump')}</h2>
+    ${pnl(`<p class="mono" style="font-size:12px;color:var(--mute);margin-bottom:10px">
+        chain ${esc(d.chain)} · ${esc(d.modules)} modules · level ${fmt(d.level) ?? '—'} · power ${fmt(d.power) ?? '—'}
+        ${d.certs.length ? ' · gated by ' + d.certs.map(esc).join(', ') : ''}</p>
+      ${measuredTable(d.stats)}
+      <p style="font-size:12px;color:var(--dim);margin:10px 0 0">A range is the spread from the weakest
+      module to the strongest — the ability's whole progression in one row.</p>`)}
+    ${d.desc ? `<div class="note"><span class="eyebrow">Client string</span><p>${esc(d.desc)}</p></div>` : ''}
+    ${d.alsoChains.length ? `<p class="lede" style="font-size:13px">Other chains share this name:
+      ${d.alsoChains.map(esc).join(', ')}. The one above has the most modules.</p>` : ''}`;
+
+  return `<div class="crumb"><a href="#/">Home</a> / Ability</div>
+  <h1>${esc(ab.name)} ${badge(d ? 'verified' : ab.status)} ${ab.slot==='ultimate'?'<span class="b b-ult">ultimate</span>':''}</h1>
+  <p class="lede">${esc(ab.desc)}</p>
+  ${dead}
+
+  <h2>Frames ${tag('notes')}</h2>
+  <p>${frames.map(f=>`<a href="#/frame/${f.id}">${esc(f.name)}</a>`).join(' · ')}</p>
+  <p style="font-size:12.5px;color:var(--mute)">Frame attribution comes from the patch notes. The client
+  database points at an ability-group table it does not contain, so the dump can only confirm the
+  certificate that gates the modules.</p>
+
+  ${dumpBlock}
+  ${ov ? diffBlock(ov) : ''}
+  ${variants}
+
+  ${Object.keys(unmeasured).length ? `<h2>Still unmeasured</h2>
+    <p class="lede" style="font-size:13.5px">Named in the notes, absent from the dump. These are the
+    real remaining holes.</p>${pnl(statTable(unmeasured))}` : ''}
+
+  ${ab.notes ? `<div class="note warn"><span class="eyebrow">Implementation note</span><p>${esc(ab.notes)}</p></div>` : ''}
+
+  <h2>Change history</h2>
+  ${timeline(historyFor(ab.id))}`;
+};
+
+V.weapon = id => {
+  const w = byId(DATA.weapons, id);
+  if (!w) return V.home();
+  const d = dumpWeapon(id), ov = override(id);
+  const cov = coverage(w);
+  const dead = w.descSuperseded ? `
+    <div class="note dead"><span class="eyebrow">Superseded by ${esc(w.supersededBy)}</span>
+    <p class="strike">${esc(w.descSuperseded)}</p></div>` : '';
+
+  const roleOrder = ['pve','alt','pvp','legacy'];
+  const ROLE_LABEL = { pve:'PvE primary', alt:'Alternate fire', pvp:'PvP version', legacy:'Pre-1.6 template' };
+  const roles = d ? roleOrder.filter(r => d.roles[r]) : [];
+  const active = window.__wrole && roles.includes(window.__wrole) ? window.__wrole : roles[0];
+
+  const roleBlock = !d ? '' : `
+    <h2>Measured ${tag('dump')}</h2>
+    <div class="roles">${roles.map(r =>
+      `<button onclick="window.__wrole='${r}';render()" class="${r===active?'on':''}">${ROLE_LABEL[r]}</button>`).join('')}</div>
+    ${pnl(`<p class="mono" style="font-size:12px;color:var(--mute);margin-bottom:10px">
+        template ${esc(d.roles[active].id)} · ${esc(d.roles[active].name)}
+        ${active==='legacy' ? tag('legacy') : ''}</p>
+      ${templateTable(d.roles[active].tmpl)}`)}
+    <h3 style="margin-top:22px">Item tiers using this template</h3>
+    <p class="lede" style="font-size:13px">Each row is one named weapon; the ranges are its level and quality tiers collapsed.</p>
+    ${tierTable(d.roles[active].tiers)}`;
+
+  const conf = conflicts(w, d);
+  const confBlock = conf.length ? `<div class="note warn"><span class="eyebrow">Sources disagree</span>
+    ${conf.map(c => `<p>${esc(c)}</p>`).join('')}
+    <p style="font-size:12.5px;color:var(--mute);margin-bottom:0">Both are recorded. The template is the
+    server's value before per-item modifiers, so a patch note quoting a different figure may be describing
+    a specific item rather than the template.</p></div>` : '';
+
+  return `<div class="crumb"><a href="#/">Home</a> / Weapon</div>
+  <h1>${esc(w.name)} ${badge(w.status)}</h1>
+  <p class="eyebrow" style="margin-bottom:10px">${esc(w.damageType)} damage</p>
+  <p class="lede">${esc(w.desc)}</p>
+  ${dead}
+  <div class="note"><span class="eyebrow">Alternate fire ${tag('notes')}</span><p>${esc(w.alt)}</p></div>
+  ${confBlock}
+
+  <h2>Carried by</h2>
+  <p>${w.frames.map(x=>`<a href="#/frame/${x}">${esc(nameOf(x))}</a>`).join(' · ')}</p>
+
+  ${roleBlock}
+  ${ov ? diffBlock(ov) : ''}
+
+  <h2>From the notes ${tag('notes')}</h2>
+  ${pnl(`<div class="cov" style="border:0;padding:0 0 10px">
+      <b>Fields the notes fill</b>${ticks(Math.round(cov.pct/10),10,'jade')}
+      <span class="pct">${cov.filled}/${cov.total}</span></div>
+    ${statTable(w.stats)}`)}
+
+  ${w.notes ? `<div class="note warn"><span class="eyebrow">Implementation note</span><p>${esc(w.notes)}</p></div>` : ''}
+
+  <h2>Change history</h2>
+  ${timeline(historyFor(w.id))}`;
+};
+
+V.perks = () => {
+  const cats = [...new Set(DATA.perks.map(p=>p.category))];
+  return `<div class="crumb"><a href="#/">Home</a> / Perks</div>
+  <h1>Perks</h1>
+  <p class="lede">A working sample of ${DATA.perks.length}. The full 1.6 list runs to roughly a hundred
+  across five frame tables plus the ARES Supplier, Elite Ranks and achievements — a mechanical import
+  once the shape below is settled.</p>
+  ${cats.map(c => `<h2>${esc(c)}</h2><div class="grid g2">${
+    DATA.perks.filter(p=>p.category===c).map(p => pnl(`
+      <b style="font-size:14.5px">${esc(p.name)} ${badge(p.status)}</b>
+      <p style="font-size:12.5px;color:var(--mute);margin:2px 0 8px" class="mono">${esc(p.unlock)}</p>
+      <p style="font-size:13.5px;margin:0">${esc(p.effect)}</p>
+      ${p.collides ? `<p style="font-size:12px;color:var(--amber);margin:8px 0 0">
+        ⚠ Name collides with the ${esc(byId(DATA.perks,p.collides).category)} version — different numbers.</p>`:''}
+      ${p.notes ? `<p style="font-size:12px;color:var(--mute);margin:8px 0 0">${esc(p.notes)}</p>`:''}
+    `)).join('')}</div>`).join('')}`;
+};
+
+V.patch = id => {
+  const p = byId(DATA.patches, id);
+  if (!p) return V.home();
+  const grouped = ['rework','change','fix'].map(t => {
+    const es = p.entries.filter(e => e.type === t);
+    if (!es.length) return '';
+    return `<h2>${t}${es.length>1?'s':''}</h2><ul class="tl">${es.map(e => `
+      <li class="${t}">${e.ref
+        ? `<div class="when"><a href="${routeFor(e.ref)}">${esc(nameOf(e.ref))}</a></div>`
+        : `<div class="when" style="color:var(--dim)">General</div>`}
+      <div class="what">${esc(e.text)}</div></li>`).join('')}</ul>`;
+  }).join('');
+
+  const i = DATA.patches.indexOf(p);
+  const nav = [
+    i>0 ? `<a href="#/patch/${DATA.patches[i-1].id}">← ${esc(DATA.patches[i-1].id)}</a>` : '',
+    i<DATA.patches.length-1 ? `<a href="#/patch/${DATA.patches[i+1].id}">${esc(DATA.patches[i+1].id)} →</a>` : ''
+  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+
+  return `<div class="crumb"><a href="#/">Home</a> / Patch</div>
+  <h1>${esc(p.name)}</h1>
+  <p class="eyebrow" style="margin-bottom:10px">${esc(p.date)}</p>
+  <p class="lede">${esc(p.summary)}</p>
+  ${p.entries.length ? grouped : `<p class="lede" style="margin-top:20px">The base state. Every patch below applies on top of this.</p>`}
+  <p style="margin-top:28px">${nav}</p>`;
+};
+
+V.system = id => {
+  const s = byId(DATA.systems, id);
+  if (!s) return V.home();
+  return `<div class="crumb"><a href="#/">Home</a> / System</div>
+  <h1>${esc(s.name)}</h1>
+  ${s.body.map(b => `<h2>${esc(b.h)}</h2><p>${esc(b.p)}</p>`).join('')}`;
+};
+
+V.gaps = () => {
+  /* Coverage is measured against the dump now. A hand-authored null that the
+     dump fills is not a gap; what is left is what nothing measured. */
+  const remaining = e => {
+    if (dumpWeapon(e.id)) return 0;
+    const d = dumpAbility(e.id);
+    const measured = new Set((d ? d.stats : []).map(x => x.name));
+    return Object.entries(e.stats || {}).filter(([k,v]) =>
+      v === null && !measured.has(MEASURED_BY[k] || '')).length;
+  };
+  const ents = DATA.abilities.concat(DATA.weapons).map(e => ({ e, left: remaining(e) }));
+  const open = ents.filter(x => x.left > 0).sort((a,b) => b.left - a.left);
+  const closed = ents.length - open.length;
+
+  const flags = [
+    ...DATA.abilities.concat(DATA.weapons).filter(e => e.descSuperseded)
+      .map(e => ({ t:'Superseded text', n:e.name, r:routeFor(e.id),
+        d:`Base notes describe behaviour replaced in ${e.supersededBy}.` })),
+    ...DATA.perks.filter(p => p.collides)
+      .map(p => ({ t:'Name collision', n:p.name, r:'#/perks',
+        d:`Two perks share this name with different values (${p.category} version).` })),
+    ...DATA.perks.filter(p => p.status === 'missing')
+      .map(p => ({ t:'Undocumented', n:p.name, r:'#/perks', d:p.notes }))
+  ];
+
+  return `<div class="crumb"><a href="#/">Home</a> / Gaps</div>
+  <h1>Gaps and conflicts</h1>
+  <p class="lede">Generated from the data. A field the build-1962 dump measures is no longer counted as
+  missing, so what remains is what no surviving source has a number for.</p>
+
+  <div class="kpi">
+    <div><b>${closed}</b><span>entities fully measured</span></div>
+    <div><b>${open.length}</b><span>with fields left</span></div>
+    <div><b>${flags.length}</b><span>source conflicts</span></div>
+  </div>
+
+  <h2>Conflicts in the source</h2>
+  <div class="grid g2">${flags.map(f => `<a class="tile" href="${f.r}">${pnl(
+    `<span class="eyebrow" style="color:var(--rust)">${esc(f.t)}</span>
+     <b style="margin-top:4px">${esc(f.n)}</b><p>${esc(f.d)}</p>`)}</a>`).join('')}</div>
+
+  <h2>Fields no source fills</h2>
+  ${open.length ? pnl(open.slice(0,20).map(({e,left}) => `<div class="cov">
+      <b><a href="${routeFor(e.id)}">${esc(e.name)}</a></b>
+      <span class="pct">${left} left</span></div>`).join(''))
+    : `<p class="lede">None — every hand-authored field now has a measured counterpart.</p>`}
+
+  <h2>Absent from every source</h2>
+  <p class="lede">Not holes in the wiki. The 1.6 documents never contained these and the client database
+  does not either.</p>
+  ${pnl(DATA.absent.map(a => `<div style="padding:10px 0;border-bottom:1px solid rgba(56,220,230,.08)">
+      <b style="font-size:14px;color:var(--amber)">${esc(a.area)}</b>
+      <p style="font-size:13px;color:var(--mute);margin:3px 0 0">${esc(a.detail)}</p></div>`).join(''))}`;
+};
+
+/* --- Recipes: the crafting graph v1.6 switched off ----------------------- */
+V.recipes = arg => {
+  const q = (window.__rq || '').toLowerCase();
+  const all = DUMP.recipes;                     // [id, output, qty, time, research, ings, type]
+  const orphan = r => r[1].includes('^Q');
+  const view = window.__rview || 'all';
+  let rows = all;
+  if (view === 'orphans') rows = all.filter(orphan);
+  if (view === 'live')    rows = all.filter(r => !orphan(r));
+  if (q) rows = rows.filter(r => r[1].toLowerCase().includes(q)
+    || r[5].some(i => (i[1]||'').toLowerCase().includes(q)));
+  const shown = rows.slice(0, 300);
+
+  return `<div class="crumb"><a href="#/">Home</a> / Recipes</div>
+  <h1>Recipes</h1>
+  <p class="lede">The crafting graph 1.6 switched off in January 2016. It was never deleted, so all
+  ${DUMP.counts.recipes.toLocaleString()} of these survived the migration intact.</p>
+
+  <div class="kpi">
+    <div><b>${DUMP.counts.recipes.toLocaleString()}</b><span>with a named output</span></div>
+    <div><b>${DUMP.counts.orphans}</b><span>orphaned <span class="mono">^Q</span> rows</span></div>
+    <div><b>${DUMP.counts.orphansWithIngredients}</b><span>orphans keeping ingredients</span></div>
+  </div>
+
+  <div class="note warn"><span class="eyebrow">The orphans are one system</span>
+  <p>The <span class="mono">^Q</span> rows are the four-stage component system — Assault Rifle Barrel I–IV,
+  Accord Servos, Accord Jumpjets, Absorption Plating, Toxin Blending Unit — together with the pre-1.6 slot
+  vocabulary of plating, servos and jumpjets. Nearly all of them have no ingredient rows left. The
+  ${DUMP.counts.orphansWithIngredients} that do list Crystite and nothing else: the mineral inputs were
+  stripped when thumping stopped yielding minerals. The shape survived; the connection to the world did not.</p></div>
+
+  <div class="roles">
+    ${[['all','Everything'],['orphans','Orphaned ^Q'],['live','Live at 1962']].map(([k,l]) =>
+      `<button class="${view===k?'on':''}" onclick="window.__rview='${k}';render()">${l}</button>`).join('')}
+  </div>
+  <input id="rq" type="search" placeholder="Filter by output or ingredient…" value="${esc(window.__rq||'')}"
+    style="width:100%;background:var(--deep);border:1px solid var(--cyan-mid);color:var(--text);
+    padding:9px 14px;border-radius:999px;margin-bottom:12px;font-size:13px">
+
+  <p class="lede" style="font-size:13px">${rows.length.toLocaleString()} match${rows.length===1?'':'es'}${
+    rows.length > 300 ? ', showing the first 300' : ''}.</p>
+  <div class="rowlist"><table><thead><tr><th>Id</th><th>Output</th><th>Time</th><th>Ingredients</th></tr></thead>
+  <tbody>${shown.map(r => `<tr>
+    <td class="v" style="color:var(--dim)">${esc(r[0])}</td>
+    <td>${esc(r[1])}</td><td class="v">${esc(r[3])}</td>
+    <td class="ing">${r[5].length ? r[5].map(i => `<b>${fmt(i[0])}×</b> ${esc(i[1])}`).join(', ')
+      : '<span style="color:var(--rust)">stripped</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+};
+
+/* --- Attributes: the legend every other number joins through ------------- */
+V.attributes = () => {
+  const q = (window.__aq || '').toLowerCase();
+  const rows = Object.entries(DUMP.attributes)
+    .filter(([id,a]) => !q || a.internal.toLowerCase().includes(q) || (a.display||'').toLowerCase().includes(q))
+    .sort((a,b) => b[1].items - a[1].items);
+
+  return `<div class="crumb"><a href="#/">Home</a> / Attributes</div>
+  <h1>Attributes</h1>
+  <p class="lede">Items do not store stats — they store rows keyed by an attribute id. This is what those
+  ids mean, and it is the join key for everything else in the dump.</p>
+
+  <div class="kpi">
+    <div><b>${DUMP.counts.attributes.toLocaleString()}</b><span>defined</span></div>
+    <div><b>${DUMP.counts.attributesUsed}</b><span>used by an item</span></div>
+    <div><b>${DUMP.counts.categories}</b><span>categories</span></div>
+  </div>
+
+  <div class="note warn"><span class="eyebrow">Join on id, never on name</span>
+  <p>The internal name is what a designer typed; the display name is what the item card showed, and several
+  unrelated internal attributes share one display name — <span class="mono">Crater Damage</span> displays as
+  <span class="mono">Base Damage</span>. Matching on the display name silently merges stats that have nothing
+  to do with each other.</p></div>
+
+  <input id="aq" type="search" placeholder="Filter attributes…" value="${esc(window.__aq||'')}"
+    style="width:100%;background:var(--deep);border:1px solid var(--cyan-mid);color:var(--text);
+    padding:9px 14px;border-radius:999px;margin-bottom:12px;font-size:13px">
+  <p class="lede" style="font-size:13px">${rows.length} shown, most-used first. Only attributes at least one item carries.</p>
+  <div class="rowlist"><table><thead><tr><th>Id</th><th>Internal name</th><th>Display name</th><th>Category</th><th>Items</th></tr></thead>
+  <tbody>${rows.slice(0,400).map(([id,a]) => `<tr>
+    <td class="v" style="color:var(--dim)">${esc(id)}</td><td>${esc(a.internal)}</td>
+    <td style="color:var(--mute)">${esc(a.display) || '—'}</td>
+    <td style="color:var(--mute)">${esc(a.category) || '—'}</td>
+    <td class="v">${a.items}${a.inverse ? ' <span style="color:var(--amber)">↓</span>' : ''}</td></tr>`).join('')}
+  </tbody></table></div>`;
+};
+
+/* --- Eras: the anchor decision, stated where it can be argued with ------- */
+V.eras = () => `<div class="crumb"><a href="#/">Home</a> / Eras</div>
+  <h1>Eras and the anchor</h1>
+  <p class="lede">Firefall was rebuilt twice. A 2013 article and a 2016 article describing the same weapon
+  are describing different weapons, so era is a dimension here rather than a filter.</p>
+
+  <h2>The three</h2>
+  ${pnl(`<table><thead><tr><th>Era</th><th>Progression</th><th>Crafting</th><th>Documented by</th></tr></thead><tbody>
+  <tr><td class="k"><b>Beta 0.5–0.7</b><br><span style="font-size:12px;color:var(--mute)">to mid-2013</span></td>
+      <td>No levels. Power / Mass / Cores constraint trees, 10 unlocks each</td>
+      <td>Four stages of component recipes; resource quality sets component quality sets the stat</td>
+      <td>17 patch files, 1,682 entries — the only era whose notes introduce systems rather than fix them</td></tr>
+  <tr><td class="k"><b>1.0–1.3</b><br><span style="font-size:12px;color:var(--mute)">2014–2015</span></td>
+      <td>Levels 1–40, research trees</td><td>Simplified; thumping still yields minerals</td>
+      <td>23 files but 13 are stubs. No update notes for 1.0, 1.1, 1.2 or 1.3 survive — only what broke</td></tr>
+  <tr><td class="k"><b>1.6–1.7</b><br><span style="font-size:12px;color:var(--mute)">2016</span></td>
+      <td>Levels 1–40 plus Elite Ranks</td><td>Switched off January 2016</td>
+      <td>17 files, plus the client database itself</td></tr>
+  </tbody></table>`)}
+
+  <h2>The anchor</h2>
+  <div class="note"><span class="eyebrow">Numbers from 1962, design from 0.7</span>
+  <p>The dump is build 1962 and measures the 1.6/1.7 game, so every figure on this wiki that carries a
+  ${tag('dump')} label describes that game. The beta systems cannot be recovered from data — the resource
+  taxonomy, quality aspects, purity and blending left no trace in the client database. They have to be
+  reconstructed from the patch notes, and every reconstruction is recorded as a decision rather than
+  presented as a finding.</p></div>
+
+  <div class="note warn"><span class="eyebrow">One qualification</span>
+  <p>Some pre-1.6 weapon templates survived the rebuild and are still in the 1962 database beside their
+  replacements — Thermal Cannon next to Phason Thrower, Plasma Cannon next to Plasma Cannon - Current,
+  Heavy Laser MG next to Photon Lance. Weapon pages label these ${tag('legacy')} and keep them separate from
+  the live template. They are evidence about the older game, not a description of the shipped one.</p></div>
+
+  <h2>Recording your build</h2>
+  <p>Where the reimplementation departs from what shipped, the departure goes in
+  <span class="mono">BUILD_OVERRIDES</span> in <span class="mono">data.js</span> and renders as a diff on the
+  entity's page — the original on the left, your decision on the right, the reasoning underneath. Nothing is
+  overwritten. The wiki stays a faithful record of the game and a record of where you left it.</p>`;
+
+V.find = id => {
+  location.hash = routeFor(id);
+  return '';
+};
+
+V.search = term => {
+  const t = term.toLowerCase();
+  const hit = [
+    ...DATA.frames.map(x=>({x,k:'Frame',r:`#/frame/${x.id}`})),
+    ...DATA.abilities.map(x=>({x,k:'Ability',r:`#/ability/${x.id}`})),
+    ...DATA.weapons.map(x=>({x,k:'Weapon',r:`#/weapon/${x.id}`})),
+    ...DATA.perks.map(x=>({x,k:'Perk',r:'#/perks'})),
+    ...DATA.systems.map(x=>({x,k:'System',r:`#/system/${x.id}`}))
+  ].filter(o => o.x.name.toLowerCase().includes(t)
+    || (o.x.desc||o.x.effect||o.x.blurb||'').toLowerCase().includes(t));
+
+  return `<h1>Search</h1><p class="lede">${hit.length} match${hit.length===1?'':'es'} for “${esc(term)}”.</p>
+  <div class="grid g2" style="margin-top:20px">${hit.map(o => `<a class="tile" href="${o.r}">${pnl(
+    `<span class="eyebrow">${o.k}</span><b style="margin-top:4px">${esc(o.x.name)}</b>
+     <p>${esc((o.x.desc||o.x.effect||o.x.blurb||'').slice(0,100))}…</p>`)}</a>`).join('')}</div>`;
+};
+
+/* ===========================================================================
+   NAV + ROUTER
+   =========================================================================== */
+function buildNav(){
+  const link = (h,t,n) => `<a href="${h}" data-h="${h}">${t}${n!=null?`<small>${n}</small>`:''}</a>`;
+  $('#nav').innerHTML =
+    `<div class="nav-h">Reference</div>
+     ${link('#/','Overview')}
+     ${link('#/eras','Eras &amp; anchor')}
+     ${link('#/gaps','Gaps &amp; conflicts')}
+     <div class="nav-h">Build 1962</div>
+     ${link('#/recipes','Recipes', DUMP.counts.recipes)}
+     ${link('#/attributes','Attributes', DUMP.counts.attributesUsed)}
+     ${link('#/perks','Perks', DATA.perks.length)}
+     <div class="nav-h">Battleframes</div>
+     ${DATA.archetypes.map(a => link(`#/archetype/${a.id}`, a.name, 3)).join('')}
+     <div class="nav-h">Systems</div>
+     ${DATA.systems.map(s => link(`#/system/${s.id}`, s.name)).join('')}
+     <div class="nav-h">Patch chain</div>
+     ${DATA.patches.map(p => link(`#/patch/${p.id}`, p.id, p.entries.length||null)).join('')}`;
+}
+
+function render(){
+  const raw = location.hash.replace(/^#\/?/, '') || '';
+  const [seg, arg] = raw.split('/');
+  let html;
+  if      (!seg)               html = V.home();
+  else if (V[seg])             html = V[seg](decodeURIComponent(arg || ''));
+  else                         html = V.home();
+  if (html === '') return;                       // V.find redirected
+  $('#view').innerHTML = html;
+  const rq = document.querySelector('#rq');
+  if (rq) rq.addEventListener('input', e => { window.__rq = e.target.value; render();
+    const n = document.querySelector('#rq'); if (n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } });
+  const aq = document.querySelector('#aq');
+  if (aq) aq.addEventListener('input', e => { window.__aq = e.target.value; render();
+    const n = document.querySelector('#aq'); if (n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } });
+  document.querySelectorAll('#nav a').forEach(a =>
+    a.classList.toggle('on', a.dataset.h === '#/' + raw));
+  window.scrollTo(0,0);
+}
+
+$('#q').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  if (v.length >= 2) $('#view').innerHTML = V.search(v);
+  else if (!v) render();
+});
+
+window.addEventListener('hashchange', () => { $('#q').value = ''; render(); });
+buildNav();
+render();
+</script>
+</body>
+</html>

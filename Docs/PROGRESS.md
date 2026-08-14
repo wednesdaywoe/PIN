@@ -465,6 +465,14 @@ Out of scope because the slice closes without them:
 - **Crafting and blueprints** — spending resources needs `RequireResource` and
   `RequireResourceFromTarget`, both stubs, plus `Blueprint_Resources` which nothing reads;
   gathering is the loop, crafting is a second one (see [Restoration](Restoration.md))
+- **Battleframe mass/power/CPU constraints** — the three-bar budget the beta built loadouts
+  against. Scoped 2026-08-14 and not scheduled: the used half is already summed and already on the
+  wire, the frame capacities have no source anywhere and must be authored, and retail's own item
+  costs price power at exactly half of mass so two of the three bars would be the same bar. Blocked
+  on one tooltip inspection for the client half; everything else is server-side.
+  [Tools/ConstraintSweep](../Tools/ConstraintSweep/) is written and waiting on a machine with the
+  db: it prices every shipped loadout in all three, which is what an authored capacity has to be
+  calibrated against. See [streams/battleframe-constraints.md](streams/battleframe-constraints.md)
 - **Server-side terrain** — `LoadMapsCollision` is off, so every raycast in the game sees an empty
   world. The consumer is already built and proven: `ZoneLoader` plus `TagfileLoader` turn Havok
   collision into Bepu statics, and that same path loads deployable collision today. Only the

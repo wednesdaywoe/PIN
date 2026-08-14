@@ -164,7 +164,16 @@ baseline the next pass diffs against.
   stale requests at all, and only the four that ran their full cycle did, which points at the same
   `OnInteraction`/`OnUpdate` split as [DATA-18](#static-data--data) rather than at removal itself.
   No session has yet been shown to end because of it, but the 2026-08-14 client quit with two loops
-  outstanding
+  outstanding. **A code read the same day cleared the message and moved the suspicion to the
+  channel**: msg 6 on the sole view is how the 2016 capture shows retail removing a single-view
+  entity, and nothing else in the server ever names a thumper's entity id — so the likeliest reading
+  is that this is [NET-1](gaps/network.md#net-1) in costume, one scope-out sent once on a channel
+  that acks but never resends. The client's `AddView` at state 7 is the server *answering* a request
+  during `LEAVING`, which puts the loop before removal rather than after it and makes the split a
+  question of how many `UnreliableGss` deltas each path sends (~106 against ~7). Three changes
+  landed, unverified: a failed keyframe request for a view now answers with a scope-out instead of
+  only warning, successful requests log at Debug so the loop can be dated, and a queued scope-in
+  whose entity died is dropped. [G6](In-Game-Tests/Resource-Payout.md) is the check
 
 - [ ] **NET-23** — A dead player has no way back. `Die` runs correctly and `RequestRespawn` is
   implemented, but the client never sends it, so death ends the session. Found by

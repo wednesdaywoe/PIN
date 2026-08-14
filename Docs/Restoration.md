@@ -49,10 +49,13 @@ long gone, so their silence is expected rather than evidence.
 still defined in `dbitems::AttributeDefinition`, side by side as attribute ids 951, 952 and 953,
 and 1,125 items carry values for them in `dbitems::AttributeRange`, stored negative because
 they're costs against the budget. They sit on exactly the stratum where the pre-1.6 weapon
-templates survived: 1.0-era servos, platings, jumpjets, abilities and crafted modules. The
-formula-side tables noted earlier are still there too: `dbitems::ItemTypeAttributeModifier`
-loads its weight, power and cpu coefficients that nothing reads, and `dbitems::FrameMassRange`
-still has no loader.
+templates survived: 1.0-era servos, platings, jumpjets, abilities and crafted modules. The coverage
+isn't even across the three, though. [Attributes](Wiki/Reference/Attributes.md) counts 1081 items on
+mass, 1108 on power and 373 on CPU, so CPU is priced on about a third of what mass is. The
+formula-side tables noted earlier are still there too: `dbitems::ItemTypeAttributeModifier` prices a
+point of any stat in weight, power and cpu, and `dbitems::FrameMassRange` maps used mass to a speed
+multiplier. Both have a record class in PIN and neither has a loader (checked 2026-08-14), so
+neither is read.
 
 The values are a late pricing formula, not beta design intent. Across all 1,125 items mass takes
 only seven distinct values, running 48/64/80/120 by tier; power is exactly half of mass in 1,006
@@ -93,9 +96,16 @@ described in five languages ("Mass Tech 7 - Low Density Servos" is cert 705), pl
 reserved for 11 through 20. But every payload column on them is zero, and a scan of every table in
 the db for their cert ids found only id collisions. The grant amounts, the node costs and the
 per-frame capacities never shipped; they were server data, like the spawn tables. Rebuilding the
-tree means authoring those numbers, with beta tooltips and patch notes as the only sources. The
-one primary data point in hand: a Raptor at 18 of 30 unlocks showing Mass 1400, Power 800, CPU 13,
-with Mass Tech 7 granting +200 (user, 2026-08-14). The client's progression panel (`BFPLogic.lua`,
+tree means authoring those numbers, with beta tooltips and patch notes as the only sources. PIN
+loads the table already and exposes `GetAllCertificates`, so the authoring has a home rather than
+needing a new one, and `BonusAmount`/`CertType` alongside `XpValue`/`XpType` is the obvious shape
+for a grant and its price.
+
+The primary data in hand is the [beta reference shots](UI%20Reference/): a Raptor at 18 of 30 unlocks
+showing Mass 1400, Power 800, CPU 13, with Mass Tech 7 granting +200 for 150,000 XP / 2,000 CY /
+2,500 Mineral, and CPU Tech 6 granting Cores +1 and Energy +30 for 70,000 XP / 1,000 CY / 1,250
+Organic (user, 2026-08-14). So a node costs XP, crystite and one named resource, and CPU capacity
+is counted in cores. The client's progression panel (`BFPLogic.lua`,
 around `Game.GetProgressionUnlocks`) only renders power-rating and health grants now, so the tree
 would need a surface of its own as well.
 
@@ -107,10 +117,33 @@ Lua can be authored. The bars are the inverse case — the Lua survived and the 
 died, inside a binary we can't rebuild. Thumping still sits above both, with every layer intact.
 The build is real either way, and still not on any milestone, but it's re-wiring a preserved
 widget rather than authoring one. The question it turns on is how three numbers reach a widget
-the engine won't feed. The item half may already be within reach: the costs sit in the client's
-own db as attributes 951 to 953, so the first thing to check is whether the engine still hands
-them to Lua in an item's ordinary stat list, which one tooltip inspection would settle. The frame
-half has no source anywhere and has to be authored either way.
+the engine won't feed.
+
+**The item half turns out to be halfway there already (checked 2026-08-14).** PIN's own
+`CharacterStatsData.ItemAttributes` is an open list of attribute-id and value pairs keyed on
+`dbitems::AttributeDefinition`, and `ApplyItemStats` sums every attribute row on the chassis and
+each slotted item without filtering on the id. 951 to 953 are ordinary ids, so the server is already
+summing them and already sending them, as negatives. What that leaves is a client-side question
+rather than a protocol one: whether the engine hands those ids to Lua in an item's ordinary stat
+list, which one tooltip inspection would settle. Two gaps sit on the server side regardless.
+Weapons are excluded from the sum, going to the separate `WeaponA`/`WeaponB` arrays instead, and
+the beta panel charged for both of them. And the frame half has no source anywhere:
+`dbitems::Battleframe` has no capacity column of any kind, so it has to be authored.
+
+**Retail's cost table can't draw three bars, which is a design decision rather than a data
+problem.** Power being exactly half of mass in 1,006 of 1,015 tuned rows means it is half of mass
+in the sum too, for every loadout anyone can build, so the power bar would be a scaled copy of the
+mass bar. Item costs get re-authored so power binds where mass doesn't (decision 2026-08-14,
+user-chosen). Dropping power instead would take the surplus allocation pool with it, and that pool
+is the most distinctive thing in the system.
+
+Beta priced the two apart by item type, and was still doing it by hand near the end of 0.7. A
+Stock SIN Scrambler cost 88 mass against 45 power, a Recovered SIN Beacon I 48 against 58, and
+build 1688 moved three modules between the two axes in a single patch (user, 2026-08-14).
+Ammunition is bulky and cheap to run, a deployable emitter is light and draws hard. The Raptor's
+446 against 691 is a mixed loadout sitting between the two.
+
+Scoped in full in [Battleframe Constraints](streams/battleframe-constraints.md).
 
 **Sources become design references.** The [patch corpus](Wiki/Sources.md) stops being a spec to
 conform to and becomes an argument about what each loop was for and why it worked. Beta-era
