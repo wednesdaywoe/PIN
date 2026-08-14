@@ -234,8 +234,8 @@ Hammer" item, a "Scan Hammer ability", and tutorial text reading "Equip your sca
 the Scan Hammer to find a valid thumping spot". Getting one into a character's hands is the next
 piece of work, and until then a `[-]` here is about equipment, not about a dead message.
 
-## [ ] S3: Thumping the rich center pays center values
-
+## [x] S3: Thumping the rich center pays center values
+> I saw 33 Crystite in the in-game toast, I was off-center
 The milestone's exit condition, first half. Same shape as G2, on the one deposit whose center is
 walked ground.
 
