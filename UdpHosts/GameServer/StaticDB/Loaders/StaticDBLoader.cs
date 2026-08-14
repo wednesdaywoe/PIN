@@ -1430,12 +1430,6 @@ public class StaticDBLoader : ISDBLoader
             .ToDictionary(group => group.Key, group => group.ToList());
     }
 
-    public Dictionary<uint, ResourceItem> LoadResourceItem()
-    {
-        return LoadStaticDB<ResourceItem>("dbitems::ResourceItem")
-            .ToDictionary(row => row.Id);
-    }
-
     public Dictionary<uint, ZoneRecord> LoadZoneRecord()
     {
         return LoadStaticDB<ZoneRecord>("dbzonemetadata::ZoneRecord")

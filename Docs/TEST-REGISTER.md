@@ -19,13 +19,23 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**[Kill Rewards](In-Game-Tests/Kill-Rewards.md) is the queue's newest stream and nothing in it has
-run.** M5 changed shape the day it started — crystite instead of XP — and the reward figures come
-out of `dbitems::LootTable`, which shipped complete and which PIN had never loaded. The thing to
-carry into the session is the rate: table 25 is reached a quarter of the time, so **three kills in
-four pay nothing and that is correct**. An entry judged on two kills will report a defect that isn't
-there. K2 exists because PIN's reading of `roll_mode` is inferred rather than known, and twenty
-kills is the only measurement anyone can take of it.
+**[Kill Rewards](In-Game-Tests/Kill-Rewards.md) is the queue's newest stream, and K1 failed on its
+first run in the most ordinary way available: the wrong table.** 21 kills rolled crystite ten times
+and paid it zero times, because the resource-or-item check asked `dbitems::ResourceItem` — a table
+that exists, has 111 rows, and lists gatherable materials from id 75537 up rather than the contents
+of the resource pane. Crystite is id 10 and is not in it. The check is now the `Resource` flag on
+`RootItem`, which `createitem` has always used and [G1](In-Game-Tests/Resource-Payout.md) confirmed.
+
+**What made it a one-pass diagnosis was a log line written for a different entry.** K3 asked for
+rolled-but-unpaid items to be named in the log, on the argument that "nothing arrived" and "nothing
+was owed" have to be distinguishable — the same argument the thumper's participant count settled.
+The output was `rolled item 10 x2, not paid`, and item 10 is crystite, so the log said exactly what
+was wrong without anyone having to reproduce anything.
+
+The same session promoted [DATA-16](ISSUE-REGISTER.md)'s basis-points guess to confirmed, on a table
+reached from monster 528 rather than somewhere distant. Carry the rate into the re-run: table 25 is
+reached a quarter of the time, so **three kills in four pay nothing and that is correct**. The failed
+run measured 48% over 21 kills, which is suggestive and too small to act on — K2 wants 40 or more.
 
 **[Resource Payout](In-Game-Tests/Resource-Payout.md) went 3 of 5 on the day it was written,
 2026-08-13, and closed [M3](PROGRESS.md).** A thumper called down at a player's feet ran its full
@@ -227,11 +237,15 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Resources
 
-- [ ] [Kill Rewards](In-Game-Tests/Kill-Rewards.md) — 0 of 5, written 2026-08-13, none run. The
-  check on [M5](PROGRESS.md), which is now crystite rather than XP. **Read the rate before running
-  any of it**: a small creature pays about one kill in four, so a dry kill is the expected case and
-  no entry can be judged on one. K2 is the only check that exists on PIN's reading of `roll_mode`,
-  which is inferred from the tables' arithmetic and nothing else
+- [!] [Kill Rewards](In-Game-Tests/Kill-Rewards.md) — 0 of 5, written and first run 2026-08-13.
+  The check on [M5](PROGRESS.md), which is now crystite rather than XP. **K1 failed and the failure
+  was in PIN, one line of it**: 21 kills rolled crystite ten times and paid it zero times, because
+  the resource-or-item check consulted `dbitems::ResourceItem` — the gatherable-materials list,
+  which does not contain crystite. Fixed to the `Resource` flag on `RootItem` and not re-run. The
+  same session confirmed [DATA-16](ISSUE-REGISTER.md)'s basis-points guess on a table that is on the
+  kill path. **Read the rate before re-running**: a small creature should pay about one kill in
+  four, so a dry kill is the expected case; the failed run measured 48%, which wants 40 kills before
+  it means anything
 - [~] [Resource Payout](In-Game-Tests/Resource-Payout.md) — 3 of 5 passing, all on 2026-08-13.
   **G2 is [M3](PROGRESS.md)'s exit condition and it passed**: a thumper ran its cycle and paid 200
   crystite to one participant. G1 proved a resource count climbs on screen as partial updates

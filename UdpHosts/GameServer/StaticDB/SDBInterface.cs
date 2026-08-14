@@ -72,7 +72,6 @@ public class SDBInterface
     private static Dictionary<uint, LootTable> _lootTable;
     private static Dictionary<uint, List<LootTableItemDist>> _lootTableItemDist;
     private static Dictionary<uint, List<LootTableSubTableDist>> _lootTableSubTableDist;
-    private static Dictionary<uint, ResourceItem> _resourceItem;
 
     // dbzonemetadata
     private static Dictionary<uint, ZoneRecord> _zoneRecord;
@@ -337,7 +336,6 @@ public class SDBInterface
         _lootTable = loader.LoadLootTable();
         _lootTableItemDist = loader.LoadLootTableItemDist();
         _lootTableSubTableDist = loader.LoadLootTableSubTableDist();
-        _resourceItem = loader.LoadResourceItem();
 
         // dbzonemetadata
         _zoneRecord = loader.LoadZoneRecord();
@@ -627,8 +625,6 @@ public class SDBInterface
     public static LootTable GetLootTable(uint id) => _lootTable.GetValueOrDefault(id);
     public static List<LootTableItemDist> GetLootTableItemDist(uint lootTableId) => _lootTableItemDist.GetValueOrDefault(lootTableId);
     public static List<LootTableSubTableDist> GetLootTableSubTableDist(uint lootTableId) => _lootTableSubTableDist.GetValueOrDefault(lootTableId);
-    public static ResourceItem GetResourceItem(uint id) => _resourceItem.GetValueOrDefault(id);
-    public static bool IsResourceItem(uint id) => _resourceItem.ContainsKey(id);
 
     // dbzonemetadata
     public static ZoneRecord GetZoneRecord(uint id) => _zoneRecord.GetValueOrDefault(id);

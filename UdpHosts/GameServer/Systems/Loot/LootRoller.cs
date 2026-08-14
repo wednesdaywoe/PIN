@@ -32,9 +32,9 @@ namespace GameServer.Systems.Loot;
 ///     </list>
 ///     <para>
 ///     Modes 1, 4 and 5 exist in the file and no table reached from a zone 448 monster uses one, so
-///     they fall into the weighted branch untested. Probability reads as a percentage: the tables on
-///     the kill path all use small percentages, though the column tops out at 10000 elsewhere, so
-///     some table somewhere is using basis points and will roll wrong here.
+///     they fall into the weighted branch untested. Probability is read out of 100 or out of 10000
+///     depending on the table's own rows — see <see cref="ScaleOf"/>, which K1's first run is what
+///     forced.
 ///     </para>
 /// </remarks>
 public sealed class LootRoller
@@ -62,6 +62,41 @@ public sealed class LootRoller
         return results;
     }
 
+    /// <summary>
+    ///     Whether a table's probabilities are out of 100 or out of 10000, decided by the table's own rows.
+    /// </summary>
+    /// <remarks>
+    ///     A percentage cannot exceed 100, so a table carrying any row above that is not in percent. Both
+    ///     scales are in the file and nothing marks which is which.
+    ///
+    ///     This came out of K1's first run rather than out of reading. "Melded Loot Common" (5463) is on
+    ///     the kill path — monster 528's second table reaches it — and its rows are 5000/1000/100, summing
+    ///     to 6100. Read as percent that is a distribution that always drops something; read out of 10000
+    ///     it is 61% something and 39% nothing, which is what a table with that rarity gradient is for.
+    ///     Deciding per table rather than per row keeps a table internally consistent, which is how
+    ///     whoever authored these would have worked.
+    /// </remarks>
+    private static int ScaleOf(IReadOnlyList<LootTableItemDist> items, IReadOnlyList<LootTableSubTableDist> subtables)
+    {
+        foreach (var item in items)
+        {
+            if (item.Probability > 100)
+            {
+                return 10000;
+            }
+        }
+
+        foreach (var sub in subtables)
+        {
+            if (sub.Probability > 100)
+            {
+                return 10000;
+            }
+        }
+
+        return 100;
+    }
+
     private void RollInto(uint lootTableId, Dictionary<uint, uint> results, int depth)
     {
         if (lootTableId == 0 || depth >= MaxDepth)
@@ -77,12 +112,13 @@ public sealed class LootRoller
 
         var items = _tables.GetItems(lootTableId);
         var subtables = _tables.GetSubtables(lootTableId);
+        var scale = ScaleOf(items, subtables);
 
         if (table.RollMode == 2)
         {
             foreach (var item in items)
             {
-                if (Hits(item.Probability))
+                if (Hits(item.Probability, scale))
                 {
                     Award(results, item);
                 }
@@ -90,7 +126,7 @@ public sealed class LootRoller
 
             foreach (var sub in subtables)
             {
-                if (Hits(sub.Probability))
+                if (Hits(sub.Probability, scale))
                 {
                     RollInto(sub.SubtableId, results, depth + 1);
                 }
@@ -117,9 +153,9 @@ public sealed class LootRoller
             return;
         }
 
-        // Weights that sum below 100 leave the remainder as "nothing dropped"; weights that sum above
-        // it are a distribution and always produce something.
-        var roll = _rng.Next(Math.Max(total, 100));
+        // Weights that sum below the scale leave the remainder as "nothing dropped"; weights that sum
+        // to or above it are a distribution and always produce something.
+        var roll = _rng.Next(Math.Max(total, scale));
 
         foreach (var item in items)
         {
@@ -142,9 +178,9 @@ public sealed class LootRoller
         }
     }
 
-    private bool Hits(ushort probability)
+    private bool Hits(ushort probability, int scale)
     {
-        return probability > 0 && _rng.Next(100) < probability;
+        return probability > 0 && _rng.Next(scale) < probability;
     }
 
     private void Award(Dictionary<uint, uint> results, LootTableItemDist item)

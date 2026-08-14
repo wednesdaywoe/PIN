@@ -67,6 +67,35 @@ public class LootRollerTests
         Assert.InRange(reached, 60, 145);
     }
 
+    /// <summary>
+    ///     "Melded Loot Common" (5463), verbatim — monster 528's second loot table reaches it. Its rows are
+    ///     5000/1000/100, which cannot be percentages, and reading them as such made a table with a rarity
+    ///     gradient drop something on every kill. K1's first run is what surfaced it.
+    /// </summary>
+    [Fact]
+    public void ATableWithRowsAboveOneHundredIsReadOutOfTenThousand()
+    {
+        var tables = new FakeTables();
+        tables.AddTable(5463, rollMode: 0);
+        tables.AddItem(5463, itemId: 77343, min: 0, max: 0, probability: 5000);
+        tables.AddItem(5463, itemId: 77344, min: 0, max: 0, probability: 1000);
+        tables.AddItem(5463, itemId: 77345, min: 0, max: 0, probability: 100);
+
+        var roller = new LootRoller(tables, new Random(7));
+
+        var dropped = 0;
+        for (var i = 0; i < 1000; i++)
+        {
+            if (roller.Roll(5463).Count > 0)
+            {
+                dropped++;
+            }
+        }
+
+        // 6100 out of 10000. Read as percent this is 1000 of 1000, which is the bug.
+        Assert.InRange(dropped, 560, 660);
+    }
+
     [Fact]
     public void AMissingTableDropsNothingRatherThanThrowing()
     {

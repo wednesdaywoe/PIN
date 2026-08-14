@@ -68,7 +68,6 @@ public interface ISDBLoader
     Dictionary<uint, LootTable> LoadLootTable();
     Dictionary<uint, List<LootTableItemDist>> LoadLootTableItemDist();
     Dictionary<uint, List<LootTableSubTableDist>> LoadLootTableSubTableDist();
-    Dictionary<uint, ResourceItem> LoadResourceItem();
 
     // dbzonemetadata
     Dictionary<uint, ZoneRecord> LoadZoneRecord();

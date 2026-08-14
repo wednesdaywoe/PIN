@@ -14,7 +14,19 @@ Part of the [in-game test queue](README.md). Setup, admin commands and the type-
 The check on [M5](../streams/m5-kill-rewards.md). One sentence: kill something and come away holding
 crystite you didn't have.
 
-**None of these have run.** The code landed 2026-08-13 and no client has seen it.
+**K1 ran once on 2026-08-13 and failed on a wrong table lookup. Fixed, not re-run.** 21 kills rolled
+crystite ten times and paid it zero times: `IsResourceItem` asked `dbitems::ResourceItem`, which is
+the gatherable-materials list (Brimstone, Ferrite and the rest, ids 75537 and up) and does not
+contain crystite at id 10. So every roll was correct and every one of them was filed as an unpayable
+item. The check is now the `Resource` flag on the item's own `RootItem` row, which is what
+`createitem` has always used and what [G1](Resource-Payout.md) confirmed against the client.
+
+**The same run confirmed the basis-points guess, on a table that is on the kill path.** "Melded Loot
+Common" (5463) is reached from monster 528's second loot table and its rows are 5000/1000/100. Read
+as percentages that is a distribution that drops something every time; it is out of 10000.
+`LootRoller` now decides the scale per table from its own rows. See [DATA-16](../gaps/data.md).
+
+**Nothing else in the stream has run.**
 
 ## What changed about this milestone
 
@@ -86,7 +98,20 @@ grep -a "not paid — item drops are unbuilt" ~/Games/PIN/logs/GameServer.log
 Zone 448 has thirteen monsters standing in it at login and they respawn about two minutes after
 death, so there is no shortage of targets. `npc 528` and `npc 1196` spawn more at your feet.
 
-## [ ] K1: A kill pays crystite
+## [!] K1: A kill pays crystite
+
+**Failed 2026-08-13 on the first run, and the failure was one line of my code rather than anything
+about loot.** 21 kills, 10 crystite rolls, 0 paid. Every line in the log read
+`rolled item 10 x2, not paid — item drops are unbuilt`, and **item 10 is crystite** — the roller was
+right and the classifier was wrong. `IsResourceItem` consulted `dbitems::ResourceItem`, a table that
+exists, has 111 rows, and is the wrong one: it lists gatherable materials from id 75537 up, not
+things that live in the resource pane. Now reads `ItemFlags.Resource` off `RootItem`, the same check
+`createitem` uses.
+
+Worth keeping as a shape: the entry's own "Fail, the server has it and the screen doesn't" branch
+did not apply, and neither did "nothing in the log". The log was talkative and correct about what it
+had done. What made it findable in one pass was **logging the id and quantity of the thing it
+declined to pay** — the K3 line, written for a different reason, is what identified the bug.
 
 The milestone's exit condition. Everything else here is a qualifier on it.
 
@@ -127,6 +152,14 @@ The only check that exists on the `roll_mode` reading, and the reason it is writ
 
 Pass: step 2 and step 3 add up to roughly the number of kills, and step 2 is somewhere around a
 quarter of them. Two to nine out of twenty is a normal spread and passes.
+
+**The failed K1 run took this measurement by accident and it came out high**: 21 kills, 10 crystite
+rolls, 6 dry, 7 powerups, 1 melded resource. Ten of 21 is 48% against an expected 25%, which is
+about 2.4 standard deviations — unlikely rather than impossible at that sample size. Two things make
+it not yet a finding. The sample is 21, and the run predates the scale fix, which changed how the
+second loot table rolls. **Re-take it at 40 kills or more before drawing anything from it.** If it
+stays near half, the 25% subtable roll is not the only crystite source on the path and the chain
+needs tracing again from `loot_table2_id`.
 
 **Fail, every kill pays:** mode 2 is being applied where a weighted pick belongs, or the 25%
 subtable roll isn't happening. This is the failure that looks like success in game and is worth

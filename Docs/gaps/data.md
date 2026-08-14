@@ -542,10 +542,16 @@ inferred from the arithmetic of the tables themselves rather than from anything 
 Modes 1, 4 and 5 fall into the weighted branch untested, because nothing reachable from a zone 448
 monster uses one.
 
-The second guess is the probability scale. Every table on the kill path uses small percentages, and
-the reading is percent. The column reaches 10000 in `LootTableSubTableDist` and 9638 in
-`LootTableItemDist`, so at least one table somewhere is in basis points and will roll at a hundredth
-of its intended rate here.
+The second guess is the probability scale, and **K1's first run promoted it from theoretical to
+confirmed.** It is not some distant table: "Melded Loot Common" (5463) is reached from monster 528's
+own `loot_table2_id` and its rows are 5000/1000/100. A percentage cannot exceed 100, so that table
+is out of 10000, and reading it as percent made a rarity gradient into something that dropped on
+every kill.
+
+`LootRoller.ScaleOf` now decides per table — 10000 if any of the table's own rows exceeds 100,
+otherwise 100 — which keeps a table internally consistent and gets both known cases right: table 25
+(80/10/5/5) stays a percentage distribution summing to exactly 100, and 5463 (6100 of 10000) becomes
+61% something and 39% nothing. That is still an inference. Nothing in the file marks the scale.
 
 **What this costs is drop rates, not correctness.** A wrong reading pays too often or too rarely; it
 does not pay the wrong thing, because quantities and item ids come off the rows directly.
