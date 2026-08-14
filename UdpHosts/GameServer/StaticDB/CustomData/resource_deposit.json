@@ -19,7 +19,7 @@
     "position": {
       "x": 138.8,
       "y": 181.3,
-      "z": 401.0
+      "z": 401
     },
     "radius": 45
   },
@@ -43,7 +43,19 @@
     "position": {
       "x": 31.6,
       "y": 268.9,
-      "z": 401.0
+      "z": 401
+    },
+    "radius": 35
+  },
+  {
+    "id": 5,
+    "zone_id": 448,
+    "name": "Tier 1 - Common - Raw Iron - Normal",
+    "node_type_id": 233,
+    "position": {
+      "x": -289.40768,
+      "y": 141.07364,
+      "z": 401.66394
     },
     "radius": 35
   }

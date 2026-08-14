@@ -22,7 +22,7 @@ covers what's missing and what order to fix it in.
 M1 confirm the combat models                        done
  └─> M2 NPCs that fight back                        done
       ├─> M3 resources come out of the ground       done
-      │    ├─> M4 where you thump matters           S1-S2 passed, S3-S5 are the exit condition
+      │    ├─> M4 where you thump matters           done
       │    └─> M7 an encounter that plays
       └─> M5 killing something pays                 done
 
@@ -32,10 +32,23 @@ M8 session stability             independent, but "playable" isn't honest withou
 
 ## Current frontier
 
-**M4: where you thump matters has its visible half confirmed — S1 and S2 both pass — and the three
-entries that decide the milestone are unrun.** A player can now see where the zone's resources are
-and read what is under their feet; nobody has yet thumped a rich deposit and a poor one and compared
-the piles, which is the exit condition. The milestone that was "the one with no ground truth to check against" turned out to be
+**M4: where you thump matters is done, closed 2026-08-14 by
+[S1–S6](In-Game-Tests/Thump-Placement.md) passing in full.** The exit condition was "thump a rich
+deposit and a poor one and come away with visibly different piles", and the sitting produced **48
+crystite near the rich vein's center, 33 from the same vein 59% of the way out, 8 from the poor
+trace, and one unit of dirt from barren ground**. Four node types resolved from position in one
+session. The gradient is not a claim about code any more; it is four numbers a player watched
+arrive.
+
+**S6 is the one with consequences beyond this milestone.** A deposit placed by walking to a spot and
+typing `deposit add 233` survived a restart with its id, position and radius intact, and was thumped
+again afterwards — so zone content can be authored from inside the running game, the same doctrine
+`spawngroup` established for monsters, and neither needs this repo. The sitting also produced two
+defects no code read had found: [NET-24](ISSUE-REGISTER.md), a finished thumper the client leaves
+standing in the world forever, and [DATA-18](ISSUE-REGISTER.md), the hardcoded ability that sends it
+away.
+
+The milestone that was "the one with no ground truth to check against" turned out to be
 half-shipped after all: `dbzonemetadata::ResourceNodeType` and `ResourceNodeTypeResource` carry 46
 node types and 67 live yield rows — the center-to-rim gradient is real data, crystite is item 10 in
 it, and node type 20, the literal every thumper used, is the data's own name for barren ground
@@ -47,9 +60,9 @@ and a `deposit` admin command that places one where you stand, with the same foo
 that is safe to author without terrain. All four scan-protocol messages now carry real data, the
 thumper pays the gradient where it stands scaled by its own progress bar — so G4's partial-yield
 question died on the drawing board — and the flat 200-crystite grant is gone.
-[S1–S6](In-Game-Tests/Thump-Placement.md) are the check; S3–S5 are the exit condition, and the
-ranges (40–100 rich, 10–25 poor, ~nothing barren) cannot overlap, so single runs decide. The two
-invented values are flagged in the stream doc: `Unk4` on a scan area (radius, by guess) and the
+[S1–S6](In-Game-Tests/Thump-Placement.md) were the check, and the ranges predicted for them
+(40–100 rich, 10–25 poor, ~nothing barren) were written before any of it ran. The two invented
+values are flagged in the stream doc: `Unk4` on a scan area (radius, by guess) and the
 scan def's `Range` column (600m from a shipped comment, 100m elsewhere). Full detail in
 [streams/m4-thump-placement.md](streams/m4-thump-placement.md).
 
@@ -342,14 +355,15 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Fill in the grant defs that matter — needs the client's ability data, same gap as
   [DATA-5](gaps/data.md#data-5)
 
-[Full detail](streams/m4-thump-placement.md) — code complete 2026-08-13,
-[S1–S6](In-Game-Tests/Thump-Placement.md) 2 of 6 passed, S3–S5 are the exit condition
+[Full detail](streams/m4-thump-placement.md) — COMPLETE 2026-08-14,
+[S1–S6](In-Game-Tests/Thump-Placement.md) 6 of 6 passed
 
 - [x] Load node type and yield tables — live data, 46 types and 67 gradient rows; the sampler is
   pinned offline by `DepositSamplerTests` on the real rows
-- [~] Per-zone resource map ("what's near here") — four deposits on walked ground in
-  `resource_deposit.json`, plus the `deposit` command to author more in game; discs not yet seen
-  from a client (S6)
+- [x] Per-zone resource map ("what's near here") — four deposits on walked ground in
+  `resource_deposit.json`, plus the `deposit` command to author more in game. **S6 passed
+  2026-08-14**: a fifth deposit placed by walking survived a restart with its id, position and
+  radius, and was thumped again afterwards
 - [x] Show deposits on the map — **passed 2026-08-13, S1**: the station outpost's radar reads
   `Crystite, Iron Ore`. Three sittings to find the layer that actually draws.
   `FoundResourceAreas` is beta-era and ignored; `ResourceLocationInfosResponse` carries the deposit
@@ -358,16 +372,20 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
   `Outpost::ObserverView.NearbyResourceItems`, which `OutpostEntity` now fills from the deposits in
   reach. Zone 448's station advertises crystite and raw iron (S1)
 - [x] Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0` — **passed 2026-08-14, S2**,
-  on the tester's word after a restart truncated the log. The Scan Hammer's ability module (56811,
+  logged the second time round at `feedback OK, scan 1, node type 242, 1 resource(s)` after the
+  first pass was recorded on the tester's word and a restart truncated its log. The Scan Hammer's ability module (56811,
   ability 34503) in `GearAuxWeapon` puts the scan on **G**, the animation plays, and the client
   sends the request the 2016 capture never contains once. The first attempt read barren everywhere
   because deposit 1 sat inside the station's no-thumping zone
   ([DATA-17](ISSUE-REGISTER.md), closed by moving it)
-- [~] Resolve node type from position instead of the literal `20` — all three call sites resolve;
-  20 survives as what barren ground is ([DATA-2](ISSUE-REGISTER.md) fixed in code)
-- [~] Sample the gradient where the thumper landed and pay that out — payout scales with the
-  progress bar (G4's question, answered before it ran) and `ResourceNodeCompletedEvent` closes the
-  scan's loop; the flat 200 grant is gone (S3–S5)
+- [x] Resolve node type from position instead of the literal `20` — all three call sites resolve,
+  and **four distinct node types resolved from position in one 2026-08-14 sitting** (242, 241, 233,
+  and 20 for barren ground) ([DATA-2](ISSUE-REGISTER.md), closed)
+- [x] Sample the gradient where the thumper landed and pay that out — **passed 2026-08-14, S3–S5**:
+  48 crystite near the rich vein's center, 33 from the same vein 59% out, 8 from the poor trace, one
+  unit of dirt from barren ground. Payout also scales with the progress bar, so a thumper pulled up
+  4% done paid 1 of what a full run would have (G4). `ResourceNodeCompletedEvent` closes the scan's
+  loop and the flat 200 grant is gone
 
 [Full detail](streams/m5-kill-rewards.md) — COMPLETE 2026-08-13, 1 dropped, 2 landed, 2 deferred
 

@@ -30,6 +30,12 @@ scanned yet:
 | 2 | Basin Mouth Iron | 233 | 138.8, 181.3, 401.0 | 45m | 25–35 raw iron (86668) |
 | 3 | Basin West Crystite Trace | 241 | 85.5, 226.8, 400.9 | 35m | 10–25 crystite |
 | 4 | North Flats Crystite and Iron | 239 | 31.6, 268.9, 401.0 | 35m | 8–15 crystite + 16–32 raw iron |
+| 5 | Tier 1 - Common - Raw Iron - Normal | 233 | -289.4, 141.1, 401.7 | 35m | 25–35 raw iron (86668) |
+
+**Deposit 5 was placed from inside the game**, by walking to the west of the basin and typing
+`deposit add 233` — that is [S6](#x-s6-a-deposit-placed-by-walking-survives-a-restart)'s pass, and it
+keeps the name the command gives a new deposit, which is its node type's. The other four were written
+into the file by hand.
 
 Quantities fall linearly from those center ranges to the rim ranges (mostly 0–5), so **standing at
 the middle of a disc pays several times what its edge does**, and a rim roll can legitimately come
@@ -235,7 +241,26 @@ the Scan Hammer to find a valid thumping spot". Getting one into a character's h
 piece of work, and until then a `[-]` here is about equipment, not about a dead message.
 
 ## [x] S3: Thumping the rich center pays center values
-> I saw 33 Crystite in the in-game toast, I was off-center
+
+**Passed 2026-08-14 on the second attempt of the sitting**, and the first attempt is the better
+evidence of the two because it missed:
+
+```
+08:54:33  mined node type 242 at distance fraction 0.59 of deposit [1] Basin Head Crystite,
+          completion 1.00: 1 resource kind(s), 33 total     -> paying 33 of resource 10
+09:29:07  mined node type 242 at distance fraction 0.19 of deposit [1] Basin Head Crystite,
+          completion 1.00: 1 resource kind(s), 48 total     -> paying 48 of resource 10
+```
+
+The second run is the pass: 48 crystite, inside the 40–100 band, from a thumper set down near the
+center. The tester saw the same 48 in the on-screen toast.
+
+**The first run is what makes it convincing.** It was set down 17.6m out on a 30m deposit — 59% of
+the way to the rim — and paid 33, which the tester noticed at the time ("I was off-center"). The
+gradient interpolates the center's 40–100 toward the rim's 0–5, so 0.59 predicts roughly 16–44.
+Two runs on the same deposit, minutes apart, differing only in where they stood, and the payout
+tracked the distance. **That is the milestone stated as one sentence.**
+
 The milestone's exit condition, first half. Same shape as G2, on the one deposit whose center is
 walked ground.
 
@@ -259,7 +284,23 @@ thump-results screen, if `ResourceNodeCompletedEvent` renders) shows crystite at
 wrong build deployed. If it's 0–5, the distance fraction read the rim at the center; step 5's
 `distance fraction` says which happened.
 
-## [ ] S4: Thumping barren ground pays approximately nothing
+## [x] S4: Thumping barren ground pays approximately nothing
+
+**Passed 2026-08-14**, and it settled the open question in step 5 on the way past:
+
+```
+09:36:52  mined node type 20 at distance fraction 1.00 of no deposit, completion 1.00:
+          1 resource kind(s), 1 total   ->  paying 1 of resource 30404 to 1 participant(s)
+```
+
+Seven and a half minutes of drilling for **one unit of sifted earth**, and no crystite at all. The
+line reads `paying`, not `not paid`, which answers what the entry could not assume: **item 30404
+does carry the `Resource` flag**, so barren ground pays a real item rather than dropping one on the
+floor. It is simply worth nothing, which is the point.
+
+Three earlier barren thumps the same morning (08:28, 08:50, 09:25) produced the identical line at
+`0 participant(s)` — those are the Aero's unattended debug thumper, and their agreement is
+[G5](Resource-Payout.md) still holding.
 
 The other half of "where you thump matters". Anywhere 100m+ from all four centers works; the
 walked-ground candidates are along the basin road between deposits.
@@ -278,7 +319,19 @@ walked-ground candidates are along the basin road between deposits.
 Pass: crystite unchanged, and the log accounts for the sifted earth one way or the other. Seven and
 a half minutes for a single unit of dirt is retail's own answer to thumping nowhere.
 
-## [ ] S5: A poor deposit visibly underpays a rich one
+## [x] S5: A poor deposit visibly underpays a rich one
+
+**Passed 2026-08-14. Four crystite payouts, one poor deposit and one rich, and nothing overlaps:**
+
+| Time | Deposit | Distance out | Paid |
+|------|---------|--------------|------|
+| 09:29 | [1] Basin Head Crystite (rich) | 0.19 | **48** |
+| 08:54 | [1] Basin Head Crystite (rich) | 0.59 | 33 |
+| 09:45 | [3] Basin West Crystite Trace (poor) | 0.72 | **8** |
+
+48 against 8 is not a margin anyone has to squint at. Both deposits were read at their own distance
+fractions rather than dead center, so this is the gradient and the deposit's own richness compounding
+— which is the honest version of the milestone anyway. Nobody thumps exactly on a center.
 
 Exit condition, second half: "thump a rich one and a poor one, and come away with visibly different
 piles". Basin West Crystite Trace pays 10–25 at center against the shelf's 40–100 — the ranges
@@ -300,7 +353,26 @@ and resolves like everything else since M4, so expect a `paying <40–100> of re
 participant(s)` from it. **The participant count still tells the thumpers apart**; that is G5's
 check surviving the payout model change.
 
-## [ ] S6: A deposit placed by walking survives a restart
+## [x] S6: A deposit placed by walking survives a restart
+
+**Passed 2026-08-14 on the second attempt.** Deposit **5**, "Tier 1 - Common - Raw Iron - Normal",
+node type 233, was placed by walking to -289.4, 141.1 and typing `deposit add 233`. It was thumped
+immediately (`in deposit [5]`, paying raw iron), the server was restarted with `--no-build`, and it
+came back whole:
+
+```
+09:51:24  Resource locations for <player>: 5 deposit(s) in zone 448
+09:53:07  Thumper 766269 called down at <-299.7, 128.0, 401.8>,
+          in deposit [5] Tier 1 - Common - Raw Iron - Normal (node type 233)
+```
+
+Same id, same position, same 35m radius, and thumpable again on the far side of the disc. **New
+zone content does not need this repo** — which is the entry's real claim, and the same one
+`spawngroup` makes for monsters.
+
+The first attempt failed for a reason outside the entry: it was restarted with a plain
+`./start-pin.sh`, which reinstalled the repo's four-deposit file over the five-deposit one the game
+had written. See the note at the end of this entry.
 
 The `deposit` command is the authoring loop, same doctrine as `spawngroup`: the running game is the
 editor. This is the entry that proves new zone content doesn't need this repo.

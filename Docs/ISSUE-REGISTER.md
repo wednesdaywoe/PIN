@@ -35,13 +35,15 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 3 of 18 closed
+[Full detail](gaps/data.md) — 4 of 18 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
-- [~] **DATA-2** — Thump `nodeType` hardcoded to `20`, every deposit identical. Fixed in code
+- [x] **DATA-2** — Thump `nodeType` hardcoded to `20`, every deposit identical. Fixed in code
   2026-08-13 by M4 — node type resolves from the deposit under the calldown, barren ground stays
-  20 — unverified in game until [S3–S5](In-Game-Tests/Thump-Placement.md) run
+  20 — and **confirmed in game 2026-08-14** by [S3–S5](In-Game-Tests/Thump-Placement.md): four
+  distinct node types resolved from position in one sitting (242, 241, 233, and 20 for barren), and
+  the same deposit paid 48 near its center against 33 at 59% out
 - [ ] **DATA-3** — `Battleframe.base_health` reads ~1000 in SDB vs. 19192 observed live, no scaling
   logic
 - [ ] **DATA-4** — Splash and ability-projectile range falloff are guessed/unmodeled, unlike the
@@ -92,7 +94,11 @@ baseline the next pass diffs against.
   split between the two paths, so the hardcoded `34216` is the suspect and the shipped
   `completed_ability` (123 on all 40 `aptfs::ResourceNodeBeaconCalldownCommandDef` rows) is what
   retail played. Cosmetic, and a one-line read to fix once a side-by-side confirms it —
-  [G4](In-Game-Tests/Resource-Payout.md) is written to take that reading
+  [G4](In-Game-Tests/Resource-Payout.md) is written to take that reading. A second report the same
+  day — "sound effect and launch prep animation played, thumper remained on the ground" — is a
+  different fault on the same event and belongs to [NET-24](#networking--protocol--net): the
+  departure the client plays is the animation, and the model staying behind is the client never
+  being told the entity is gone
 
 - [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
   is inferred from the tables' own arithmetic; costs drop rates, not correctness, and
@@ -100,7 +106,7 @@ baseline the next pass diffs against.
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 1 of 23 closed
+[Full detail](gaps/network.md) — 1 of 24 closed
 
 - [ ] **NET-1** — No retransmit queue; "reliable" only acks, never resends (scheduled as M8)
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
@@ -145,6 +151,20 @@ baseline the next pass diffs against.
   them. Monsters teleported, and fired at where you used to be for seconds before snapping round —
   the burst itself travels on the combat view and arrived on time. Damage was always resolved from
   the live direction. Fixed 2026-08-13 with `NpcPose`, confirmed the same day by N8–N13 passing
+
+- [ ] **NET-24** — A finished thumper never leaves the client. Reported 2026-08-14: "on sending
+  thumper away, sound effect and launch prep animation played, thumper remained on the ground."
+  The server removes the entity and pays out correctly; the client keeps its copy and asks for a
+  fresh keyframe of the dead entity's `ResourceNode_ObserverView` every ~5.5 seconds, **forever**.
+  One 32-minute sitting accumulated **648 failed requests across four abandoned thumpers**
+  (259/218/134/37, each rate-constant from the moment its thumper was removed), and the loop grows
+  by one thumper each time. The server is answering correctly — `NetworkClient` masks the
+  controller byte and looks up an entity that is genuinely gone — so this is a scope-out that never
+  arrives or never takes. **Not universal**: the two thumpers cut short by a player that day left no
+  stale requests at all, and only the four that ran their full cycle did, which points at the same
+  `OnInteraction`/`OnUpdate` split as [DATA-18](#static-data--data) rather than at removal itself.
+  No session has yet been shown to end because of it, but the 2026-08-14 client quit with two loops
+  outstanding
 
 - [ ] **NET-23** — A dead player has no way back. `Die` runs correctly and `RequestRespawn` is
   implemented, but the client never sends it, so death ends the session. Found by

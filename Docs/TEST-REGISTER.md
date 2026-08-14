@@ -19,12 +19,24 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
-**[Thump Placement](In-Game-Tests/Thump-Placement.md) is mid-run, 2 of 6.** It checks
-[M4](PROGRESS.md): four deposits in zone 448, a scan that sends them, a ground report that reads
-them, and a thumper that pays what it stands on. S1 and S2 are passed — the map names the zone's
-resources, and a ground report reads back under an equipped Scan Hammer. **S3–S5 are the
-milestone's exit condition**, unrun, and their expected ranges cannot overlap, so single runs
-decide.
+**[Thump Placement](In-Game-Tests/Thump-Placement.md) closed [M4](PROGRESS.md) on 2026-08-14 — 6 of
+6.** The whole stream ran in one long sitting. The map names the zone's resources (S1), a ground
+report reads what is under your feet (S2), and the payouts came out as the milestone predicted:
+
+| | Where | Paid |
+|---|-------|------|
+| S3 | rich crystite vein, near center | **48 crystite** |
+| | the same vein, 59% out to the rim | 33 crystite |
+| S5 | the poor crystite trace, 72% out | **8 crystite** |
+| S4 | barren ground | 1 unit of sifted earth |
+
+**Where you thump now matters, and it is measurable.** S6 closed it: a deposit placed by walking to
+a spot and typing `deposit add` survived a restart with its id, position and radius intact, and was
+thumped again afterwards — so new zone content does not need this repo.
+
+Two defects came out of the sitting rather than out of a code read, which is what the queue is for:
+[NET-24](ISSUE-REGISTER.md), a finished thumper the client never removes from the world, and
+[DATA-18](ISSUE-REGISTER.md), the hardcoded ability that sends it away.
 
 **A restart no longer destroys a sitting's log.** S2 passed on 2026-08-14 and its transcript did
 not survive: every start truncated `logs/`, and the restart S6 asks for took the evidence of
@@ -279,18 +291,15 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   thumper cut short pays. **M4 replaced the payout model after these passed** — a re-run of G2's
   steps now pays what the ground holds, not a flat 200; the record stands as history and G4 was
   rewritten for the gradient before ever running
-- [~] [Thump Placement](In-Game-Tests/Thump-Placement.md) — 2 of 6, [M4](PROGRESS.md)'s check.
-  **S1 passed 2026-08-13**: the map's resource layer names the zone's deposits, off the outpost
-  radar rather than the two overlays that looked like the obvious candidates. **S2 passed
-  2026-08-14 on the tester's word, with its log lost** — the sitting was restarted with a plain
-  `./start-pin.sh`, which truncated `GameServer.log`; outgoing logs are kept in `logs/previous/`
-  from that day on, so this is the last entry that can happen to. Both protocol unknowns S1 and S2
-  carried are settled: `ResourceLocationInfo`'s field order was confirmed twice, and the request
-  nothing in the UI sends turns out to come from the client's own code behind an equipped Scan
-  Hammer. S3–S5 are the milestone's exit condition (rich center 40–100 crystite, barren ground
-  ~nothing, poor deposit 10–25, ranges that cannot overlap) and are unrun; S6 proves the `deposit`
-  command's authoring loop survives a restart and **needs `--no-build`**, since a rebuild-restart
-  reinstalls the repo's copy of the file it writes
+- [x] [Thump Placement](In-Game-Tests/Thump-Placement.md) — **6 of 6, closed 2026-08-14**,
+  [M4](PROGRESS.md)'s check. S1 on 2026-08-13; S2–S6 the following day in one sitting. Both protocol
+  unknowns the stream carried are settled: `ResourceLocationInfo`'s field order was confirmed twice,
+  and the ground-report request nothing in the UI sends turns out to come from the client's own code
+  behind an equipped Scan Hammer. The payout table is in the frontier note above. Two footnotes
+  worth keeping: S2's first pass was recorded on the tester's word because a restart truncated the
+  log (fixed the same morning — outgoing logs now rotate into `logs/previous/`), and S6 failed once
+  for a reason outside itself, because a plain `./start-pin.sh` reinstalls the repo's copy of the
+  very file the `deposit` command writes. **S6 needs `--no-build`**
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and

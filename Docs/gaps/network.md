@@ -359,3 +359,46 @@ Two smaller things fall out of the same entry:
 Not an M2 defect — M2 is about whether a monster is worth fighting, and being killed by one is the
 evidence that it is. It belongs to whichever milestone owns the player lifecycle, and until then a
 tester who dies has to reconnect.
+
+### NET-24 — A finished thumper never leaves the client [ ] open
+
+A thumper that completes its cycle pays out correctly and is removed from the shard. **On screen it
+stays standing.** The tester's report, 2026-08-14: "on sending thumper away, sound effect and launch
+prep animation played, thumper remained on the ground."
+
+The server side is doing what it should. `Thumper.OnSuccess` calls `Shard.EntityMan.Remove`, which
+scopes the entity out of every player holding it and then drops it. The client, however, goes on
+asking for a fresh copy of the dead entity's `ResourceNode_ObserverView` — and PIN answers each one
+with a warning, because `NetworkClient` masks the controller byte off the requested id and finds
+nothing under it:
+
+```
+KeyframeRequest failed to find 2233904037877645104 (ResourceNode_ObserverView)
+```
+
+**It never stops.** One 32-minute sitting on 2026-08-14 logged 648 of these across four abandoned
+thumpers — 259, 218, 134 and 37 requests, each starting three to four seconds after its thumper was
+removed and continuing at a flat rate of about one every 5.5 seconds until the client disconnected.
+The load is trivial; the leak is not, because every completed thumper in a session adds another
+permanent loop, and nothing ever retires one.
+
+**Two things narrow it.** First, no earlier log in the project contains a single one of these,
+because no thumper had ever finished while a player was watching — [S3–S5](../In-Game-Tests/Thump-Placement.md)
+on 2026-08-14 were the first runs to take one all the way through. Second, and more useful: **the
+thumpers a player cut short left no stale requests at all.** Two early collections that day (both at
+deposit 5, completions 0.04 and 0.03) produced none, while all four full-cycle runs produced them.
+That is the same split as [DATA-18](data.md#data-18) — `OnInteraction` transitions a `THUMPING`
+thumper straight to `LEAVING` itself, where a completed one is transitioned from `OnUpdate` — so the
+suspicion is that something about the `CLOSING`/`COMPLETED` leg leaves the client holding a view the
+scope-out does not cover, not that removal is broken.
+
+The client's own log shows it adding an observer view to a thumper **already in state 7, `LEAVING`**
+(`tfResourceNode::AddView(Observer) - owner=Fallback, beaconId=33978, state=7`), with the owner
+unresolvable. An entity introduced to a client twelve seconds before it is destroyed, through
+[NET-9](#net-9)'s scope-in hack, is a plausible way to end up with a copy nothing later accounts
+for.
+
+No session has been shown to end because of this. The 2026-08-14 client did quit with two loops
+outstanding, seventeen seconds after the second one began, but it quit cleanly — its own log reads
+`Application shutdown called: no error` — which is not what a client killed by a network fault
+writes.

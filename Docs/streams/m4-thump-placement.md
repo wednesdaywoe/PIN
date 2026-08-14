@@ -203,3 +203,52 @@ output, and a plain `./start-pin.sh` therefore deployed the repo's copy straight
 placed by walking — which is S6's entire subject matter. The repo still wins, deliberately, because
 preserving the local file would mean silently testing stale data; but the outgoing file is now kept
 under `builds/authored/` and the deploy says where it went. S6 runs with `--no-build`.
+
+## Closed: the numbers a player watched arrive
+
+**2026-08-14, [S1–S6](../In-Game-Tests/Thump-Placement.md) all passing.** The milestone asked
+whether where you thump matters. One sitting answered it four times over:
+
+| Where the thumper stood | Node type | Paid |
+|-------------------------|-----------|------|
+| the rich crystite vein, near its center | 242 | **48 crystite** |
+| the same vein, 59% of the way to the rim | 242 | 33 crystite |
+| the poor crystite trace, 72% out | 241 | **8 crystite** |
+| barren ground, no deposit | 20 | 1 unit of sifted earth |
+
+The pair on deposit 1 is the entry worth keeping. Two runs on the same vein, minutes apart, differing
+in nothing but position, and the payout tracked the distance from the center the way the shipped
+gradient says it should. That is a stronger result than the rich-versus-poor comparison the
+milestone was written around, because it removes the deposit itself as a variable.
+
+**The barren case settled a question the entry could not assume.** Node type 20's single unit of item
+30404 came out as `paying 1 of resource 30404`, not `not paid` — so sifted earth carries the
+`Resource` flag and a barren thump does deliver something. It is simply worthless, which is retail's
+own joke about drilling nowhere.
+
+**S6 is the one that outlives the milestone.** Deposit 5 was placed by walking to a spot on the far
+west of the basin and typing `deposit add 233`; it was thumped, the server was restarted, and it came
+back with the same id, position and radius, thumpable again from the other side of its disc. Zone
+content can be authored from inside the running game. That was the doctrine `spawngroup` established
+for monsters, and the reason it holds for deposits too is that a deposit is a disc in X and Y and
+never needs a ground height — [there is no server-side terrain](../gaps/data.md#data-15) to give it
+one.
+
+### What the sitting found that no code read had
+
+Two defects, both on the same event — the moment a thumper leaves.
+
+**[NET-24](../gaps/network.md#net-24): the client never removes a finished thumper.** The server pays
+out and deletes the entity; the model stays standing, and the client asks for a fresh keyframe of the
+dead entity every 5.5 seconds for the rest of the session. One 32-minute stretch logged 648 of these
+across four abandoned thumpers. The narrowing that matters: **thumpers a player cut short left none
+at all**, only the ones that ran their full cycle, which points at the `CLOSING`/`COMPLETED` leg
+rather than at removal.
+
+**[DATA-18](../gaps/data.md#data-18): three of the four state-change abilities are literals.** Only
+the landing and early-collection paths read the beacon's own def. The hardcoded `34216` is what sends
+away a thumper that finished on its own, and the shipped `completed_ability` is what sends away one
+you cut short — two different departures depending on when you press E.
+
+Neither is a payout problem, and neither was visible from the code alone. Both came out of somebody
+standing in the world watching a rig leave.
