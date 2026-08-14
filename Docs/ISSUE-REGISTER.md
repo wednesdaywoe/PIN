@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 2 of 16 closed
+[Full detail](gaps/data.md) — 3 of 17 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -74,13 +74,14 @@ baseline the next pass diffs against.
 - [ ] **DATA-15** — Zone 448's spawn group placements, pack sizes and respawn delays are PIN's own
   content; retail's spawn tables were server-side and nothing in the client db or the zone file
   holds a monster placement. Open by necessity, not pending work
-- [ ] **DATA-17** — Deposit 1, the zone's richest, sits inside the starting station's no-thumping
-  zone. Its center is 14.7m from outpost 17's center, and every scan taken on the shelf on
-  2026-08-13 came back from the client as `NOTHUMPINGZONE` before the server saw a position. The
-  `thumper` admin command still works there because it spawns server-side and never asks the client,
-  so this blocks the player-driven route only — but a deposit a player cannot thump is not restored
-  content. Fix by re-placing it with `deposit add` from walked ground clear of the base; the other
-  three sit 80–141m out and are unaffected
+- [x] **DATA-17** — Deposit 1, the zone's richest, sat inside the starting station's no-thumping
+  zone: its center was 14.7m from outpost 17's, and every scan taken on the shelf on 2026-08-13 came
+  back from the client as `NOTHUMPINGZONE` before the server saw a position. **Moved the same
+  evening to 199.8, 315.7** — one of three coordinates the client itself answered `OK` at that
+  session, 67m from the station and walked, so it is confirmed thumpable rather than merely clear of
+  a base. Renamed Basin Head Crystite. The other three deposits have never been scanned and could
+  have the same problem; a barren reading now logs the nearest deposit and its distance so finding
+  out costs one press of G
 
 - [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
   is inferred from the tables' own arithmetic; costs drop rates, not correctness, and

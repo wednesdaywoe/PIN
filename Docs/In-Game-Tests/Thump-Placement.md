@@ -17,13 +17,16 @@ thumper's payout comes from the spot it stands on rather than from a constant. *
 grant is gone** — [Resource Payout](Resource-Payout.md)'s G2 record describes the old behaviour.
 
 The four deposits, from
-[resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json). Only
-the first is on a coordinate a tester has actually stood on (the G2 thumper site); the other three
-centers are walked spawn-group footings, but their discs extend over unwalked ground:
+[resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json). All
+four centers are coordinates a tester has stood on, and **deposit 1's is the only one the client has
+also confirmed you may thump** — it was moved there on 2026-08-13 after the original center turned
+out to be inside the station's no-thumping zone ([DATA-17](../ISSUE-REGISTER.md)). The other three
+are walked spawn-group footings whose discs extend over unwalked ground, and none of them has been
+scanned yet:
 
 | Id | Name | Node type | Center | Radius | Pays at center |
 |----|------|-----------|--------|--------|----------------|
-| 1 | Station Shelf Crystite | 242 | 158.3, 249.3, 491.9 | 30m | 40–100 crystite |
+| 1 | Basin Head Crystite | 242 | 199.8, 315.7, 401.3 | 30m | 40–100 crystite |
 | 2 | Basin Mouth Iron | 233 | 138.8, 181.3, 401.0 | 45m | 25–35 raw iron (86668) |
 | 3 | Basin West Crystite Trace | 241 | 85.5, 226.8, 400.9 | 35m | 10–25 crystite |
 | 4 | North Flats Crystite and Iron | 239 | 31.6, 268.9, 401.0 | 35m | 8–15 crystite + 16–32 raw iron |
@@ -133,17 +136,18 @@ were invalid, so the composition the tester read can only have come from
 (item, percent) list, guessed from the heatmap's Lua and now seen rendering real deposit data. S1's
 bonus layer is working.
 
-**What is still unproven is a valid reading, and the reason is placement.** All three requests
-carried the client's own verdict `NOTHUMPINGZONE`, so the server correctly declined to read the
-ground. Every one of those spots was 6–20m from the station outpost's center and 18–29m from
-deposit 1's center — that is, **inside deposit 1 and inside the station's no-thumping zone at the
-same time**. Deposit 1's center is 14.7m from the outpost center, so the whole of the zone's richest
-deposit sits in a place the client will not let a player thump. See
-[DATA-17](../ISSUE-REGISTER.md).
+**What is still unproven is a valid reading, and the reason was placement.** Ten scans were taken
+across the evening. Seven came back `NOTHUMPINGZONE` — the client refusing the spot before the
+server sees a position — and **three came back `OK`**, which is the proof that the refusals are
+about where the tester stood rather than anything broken. But all three accepted spots were 78m,
+94m and 182m from the nearest deposit, so `barren` was the right answer every time. No scan has yet
+been taken standing on a deposit with the client's blessing.
 
-Re-run in the basin, where deposits 2, 3 and 4 sit 80–141m out from the station and no base covers
-them. `thumper` still works at deposit 1 because the admin command spawns server-side and never asks
-the client, so S3 is not blocked by this — only the player-driven route is.
+Two fixes came out of that. Deposit 1's old center sat 14.7m from the station outpost, entirely
+inside its no-thumping zone, so **it was moved to 199.8, 315.7 — one of the three coordinates the
+client itself said `OK` to**, 67m from the station and reachable on foot
+([DATA-17](../ISSUE-REGISTER.md), now closed). And a barren reading now names the nearest deposit
+and its distance, so a miss says which way to walk instead of only that you missed.
 
 ### The re-run
 
@@ -159,10 +163,10 @@ button.
    client calls ability slot 5, which is bound to **G** by default. The weapon 56826 is the model you
    hold and grants no ability — equipping that instead is what the 2026-08-13 sitting did, and G
    stayed a plain melee swing.
-2. **Walk to the basin, not the station shelf.** Deposit 3, Basin West Crystite Trace, is centered
-   at 85.5, 226.8 and is 91m from the station — far enough out that no base covers it. The station
-   shelf is a no-thumping zone and every scan taken there is refused by the client before the server
-   sees a position ([DATA-17](../ISSUE-REGISTER.md)).
+2. **Walk down to deposit 1, Basin Head Crystite, centered at 199.8, 315.7** — 67m from the station,
+   on the one coordinate in the zone the client has already accepted for thumping. Do not scan on the
+   station shelf; it is a no-thumping zone and every scan there is refused before the server sees a
+   position.
 3. **Press G.** `grep -a "ActivateAbility Slot 5" ~/Games/PIN/logs/GameServer.log` proves the press
    arrived; the server now also logs `nothing slotted in GearAuxWeapon` when the slot is empty and
    `is slotted but is not an ability module` when the wrong item is in it, so a dead key names its
@@ -172,9 +176,10 @@ button.
 5. If no report follows, `pflags detect_resources` and retry — that permission gates the client's
    resource-scanning HUD, and turning it on also makes the client re-ask for the deposit list.
 6. `grep -a "Geo report" ~/Games/PIN/logs/GameServer.log` — expect
-   `feedback OK, scan 1, node type 241, 1 resource(s)` for Basin West. **`feedback NOTHUMPINGZONE`
-   means the spot itself was refused**, not that the ground is empty; walk further from any base and
-   press G again.
+   `feedback OK, scan 1, node type 242, 1 resource(s)`. The two failure modes now read differently:
+   **`feedback NOTHUMPINGZONE` means the spot was refused** by the client, so move away from any
+   base and press G again; **`feedback OK, barren`** means the spot was fine and holds nothing, and
+   the same line names the nearest deposit and its distance so you know which way to walk.
 7. Walk somewhere no deposit covers (100m+ from every center in the table) and scan again. Expect
    the grep to end in `barren`.
 8. Open the map. `MapOpened` now re-sends your latest report instead of a hardcoded empty one —
@@ -206,13 +211,13 @@ The milestone's exit condition, first half. Same shape as G2, on the one deposit
 walked ground.
 
 1. Run [G1](Resource-Payout.md) first if this is a fresh character, for the baseline.
-2. Walk — do not `tp` — to within a few metres of 158.3, 249.3 (beside the G2 thumper site, near
-   the Battleframe Station). Note the crystite count.
+2. Walk — do not `tp` — to within a few metres of 199.8, 315.7, deposit 1's center at the head of
+   the basin, 67m from the Battleframe Station. Note the crystite count.
 3. `thumper` — the feedback line now names the ground: expect
-   `in deposit [1] Station Shelf Crystite (node type 242)`.
+   `in deposit [1] Basin Head Crystite (node type 242)`.
 4. Let it run its full cycle untouched — interacting early is G4's entry.
 5. `grep -a "mined node type" ~/Games/PIN/logs/GameServer.log` — expect
-   `mined node type 242 at distance fraction 0.0x of deposit [1] Station Shelf Crystite,
+   `mined node type 242 at distance fraction 0.0x of deposit [1] Basin Head Crystite,
    completion 1.00: 1 resource kind(s)`.
 6. `grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log` — expect
    `paying <40–100> of resource 10 to 1 participant(s)`.

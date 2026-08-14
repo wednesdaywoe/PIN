@@ -399,13 +399,40 @@ public class BaseController : Base
             character.EntityId,
             position,
             request.Feedback,
-            report == null ? "barren" : $"scan {report.ScanId}, node type {report.NodeTypeId}, {report.Composition.Length} resource(s)");
+            report == null
+                ? $"barren; {NearestDepositSummary(client.AssignedShard.ZoneId, position)}"
+                : $"scan {report.ScanId}, node type {report.NodeTypeId}, {report.Composition.Length} resource(s)");
 
         var response = report == null
             ? new GeographicalReportResponse { ScanId = 0, Position = position, Valid = 0x00, Composition = [] }
             : new GeographicalReportResponse { ScanId = report.ScanId, Position = report.Position, Valid = 0x01, Composition = report.Composition };
 
         client.NetChannels[ChannelType.ReliableGss].SendMessage(response, character.EntityId);
+    }
+
+    /// <summary>
+    ///     Which deposit was closest and how far, so an empty reading says which way to walk. A
+    ///     barren answer is otherwise indistinguishable whether you missed a deposit by five metres
+    ///     or by five hundred, and searching a zone by trial and error is how a sitting gets spent.
+    /// </summary>
+    private static string NearestDepositSummary(uint zoneId, Vector3 position)
+    {
+        ResourceDeposit nearest = null;
+        var nearestDistance = float.MaxValue;
+
+        foreach (var deposit in CustomDBInterface.GetZoneResourceDeposits(zoneId).Values)
+        {
+            var distance = DepositSampler.DistanceXY(deposit.Position, position);
+            if (distance < nearestDistance)
+            {
+                nearest = deposit;
+                nearestDistance = distance;
+            }
+        }
+
+        return nearest == null
+            ? "no deposits in this zone"
+            : $"nearest is [{nearest.Id}] {nearest.Name} at {nearestDistance:F0}m, radius {nearest.Radius:F0}m";
     }
 
     [MessageID((byte)Commands.RequestTeleport)]

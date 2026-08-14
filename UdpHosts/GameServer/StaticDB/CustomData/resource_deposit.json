@@ -2,12 +2,12 @@
   {
     "id": 1,
     "zone_id": 448,
-    "name": "Station Shelf Crystite",
+    "name": "Basin Head Crystite",
     "node_type_id": 242,
     "position": {
-      "x": 158.3,
-      "y": 249.3,
-      "z": 491.93
+      "x": 199.84,
+      "y": 315.67,
+      "z": 401.29
     },
     "radius": 30
   },

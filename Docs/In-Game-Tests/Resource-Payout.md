@@ -219,11 +219,12 @@ quantity by the progress bar, so a thumper cut short pays the fraction it mined.
 G2 accidentally previewed — the tester collected at `COMPLETED`, when progress was already 1.00,
 and was paid in full.
 
-Run it inside the Station Shelf Crystite deposit (walk to within a few metres of 158.3, 249.3 near
-the Battleframe Station), because a fraction of a 40–100 roll is measurable and a fraction of
-barren ground's single unit is not.
+Run it inside the Basin Head Crystite deposit (walk to within a few metres of 199.8, 315.7, 67m
+from the Battleframe Station), because a fraction of a 40–100 roll is measurable and a fraction of
+barren ground's single unit is not. That deposit moved on 2026-08-13: its old center by the station
+was inside a no-thumping zone ([DATA-17](../ISSUE-REGISTER.md)).
 
-1. Note the crystite count. `thumper` — expect `in deposit [1] Station Shelf Crystite`.
+1. Note the crystite count. `thumper` — expect `in deposit [1] Basin Head Crystite`.
 2. Let it reach `THUMPING` — `grep -a "Thumper .* entered" ~/Games/PIN/logs/GameServer.log | tail -3`
    confirms it — then wait roughly 2½ minutes, about half the 300-second thumping window.
 3. Interact with it (hold to use).

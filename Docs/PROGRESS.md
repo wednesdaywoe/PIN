@@ -64,9 +64,11 @@ trigger it was waiting on is the Scan Hammer's **ability module** (56811, abilit
 `GearAuxWeapon` slot — which is the **G** key. With it slotted, the animation plays and the client
 sends `GeographicalReportRequest`, a message the whole 2016 capture does not contain once. The
 overlay draws deposits with their composition, which retires the last field-order guess. What is left
-is a valid ground reading: the starting station is a no-thumping zone and deposit 1 sits inside it
-([DATA-17](ISSUE-REGISTER.md)), so every scan taken there is refused by the client before the server
-sees it.
+is a valid ground reading. Ten scans that evening produced seven `NOTHUMPINGZONE` refusals and
+**three `OK`s**, which proves the refusals are about where the tester stood — but all three accepted
+spots were 78–182m from any deposit, so `barren` was correct each time. Deposit 1 has been moved onto
+one of those accepted coordinates ([DATA-17](ISSUE-REGISTER.md), closed), and a barren reading now
+names the nearest deposit and its distance.
 
 **M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.md).** A
 Gaia creature died and paid 4 crystite, logged as `paid 4 of resource 10`, and the tester saw it
