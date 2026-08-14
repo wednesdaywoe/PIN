@@ -119,7 +119,33 @@ the real deposit table — correct, and still invisible, which is what the secon
 
 </details>
 
-## [ ] S2: The ground says what is under it
+## [~] S2: The ground says what is under it
+
+**The trigger is found and the whole loop runs, 2026-08-13.** With ability module 56811 in
+`GearAuxWeapon`, pressing **G** plays the Scan Hammer animation, fires ability 34503, and the client
+sends `GeographicalReportRequest` — the message the 2016 capture contains none of. The scan overlay
+draws, showing density and naming what is in the scanned area.
+
+**Those labels are not coming from this entry's message.** All three reports the server answered
+were invalid, so the composition the tester read can only have come from
+`ResourceLocationInfosResponse` — which is the heat-blob layer, fed by the client-side patch, and
+**that confirms the `ResourceLocationInfo` field mapping outright**: position, radius, and an
+(item, percent) list, guessed from the heatmap's Lua and now seen rendering real deposit data. S1's
+bonus layer is working.
+
+**What is still unproven is a valid reading, and the reason is placement.** All three requests
+carried the client's own verdict `NOTHUMPINGZONE`, so the server correctly declined to read the
+ground. Every one of those spots was 6–20m from the station outpost's center and 18–29m from
+deposit 1's center — that is, **inside deposit 1 and inside the station's no-thumping zone at the
+same time**. Deposit 1's center is 14.7m from the outpost center, so the whole of the zone's richest
+deposit sits in a place the client will not let a player thump. See
+[DATA-17](../ISSUE-REGISTER.md).
+
+Re-run in the basin, where deposits 2, 3 and 4 sit 80–141m out from the station and no base covers
+them. `thumper` still works at deposit 1 because the admin command spawns server-side and never asks
+the client, so S3 is not blocked by this — only the player-driven route is.
+
+### The re-run
 
 `GeographicalReportRequest` finally has a handler. The client sends it carrying only its own verdict
 on the spot (`OK`, `NOTHUMPINGZONE`, `INVALIDSURFACE`); the server reads the ground under your feet
@@ -133,7 +159,10 @@ button.
    client calls ability slot 5, which is bound to **G** by default. The weapon 56826 is the model you
    hold and grants no ability — equipping that instead is what the 2026-08-13 sitting did, and G
    stayed a plain melee swing.
-2. Stand on the station shelf, within 30m of 158.3, 249.3 — the G2 thumper site is the center.
+2. **Walk to the basin, not the station shelf.** Deposit 3, Basin West Crystite Trace, is centered
+   at 85.5, 226.8 and is 91m from the station — far enough out that no base covers it. The station
+   shelf is a no-thumping zone and every scan taken there is refused by the client before the server
+   sees a position ([DATA-17](../ISSUE-REGISTER.md)).
 3. **Press G.** `grep -a "ActivateAbility Slot 5" ~/Games/PIN/logs/GameServer.log` proves the press
    arrived; the server now also logs `nothing slotted in GearAuxWeapon` when the slot is empty and
    `is slotted but is not an ability module` when the wrong item is in it, so a dead key names its
@@ -143,7 +172,9 @@ button.
 5. If no report follows, `pflags detect_resources` and retry — that permission gates the client's
    resource-scanning HUD, and turning it on also makes the client re-ask for the deposit list.
 6. `grep -a "Geo report" ~/Games/PIN/logs/GameServer.log` — expect
-   `feedback OK, scan 1, node type 242, 1 resource(s)`.
+   `feedback OK, scan 1, node type 241, 1 resource(s)` for Basin West. **`feedback NOTHUMPINGZONE`
+   means the spot itself was refused**, not that the ground is empty; walk further from any base and
+   press G again.
 7. Walk somewhere no deposit covers (100m+ from every center in the table) and scan again. Expect
    the grep to end in `barren`.
 8. Open the map. `MapOpened` now re-sends your latest report instead of a hardcoded empty one —

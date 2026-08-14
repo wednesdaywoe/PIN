@@ -132,12 +132,22 @@ answers with the deposit table, shares computed from center-midpoint quantities
 "restore what they threw away" applied to a single message. The scan command keeps sending
 `FoundResourceAreas` — proven server-side, most likely dead client-side — and the field mapping of
 `ResourceLocationInfo` (`Unk1/2/3` = x/y/z, `Unk4` = radius, inner `Unk2` = percent) is a
-capture-informed guess the empty retail body could not confirm; S1's re-run is the check.
+capture-informed guess the empty retail body could not confirm — **settled the same evening**, first
+by the heatmap's own Lua and then by watching it render real deposits in game.
 
 ## What the client's own UI source settled, 2026-08-13
 
 **S1 passed the same evening**: the station outpost's radar reads `Crystite, Iron Ore`. Deposits are
 visible on the map for the first time, by retail's own live mechanism.
+
+**And the scan came back to life an hour later.** The Scan Hammer's ability module (56811, ability
+34503 "Scan Hammer") in the `GearAuxWeapon` slot puts it on **G**, and pressing it plays the
+animation, runs the ability, and makes the client send `GeographicalReportRequest` — a message the
+2016 capture does not contain once. The overlay draws density and names what is in the scanned area,
+and since every report the server answered that evening was invalid, those labels can only be coming
+from `ResourceLocationInfosResponse`: the field mapping below is no longer a guess, it has been seen
+rendering real deposits. What is still unproven is a valid ground reading, because the station shelf
+is a no-thumping zone and deposit 1 sits inside it ([DATA-17](../ISSUE-REGISTER.md)).
 
 The re-run half-passed the same way: the request arrived, PIN answered with four deposits, nothing
 drew. The answer was not in the protocol at all. **The 1962 client ships its entire interface as

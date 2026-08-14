@@ -74,6 +74,14 @@ baseline the next pass diffs against.
 - [ ] **DATA-15** — Zone 448's spawn group placements, pack sizes and respawn delays are PIN's own
   content; retail's spawn tables were server-side and nothing in the client db or the zone file
   holds a monster placement. Open by necessity, not pending work
+- [ ] **DATA-17** — Deposit 1, the zone's richest, sits inside the starting station's no-thumping
+  zone. Its center is 14.7m from outpost 17's center, and every scan taken on the shelf on
+  2026-08-13 came back from the client as `NOTHUMPINGZONE` before the server saw a position. The
+  `thumper` admin command still works there because it spawns server-side and never asks the client,
+  so this blocks the player-driven route only — but a deposit a player cannot thump is not restored
+  content. Fix by re-placing it with `deposit add` from walked ground clear of the base; the other
+  three sit 80–141m out and are unaffected
+
 - [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
   is inferred from the tables' own arithmetic; costs drop rates, not correctness, and
   [K2](In-Game-Tests/Kill-Rewards.md) is the only measurement available
