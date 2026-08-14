@@ -214,7 +214,9 @@
   // -------------------------------------------------------------------
 
   function secIntro() {
-    return h('Crafting') +
+    // Not 'Crafting' — the wiki shell puts that above as the page title, and a
+    // section header repeating it just reads as a stutter.
+    return h('One system, not two') +
       '<p class="cft-lede">Crafting and the constraint economy are one system. Resources are ' +
       'graded on three aspects, Power, Mass and CPU-Cores, which are the same three budgets a ' +
       'battleframe spends against. Choosing materials at the terminal is the constraint tradeoff, ' +

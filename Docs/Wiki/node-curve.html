@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node cost curve</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:#fcfcfb; --plane:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:#1a1a19; --plane:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:#1a1a19; --plane:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body { background: #f9f9f7; }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) body { background: #0d0d0d; }
+  }
+  :root[data-theme="dark"] body { background: #0d0d0d; }
+  .viz-root {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--plane);
+    color: var(--text-primary);
+    padding: 28px 24px 48px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 20px; line-height: 1.55; max-width: 70ch; }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 18px 10px;
+    margin-bottom: 18px;
+  }
+  .card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+  .card-title { font-size: 14px; font-weight: 600; margin:0; }
+  .card-note { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+  .controls { display:flex; gap:6px; align-items:center; }
+  button.seg {
+    font: inherit; font-size:12px; padding:5px 11px; cursor:pointer;
+    background: transparent; color: var(--text-secondary);
+    border:1px solid var(--border); border-radius:6px;
+  }
+  button.seg[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); margin: 2px 0 10px; align-items:center; }
+  .legend .key { display:inline-flex; align-items:center; gap:7px; }
+  .swatch { width:11px; height:11px; border-radius:3px; display:inline-block; }
+  .legend .hint { color: var(--text-muted); }
+  svg { display:block; width:100%; height:auto; overflow:visible; }
+  .tick { font-size:11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .axis-label { font-size:11px; fill: var(--text-muted); }
+  .endlabel { font-size:11px; font-weight:600; }
+  table { border-collapse: collapse; width:100%; font-size:13px; font-variant-numeric: tabular-nums; }
+  th, td { text-align:right; padding:7px 10px; border-bottom:1px solid var(--grid); }
+  th:first-child, td:first-child { text-align:left; }
+  th { font-size:11px; font-weight:600; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; }
+  td.est { color: var(--text-muted); font-style: italic; }
+  tr.estrow td:first-child { color: var(--text-muted); }
+  .tip {
+    position: fixed; pointer-events:none; opacity:0; transition: opacity .08s;
+    background: var(--surface-1); border:1px solid var(--border);
+    border-radius:8px; padding:9px 11px; font-size:12px; color: var(--text-primary);
+    box-shadow: 0 4px 14px rgba(0,0,0,.14); z-index:10; min-width: 168px;
+  }
+  .tip h4 { margin:0 0 6px; font-size:12px; font-weight:600; }
+  .tip .row { display:flex; align-items:center; gap:7px; justify-content:space-between; margin-top:3px; }
+  .tip .row span:last-child { font-variant-numeric: tabular-nums; font-weight:600; }
+  .tip .tag { font-size:11px; color:var(--text-muted); margin-top:7px; display:block; }
+  .foot { font-size:12px; color: var(--text-secondary); line-height:1.6; max-width:74ch; }
+  .foot code { font-size:12px; background: var(--surface-1); border:1px solid var(--border); border-radius:4px; padding:1px 5px; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+
+  <h1>Node cost curve</h1>
+  <p class="sub">Five of ten nodes recovered. Costs climb by a roughly constant multiplier per node, so on a log axis the data lands close to a straight line and the gaps can be bridged by reading across. The multiplier isn't quite fixed: it's about 1.72&times; per node early and 2.0&times; per node at the top, which is why the line bends up slightly.</p>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <p class="card-title">Cost per node</p>
+        <p class="card-note">Solid = recovered. Dashed with hollow markers = estimated.</p>
+      </div>
+      <div class="controls">
+        <button class="seg" id="btn-log" aria-pressed="true">Log scale</button>
+        <button class="seg" id="btn-lin" aria-pressed="false">Linear</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="key"><i class="swatch" style="background:var(--series-1)"></i>XP</span>
+      <span class="key"><i class="swatch" style="background:var(--series-2)"></i>Crystite</span>
+      <span class="key"><i class="swatch" style="background:var(--series-3)"></i>Resource</span>
+      <span class="hint">hover for values</span>
+    </div>
+    <svg id="chart" viewBox="0 0 940 440" role="img" aria-label="Cost per node for XP, Crystite and Resource, nodes 1 to 10"></svg>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <p class="card-title">Step multiplier</p>
+        <p class="card-note">Each node's XP divided by the node before it. Flat bars would mean a pure exponential.</p>
+      </div>
+    </div>
+    <svg id="ratio" viewBox="0 0 940 210" role="img" aria-label="XP multiplier from each node to the next"></svg>
+  </div>
+
+  <div class="card">
+    <p class="card-title" style="margin-bottom:10px">Table</p>
+    <table id="tbl">
+      <thead><tr><th>Node</th><th>XP</th><th>Crystite</th><th>Resource</th><th>&times; prev (XP)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="card-note" style="margin:10px 0 8px">Italic = estimated, not recovered. Resource for nodes 3&ndash;5 assumes the cost starts at node 3; it may simply not exist below node 6.</p>
+  </div>
+
+  <p class="foot">
+    Estimates come from geometric interpolation anchored on the real numbers rather than one global fit. Nodes 3&ndash;5 bridge the known 8,000 &rarr; 70,000 gap at a constant 1.72&times; per step. Nodes 9&ndash;10 continue the 2.0&times; step measured across nodes 6 &rarr; 8. A single exponential over all five points gives <code>XP &asymp; 2,237 &times; 1.82<sup>n</sup></code>, which fits well but overshoots node 6 by 17% and undershoots node 8 by 9%, so it's the weaker basis for filling blanks.
+  </p>
+
+</div>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = [
+  {n:1,  xp:4000,     cr:100,   rs:null,   xpE:false, crE:false, rsE:false, none:true},
+  {n:2,  xp:8000,     cr:200,   rs:null,   xpE:false, crE:false, rsE:false, none:true},
+  {n:3,  xp:13800,    cr:300,   rs:375,    xpE:true,  crE:true,  rsE:true},
+  {n:4,  xp:23700,    cr:450,   rs:560,    xpE:true,  crE:true,  rsE:true},
+  {n:5,  xp:40700,    cr:670,   rs:840,    xpE:true,  crE:true,  rsE:true},
+  {n:6,  xp:70000,    cr:1000,  rs:1250,   xpE:false, crE:false, rsE:false},
+  {n:7,  xp:150000,   cr:2000,  rs:2500,   xpE:false, crE:false, rsE:false},
+  {n:8,  xp:300000,   cr:4000,  rs:5000,   xpE:false, crE:false, rsE:false},
+  {n:9,  xp:600000,   cr:8000,  rs:10000,  xpE:true,  crE:true,  rsE:true},
+  {n:10, xp:1200000,  cr:16000, rs:20000,  xpE:true,  crE:true,  rsE:true},
+];
+const SERIES = [
+  {key:'xp', ekey:'xpE', label:'XP',       color:'var(--series-1)'},
+  {key:'cr', ekey:'crE', label:'Crystite', color:'var(--series-2)'},
+  {key:'rs', ekey:'rsE', label:'Resource', color:'var(--series-3)'},
+];
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const fmt = v => v >= 1000 ? v.toLocaleString('en-US') : String(v);
+
+let scale = 'log';
+
+function renderChart() {
+  const svg = document.getElementById('chart');
+  svg.textContent = '';
+  const W = 940, H = 440, L = 62, R = 92, T = 16, B = 40;
+  const iw = W - L - R, ih = H - T - B;
+
+  const vals = DATA.flatMap(d => SERIES.map(s => d[s.key])).filter(v => v != null);
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const x = n => L + (n - 1) / 9 * iw;
+  let y, ticks;
+  if (scale === 'log') {
+    const lo = Math.log10(80), hi = Math.log10(2000000);
+    y = v => T + ih - (Math.log10(v) - lo) / (hi - lo) * ih;
+    ticks = [100, 1000, 10000, 100000, 1000000];
+  } else {
+    y = v => T + ih - (v / (max * 1.04)) * ih;
+    ticks = [0, 250000, 500000, 750000, 1000000, 1250000];
+  }
+
+  ticks.forEach(t => {
+    if (scale === 'log' && (t < 80 || t > 2000000)) return;
+    svg.appendChild(el('line', {x1:L, x2:L+iw, y1:y(t), y2:y(t), stroke:'var(--grid)', 'stroke-width':1}));
+    svg.appendChild(el('text', {x:L-10, y:y(t)+4, 'text-anchor':'end', class:'tick'})).textContent =
+      t >= 1000000 ? (t/1000000)+'M' : t >= 1000 ? (t/1000)+'k' : String(t);
+  });
+  svg.appendChild(el('line', {x1:L, x2:L+iw, y1:T+ih, y2:T+ih, stroke:'var(--axis)', 'stroke-width':1}));
+  DATA.forEach(d => {
+    svg.appendChild(el('text', {x:x(d.n), y:T+ih+22, 'text-anchor':'middle', class:'tick'})).textContent = d.n;
+  });
+  svg.appendChild(el('text', {x:L+iw/2, y:H-2, 'text-anchor':'middle', class:'axis-label'})).textContent = 'Node';
+
+  const endLabels = [];
+  SERIES.forEach(s => {
+    const pts = DATA.filter(d => d[s.key] != null);
+    // draw segment by segment so estimated stretches read as dashed
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i+1];
+      const estimated = a[s.ekey] || b[s.ekey];
+      svg.appendChild(el('line', {
+        x1:x(a.n), y1:y(a[s.key]), x2:x(b.n), y2:y(b[s.key]),
+        stroke:s.color, 'stroke-width':2, 'stroke-linecap':'round',
+        'stroke-dasharray': estimated ? '5 5' : 'none',
+        opacity: estimated ? 0.75 : 1
+      }));
+    }
+    pts.forEach(d => {
+      const est = d[s.ekey];
+      svg.appendChild(el('circle', {
+        cx:x(d.n), cy:y(d[s.key]), r:5,
+        fill: est ? 'var(--surface-1)' : s.color,
+        stroke: s.color, 'stroke-width':2
+      }));
+    });
+    const last = pts[pts.length-1];
+    endLabels.push({x:x(last.n)+12, y:y(last[s.key])+4, color:s.color, label:s.label});
+  });
+  // nudge apart any end labels that would collide
+  endLabels.sort((a,b) => a.y - b.y);
+  for (let i = 1; i < endLabels.length; i++) {
+    const gap = endLabels[i].y - endLabels[i-1].y;
+    if (gap < 15) endLabels[i].y = endLabels[i-1].y + 15;
+  }
+  endLabels.forEach(l => {
+    const t = el('text', {x:l.x, y:l.y, class:'endlabel', fill:l.color});
+    t.textContent = l.label;
+    svg.appendChild(t);
+  });
+
+  // hover columns
+  const crosshair = el('line', {x1:0,x2:0,y1:T,y2:T+ih, stroke:'var(--axis)', 'stroke-width':1, opacity:0});
+  svg.appendChild(crosshair);
+  const tip = document.getElementById('tip');
+  DATA.forEach(d => {
+    const hit = el('rect', {x:x(d.n)-iw/18, y:T, width:iw/9, height:ih, fill:'transparent'});
+    hit.addEventListener('mouseenter', () => {
+      crosshair.setAttribute('x1', x(d.n)); crosshair.setAttribute('x2', x(d.n));
+      crosshair.setAttribute('opacity', 1);
+      tip.innerHTML = `<h4>Node ${d.n}</h4>` + SERIES.map(s =>
+        `<div class="row"><span><i class="swatch" style="background:${s.color}"></i> ${s.label}</span>` +
+        `<span>${d[s.key] == null ? '—' : (d[s.ekey] ? '~' : '') + fmt(d[s.key])}</span></div>`
+      ).join('') + `<span class="tag">${d.xpE ? 'estimated' : 'recovered'}</span>`;
+      tip.style.opacity = 1;
+    });
+    hit.addEventListener('mousemove', ev => {
+      tip.style.left = Math.min(ev.clientX + 14, window.innerWidth - 200) + 'px';
+      tip.style.top = (ev.clientY - 10) + 'px';
+    });
+    hit.addEventListener('mouseleave', () => { tip.style.opacity = 0; crosshair.setAttribute('opacity', 0); });
+    svg.appendChild(hit);
+  });
+}
+
+function renderRatio() {
+  const svg = document.getElementById('ratio');
+  svg.textContent = '';
+  const W = 940, H = 210, L = 62, R = 92, T = 14, B = 34;
+  const iw = W - L - R, ih = H - T - B;
+  const rows = DATA.slice(1).map((d, i) => ({n:d.n, prev:DATA[i].n, r:d.xp/DATA[i].xp, est:d.xpE||DATA[i].xpE}));
+  const y = v => T + ih - (v / 2.4) * ih;
+  [1, 1.5, 2].forEach(t => {
+    svg.appendChild(el('line', {x1:L, x2:L+iw, y1:y(t), y2:y(t), stroke:'var(--grid)', 'stroke-width':1}));
+    svg.appendChild(el('text', {x:L-10, y:y(t)+4, 'text-anchor':'end', class:'tick'})).textContent = t.toFixed(1)+'×';
+  });
+  svg.appendChild(el('line', {x1:L, x2:L+iw, y1:T+ih, y2:T+ih, stroke:'var(--axis)', 'stroke-width':1}));
+  const bw = iw/9 - 12;
+  rows.forEach((r, i) => {
+    const bx = L + (iw/9)*i + 6;
+    svg.appendChild(el('rect', {
+      x:bx, y:y(r.r), width:bw, height:(T+ih)-y(r.r), rx:4,
+      fill: r.est ? 'none' : 'var(--series-1)',
+      stroke:'var(--series-1)', 'stroke-width': r.est ? 2 : 0,
+      'stroke-dasharray': r.est ? '5 5' : 'none'
+    }));
+    svg.appendChild(el('text', {x:bx+bw/2, y:y(r.r)-7, 'text-anchor':'middle', class:'tick'})).textContent = r.r.toFixed(2)+'×';
+    svg.appendChild(el('text', {x:bx+bw/2, y:T+ih+20, 'text-anchor':'middle', class:'tick'})).textContent = r.prev+'→'+r.n;
+  });
+  svg.appendChild(el('text', {x:L+iw+12, y:y(1.72)+4, class:'endlabel', fill:'var(--text-muted)'})).textContent = '';
+}
+
+function renderTable() {
+  const tb = document.querySelector('#tbl tbody');
+  tb.innerHTML = DATA.map((d, i) => {
+    const ratio = i ? (d.xp/DATA[i-1].xp).toFixed(2)+'×' : '—';
+    const cell = (v, est, none) => none ? '<td>none</td>' :
+      `<td class="${est?'est':''}">${est?'~':''}${fmt(v)}</td>`;
+    return `<tr class="${d.xpE?'estrow':''}"><td>${d.n}</td>` +
+      cell(d.xp, d.xpE) + cell(d.cr, d.crE) + cell(d.rs, d.rsE, d.none) +
+      `<td class="${d.xpE||(i&&DATA[i-1].xpE)?'est':''}">${ratio}</td></tr>`;
+  }).join('');
+}
+
+document.getElementById('btn-log').addEventListener('click', () => {
+  scale = 'log';
+  document.getElementById('btn-log').setAttribute('aria-pressed','true');
+  document.getElementById('btn-lin').setAttribute('aria-pressed','false');
+  renderChart();
+});
+document.getElementById('btn-lin').addEventListener('click', () => {
+  scale = 'linear';
+  document.getElementById('btn-lin').setAttribute('aria-pressed','true');
+  document.getElementById('btn-log').setAttribute('aria-pressed','false');
+  renderChart();
+});
+
+renderChart(); renderRatio(); renderTable();
+</script>
+</body>
+</html>

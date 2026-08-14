@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Firefall 1.6 — Implementation Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ===========================================================================
    DESIGN TOKENS
@@ -15,8 +18,13 @@
   --void:#05090c;  --deep:#08121a;  --panel:#0b1a22;  --panel-hi:#0f2530;
   --cyan:#38dce6;  --cyan-mid:rgba(56,220,230,.34); --cyan-low:rgba(56,220,230,.10);
   --amber:#f2a01e; --text:#cfdcdd;  --mute:#728b91;   --dim:#4a6169;
-  --jade:#5fd35f;  --rust:#d4593a;  --violet:#9b6bc9;
+  --jade:#5fd35f;  --jade-mid:rgba(95,211,95,.4);   --jade-low:rgba(95,211,95,.09);
+  --rust:#d4593a;  --violet:#9b6bc9; --violet-mid:rgba(155,107,201,.4);
   --ch:14px;                                    /* chamfer size */
+  /* Orbitron is the closest free face to Firefall's own UI type. The route
+     modules ask for it by name in their own CSS, so it is loaded here rather
+     than left to each of them. */
+  --f-display:'Orbitron','Rajdhani','Roboto Condensed',system-ui,sans-serif;
   --f-ui:'Ubuntu','Roboto Condensed','Segoe UI',system-ui,sans-serif;
   --f-mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace;
 }
@@ -61,7 +69,7 @@ a:hover{color:#8df1f7;text-shadow:0 0 12px rgba(56,220,230,.5)}
 .rail::-webkit-scrollbar-thumb{background:var(--cyan-mid)}
 
 .brand{padding:2px 0 16px}
-.brand b{display:block;font-size:22px;font-weight:700;letter-spacing:.26em;color:var(--text);
+.brand b{display:block;font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:.30em;color:var(--text);
   text-shadow:0 0 22px rgba(56,220,230,.35)}
 .brand span{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;
   color:var(--amber);text-transform:uppercase;margin-top:5px}
@@ -81,11 +89,14 @@ a:hover{color:#8df1f7;text-shadow:0 0 12px rgba(56,220,230,.5)}
 #q:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 14px rgba(56,220,230,.22)}
 
 /* --- Type --------------------------------------------------------------- */
-h1{font-size:30px;font-weight:700;letter-spacing:.03em;color:var(--text);line-height:1.14}
+/* h1 and h3 read as chapter headings on the display face; h2 stays on the mono
+   face because it is doing system-label duty, not titling anything. */
+h1{font-family:var(--f-display);font-size:30px;font-weight:700;letter-spacing:.01em;
+  color:var(--text);line-height:1.14}
 h2{font-family:var(--f-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
   color:var(--amber);margin:34px 0 12px;display:flex;align-items:center;gap:12px}
 h2::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--cyan-mid),transparent)}
-h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px}
+h3{font-family:var(--f-display);font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px}
 p{margin-bottom:12px;max-width:74ch}
 .lede{color:var(--mute);font-size:15.5px}
 .eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan)}
@@ -165,6 +176,55 @@ td.v.null{color:var(--rust);opacity:.75}
 .tl .what{font-size:13.5px;color:var(--text);margin-top:2px}
 .tl .what a{border-bottom:1px dotted var(--cyan-mid)}
 
+/* --- Lore timeline (#/timeline) ----------------------------------------- *
+   From firefall-timeline-route.js. Namespaced .ltl so it never collides with
+   the patch-history .tl above: that one is a list of deltas, this one is the
+   story, and they want different marks. Violet marks the two things the game
+   showed and never explained; jade marks the one place the tide turned.       */
+.pnl.veil{background:var(--violet-mid)}
+.pnl.veil>.in{background:linear-gradient(160deg,#130d1c 0%,var(--panel) 70%)}
+.pnl.hold{background:var(--jade-mid)}
+.pnl.hold>.in{background:linear-gradient(160deg,#0c1a12 0%,var(--panel) 72%)}
+
+.tab.v{background:var(--violet-mid)}  .tab.v>span{color:var(--violet)}
+.tab.j{background:var(--jade-mid)}    .tab.j>span{color:var(--jade)}
+.note.won{border-left-color:var(--jade);background:var(--jade-low)}
+.note.won .eyebrow{color:var(--jade)}
+
+.tml-legend{display:flex;flex-wrap:wrap;gap:18px;margin:16px 0 6px;font-family:var(--f-mono);
+  font-size:11px;letter-spacing:.06em;color:var(--mute)}
+.tml-legend span{display:inline-flex;align-items:center;gap:9px}
+.tml-legend i{width:10px;height:10px;transform:rotate(45deg);background:var(--void);border:1px solid var(--cyan)}
+.tml-legend i.pivot{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(242,160,30,.6)}
+.tml-legend i.enigma{border-color:var(--violet);box-shadow:0 0 10px rgba(155,107,201,.5)}
+.tml-legend i.won{border-color:var(--jade);box-shadow:0 0 10px rgba(95,211,95,.5)}
+
+.ltl{list-style:none;position:relative;margin:22px 0 0;padding-left:36px}
+.ltl::before{content:'';position:absolute;left:9px;top:12px;bottom:12px;width:1px;
+  background:linear-gradient(180deg,transparent,var(--cyan-mid) 6%,var(--cyan-mid) 94%,transparent)}
+.ltl>li{position:relative;padding-bottom:28px}
+.ltl>li:last-child{padding-bottom:0}
+.ltl>li::before{content:'';position:absolute;left:-31px;top:9px;width:12px;height:12px;
+  background:var(--void);border:1px solid var(--cyan);transform:rotate(45deg)}
+.ltl>li.pivot::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 14px rgba(242,160,30,.65)}
+.ltl>li.enigma::before{border-color:var(--violet);box-shadow:0 0 14px rgba(155,107,201,.5)}
+.ltl>li.won::before{border-color:var(--jade);box-shadow:0 0 14px rgba(95,211,95,.5)}
+.ltl .when{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+.ltl>li.enigma .when{color:var(--violet)}
+.ltl>li.won .when{color:var(--jade)}
+.ltl h3{font-family:var(--f-display);font-weight:600;margin-bottom:7px}
+.ltl .aside{font-size:12.5px;color:var(--mute);margin-top:10px;padding-left:12px;border-left:1px solid var(--cyan-mid)}
+.ltl>li.enigma .aside{border-left-color:var(--violet-mid)}
+.ltl>li.won .aside{border-left-color:var(--jade-mid)}
+
+/* --- Route module hosting (#/constraints, #/crafting) -------------------- *
+   The modules zero the top margin on their first section header, which is
+   right when that header is the top of the page. Under the shell's h1 it needs
+   the same gap the wiki's own h2 takes. Their stylesheets are injected into
+   <head> at first render, so they land after this block and win on order —
+   hence the #view prefix to take it back on specificity.                      */
+#view .cst-h:first-child,#view .cft-h:first-child{margin-top:26px}
+
 /* --- Coverage rows ------------------------------------------------------ */
 .cov{display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid rgba(56,220,230,.08)}
 .cov b{flex:1;font-weight:500;font-size:14px}
@@ -231,8 +291,17 @@ td.v.null{color:var(--rust);opacity:.75}
   <main id="view"><!-- rendered --></main>
 </div>
 
+<!-- The view table has to exist on window before the route modules load, and it
+     has to be the same object the main script uses. A top-level `const V` in
+     that script would be a separate binding that shadows window.V for every
+     script after it, so the modules' pages would exist and nothing could route
+     to them. Declared here, bound below. -->
+<script>window.V = window.V || {}; window.ROUTES = window.ROUTES || {};</script>
 <script src="data.js"></script>
 <script src="dump-1962.js"></script>
+<script src="firefall-timeline-route.js"></script>
+<script src="firefall-constraints-route.js"></script>
+<script src="firefall-crafting-route.js"></script>
 <script>
 /* ===========================================================================
    HELPERS
@@ -389,7 +458,17 @@ function diffBlock(ov){
 /* ===========================================================================
    VIEWS
    =========================================================================== */
-const V = {};
+const V = window.V;   /* already carries the route modules' views — see the head */
+
+/* The 0.7 systems modules self-register into ROUTES with a title, and render
+   their own section headers but no page furniture. Wrap each so the shell adds
+   the crumb and h1 every other page carries; the module stays drop-in for a
+   standalone page that has neither. #/timeline emits its own and is not in
+   ROUTES, so it passes through here untouched. */
+Object.entries(window.ROUTES).forEach(([key, r]) => {
+  V[key] = () => `<div class="crumb"><a href="#/">Home</a> / ${esc(r.title)}</div>
+    <h1>${esc(r.title)}</h1>${r.view()}`;
+});
 
 V.home = () => {
   const allStats = DATA.abilities.concat(DATA.weapons);
@@ -439,6 +518,19 @@ V.home = () => {
   <h2>Systems</h2>
   <div class="grid g2">${DATA.systems.map(s => `<a class="tile" href="#/system/${s.id}">${pnl(
     `<b>${esc(s.name)}</b><p>${esc(s.body[0].p.slice(0,110))}…</p>`)}</a>`).join('')}</div>
+
+  <h2>Beta 0.7 systems</h2>
+  <p class="lede">Two economies 1.0 removed, reconstructed from the beta patch notes and client builds.
+  They describe a different game to everything above — kept on their own pages so no figure from one
+  era is mistaken for the other. <a href="#/eras">On eras →</a></p>
+  <div class="grid g2">
+    <a class="tile" href="#/constraints">${pnl(
+      `<span class="eyebrow">0.7</span><b style="margin-top:4px">Constraints &amp; progression</b>
+       <p>No character level. Mass, Power and CPU budgets, and thirty nodes of spendable XP.</p>`)}</a>
+    <a class="tile" href="#/crafting">${pnl(
+      `<span class="eyebrow">0.7</span><b style="margin-top:4px">Crafting</b>
+       <p>Resource aspects, refining, components and quality — the same three budgets, spent at manufacture.</p>`)}</a>
+  </div>
 
   <h2>Patch chain</h2>
   <p class="lede">The base state plus four ordered deltas. Every entity page derives its own history
@@ -888,6 +980,7 @@ function buildNav(){
   $('#nav').innerHTML =
     `<div class="nav-h">Reference</div>
      ${link('#/','Overview')}
+     ${link('#/timeline','Timeline')}
      ${link('#/eras','Eras &amp; anchor')}
      ${link('#/gaps','Gaps &amp; conflicts')}
      <div class="nav-h">Build 1962</div>
@@ -898,6 +991,9 @@ function buildNav(){
      ${DATA.archetypes.map(a => link(`#/archetype/${a.id}`, a.name, 3)).join('')}
      <div class="nav-h">Systems</div>
      ${DATA.systems.map(s => link(`#/system/${s.id}`, s.name)).join('')}
+     <div class="nav-h">Beta 0.7 systems</div>
+     ${link('#/constraints','Constraints')}
+     ${link('#/crafting','Crafting')}
      <div class="nav-h">Patch chain</div>
      ${DATA.patches.map(p => link(`#/patch/${p.id}`, p.id, p.entries.length||null)).join('')}`;
 }
