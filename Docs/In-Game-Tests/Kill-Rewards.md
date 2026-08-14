@@ -30,15 +30,18 @@ as percentages that is a distribution that drops something every time; it is out
 
 ## What changed about this milestone
 
-M5 was written as XP first and loot second. It is now crystite first and no XP at all
-(decision 2026-08-13, user-chosen). Two reasons, and the second is the one that settles it:
+M5 was written as XP first and loot second. It is now crystite first and no XP (decision 2026-08-13,
+user-chosen). Two reasons:
 
-- Levelling is inert in PIN and is staying that way. Character level is a hardcoded 45, nothing
-  scales off it, and power comes entirely from the loadout — the beta model, arrived at by accident.
-  See [Restoration](../Restoration.md).
-- The data agrees. `dbcharacter::Monster.xp_resource_id` is non-zero on **2 rows of 3109** and
-  `xpreward_type` on 12. Nobody ever finished wiring XP to monsters. Its loot tables, by contrast,
-  are complete and tuned.
+- **Nothing consumes XP.** `ProgressionXPRefresh` already sends zero at scope-in, so paying out a
+  number nothing reads changes nothing on screen. The half that spends it is a milestone of its own.
+- **Nothing shipped to size it from.** `dbcharacter::Monster.xp_resource_id` is non-zero on **2 rows
+  of 3109** and `xpreward_type` on 12. The loot tables, by contrast, are complete and tuned.
+
+**Not because levels are out.** An earlier draft of this said so and it was wrong: the beta had XP
+without levels, as a currency you earned and spent on upgrading your frame (correction 2026-08-13,
+user). XP fits the level-less model rather than contradicting it, and could return once something
+consumes it. See [Restoration](../Restoration.md).
 
 ## Where the numbers come from
 

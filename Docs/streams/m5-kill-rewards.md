@@ -11,17 +11,25 @@ relates:
 Nothing rewarded a kill. `CharacterDiedEvent` had been published to nobody since M2 landed.
 
 **The milestone changed shape on 2026-08-13 and it is now crystite, not XP** (decision, user-chosen).
-The original plan was XP first because its shape was known; the reason for dropping it is that XP has
-nothing to land on and nothing to come from.
+The original plan was XP first because its shape was known. The reason for dropping it is that
+nothing consumes XP.
 
-**Nothing to land on.** PIN never implemented levelling and is not going to. Character level is a
-hardcoded 45, `LevelUpEvent` is never sent, and no stat scales off level — power comes entirely from
-the loadout, which is the beta model arrived at by accident rather than by design. Adding XP would
-mean building the progression system that makes XP mean something, which is the opposite of the
-direction [Restoration](../Restoration.md) sets.
+**Nothing to spend it on.** PIN never implemented levelling and is not going to: character level is
+a hardcoded 45, `LevelUpEvent` is never sent, and no stat scales off level. Power comes entirely
+from the loadout.
 
-**Nothing to come from.** `dbcharacter::Monster.xp_resource_id` is non-zero on 2 of 3109 rows and
-`xpreward_type` on 12. Whatever was going to feed XP from monsters, nobody finished it.
+**That is an argument against levels, not against XP, and the first draft of this doc conflated
+them.** The beta had XP without levels — it was a currency you earned and spent on upgrading your
+frame, part of the resource economy rather than a track pulling a level up behind it. So XP is
+compatible with where [Restoration](../Restoration.md) is going, and could come back as one. What it
+needs first is the half that consumes it, which is a milestone rather than a line in this one.
+Paying out a number nothing reads would be the same shape of nothing PIN already ships:
+`ProgressionXPRefresh` sends zero at scope-in today.
+
+**Nothing shipped to size it from either.** `dbcharacter::Monster.xp_resource_id` is non-zero on 2
+of 3109 rows and `xpreward_type` on 12. That column's name is itself a trace of the beta model — XP
+addressed as a resource id — but by 1962 the economy behind it was gone, so the two surviving rows
+are not a table anyone could pay out of.
 
 ## The loot tables shipped intact
 

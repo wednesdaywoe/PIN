@@ -76,8 +76,9 @@ result as `AIEngine.CurrentTargetOf(entityId)` for locomotion and attacking to r
 Detection range and the threat gain/decay/engage numbers are invented — `dbmonster` has no
 perception field to read them from — tracked as [DATA-10](../gaps/data.md#data-10), where a research
 pass on 2026-08-13 established that retail's numbers ship inline on two thirds of the monster table,
-that the instance rows behind the rest never reached the client, and that PIN's 40m perception is
-wider than any `perceptionDist` in the file. The aim geometry
+that the instance rows behind the rest never reached the client, and that PIN's then-40m perception
+was wider than any `perceptionDist` in the file. It has since been narrowed to that file's 25m
+ceiling. The aim geometry
 and line-of-sight check it shares with the attack pass now live in
 [Sightline.cs](../../UdpHosts/GameServer/Systems/AI/Sightline.cs), because the two have to agree:
 selection deliberately holds a target through a moment of broken sight, so the shot is what has to
@@ -200,11 +201,13 @@ nothing to do with M2 at all — [DATA-11](../gaps/data.md#data-11), below — a
 one session log closed [NET-21](../gaps/network.md#net-21). The other two:
 
 **N4 found a real defect, now fixed and re-run green.** Engagement was bounded by the weapon's reach rather than
-by perception — a Chosen Grunt Rifle carries 180m against a 40m perception radius — and threat had no
-ceiling, so a target that stood in front of an NPC for a minute banked several hundred points and
-took minutes of decay to fall under the engage threshold. The two compounded into an NPC that
-engaged at 40m and then shot you until you left draw distance. `TargetSelection` now forgets anything
-past a 60m leash and caps threat at 60, which decays back under the threshold in 6.25 seconds. The
+by perception — a Chosen Grunt Rifle carries 180m against what was then a 40m perception radius —
+and threat had no ceiling, so a target that stood in front of an NPC for a minute banked several
+hundred points and took minutes of decay to fall under the engage threshold. The two compounded into
+an NPC that engaged at 40m and then shot you until you left draw distance. `TargetSelection` now
+forgets anything past the leash and caps threat at 60, which decays back under the threshold in 6.25
+seconds. N4 was measured at 40m perception / 60m leash; both have since narrowed to 25m and 37.5m,
+which is the same ratio and the same behaviour at shorter range. The
 leash is deliberately wider than perception so a target loitering on the boundary doesn't get dropped
 and re-acquired every tick.
 
@@ -253,9 +256,13 @@ inside `TargetSelection.PerceptionRange`, because the relationship that broke th
 the content file and nobody would think to look for it twice.
 
 Where the groups can go turned out to be decided by [DATA-10](../gaps/data.md#data-10) rather than
-by design. At a 40m perception radius, nothing hostile fits on the starting shelf at all while Aero
-is standing on it, since the shelf is about 45m across. Retail's widest shipped `perceptionDist` is
-25m. An invented constant is currently choosing the level layout.
+by design. At the 40m perception radius these groups were placed under, nothing hostile fits on the
+starting shelf at all while Aero is standing on it, since the shelf is about 45m across. An invented
+constant was choosing the level layout.
+
+Perception has since been narrowed to retail's own 25m ceiling, which makes the shelf usable. The
+thirteen placements here were made under the wider radius and are unaffected — they were the
+conservative case — so the shelf stays empty until somebody walks up and runs `spawngroup add`.
 
 **The next two cuts were both wrong about height, and between them they ended offline authoring.**
 With the factions sorted, three Chosen anchored at Z 465.52 shot a player who never saw them: the

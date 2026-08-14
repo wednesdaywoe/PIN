@@ -23,8 +23,9 @@ public static class NpcMovement
     ///     in <c>dbmonster</c> carries a preferred engagement distance, and the behaviour trees that
     ///     would have (<c>Behavior</c>, <c>BehaviorOffensive</c>) are names of assets PIN doesn't load.
     ///
-    ///     Chosen as comfortably inside the 40m perception radius, so an NPC that notices you at the edge
-    ///     of it has an obvious distance to close and you can see it decide to.
+    ///     Chosen as comfortably inside the perception radius, so an NPC that notices you at the edge of
+    ///     it has an obvious distance to close and you can see it decide to. Still holds after that
+    ///     radius narrowed from 40m to 25m — 12m leaves 13m of approach to watch.
     /// </summary>
     public const float PreferredStandoff = 12f;
 
@@ -48,8 +49,10 @@ public static class NpcMovement
     ///     How far from <see cref="AIState.Home"/> an NPC will chase before giving up and walking back.
     ///     Invented, and the number that stops a monster following a player across the zone.
     ///
-    ///     Deliberately wider than the 40m perception radius and narrower than a chase that could drag a
-    ///     whole camp along behind one player. It bounds where an NPC can be, which
+    ///     Deliberately wider than the perception radius and narrower than a chase that could drag a
+    ///     whole camp along behind one player. Left at 50m when perception narrowed to 25m: it bounds
+    ///     how far a fight can wander from where it started, which is a question about the zone rather
+    ///     than about eyesight. It bounds where an NPC can be, which
     ///     <see cref="TargetSelection.LeashRange"/> does not: that one is measured from the NPC, so it
     ///     travels with the NPC and never stops a chase.
     /// </summary>

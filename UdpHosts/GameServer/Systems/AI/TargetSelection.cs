@@ -11,8 +11,26 @@ namespace GameServer.Systems.AI;
 /// </summary>
 public static class TargetSelection
 {
-    /// <summary>How close something has to be before an NPC starts building threat on it.</summary>
-    public const float PerceptionRange = 40f;
+    /// <summary>
+    ///     How close something has to be before an NPC starts building threat on it.
+    ///
+    ///     Was 40m through M2, which is wider than anything retail shipped: the `perceptionDist` values
+    ///     parsed out of the behaviour strings top out at 25m and are most often 10 or 15 (DATA-10).
+    ///     40m was kept deliberately while the spawn groups were being proven, so a placement failure
+    ///     couldn't be confused with a tuning change, and it cost something concrete — zone 448's
+    ///     starting shelf is about 45m across with Aero standing on it, so nothing hostile fitted on it
+    ///     and the zone had nothing to fight within 120m of where a player logs in.
+    ///
+    ///     Narrowed to retail's widest rather than its most common. 25m is the smallest change that
+    ///     puts a group back on the shelf, and staying at the top of the shipped range keeps NPCs as
+    ///     alert as anything retail had while PIN has no other detection cue — no hearing, no gunfire
+    ///     response, nothing but distance and line of sight.
+    ///
+    ///     Still one number for every monster in the game. Reading it per monster would not help zone
+    ///     448: 1196, 528 and 2342 are all in the third of `dbcharacter::Monster` that carries only a
+    ///     `BehaviorInstanceId`, and the rows behind those went to a server db that didn't ship.
+    /// </summary>
+    public const float PerceptionRange = 25f;
 
     /// <summary>
     ///     How far it has to get before the NPC forgets it entirely. Deliberately wider than
@@ -20,10 +38,13 @@ public static class TargetSelection
     ///     its target every time you shuffle across the boundary.
     ///
     ///     Without this, engagement was bounded by the *weapon's* reach instead — 180m for a Chosen
-    ///     Grunt Rifle against a 40m perception radius — so an NPC that noticed you at 40m kept firing
-    ///     until you left draw distance, which is what N4 caught.
+    ///     Grunt Rifle against the perception radius — so an NPC that noticed you at the edge kept
+    ///     firing until you left draw distance, which is what N4 caught.
+    ///
+    ///     Held at 1.5x perception when that narrowed, so the gap that stops the acquire/drop flapping
+    ///     stays proportional rather than swallowing the whole radius.
     /// </summary>
-    public const float LeashRange = 60f;
+    public const float LeashRange = 37.5f;
 
     private const float ThreatGainPerSecond = 20f;
     private const float ThreatDecayPerSecond = 8f;

@@ -11,7 +11,7 @@ relates:
 # PIN — Progress
 
 Checklist toward a vertical slice: one player, one zone, a loop that closes — logs into zone 448,
-gets noticed by NPCs that close and shoot back, kills them for XP and loot, scans the ground for a
+gets noticed by NPCs that close and shoot back, kills them for crystite, scans the ground for a
 deposit worth working, calls down a thumper and defends it through extraction, logs out, and comes
 back to the same character. Full narrative for each milestone lives in [streams/](streams/).
 
@@ -33,12 +33,15 @@ M8 session stability             independent, but "playable" isn't honest withou
 ## Current frontier
 
 **M5 is built and has never been seen in game, and it is not the milestone that was written down.**
-It was XP first, loot second. It is now crystite and no XP at all (decision 2026-08-13,
-user-chosen). Levelling is inert in PIN — level is a hardcoded 45 and power comes entirely from the
-loadout — and the intent is to keep the beta's level-less model rather than build the progression
-system XP would need. The data agreed independently: `dbcharacter::Monster.xp_resource_id` is
-non-zero on 2 of 3109 rows and `xpreward_type` on 12, so nobody ever finished wiring XP to monsters
-either.
+It was XP first, loot second. It is now crystite and no XP (decision 2026-08-13, user-chosen).
+Levelling is inert in PIN — level is a hardcoded 45 and power comes entirely from the loadout — and
+the intent is to keep the beta's level-less model. **XP is a separate question from levels and this
+doc originally ran them together**: the beta had XP as a currency you spent on upgrading your frame,
+so it fits a level-less model rather than contradicting it (correction 2026-08-13, user). What rules
+it out of M5 is that nothing consumes it — paying out a number nothing reads is what PIN already
+does, since `ProgressionXPRefresh` sends zero at scope-in. The spending half is a milestone, not a
+line in this one. Nothing shipped to size a payout from either:
+`dbcharacter::Monster.xp_resource_id` is non-zero on 2 of 3109 rows and `xpreward_type` on 12.
 
 **What replaced it is shipped data rather than a constant, which is the part worth knowing.**
 `dbitems::LootTable` carries 2472 rows and `LootTableItemDist` 34159, none of it loaded by PIN until
@@ -199,13 +202,17 @@ feel is unconfirmed until someone kills something.
 Those sittings also showed what the invented perception radius costs, and it is not cosmetic. At 40m
 nothing hostile fits on zone 448's starting shelf while Aero stands on it, because the shelf is
 about 45m across, and it is the only ground near the station anything has been seen standing on.
-Zone 448 therefore has nothing to fight within 120m of where a player logs in. Retail's widest
-shipped `perceptionDist` is 25m and its most common are 10 and 15. Keeping 40m until N14–N16 had run
-was a deliberate call (decision 2026-08-13, user-chosen) so a spawn-group failure couldn't be
-confused with a tuning change. They have now run and passed, so that reason has expired and the
-question is open again — narrowing it would let something stand on the starting shelf, and N16 read
-the pack's 45m spread as arriving in ones and twos, which is 40m perception against that spread
-rather than a defect.
+Zone 448 therefore has nothing to fight within 120m of where a player logs in. Keeping 40m until
+N14–N16 had run was a deliberate call (decision 2026-08-13, user-chosen) so a spawn-group failure
+couldn't be confused with a tuning change. N16 also read the pack's 45m spread as arriving in ones
+and twos, which is 40m perception against that spread rather than a defect.
+
+**They passed, so that reason expired, and perception is now 25m** (decision 2026-08-13,
+user-chosen) with the leash moved to 37.5m to hold the 1.5x ratio. 25m is retail's widest shipped
+`perceptionDist` rather than its most common (10 and 15) — the smallest change that lets a group
+stand on the shelf, and the top of the shipped range is where PIN should sit while it gives NPCs no
+detection cue except distance and line of sight. **The thirteen existing monsters have not moved**,
+so the station is still quiet until somebody walks to the shelf and runs `spawngroup add`.
 
 Two log floods came out of the same runs and are fixed: 8472 warnings for pose asset `00000000`
 (a character with no collision id, re-asked on every physics query because only successes were
@@ -226,7 +233,8 @@ rows carry their parameters inline, not the 451 the entry assumed. The instance 
 other 695 does not exist to be found. Searching the string content of all 575 tables turns up
 behaviour text in exactly three columns of one table and nowhere else, and this db was built with
 the client flag, so those rows went to a server database PIN can't get. The same strings also carry
-`perceptionDist`, which never exceeds 25m anywhere in the file against PIN's flat 40m, and
+`perceptionDist`, which never exceeds 25m anywhere in the file and is what PIN's own radius was
+narrowed to, and
 `triggerPullTime`/`fireRestDuration` on 301 monsters, which is the pause
 [DATA-14](ISSUE-REGISTER.md) says is missing. `MinimalSDB find` reproduces all of it. See
 [streams/m2-npc-combat.md](streams/m2-npc-combat.md).
@@ -288,8 +296,10 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 
 [Full detail](streams/m5-kill-rewards.md) — 1 dropped, 2 landed but unverified in game, 2 open
 
-- [x] ~~Award XP on kill~~ — dropped 2026-08-13. Levelling is inert and staying that way, and
-  `xp_resource_id` is set on 2 of 3109 monsters, so there was nothing to pay from either
+- [x] ~~Award XP on kill~~ — dropped 2026-08-13, because nothing consumes XP, not because levels
+  are out. Beta XP was a spendable currency and fits the level-less model; it needs the spending
+  half first, which is its own milestone. `xp_resource_id` is set on 2 of 3109 monsters, so there
+  is nothing to size a payout from either
 - [~] Load the loot tables and roll a kill's — `LootRoller` over `dbitems::LootTable`, tested
   offline, no client has seen it
 - [~] Pay the killer the resources that dropped — `KillRewardSim` on `CharacterDiedEvent`, crystite

@@ -204,16 +204,16 @@ suspect if [NET-19](network.md#net-19)'s P0 verification doesn't hold.
 `dbmonster::Monster` carries `Behavior`/`BehaviorOffensive`/`BehaviorDefensive` name references but
 no numeric perception radius or aggro field, so
 [TargetSelection.cs](../../UdpHosts/GameServer/Systems/AI/TargetSelection.cs) picks its own
-detection range (40m) and threat gain/decay/engage-threshold constants rather than reading them off
-a def. Every monster currently notices, aggros and disengages identically regardless of type. Part
+detection range (25m, narrowed from 40m) and threat gain/decay/engage-threshold constants rather
+than reading them off a def. Every monster currently notices, aggros and disengages identically regardless of type. Part
 of [M2](../streams/m2-npc-combat.md).
 
 The attack and locomotion passes add more invented numbers of the same kind:
 
 | Number | Where | What it decides |
 |--------|-------|-----------------|
-| 40m perception | `TargetSelection` | how close before an NPC notices you |
-| 60m leash | `TargetSelection` | how far before it forgets you |
+| 25m perception (was 40m) | `TargetSelection` | how close before an NPC notices you |
+| 37.5m leash (was 60m) | `TargetSelection` | how far before it forgets you |
 | 60 threat cap | `TargetSelection` | how long it stays interested after losing sight (6.25s) |
 | 20/8/10 gain, decay, engage | `TargetSelection` | how fast it aggros and disengages |
 | 250ms burst floor | `AttackWindow` | slowest cycle a template with no `MsPerBurst` may fire at |
@@ -266,7 +266,7 @@ Parsing the strings that did ship yields, per monster:
 |-----------|----------|--------|-------------------------------|
 | `combatDist` | 108 | 0.5 to 50, 22 distinct | 12m standoff |
 | `preferredMinCombatDist` | 42 | 3.5 to 120, 7 distinct | 12m standoff |
-| `perceptionDist` | 67 | 4, 5, 6, 8, 10, 15, 25 | 40m perception |
+| `perceptionDist` | 67 | 4, 5, 6, 8, 10, 15, 25 | 25m perception, narrowed to this ceiling |
 | `maxDistFromSpawn` | 13 | 30 and 45 | 50m chase leash |
 | `am1MaxDist` / `am1MinDist` | 23 / 14 | 5 to 150 / 0 to 10 | nothing yet; ability ranges |
 | `wideTurnRadius` | 8 | 3, 5, 10 | nothing yet; NPCs turn instantly |
@@ -277,21 +277,35 @@ Parsing the strings that did ship yields, per monster:
 
 The perception row is the finding worth acting on independently of the rest. Retail's widest
 `perceptionDist` in the whole file is 25m and its most common values are 10 and 15, against PIN's
-flat 40m. Every NPC in the game currently notices you from at least 1.6 times as far as the furthest-
-seeing monster retail shipped, and from four times as far as the most common one. `maxDistFromSpawn`
+then-flat 40m — every NPC noticing you from at least 1.6 times as far as the furthest-seeing monster
+retail shipped, and four times as far as the most common one. PIN now sits at that 25m ceiling. `maxDistFromSpawn`
 says the same about the chase leash, at 30 to 45 against PIN's 50.
 
 None of that is a lookup PIN can just wire up, because a parser has to exist first and 959 rows would
 still fall through it. What the numbers do settle is what the fallbacks should be: a default taken
 from the distribution of what shipped is defensible in a way that 40m is not.
 
-**Perception stays at 40m for now** (decision 2026-08-13, user-chosen). Narrowing it was on the table
-as soon as the 25m ceiling turned up, and it was declined until [N14 to
-N16](../In-Game-Tests/NPC-Combat.md) have run: [N4](../In-Game-Tests/NPC-Combat.md) measured
-disengagement against the current radius, and changing the number underneath a spawn-group test makes
-a failure ambiguous between the content and the tuning. The cost is recorded under
-[DATA-15](#data-15): at 40m no hostile group fits on zone 448's starting shelf at all, so an invented
-constant is currently choosing where the level's monsters can stand.
+**Perception stayed at 40m through M2 and was narrowed to 25m on 2026-08-13** (both decisions
+user-chosen). Holding it was the right call while it lasted: [N4](../In-Game-Tests/NPC-Combat.md)
+measured disengagement against the 40m radius, and moving the number underneath a spawn-group test
+would have made a failure ambiguous between the content and the tuning. N14 to N16 have now passed,
+so that reason expired.
+
+25m is retail's widest rather than its most common, which is the smallest change that buys the thing
+worth buying — a group that fits on zone 448's starting shelf. Staying at the top of the shipped
+range also keeps NPCs as alert as anything retail had, which matters because PIN gives them no other
+detection cue: no hearing, no reacting to gunfire, nothing but distance and line of sight. The leash
+moved with it, 60m to 37.5m, holding the 1.5x ratio that stops a target on the boundary being
+acquired and dropped repeatedly. `ChaseLeash` stayed at 50m — it bounds how far a fight wanders from
+where it started, which is a question about the zone rather than about eyesight.
+
+**Narrowing the radius does not by itself put anything near the station.** Zone 448's thirteen
+monsters are where they were placed, in the basin, 120m out. What changed is that a group *may* now
+stand on the shelf, and putting one there is a walk with `spawngroup add` like every other placement
+([DATA-15](#data-15)) — there is no server-side terrain to place one from a desk.
+
+Still one number for every monster in the game. Reading it per monster would not help the zone as it
+stands: 1196, 528 and 2342 are all in the 695-row third that carries only a `BehaviorInstanceId`.
 
 `triggerPullTime` and `fireRestDuration` are the two most widely populated parameters in the whole
 set, and they describe exactly the pause [DATA-14](#data-14) says is missing from NPC cadence. That
@@ -509,11 +523,12 @@ What is still worth writing down is which parts are guesses and which aren't:
 - **Respawn delays (90 to 120s) and pack sizes (3 to 6) are invented outright.** Nothing anywhere
   suggests what retail used.
 - **Where the groups can go is decided by [DATA-10](#data-10)'s perception number, not by design.**
-  Anything hostile within 40m of Aero kills it, and the only ground near the station anything has
-  been seen standing on is a shelf about 45m across with Aero on it. No hostile group fits there at
-  all, which is why zone 448 currently has nothing to fight within 120m of where a player logs in.
-  Retail's widest shipped `perceptionDist` is 25m and its most common are 10 and 15, at which the
-  shelf holds a group comfortably.
+  Anything hostile within perception of Aero kills it, and the only ground near the station anything
+  has been seen standing on is a shelf about 45m across with Aero on it. At the original 40m no
+  hostile group fitted there at all, which is why zone 448 has nothing to fight within 120m of where
+  a player logs in. **Perception is now 25m**, at which the shelf holds a group comfortably — but the
+  thirteen existing monsters have not moved, so putting one there is still a walk with
+  `spawngroup add`.
 
 The delay is also measured from the corpse despawning rather than from the kill, which adds
 `CharacterEntity.Die`'s fixed 30s to all of them. That is an implementation choice in

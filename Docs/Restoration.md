@@ -31,6 +31,18 @@ sums the chassis and every slotted item, and level isn't a term in it. That's th
 arrived at by accident. So level-45 balance is a number the client draws rather than a system
 crafted output has to satisfy.
 
+**XP is a separate question from levels, and the beta had one without the other.** Beta XP was a
+currency: you earned it and you spent it on upgrading your frame. It was part of the resource
+economy rather than a track that pulled a level number up behind it (user, 2026-08-13). So "no
+levels" does not imply "no XP", and dropping XP from [M5](streams/m5-kill-rewards.md) closed a
+milestone rather than a design question — nothing in PIN consumes XP today, and building the
+spending side is its own piece of work, not a rider on paying out for a kill.
+
+Worth knowing because it makes a column name legible: `dbcharacter::Monster.xp_resource_id` says
+*resource*, which is what XP was. 1962's own rows don't corroborate it — the column is set on 2 of
+3109 monsters and one of the two ids carries no `Resource` flag — but by 1962 the beta economy was
+long gone, so their silence is expected rather than evidence.
+
 The beta budget survives in the data but isn't wired up. `dbitems::ItemTypeAttributeModifier`
 carries per-attribute weight, power and cpu coefficients, and loads, but nothing reads it.
 `dbitems::FrameMassRange` carries the mass-to-speed rule, has no loader, and isn't confirmed
