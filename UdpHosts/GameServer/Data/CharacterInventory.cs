@@ -19,6 +19,13 @@ public class CharacterInventory
     private readonly Dictionary<uint, Resource> _resources; // By typeid
     private readonly Dictionary<int, Loadout> _loadouts; // By loadoutid
 
+    /// <summary>
+    ///     Guids of the items the hardcoded seed produced, so persistence can tell them from the ones a
+    ///     session actually earned. See <see cref="Persistence.SavedCharacter"/> for why the seed isn't
+    ///     saved.
+    /// </summary>
+    private readonly HashSet<ulong> _seeded = [];
+
     private readonly IShard _shard;
     private readonly INetworkClient _player;
     private readonly CharacterEntity _character;
@@ -46,6 +53,42 @@ public class CharacterInventory
         {
             HardcodedCharacterData.GenerateCharCreateLoadoutAndItems(this, createId, chassisId);
         }
+    }
+
+    /// <summary>
+    ///     Draws the line between what login handed out and what the session went and got. Call it once
+    ///     the hardcoded seed is in and before anything else touches the inventory.
+    /// </summary>
+    public void MarkSeeded()
+    {
+        _seeded.Clear();
+        _seeded.UnionWith(_items.Keys);
+    }
+
+    /// <summary>
+    ///     The items worth saving: everything the seed didn't put there. Today that's what
+    ///     <c>createitem</c> made and whatever a kill or a thumper delivered as an item.
+    /// </summary>
+    public IEnumerable<Item> GetPersistableItems()
+    {
+        return _items.Values.Where(item => !_seeded.Contains(item.GUID));
+    }
+
+    /// <summary>
+    ///     Puts a saved item back, with a new guid and its old history.
+    /// </summary>
+    public ulong RestoreItem(Persistence.SavedItem saved)
+    {
+        var guid = CreateItem(saved.SdbId);
+        var item = _items[guid];
+
+        item.Durability = saved.Durability;
+        item.DynamicFlags = saved.DynamicFlags;
+        item.TimestampEpoch = saved.TimestampEpoch;
+        item.Modules = saved.Modules ?? [];
+
+        _items[guid] = item;
+        return guid;
     }
 
     /// <summary>

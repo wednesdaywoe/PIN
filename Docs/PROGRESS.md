@@ -26,11 +26,53 @@ M1 confirm the combat models                        done
       │    └─> M7 an encounter that plays
       └─> M5 killing something pays                 done
 
-M6 persistence across sessions   wants M3 and M5 landed, so there's something worth saving
+M6 persistence across sessions   current frontier; M3 and M5 landed, so there's something to save
 M8 session stability             independent, but "playable" isn't honest without it
 ```
 
 ## Current frontier
+
+**M6, persistence across sessions, is the frontier. Its decision is made and its code is written, and
+it is waiting on a client.** M3 and M5 closed on 2026-08-13 and M4 on 2026-08-14, so there was
+finally something worth saving, and as of 2026-08-14 the GameServer saves it.
+[C1–C7](In-Game-Tests/Persistence.md) are the check and none of them have run.
+
+**The decision was whether RIN owns the data, and the answer is no, because RIN has never run.** That
+was checked rather than assumed: `start-pin.sh` starts exactly three servers and RIN is not among
+them, and [Session Setup](In-Game-Tests/Session-Setup.md) had already recorded the consequence —
+"nothing answers, and it falls back to `HardcodedCharacterData.FallbackData`, so the fallback isn't a
+fallback in practice, it's the character." Building persistence behind the gRPC contract would have
+meant building something that has never once been exercised. The GameServer writes its own JSON
+instead, one file per character, the same way `deposit add` already writes zone content (decision
+2026-08-14, user-chosen).
+
+**What is saved is a session's own gains rather than its handouts**: resources, items the login seed
+didn't produce, the outpost you were nearest, and playtime. Loadouts and what was equipped are a
+deliberate cut, because every login regenerates all 20 battleframes and an item restored into a slot
+no loadout knows about would be equipped according to nothing. **The autosave rather than the logout
+is the load-bearing half** — almost nothing that ends a PIN session sends `RequestLogout`, so
+`Shard.MigrateOut` saves as well, and the 60-second timer is the most anyone loses. 14 offline tests
+cover the store and the mapping. What they can't cover is whether what comes back is what left, and
+that is C1.
+
+**One property of the save is worth knowing before anything builds on it.** It keys on the character
+guid, and in PIN that is not an identity: the character list is 38 hardcoded rows whose guid is
+`0x99aabbccddee0000 + zoneId`, so picking a character is picking a zone, and a save is per-zone and
+shared by everyone who connects to it. Right for one player, wrong for two, and it moves when
+[DATA-9](ISSUE-REGISTER.md) does rather than when the store changes.
+
+**The work started on a machine with no client and no client db, which changed the order rather than
+the plan.** Checked 2026-08-14: the repo builds, `Tests/GameServer.Tests` passes 187 of 187, and the
+2016 capture is on disk, so [CaptureReplay](../Tools/CaptureReplay/) still answers wire questions.
+There is no `clientdb.sd2` anywhere on it, so the GameServer can't boot and MinimalSDB,
+ConstraintSweep, EffectSweep and SdbDocs have nothing to read. The client's own Lua UI source, which
+is what unblocked M4, ships inside the same install. So M6 can be designed, built and unit-tested
+here in full, and only its exit condition waits for a sitting, along with the whole
+[test queue](TEST-REGISTER.md). **M8 is the other milestone shaped this way** — a retransmit queue is
+server-side and unit-testable, and only "test under induced packet loss" needs a client — and
+[NET-24](ISSUE-REGISTER.md)'s code read suspects the stale thumper is
+[NET-1](ISSUE-REGISTER.md) in costume, so M8 may close a live defect rather than only a theoretical
+one.
 
 **M4: where you thump matters is done, closed 2026-08-14 by
 [S1–S6](In-Game-Tests/Thump-Placement.md) passing in full.** The exit condition was "thump a rich
@@ -167,9 +209,8 @@ went first as the older debt. What was expected to be the risky half of it — t
 turned out to be separable from the payout entirely, so M5's resource half landed in a day and its
 item half is still the same open protocol question it was.
 
-**M4 was the remaining frontier and is now built, unverified** — see the top of this section. With
-its code landed, the last unbuilt thing between here and a loop that closes is M6 keeping any of it
-across a logout.
+**M4 closed on 2026-08-14**, so the only unbuilt thing between here and a loop that closes is M6
+keeping any of it across a logout.
 
 Three milestones closed on 2026-08-13, which is worth being wary of rather than pleased about. M5's
 own check found a defect that produced a completely convincing log — the reward system ran end to
@@ -400,11 +441,20 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Work out the client's drop protocol, then spawn the items the same tables already roll
 - [ ] Pick up a drop and put it in the bag
 
-[Full detail](streams/m6-persistence.md) — 0 of 3 done
+[Full detail](streams/m6-persistence.md) — 1 of 3 done, 2 built and unverified,
+[C1–C7](In-Game-Tests/Persistence.md) 0 of 7 run
 
-- [ ] Decide RIN-owned vs local store, and what happens with no RIN
-- [ ] Persist XP, level, inventory and the resource ledger
-- [ ] Save on a timer and on logout, not just on zone change
+- [x] Decide RIN-owned vs local store, and what happens with no RIN — **a local JSON store**
+  (decision 2026-08-14, user-chosen). RIN has never answered a request in this project, which was
+  checked rather than assumed, so building behind its contract would have been building something
+  never exercised. No RIN keeps meaning no difference
+- [~] Persist inventory, the resource ledger and the character record — built, unverified.
+  Resources, items the login seed didn't hand out, the nearest outpost and playtime, in one JSON
+  file per character. Loadouts and what was equipped are a deliberate cut. XP came off this list
+  with M5's decision, since nothing consumes it
+- [~] Save on a timer and on logout, not just on zone change — built, unverified. On a 60s
+  autosave, on `RequestLogout`, and on `Shard.MigrateOut`, which is the only exit a session that
+  crashed, timed out or died ever takes
 
 [Full detail](streams/m7-encounter-combat.md) — 0 of 4 done
 

@@ -19,6 +19,22 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**The queue is paused, and for once not because something is blocked.** [M6](PROGRESS.md) is being
+built on a machine with no client installed, so nothing here can run until the work reaches one. Two
+things follow. Everything the next sitting should carry is written down below rather than remembered,
+and [Capture Replay](In-Game-Tests/Capture-Replay.md) is the only stream that still answers anything
+today. It needs one 19MB download and no client at all, which makes the open wire questions
+([NET-10](ISSUE-REGISTER.md), [NET-12](ISSUE-REGISTER.md), [NET-17](ISSUE-REGISTER.md)) the cheapest
+work in the register right now.
+
+**[Persistence](In-Game-Tests/Persistence.md) is new and unrun, C1 through C7**, written the same day
+M6's code landed rather than after it. **C1 is the milestone's exit condition** and the rest are
+diagnosis for when it fails. Two of them are worth carrying into the sitting deliberately. **C3**
+relogs twice rather than once, because resources are restored by adding them and a restore that ran
+twice would multiply rather than fail, which one relog cannot show. And **C5** is the one closest to
+how sessions actually end here: most never send `RequestLogout` at all, so the autosave is the real
+save and the logout path is the tidy exception.
+
 **[Thump Placement](In-Game-Tests/Thump-Placement.md) closed [M4](PROGRESS.md) on 2026-08-14 — 6 of
 6.** The whole stream ran in one long sitting. The map names the zone's resources (S1), a ground
 report reads what is under your feet (S2), and the payouts came out as the milestone predicted:
@@ -307,6 +323,14 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   three melding entries are untouched, and E3 — which side of a perimeter is the lethal one — has to
   run before E4. E5 is half-evidenced: the damage stopped on surfacing, but the second dive of that
   session ran with `invuln` on, so the ramp reset was never seen
+
+## Persistence
+
+- [ ] [Persistence](In-Game-Tests/Persistence.md) — 0 of 7 passing, not yet run. [M6](PROGRESS.md)'s
+  check, written as the code landed. **C1 is the exit condition**: earn crystite, log out, log back
+  in, it's still there. C3 (relog twice, nothing doubles) and C5 (a session that ends without logging
+  out) are the two most likely to find something, and C7 checks that a save file which can't be read
+  costs a character its progress rather than its ability to log in
 
 ## Client prediction
 

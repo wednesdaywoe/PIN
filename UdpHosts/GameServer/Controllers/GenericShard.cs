@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Numerics;
 using AeroMessages.Control;
 using AeroMessages.GSS.V66.Generic;
 using GameServer.Entities;
@@ -93,6 +92,10 @@ public class GenericShard : Base
         var resp = new CloseConnection { Unk = [0, 0, 0, 0] };
         client.NetChannels[ChannelType.Control].SendMessage(resp);
 
+        // The tidy exit. It saves for completeness rather than because anything depends on it: most
+        // sessions never send this message, so Shard.MigrateOut is what actually catches them.
+        client.AssignedShard.CharacterSaves.SaveIfChanged(player, "logout");
+
         var zone = player.CurrentZone;
 
         if (!zone.IsOpenWorld)
@@ -100,29 +103,13 @@ public class GenericShard : Base
             return;
         }
 
-        var playerPosition = player.CharacterEntity.Position;
-
-        var minDistance = Vector3.DistanceSquared(playerPosition, zone.POIs["spawn"]);
-        var closestOutpostId = zone.DefaultOutpostId;
-
-        if (client.AssignedShard.Outposts.TryGetValue(zone.ID, out var outposts))
-        {
-            foreach (var outpost in outposts)
-            {
-                var distance = Vector3.DistanceSquared(playerPosition, outpost.Value.Outpost_ObserverView.PositionProp);
-
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    closestOutpostId = outpost.Key;
-                }
-            }
-        }
-
+        // Still this session's duration rather than the character's total. RIN has never answered a
+        // request here, so which of the two it expects has never been observed, and guessing at it would
+        // change a contract nobody can check.
         _ = GRPCService.SaveCharacterSessionDataAsync(
               player.CharacterId + 0xFE,
               zone.ID,
-              closestOutpostId,
+              player.ClosestOutpostToPosition(),
               (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds() - player.ConnectedAt);
     }
 

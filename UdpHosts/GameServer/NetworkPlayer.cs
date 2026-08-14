@@ -8,6 +8,7 @@ using AeroMessages.GSS.V66.Character.Controller;
 using AeroMessages.GSS.V66.Character.Event;
 using AeroMessages.Matrix.V25;
 using GameServer.Data;
+using GameServer.Data.Persistence;
 using GameServer.GRPC;
 using GameServer.StaticDB.Records.customdata;
 using GameServer.Test;
@@ -19,6 +20,9 @@ namespace GameServer;
 
 public class NetworkPlayer : NetworkClient, INetworkPlayer
 {
+    /// <summary>Playtime this character had banked before the current session started.</summary>
+    private uint _timePlayedBeforeSession;
+
     public NetworkPlayer(IPEndPoint endPoint, uint socketId, ILogger logger)
         : base(endPoint, socketId, logger)
     {
@@ -41,6 +45,9 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
     public CharacterInventory Inventory { get; set; }
     public uint ConnectedAt { get; }
     public bool CanReceiveGSS => (Status.Equals(IPlayer.PlayerStatus.Playing) || Status.Equals(IPlayer.PlayerStatus.Loading)) && NetClientStatus.Equals(ClientStatus.Connected);
+
+    /// <summary>Everything this character has played, banked plus the session in progress.</summary>
+    public uint TimePlayedSecs => _timePlayedBeforeSession + ((uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds() - ConnectedAt);
 
     public void Init(IShard shard)
     {
@@ -81,6 +88,11 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         // Load inventory so we get loadouts
         Inventory = new CharacterInventory(AssignedShard, this, CharacterEntity);
         Inventory.LoadHardcodedInventory();
+
+        // Everything above this line is what every character gets handed. Everything after it is this
+        // character's own, which is the whole distinction persistence runs on.
+        Inventory.MarkSeeded();
+        var saved = LoadSavedCharacter();
 
         // Use remote data or fallback to setup character
         bool useRemoteData = true;
@@ -127,7 +139,14 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         {
             zoneId = (uint)(characterId & 0x000000000000ffff);
             zone = DataUtils.GetZone(zoneId);
-            outpostId = zone.DefaultOutpostId;
+
+            // Come back where you logged out, if the save is for the zone being entered. The zone check
+            // isn't ceremony: a character id encodes the zone it enters, so a save carrying a different
+            // one means the file was hand-copied between characters, and its outpost id would name an
+            // outpost that doesn't exist here.
+            outpostId = saved != null && saved.LastZoneId == zoneId
+                            ? FindClosestAvailableOutpost(zone, saved.LastOutpostId)
+                            : zone.DefaultOutpostId;
         }
 
         Logger.Information("Zone {zoneId} Outpost {outpostId}", zoneId, outpostId);
@@ -249,6 +268,60 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         }
     }
 
+    /// <summary>
+    ///     Everything about this character that outlives the session, as of now.
+    /// </summary>
+    public SavedCharacter Snapshot(DateTimeOffset savedAt)
+    {
+        return SavedCharacter.Snapshot(
+            CharacterId,
+            CurrentZone.ID,
+            ClosestOutpostToPosition(),
+            TimePlayedSecs,
+            Inventory.GetResources(),
+            Inventory.GetPersistableItems(),
+            savedAt);
+    }
+
+    /// <summary>
+    ///     The outpost the player is standing nearest, which is where they'll come back.
+    /// </summary>
+    /// <remarks>
+    ///     Not the same question as <see cref="FindClosestAvailableOutpost"/>, which measures from another
+    ///     outpost and exists to answer "this one is captured, where instead". The spawn point seeds the
+    ///     comparison, so standing further from every outpost than the zone's own spawn is means the
+    ///     default, rather than means whichever outpost happens to be least far away.
+    /// </remarks>
+    public uint ClosestOutpostToPosition()
+    {
+        var zone = CurrentZone;
+
+        if (zone == null || !zone.IsOpenWorld || !zone.POIs.TryGetValue("spawn", out var spawn))
+        {
+            return CurrentOutpostId;
+        }
+
+        var position = CharacterEntity.Position;
+        var minDistance = Vector3.DistanceSquared(position, spawn);
+        var closest = zone.DefaultOutpostId;
+
+        if (AssignedShard.Outposts.TryGetValue(zone.ID, out var outposts))
+        {
+            foreach (var outpost in outposts)
+            {
+                var distance = Vector3.DistanceSquared(position, outpost.Value.Outpost_ObserverView.PositionProp);
+
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closest = outpost.Key;
+                }
+            }
+        }
+
+        return closest;
+    }
+
     public uint FindClosestAvailableOutpost(Zone zone, uint targetOutpostId = 0)
     {
         bool haveOutposts = AssignedShard.Outposts.TryGetValue(zone.ID, out var outposts);
@@ -340,5 +413,46 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         NetChannels[ChannelType.Matrix].SendMessage(msg);
 
         Status = IPlayer.PlayerStatus.Loading;
+    }
+
+    /// <summary>
+    ///     Puts a previous session's resources and items back into a freshly seeded inventory.
+    /// </summary>
+    /// <remarks>
+    ///     Runs before <c>EnablePartialUpdates</c>, so nothing here sends anything: the client learns the
+    ///     lot in the full inventory that <c>Respawn</c> sends. Returns the save so the caller can read
+    ///     the outpost off it, or null when this character has never been saved.
+    /// </remarks>
+    private SavedCharacter LoadSavedCharacter()
+    {
+        var saved = AssignedShard.CharacterStore.Load(CharacterId);
+
+        if (saved == null)
+        {
+            return null;
+        }
+
+        foreach (var resource in saved.Resources)
+        {
+            Inventory.AddResource(resource.SdbId, resource.Quantity);
+        }
+
+        foreach (var item in saved.Items)
+        {
+            Inventory.RestoreItem(item);
+        }
+
+        _timePlayedBeforeSession = saved.TimePlayedSecs;
+
+        Logger.Information(
+            "Restored character {CharacterId} from {SavedAt}: {ResourceCount} resource kind(s), {ItemCount} item(s), outpost {OutpostId}, {TimePlayed}s played",
+            CharacterId,
+            saved.SavedAt,
+            saved.Resources.Count,
+            saved.Items.Count,
+            saved.LastOutpostId,
+            saved.TimePlayedSecs);
+
+        return saved;
     }
 }

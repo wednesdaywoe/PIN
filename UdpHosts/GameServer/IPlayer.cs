@@ -1,6 +1,8 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Threading;
 using GameServer.Data;
+using GameServer.Data.Persistence;
 using CharacterEntity = GameServer.Entities.Character.CharacterEntity;
 
 namespace GameServer;
@@ -29,6 +31,7 @@ public interface IPlayer
     PlayerPreferences Preferences { get; }
     Zone CurrentZone { get; }
     uint ConnectedAt { get; }
+    uint TimePlayedSecs { get; }
     uint LastRequestedUpdate { get; set; }
     uint RequestedClientTime { get; set; }
     bool FirstUpdateRequested { get; set; }
@@ -53,5 +56,7 @@ public interface IPlayer
     void Jump();
     void Tick(double deltaTime, ulong currentTime, CancellationToken ct);
     uint FindClosestAvailableOutpost(Zone zone, uint targetOutpostId);
+    uint ClosestOutpostToPosition();
+    SavedCharacter Snapshot(DateTimeOffset savedAt);
     void HandleFireWeaponProjectile(uint time, Vector3 aim);
 }

@@ -46,6 +46,14 @@ public class GameServerSettings
     public string StaticDBPath { get; set; } = @"C:\Program Files\Steam\steamapps\common\Firefall\system\db\clientdb.sd2";
 
     /// <summary>
+    ///    Directory the per-character save files are written to, relative to the GameServer's working
+    ///    directory unless it's absolute. Deliberately not under StaticDB/CustomData: installing is an
+    ///    rsync out of the build output, and anything the build output also contains gets overwritten by
+    ///    a deploy.
+    /// </summary>
+    public string CharacterSavePath { get; set; } = "save";
+
+    /// <summary>
     ///    ZoneId to load
     /// </summary>
     public uint ZoneId { get; set; } = 448;

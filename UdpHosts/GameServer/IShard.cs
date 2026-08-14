@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using GameServer.Data.Persistence;
 using GameServer.Entities;
 using GameServer.Entities.Outpost;
 using GameServer.Physics;
@@ -11,6 +12,7 @@ using GameServer.Systems.Encounters;
 using GameServer.Systems.EntityManager;
 using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
+using GameServer.Systems.Persistence;
 using GameServer.Systems.ProjectileSim;
 using GameServer.Systems.Resources;
 using GameServer.Systems.Spawning;
@@ -42,6 +44,8 @@ public interface IShard : IPacketSender
     ResourceMapSim Resources { get; }
     ChatService Chat { get; }
     AdminService Admin { get; }
+    CharacterStore CharacterStore { get; }
+    CharacterSaveSim CharacterSaves { get; }
     uint ZoneId { get; }
     ILogger Logger { get; }
 

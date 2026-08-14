@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using GameServer.Data;
+using GameServer.Data.Persistence;
 using GameServer.Entities;
 using GameServer.Entities.Outpost;
 using GameServer.Physics;
@@ -18,6 +19,7 @@ using GameServer.Systems.EntityManager;
 using GameServer.Systems.Hazards;
 using GameServer.Systems.Loot;
 using GameServer.Systems.MovementRelay;
+using GameServer.Systems.Persistence;
 using GameServer.Systems.ProjectileSim;
 using GameServer.Systems.Resources;
 using GameServer.Systems.Spawning;
@@ -66,6 +68,8 @@ public class Shard : IShard
         _shieldSim = new ShieldSim(this);
         Hazards = new HazardSim(this);
         Resources = new ResourceMapSim(this);
+        CharacterStore = new CharacterStore(Settings.CharacterSavePath, Logger);
+        CharacterSaves = new CharacterSaveSim(this);
         _killRewards = new KillRewardSim(this);
         Chat = new ChatService(this, EventBus);
         Admin = new AdminService(this);
@@ -91,6 +95,8 @@ public class Shard : IShard
     public ResourceMapSim Resources { get; }
     public ChatService Chat { get; }
     public AdminService Admin { get; }
+    public CharacterStore CharacterStore { get; }
+    public CharacterSaveSim CharacterSaves { get; }
     public ulong InstanceId { get; }
     public uint ZoneId { get; private set; }
     public ulong CurrentTimeLong { get; private set; }
@@ -131,6 +137,7 @@ public class Shard : IShard
         WeaponSim.Tick(deltaTime, currentTime, ct);
         _shieldSim.Tick(deltaTime, currentTime, ct);
         Hazards.Tick(deltaTime, currentTime, ct);
+        CharacterSaves.Tick(deltaTime, currentTime, ct);
         EventBus.Flush();
 
         return true;
@@ -140,6 +147,11 @@ public class Shard : IShard
     {
         if (Clients.ContainsKey(player.SocketId))
         {
+            // Before the character comes out of the world, because the snapshot reads it. This is the
+            // catch-all: a client that closed, timed out or died and reconnected never sent
+            // RequestLogout, and this is the only exit path all of them take.
+            CharacterSaves.SaveIfChanged(player, "disconnect");
+
             if (Entities.ContainsKey(player.CharacterId))
             {
                 EntityMan.Remove(player.CharacterId);
