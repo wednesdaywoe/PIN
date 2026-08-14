@@ -20,16 +20,29 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 ## Current frontier
 
-**First pass, 2026-08-12.** This register didn't exist before today — everything below was mined
-in one sweep across [the progress ledger](PROGRESS.md)'s milestone write-ups, the
+**Two days of sittings on, 2026-08-14, and every entry that moved moved on evidence.**
+[DATA-2](gaps/data.md#data-2) closed when four node types resolved from position in one sitting,
+[DATA-17](gaps/data.md#data-17) when the zone's richest deposit turned out to be sitting inside the
+starting station's no-thumping zone and was moved onto ground the client agrees can be thumped, and
+[NET-22](gaps/network.md#net-22) when N8–N13 passed against replicated NPC poses. That is
+4 of 18 DATA closed, 2 of 24 NET, 1 of 3 CLIENT.
+
+**The two entries opened in the same period are the ones worth reading**, because neither was found
+by reading code: [NET-24](gaps/network.md#net-24), a finished thumper the client leaves standing in
+the world forever while asking for keyframes of it every 5.5 seconds, and
+[DATA-18](gaps/data.md#data-18), the hardcoded ability that sends it away. They come off the same
+`OnInteraction`/`OnUpdate` split, and NET-24's code read makes it a likely costume for
+[NET-1](gaps/network.md#net-1) — one scope-out sent once on a channel that acks but never resends.
+M8 would close it, if that reading is right.
+
+**What this register is short of is a re-audit, not entries.** Everything below was mined in one
+sweep on 2026-08-12 across [the progress ledger](PROGRESS.md)'s milestone write-ups, the
 [Architecture Guide](Architecture/README.md), the [Test Register](TEST-REGISTER.md)'s incident
 narratives (Charge-Camera and Transport-And-Lifecycle especially), and a grep for
-TODO/hardcoded/guess markers across the codebase. Two entries are closed with a guard
-([DATA-1](gaps/data.md#data-1)'s deliberate shield-pool divergence, [CLIENT-2](gaps/client.md#client-2)'s
-HTTP-only login patch); one more is closed pending further confirmation
-([CLIENT-1](gaps/client.md#client-1), the Wine fsync world-entry freeze — four clean sessions on
-record, not yet certain it can't recur). Nothing below has been re-audited yet; this is the
-baseline the next pass diffs against.
+TODO/hardcoded/guess markers across the codebase. Only entries a sitting touched have been looked at
+since, so the parts of the codebase the test queue hasn't reached are still on their first pass.
+M6 will land the first system PIN has ever written that owns data of its own, which is a category
+this register has no entries in yet.
 
 ---
 
@@ -76,6 +89,10 @@ baseline the next pass diffs against.
 - [ ] **DATA-15** — Zone 448's spawn group placements, pack sizes and respawn delays are PIN's own
   content; retail's spawn tables were server-side and nothing in the client db or the zone file
   holds a monster placement. Open by necessity, not pending work
+- [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
+  is inferred from the tables' own arithmetic; costs drop rates, not correctness, and
+  [K2](In-Game-Tests/Kill-Rewards.md) is the only measurement available
+
 - [x] **DATA-17** — Deposit 1, the zone's richest, sat inside the starting station's no-thumping
   zone: its center was 14.7m from outpost 17's, and every scan taken on the shelf on 2026-08-13 came
   back from the client as `NOTHUMPINGZONE` before the server saw a position. **Moved the same
@@ -100,13 +117,9 @@ baseline the next pass diffs against.
   departure the client plays is the animation, and the model staying behind is the client never
   being told the entity is gone
 
-- [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
-  is inferred from the tables' own arithmetic; costs drop rates, not correctness, and
-  [K2](In-Game-Tests/Kill-Rewards.md) is the only measurement available
-
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 1 of 24 closed
+[Full detail](gaps/network.md) — 2 of 24 closed
 
 - [ ] **NET-1** — No retransmit queue; "reliable" only acks, never resends (scheduled as M8)
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
@@ -146,7 +159,7 @@ baseline the next pass diffs against.
 - [x] **NET-21** — An encounter throwing from `Tick` killed the whole shard thread; the Coral Forest
   thumper did it every session via a null participant, a set mutated mid-iteration, and no isolation
   around the update loop. Fixed 2026-08-12, verified headless
-- [~] **NET-22** — Nothing replicated an NPC's pose: the movement view is not flushed and no pose was
+- [x] **NET-22** — Nothing replicated an NPC's pose: the movement view is not flushed and no pose was
   sent on its behalf, so both position and aim only reached the client when a keyframe corrected
   them. Monsters teleported, and fired at where you used to be for seconds before snapping round —
   the burst itself travels on the combat view and arrived on time. Damage was always resolved from

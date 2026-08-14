@@ -49,6 +49,8 @@ The guard doesn't survive a Steam file-verification pass — it reverts the patc
 has to be reapplied after any Steam-initiated verify or update. Worth a line in
 [Session Setup](../In-Game-Tests/Session-Setup.md) if it isn't there already.
 
+<a id="client-3"></a>
+
 ### CLIENT-3 — Some creature models don't render along the orientation the server sends [ ] open, cosmetic
 
 A Melded Aranha (528) engaged at melee range stands and attacks about 90° off from the player it is

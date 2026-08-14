@@ -25,7 +25,7 @@ whenever fidelity wins out over observability. See [M1](../streams/m1-combat-mod
 
 <a id="data-2"></a>
 
-### DATA-2 — Thump node type hardcoded to `20` for every deposit [~] fixed in code 2026-08-13, unverified in game
+### DATA-2 — Thump node type hardcoded to `20` for every deposit [x] closed 2026-08-14
 
 Was: `nodeType` resolved to the literal `20` at both call sites, so every deposit in the world was
 the same deposit. M4 replaced the literal with a lookup —
@@ -34,8 +34,14 @@ answers with the deposit under the calldown position, out of the per-zone
 [resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json), and
 `20` survives only as what barren ground legitimately is ("Default, Thumper Sifted Earth", whose
 shipped yield is one unit of sifted earth). All three callers resolve: the real calldown, the
-`thumper` admin command, and the zone 448 debug thumper. Closes when
-[S3–S5](../In-Game-Tests/Thump-Placement.md) see distinct payouts in game.
+`thumper` admin command, and the zone 448 debug thumper.
+
+Closed on 2026-08-14 by [S3–S5](../In-Game-Tests/Thump-Placement.md). Four node types resolved from
+position in a single sitting (242, 241, 233, and 20 where no deposit covers the ground), and the
+payouts came apart with them: 48 crystite near the rich vein's center against 33 from the same vein
+59% of the way out, 8 from the poor trace, and one unit of sifted earth from barren ground. Two runs
+minutes apart on deposit 1 differing in nothing but position is the part that closes this, because
+it rules out the reading where a lookup happens to work once.
 
 <a id="data-3"></a>
 
@@ -578,6 +584,37 @@ does not pay the wrong thing, because quantities and item ids come off the rows 
 to it is deliberate, and [K2](../In-Game-Tests/Kill-Rewards.md) — twenty kills counted against an
 expected quarter — is the only measurement available in game. Unlike [DATA-10](#data-10), there is no
 shipped string to recover the answer from: the semantics were never data.
+
+<a id="data-17"></a>
+
+### DATA-17 — The zone's richest deposit sat inside a no-thumping zone [x] closed 2026-08-14
+
+Deposit 1 was written into
+[resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json) by
+hand, on a coordinate a tester had walked over, which is the standard PIN adopted after
+[DATA-15](#data-15). Walked ground turned out not to be enough. Its center was 14.7m from outpost
+17's, and the client refuses a thumper anywhere near a base without asking the server: every scan
+taken on the station shelf on 2026-08-13 came back `NOTHUMPINGZONE` before a position ever reached
+the GameServer. Ten scans that evening produced seven refusals and three `OK`s, which is what proved
+the refusals were about where the tester stood rather than about the scan protocol.
+
+The fix was to move it, on 2026-08-14, to 199.8, 315.7 — one of the three coordinates the client
+itself had answered `OK` at. So it is confirmed thumpable rather than merely far from a base, which
+is a stronger property than any of the other deposits have. Renamed Basin Head Crystite to match.
+
+Two things keep this from being a one-off correction. **The other three hand-written deposits have
+never been scanned** and could each have the same problem, since none of their centers has been
+tested against the client's own no-thumping rule. And the failure was invisible: a scan inside a
+no-thumping zone and a scan over barren ground looked identical from the server, because neither
+produces a reading. A barren result now logs the nearest deposit and its distance, so finding out
+which one you are looking at costs a single press of G. That guard is what closes the entry rather
+than the move itself.
+
+The three accepted coordinates were all 78–182m from any deposit, so `barren` was the correct
+answer at each of them. Nothing about the sitting suggested the sampler was wrong; the deposits were
+simply in places the client would not let anyone drill.
+
+<a id="data-18"></a>
 
 ### DATA-18 — A thumper's state-change animations are hardcoded ability ids [ ] open
 

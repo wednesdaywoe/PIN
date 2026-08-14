@@ -43,7 +43,8 @@ up empty. Deposit membership and the gradient are measured flat, in X and Y — 
 anything, so the shelf deposit reaches over the cliff it sits on.
 
 A thumper on ground no deposit covers mines node type 20, "Thumper Sifted Earth", whose shipped
-yield is one unit of item 30404. Whether that item carries the `Resource` flag is unknown — either
+yield is one unit of item 30404, which [S4](#x-s4-thumping-barren-ground-pays-approximately-nothing) confirmed
+does carry the `Resource` flag: the log reads `paying 1 of resource 30404`, not `not paid`. Either
 way a barren thump pays approximately nothing, which is the point.
 
 The log lines this stream reads:

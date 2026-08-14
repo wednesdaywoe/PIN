@@ -244,6 +244,8 @@ The general lesson is point 3. `Shard.Tick` calls its systems in a row with no i
 them, so any of them can still do this; the encounter loop is simply the one that was caught doing
 it. Worth extending the same treatment outward if a second system ever manages it.
 
+<a id="net-22"></a>
+
 ### NET-22 — An NPC's pose never reached the client [x] fixed 2026-08-13
 
 Monsters teleported. Found on the first locomotion session, 2026-08-13: an NPC would sit at its
@@ -359,6 +361,8 @@ Two smaller things fall out of the same entry:
 Not an M2 defect — M2 is about whether a monster is worth fighting, and being killed by one is the
 evidence that it is. It belongs to whichever milestone owns the player lifecycle, and until then a
 tester who dies has to reconnect.
+
+<a id="net-24"></a>
 
 ### NET-24 — A finished thumper never leaves the client [ ] open
 

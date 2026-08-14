@@ -55,7 +55,7 @@ the [public server appendix](public-server-hardening.md).
 |------|-------|
 | A per-zone resource map that answers "what's near here" | new; `CustomDBInterface` is where per-zone data already lives, [ZoneLoader](../../UdpHosts/GameServer/Physics/ZoneLoader/ZoneLoader.cs) knows the extent |
 | Load the node type and yield tables | [StaticDBLoader.cs](../../UdpHosts/GameServer/StaticDB/Loaders/StaticDBLoader.cs), [SDBInterface.cs](../../UdpHosts/GameServer/StaticDB/SDBInterface.cs) |
-| Wire the scan command and send `FoundResourceAreas` | [Factory.cs:481](../../UdpHosts/GameServer/Systems/Aptitude/Factory.cs#L481-L482), [ResourceNodeScanDefCommand.cs](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Other/Todo/ResourceNodeScanDefCommand.cs) |
+| Wire the scan command and send `FoundResourceAreas` | [Factory.cs:481](../../UdpHosts/GameServer/Systems/Aptitude/Factory.cs#L481-L482), [ResourceNodeScanDefCommand.cs](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Other/ResourceNodeScanDefCommand.cs) |
 | Handle `GeographicalReportRequest`, stop hardcoding `Valid = 0` | [BaseController.cs](../../UdpHosts/GameServer/Controllers/Character/BaseController.cs), its `MapOpened` handler |
 | Resolve node type from position instead of `20` | [ResourceNodeBeaconCalldownCommand.cs:23](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Calldown/ResourceNodeBeaconCalldownCommand.cs#L23) |
 | Sample the gradient where the thumper landed and pay that out | the M3 grant path, plus `ResourceNodeCompletedEvent` |
