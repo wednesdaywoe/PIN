@@ -13,7 +13,7 @@ Part of the [in-game test queue](README.md). Setup and admin commands:
 [Client Logging](Client-Logging.md).
 
 Eight attempts at one bug, kept in full because the dead ends are the argument for the fix. Read
-[D5h](#-d5h-drive-effects-through-localeffectscontroller-as-well--this-was-the-bug) for the answer;
+[D5h](#x-d5h-drive-effects-through-localeffectscontroller-as-well--this-was-the-bug) for the answer;
 read the rest for why nothing else was it. Every other prediction-shaped bug in PIN is worth
 re-testing against this result — that re-test is the [Prediction Sweep](Prediction-Sweep.md).
 
