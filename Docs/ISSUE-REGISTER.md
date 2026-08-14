@@ -35,7 +35,7 @@ baseline the next pass diffs against.
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 3 of 17 closed
+[Full detail](gaps/data.md) — 3 of 18 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -82,6 +82,17 @@ baseline the next pass diffs against.
   a base. Renamed Basin Head Crystite. The other three deposits have never been scanned and could
   have the same problem; a barren reading now logs the nearest deposit and its distance so finding
   out costs one press of G
+
+- [ ] **DATA-18** — Three of a thumper's four state-change abilities are literals in PIN's source
+  rather than reads from the beacon's own def: `34579` at the end of warm-up, `34215` at the end of
+  thumping, `34216` when a completed thumper departs. Only the early-collection path reads data —
+  `OnInteraction` fires the beacon's `CompletedAbility` when you cut a thumper short. **Reported
+  2026-08-14**: a thumper collected early played its full extraction animation with sound, while
+  every thumper sent away the ordinary way shot upward instantly and silently. That is exactly the
+  split between the two paths, so the hardcoded `34216` is the suspect and the shipped
+  `completed_ability` (123 on all 40 `aptfs::ResourceNodeBeaconCalldownCommandDef` rows) is what
+  retail played. Cosmetic, and a one-line read to fix once a side-by-side confirms it —
+  [G4](In-Game-Tests/Resource-Payout.md) is written to take that reading
 
 - [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
   is inferred from the tables' own arithmetic; costs drop rates, not correctness, and

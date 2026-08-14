@@ -242,6 +242,30 @@ interaction path — `OnInteraction` sets `LEAVING` without a final `SetProgress
 **Fail, it pays twice** — once for the interaction and once when the natural cycle would have
 finished — the state machine is being driven from two places. That would be a real defect.
 
+### Watch the departure, not just the payout
+
+**Observed 2026-08-14, and it has a cause in the code.** A thumper collected early "played the
+entire animation with SFX"; every thumper sent away before that had shot straight upward at full
+speed, instantly and in silence. Nothing about the deposit is involved — a deposit only carries a
+node type and a yield gradient, and touches neither the state machine nor any animation. **What
+differs is which ability fires**, and there are two paths through
+[Thumper.OnInteraction](../../UdpHosts/GameServer/Systems/Encounters/Encounters/Thumper.cs#L27-L40):
+
+| You press E while it is | What fires | Where that id comes from |
+|-------------------------|-----------|--------------------------|
+| `THUMPING` — cut short, this entry's case | the beacon's own `CompletedAbility` | shipped data, `aptfs::ResourceNodeBeaconCalldownCommandDef.completed_ability`, which reads **123** on all 40 rows |
+| `COMPLETED` — waited out, then collected | ability **34216** | a literal in PIN's source, read from nothing |
+
+So the early path plays retail's own extraction and the ordinary path plays PIN's stand-in, which
+is [DATA-18](../ISSUE-REGISTER.md). Note in step 3 which one you took and whether the departure had
+an animation and a sound; that is the observation the issue is waiting on, and this entry is the
+only one that takes the early path deliberately.
+
+The natural cycle fires two more literals on its way past — `34579` when warm-up ends and `34215`
+when thumping ends — and neither is read from data either. `34215` is confirmed firing in game
+(`Ability 34215 starting Chain 223317`, 2026-08-14); its chain ends in a `NO-OP (Client
+PlayAnimation)`, PIN's marker for a command it deliberately leaves to the client.
+
 ## [x] G5: The Aero's thumper pays nobody, quietly
 
 **Passed 2026-08-13 without anyone running it**, which is the ideal way for this particular entry to

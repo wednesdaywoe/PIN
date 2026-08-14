@@ -45,11 +45,25 @@ Worth knowing because it makes a column name legible: `dbcharacter::Monster.xp_r
 3109 monsters and one of the two ids carries no `Resource` flag — but by 1962 the beta economy was
 long gone, so their silence is expected rather than evidence.
 
-The beta budget survives in the data but isn't wired up. `dbitems::ItemTypeAttributeModifier`
-carries per-attribute weight, power and cpu coefficients, and loads, but nothing reads it.
-`dbitems::FrameMassRange` carries the mass-to-speed rule, has no loader, and isn't confirmed
-present in 1962. Rebuilding CPU/Mass/Power is new construction, not removal, and the gate was
-whether 1962's garage still shows three budgets or only an aggregate.
+**The item-side costs survive in the client db (checked 2026-08-14).** Mass, Power and CPU are
+still defined in `dbitems::AttributeDefinition`, side by side as attribute ids 951, 952 and 953,
+and 1,125 items carry values for them in `dbitems::AttributeRange`, stored negative because
+they're costs against the budget. They sit on exactly the stratum where the pre-1.6 weapon
+templates survived: 1.0-era servos, platings, jumpjets, abilities and crafted modules. The
+formula-side tables noted earlier are still there too: `dbitems::ItemTypeAttributeModifier`
+loads its weight, power and cpu coefficients that nothing reads, and `dbitems::FrameMassRange`
+still has no loader.
+
+The values are a late pricing formula, not beta design intent. Across all 1,125 items mass takes
+only seven distinct values, running 48/64/80/120 by tier; power is exactly half of mass in 1,006
+of 1,015 tuned rows; CPU is 2 or 3; and within a same-slot, same-tier group the numbers barely
+move, so a 1,100-health plating costs the same as a 2,100-health one. A known-answer probe
+settled what happened to the beta numbers: the beta Stock SIN Scrambler cost 88 mass, 45 power,
+2 cores, and while the item itself survives by exact name with its costs stripped, five
+"Regulation" tier-7 items (Plasma Stormer, Supernova, Smart Bomb, Stasis Shot, Antimatter Field)
+carry exactly 88/45, Antimatter Field with the CPU 2 as well. The non-formula ratio marks them as
+hand-authored rows that slipped through every rebalance. So the table wasn't rescaled from beta,
+it was re-templated, and only fragments of the original design survive in it.
 
 **Checked in game 2026-08-13: the garage shows a power rating and an equipment score, and nothing
 else.** Two aggregates, no CPU, mass or power bars. Only `PowerRating` (attribute 1451) is modelled
@@ -73,6 +87,18 @@ What's gone is the engine half. Item-info field names appear as plain strings in
 the binary at all. Every read of `item_info.constraints` in the garage falls back to zeroes because
 the numbers never arrive.
 
+**The tech tree survives as names and nothing else (checked 2026-08-14).** All 60 progression
+nodes exist in `dbitems::Certificate`: Mass, Power and CPU Tech 1 through 10, fully named and
+described in five languages ("Mass Tech 7 - Low Density Servos" is cert 705), plus unnamed blanks
+reserved for 11 through 20. But every payload column on them is zero, and a scan of every table in
+the db for their cert ids found only id collisions. The grant amounts, the node costs and the
+per-frame capacities never shipped; they were server data, like the spawn tables. Rebuilding the
+tree means authoring those numbers, with beta tooltips and patch notes as the only sources. The
+one primary data point in hand: a Raptor at 18 of 30 unlocks showing Mass 1400, Power 800, CPU 13,
+with Mass Tech 7 granting +200 (user, 2026-08-14). The client's progression panel (`BFPLogic.lua`,
+around `Game.GetProgressionUnlocks`) only renders power-rating and health grants now, so the tree
+would need a surface of its own as well.
+
 That looks like a better starting position than the crafting panel, which has no surviving
 surface — but the comparison runs the other way (checked 2026-08-13). Crafting lost only its Lua:
 the full Fabrication command set survives in both the client binary and AeroMessages, and the
@@ -81,9 +107,10 @@ Lua can be authored. The bars are the inverse case — the Lua survived and the 
 died, inside a binary we can't rebuild. Thumping still sits above both, with every layer intact.
 The build is real either way, and still not on any milestone, but it's re-wiring a preserved
 widget rather than authoring one. The question it turns on is how three numbers reach a widget
-the engine won't feed. Attribute ids 1151 and 1152 are
-the first place to look, being live percentage stats the client already formats as Power Mod and
-Mass Mod.
+the engine won't feed. The item half may already be within reach: the costs sit in the client's
+own db as attributes 951 to 953, so the first thing to check is whether the engine still hands
+them to Lua in an item's ordinary stat list, which one tooltip inspection would settle. The frame
+half has no source anywhere and has to be authored either way.
 
 **Sources become design references.** The [patch corpus](Wiki/Sources.md) stops being a spec to
 conform to and becomes an argument about what each loop was for and why it worked. Beta-era

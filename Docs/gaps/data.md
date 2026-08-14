@@ -578,3 +578,40 @@ does not pay the wrong thing, because quantities and item ids come off the rows 
 to it is deliberate, and [K2](../In-Game-Tests/Kill-Rewards.md) — twenty kills counted against an
 expected quarter — is the only measurement available in game. Unlike [DATA-10](#data-10), there is no
 shipped string to recover the answer from: the semantics were never data.
+
+### DATA-18 — A thumper's state-change animations are hardcoded ability ids [ ] open
+
+A thumper announces each stage of its life by firing an ability, and the ability is what carries
+the animation and the sound. Four fire over a full cycle, and **three of the four are literals in
+PIN's source**, read from nothing:
+
+| Stage | PIN fires | Read from |
+|-------|-----------|-----------|
+| landing ends | `LandedAbility` | the beacon's def (`landed_ability`, 111 on every row) |
+| warm-up ends | `34579` | a literal in [Thumper.cs](../../UdpHosts/GameServer/Systems/Encounters/Encounters/Thumper.cs) |
+| thumping ends | `34215` | a literal |
+| a completed thumper departs | `34216` | a literal |
+| **cut short by a player** | `CompletedAbility` | the beacon's def (`completed_ability`, 123 on every row) |
+
+The last row is the odd one and it is what surfaced the entry. `Thumper.OnInteraction` has two
+branches: press E while the thumper is still `THUMPING` and it fires the beacon's own
+`CompletedAbility` before jumping to `LEAVING`; wait the cycle out and press E during `COMPLETED`
+and it only brings the countdown forward, leaving the hardcoded `34216` to fire on the next tick.
+**Two different abilities send a thumper away depending on when you send it.**
+
+A tester reported the difference on 2026-08-14 without knowing the code split existed: a thumper
+collected early "played the entire animation with SFX", where every thumper sent away the ordinary
+way had "shot upward with 100% momentum instantly and silently". The suspicion was that the
+manually placed deposit under it mattered; it does not, since a deposit carries only a node type and
+a yield gradient and touches neither the state machine nor any ability. The timing is the whole
+difference.
+
+That makes the shipped `completed_ability` the strong candidate for what retail played on
+extraction, and PIN's `34216` a stand-in that renders as an instant silent launch. The fix is to
+read the def in both branches, but the reading is worth confirming side by side first —
+[G4](../In-Game-Tests/Resource-Payout.md) takes the early path deliberately and now asks for the
+observation. Purely cosmetic: the payout, the participants and the completion event are all
+resolved in `OnSuccess`, which neither branch changes.
+
+`aptfs::ResourceNodeBeaconCalldownCommandDef` also carries a `death_ability` (33978 on most rows,
+0 on two) that nothing in PIN reads at all, so a destroyed thumper has no departure of any kind.
