@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using GameServer.Entities.Character;
+using GameServer.Systems.Combat;
 using Serilog;
 
 namespace GameServer.Systems.AI;
@@ -179,8 +180,9 @@ public static class NpcMovement
         {
             // A target's Z is only a ground height while the target is standing on the ground, so take
             // it when it is and keep the last one when it isn't. A player jetpacking overhead is still
-            // chased across the ground; what stops is the NPC rising to meet them.
-            if (!target.IsAirborne)
+            // chased across the ground; what stops is the NPC rising to meet them. Anything that isn't
+            // a character (a thumper) is planted, and its position is its footing.
+            if (target is not CharacterEntity character || !character.IsAirborne)
             {
                 state.TargetFooting = target.Position;
                 state.HasTargetFooting = true;
@@ -257,11 +259,11 @@ public static class NpcMovement
         return state.CachedSpeed;
     }
 
-    private static CharacterEntity ResolveTarget(IShard shard, AIState state)
+    private static IDamageable ResolveTarget(IShard shard, AIState state)
     {
         if (state.CurrentTargetId is not ulong targetId
             || !shard.Entities.TryGetValue(targetId, out var entity)
-            || entity is not CharacterEntity target
+            || entity is not IDamageable target
             || !target.IsAlive)
         {
             return null;

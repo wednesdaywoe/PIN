@@ -6,10 +6,12 @@ using GameServer.Entities.Character;
 using GameServer.Enums;
 using GameServer.StaticDB.Records.aptfs;
 using GameServer.Systems.Aptitude;
+using GameServer.Systems.Combat;
+using GameServer.Systems.Encounters;
 
 namespace GameServer.Entities.Thumper;
 
-public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
+public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget, IDamageable
 {
     public ThumperEntity(
         IShard shard,
@@ -27,8 +29,10 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
         Position = position;
         LandedAbility = commandDef.LandedAbility;
         CompletedAbility = commandDef.CompletedAbility;
+        DeathAbility = commandDef.DeathAbility;
         CalldownTimeMs = commandDef.CalldownTimeMs;
         MaxHealth = (uint)commandDef.Health;
+        CurrentHealth = (int)MaxHealth;
         Interaction = new InteractionComponent()
           {
               Type = InteractionType.GenericHold,
@@ -57,8 +61,17 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
 
     public uint LandedAbility { get; set; }
     public uint CompletedAbility { get; set; }
+    public uint DeathAbility { get; set; }
     public uint CalldownTimeMs { get; set; }
     public uint MaxHealth { get; set; }
+    public int CurrentHealth { get; private set; }
+    public bool Destroyed { get; private set; }
+
+    /// <summary>
+    ///     Damageable from touchdown until liftoff. Once it's LEAVING the machine is airborne with the
+    ///     cargo already won, so shots into it stop counting rather than voiding a finished run.
+    /// </summary>
+    public bool IsAlive => !Destroyed && CurrentHealth > 0 && StateInfo.State < (byte)ThumperState.LEAVING;
 
     public ushort StatusEffectsChangeTime_0 { get; set; }
     public ushort StatusEffectsChangeTime_1 { get; set; }
@@ -157,6 +170,47 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
         ResourceNode_ObserverView.ProgressProp = Progress;
     }
 
+    public void SetCurrentHealth(int newValue)
+    {
+        CurrentHealth = System.Math.Clamp(newValue, 0, (int)MaxHealth);
+        ResourceNode_ObserverView.CurrentHealthPctProp = Vitals.HealthPercent(CurrentHealth, (int)MaxHealth);
+    }
+
+    /// <summary>
+    ///     Same funnel as every other <see cref="IDamageable"/>: shots and damage commands land here.
+    ///     No mitigation. The machine has no shields and no armour, just the pool retail gave it.
+    /// </summary>
+    public void TakeDamage(DamageInfo damage)
+    {
+        if (!IsAlive || MaxHealth == 0)
+        {
+            return;
+        }
+
+        var amount = damage.Points;
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        SetCurrentHealth(CurrentHealth - amount);
+
+        Logger.Debug(
+            "Thumper {EntityId} took {Amount} damage from {Attacker}, {Health} of {MaxHealth} health left",
+            EntityId,
+            amount,
+            damage.Attacker?.EntityId,
+            CurrentHealth,
+            MaxHealth);
+
+        DamageEvents.SendDealtHit(damage, DamageEvents.Describe(this, damage, amount));
+
+        if (CurrentHealth <= 0)
+        {
+            Destroy(damage.Attacker);
+        }
+    }
+
     public void SetHostilityInfo(HostilityInfoData newValue)
     {
         HostilityInfo = newValue;
@@ -198,6 +252,24 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget
         return IsInteractable()
                && other is CharacterEntity character
                && Encounter.Instance.Participants.Contains(character.Player);
+    }
+
+    /// <summary>
+    ///     The entity-side half of destruction: mark it dead, show the DESTROYED state, run the death
+    ///     ability retail authored for the explosion. The encounter-side half (the failure event, the
+    ///     wave cleanup, removing the entity) belongs to the encounter, which is told last.
+    /// </summary>
+    private void Destroy(CharacterEntity attacker)
+    {
+        Destroyed = true;
+        TransitionToState(ThumperState.DESTROYED);
+
+        if (DeathAbility != 0)
+        {
+            Shard.Abilities.HandleActivateAbility(Shard, this, DeathAbility);
+        }
+
+        (Encounter?.Instance as IDestructionHandler)?.OnDestroyed(this, attacker);
     }
 
     private void InitFields()

@@ -1,4 +1,5 @@
 using System.Numerics;
+using GameServer.Entities;
 using GameServer.Entities.Character;
 
 namespace GameServer.Systems.AI;
@@ -27,12 +28,22 @@ public static class Sightline
     public const float AimHeight = 1.5f;
 
     /// <summary>
+    ///     Aim height for anything that isn't a character, which today means a thumper. Deliberately
+    ///     low: a structure whose collision pose asset isn't in the deployment gets the physics
+    ///     engine's fallback shape, a 0.9m sphere at the base, and a chest-height shot sails clean
+    ///     over that. 0.7m is inside the sphere from any range and still inside the real machine when
+    ///     the asset does load.
+    /// </summary>
+    public const float StructureAimHeight = 0.7f;
+
+    /// <summary>
     ///     Works out the shot from <paramref name="shooter"/> to <paramref name="target"/>. False when
     ///     the two are close enough to be degenerate, which is the one case where there's no direction
     ///     to normalise.
     /// </summary>
-    public static bool TrySolve(CharacterEntity shooter, CharacterEntity target, out Shot shot)
+    public static bool TrySolve(CharacterEntity shooter, IEntity target, out Shot shot)
     {
+        var aimHeight = target is CharacterEntity ? AimHeight : StructureAimHeight;
         shot = default;
 
         // The muzzle sits off to one side, so the origin depends on which way the shooter is looking,
@@ -45,7 +56,7 @@ public static class Sightline
         }
 
         var origin = shooter.GetProjectileOrigin(coarse / separation);
-        var toAimPoint = target.Position + new Vector3(0f, 0f, AimHeight) - origin;
+        var toAimPoint = target.Position + new Vector3(0f, 0f, aimHeight) - origin;
         var range = toAimPoint.Length();
         if (range <= 0f)
         {
@@ -60,7 +71,7 @@ public static class Sightline
     ///     Whether <paramref name="shot"/> reaches <paramref name="target"/> without hitting something
     ///     else first. The shooter's own body is excluded by <c>TargetRayCast</c>.
     /// </summary>
-    public static bool IsClear(IShard shard, CharacterEntity shooter, CharacterEntity target, in Shot shot)
+    public static bool IsClear(IShard shard, CharacterEntity shooter, IEntity target, in Shot shot)
     {
         var (hit, _, hitEntityId) = shard.Physics.TargetRayCast(shot.Origin, shot.Direction, shooter, shot.Range);
         return !hit || hitEntityId == target.EntityId;

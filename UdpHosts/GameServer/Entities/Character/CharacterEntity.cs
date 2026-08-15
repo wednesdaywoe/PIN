@@ -103,6 +103,20 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public bool IsAirborne { get; set; }
 
     /// <summary>
+    ///     What this NPC exists to attack, assigned by whatever spawned it; a thumper wave assigns the
+    ///     thumper. Anything <see cref="Systems.Combat.IDamageable"/> qualifies, not just characters.
+    ///     Null for every character that just lives in the zone, including all players.
+    /// </summary>
+    public ulong? ObjectiveId { get; set; }
+
+    /// <summary>
+    ///     Whether the objective outranks threat. True is a sapper: it marches on the objective and
+    ///     ignores whoever is shooting it. False means the objective is a fallback for when no threat
+    ///     target is engaged, which is what a wave escort wants.
+    /// </summary>
+    public bool ObjectiveFirst { get; set; }
+
+    /// <summary>
     ///     Where the character was last put by something other than its own legs — a teleport or a
     ///     respawn — cleared once it walks away from that spot.
     /// </summary>

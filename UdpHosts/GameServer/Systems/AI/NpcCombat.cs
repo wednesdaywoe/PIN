@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using GameServer.Entities.Character;
+using GameServer.Systems.Combat;
 using Serilog;
 
 namespace GameServer.Systems.AI;
@@ -162,12 +163,12 @@ public static class NpcCombat
         npc.SetAim(direction, Facing.Towards(direction, npc.Orientation));
     }
 
-    private static bool TryResolveTarget(IShard shard, AIState state, out CharacterEntity target)
+    private static bool TryResolveTarget(IShard shard, AIState state, out IDamageable target)
     {
         target = null;
         return state.CurrentTargetId is ulong targetId
                && shard.Entities.TryGetValue(targetId, out var entity)
-               && (target = entity as CharacterEntity) != null
+               && (target = entity as IDamageable) != null
                && target.IsAlive;
     }
 

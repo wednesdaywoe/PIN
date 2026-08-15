@@ -82,3 +82,47 @@ One standing check for wave authoring: every creature type a wave introduces is 
 nobody has seen render, and one of the only two so far faces 90° sideways
 ([CLIENT-3](../gaps/client.md#client-3)). Look at each new monster's facing the first time it
 stands in a session — the observation is free then and unrecoverable later.
+
+## Built 2026-08-15, structured the way the chain walk said
+
+The whole milestone is wiring, as predicted, and the wave design follows the research pass
+directly: the thumper's own state machine decides when, and every spawn is a one-shot verb.
+Four waves of Melded Aranha stand up on a 20m ring at 15/40/65/90% of drilling progress
+(2+0, 2+1, 3+1, 3+2), each split into **sappers** that march on the machine ignoring return fire
+and **escorts** that fight what they perceive. Single-species deliberately — Aranha and Chosen are
+mutually hostile and a mixed wave fights itself, which is N14's lesson — and 528 specifically so no
+unchecked model renders (the CLIENT-3 rule above stands for whoever varies the waves).
+
+What it took, by the work table:
+
+- **The thumper is a thing that can die.** `ThumperEntity` now implements `IDamageable` with
+  retail's own pool (`Health` on the calldown def shipped 4000–5000 on all 61 rows), gets a physics
+  body from the beacon's `PosefileId` collision asset, shows its health in the view, and on zero
+  transitions to DESTROYED, runs the beacon's death ability, and tells its encounter through a new
+  `IDestructionHandler`. Damageable from touchdown to liftoff; a LEAVING thumper has already won.
+- **The AI can attack a non-character.** Target selection, sightline, combat and movement all
+  resolved targets as `CharacterEntity`; they now resolve `IDamageable`. An NPC can carry an
+  *objective* (`CharacterEntity.ObjectiveId` + `ObjectiveFirst`), which comes in beside the threat
+  table rather than through it, because threat only accumulates on characters. Sappers put the
+  objective first; escorts use it as a fallback. Structures are aimed at 0.7m rather than chest
+  height, because a missing collision asset falls back to a 0.9m sphere at the base and a
+  chest-height shot clears it.
+- **Deaths route to the owning encounter.** `EncounterManager` subscribes to M2's
+  `CharacterDiedEvent` and dispatches to a new `IDeathHandler` when the victim's
+  `EncounterComponent` carries the new `Event.Death` flag — the same addressing interactions
+  already use. `KillRewardSim` is untouched; the encounter is a second subscriber.
+- **Failure exists.** `Thumper.OnFailure` sends the completion event with `Destroyed = 1` and
+  nothing aboard, despawns the wave, and leaves the wreck 6 seconds to be seen. Both exits are
+  guarded so success and failure can't both fire.
+- **The payout reads the defence.** Yield is now `completion × defence`, where defence runs
+  linearly from 0.5 at zero health to 1.0 untouched (`Thumper.DefenceMultiplier`, unit-tested).
+  The curve and the wave schedule are invented in the DATA-10 sense; the health pool is not.
+
+What no offline test can settle is sized in the new test stream,
+[Thumper-Defence (F1–F6)](../In-Game-Tests/Thumper-Defence.md): whether the beacon's collision
+asset loads in the deployment (F3's `fallback shape` grep), and whether Aranha claws against a
+4000-point pool make the failure path reachable at all (F3/F5 record the DPS reading that tunes
+the schedule).
+
+Exit unchanged and now testable end to end: call one down, defend it against waves that get
+harder, and either extract with the resources or lose them.

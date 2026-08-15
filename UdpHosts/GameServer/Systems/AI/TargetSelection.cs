@@ -1,5 +1,6 @@
 using System.Numerics;
 using GameServer.Entities.Character;
+using GameServer.Systems.Combat;
 using GameServer.Systems.Hostility;
 
 namespace GameServer.Systems.AI;
@@ -81,7 +82,28 @@ public static class TargetSelection
             }
         }
 
-        state.CurrentTargetId = PickTarget(shard, npc, state.Threat);
+        // Threat only ever accumulates on characters, so an assigned objective (a wave NPC's thumper)
+        // comes in beside it rather than through it. A sapper takes the objective over anything the
+        // threat table says; an escort fights what threatens it and falls back to the objective when
+        // nothing does.
+        var threatTarget = PickTarget(shard, npc, state.Threat);
+        var objective = ResolveObjective(shard, npc);
+
+        state.CurrentTargetId = npc.ObjectiveFirst ? objective ?? threatTarget : threatTarget ?? objective;
+    }
+
+    private static ulong? ResolveObjective(IShard shard, CharacterEntity npc)
+    {
+        if (npc.ObjectiveId is not ulong objectiveId
+            || !shard.Entities.TryGetValue(objectiveId, out var entity)
+            || entity is not IDamageable objective
+            || !objective.IsAlive
+            || !HostilityRules.AreHostile(npc, objective))
+        {
+            return null;
+        }
+
+        return objectiveId;
     }
 
     private static ulong? PickTarget(IShard shard, CharacterEntity npc, ThreatTable threat)

@@ -13,6 +13,7 @@ using GameServer.Entities.Character;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
 using GameServer.Systems.Encounters.Encounters;
+using GameServer.Systems.SystemEvents;
 using Serilog;
 
 namespace GameServer.Systems.Encounters;
@@ -31,6 +32,10 @@ public class EncounterManager
 
     private readonly Shard _shard;
     private readonly ILogger _logger;
+
+    /// <summary>Held so the death routing stays subscribed, same shape as <c>KillRewardSim</c>.</summary>
+    private readonly System.IDisposable _deathSubscription;
+
     private ulong _lastUpdateFlush;
     private ulong _lastLifetimeCheck;
     private bool _hasSpawnedZoneEncounters;
@@ -40,6 +45,7 @@ public class EncounterManager
         _shard = shard;
         _logger = shard.Logger.ForContext<EncounterManager>();
         Factory = new Factory(shard);
+        _deathSubscription = shard.EventBus.Subscribe<CharacterDiedEvent>(OnCharacterDied);
     }
 
     public void SendUiQuery(NewUiQuery uiQuery, INetworkPlayer target, IEncounter encounter)
@@ -217,6 +223,21 @@ public class EncounterManager
         if (encounter != null)
         {
             _shard.Encounters.Remove(guid);
+        }
+    }
+
+    /// <summary>
+    ///     Routes a character's death to the encounter that owns it, the way interactions already route.
+    ///     The component is the addressing: a character with no <see cref="EncounterComponent"/>, or one
+    ///     whose encounter didn't ask for deaths, costs one flag check.
+    /// </summary>
+    private void OnCharacterDied(CharacterDiedEvent evt)
+    {
+        var component = evt.Victim?.Encounter;
+
+        if (component?.Instance is IDeathHandler handler && component.Handles(EncounterComponent.Event.Death))
+        {
+            handler.OnMemberDied(evt.Victim, evt.Killer);
         }
     }
 

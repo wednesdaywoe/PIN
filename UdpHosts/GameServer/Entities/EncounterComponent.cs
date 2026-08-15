@@ -14,6 +14,7 @@ public class EncounterComponent
         Donation = 1 << 2,
         ExitAttachment = 1 << 3,
         Proximity = 1 << 4,
+        Death = 1 << 5,
     }
 
     public ulong EncounterId { get; set; }

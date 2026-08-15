@@ -327,6 +327,14 @@ public class EntityManager
         var beacon = SDBInterface.GetResourceNodeBeacon(commandDef.ResourceNodeBeaconId);
         var thumperEntity = new ThumperEntity(_shard, _shard.GetNextGuid(), nodeType, position, owner, commandDef);
         thumperEntity.Scale = beacon.Scale;
+
+        // The machine has to be physically hittable or the M7 waves are theatre: every beacon record
+        // names a collision pose, the same asset family character bodies come from. If the asset isn't
+        // in the deployment the physics engine quietly substitutes a 0.9m sphere at the base (the
+        // "fallback shape" debug line), which is why NPCs aim low at structures.
+        thumperEntity.Collision = new CollisionComponent { HitboxCollisionId = beacon.PosefileId, Scale = beacon.Scale };
+        _shard.Physics.CreateKineticEntity(thumperEntity);
+
         Add(thumperEntity.EntityId, thumperEntity);
         return thumperEntity;
     }

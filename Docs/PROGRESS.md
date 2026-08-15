@@ -23,7 +23,7 @@ M1 confirm the combat models                        done
  └─> M2 NPCs that fight back                        done
       ├─> M3 resources come out of the ground       done
       │    ├─> M4 where you thump matters           done
-      │    └─> M7 an encounter that plays
+      │    └─> M7 an encounter that plays           built, in test
       └─> M5 killing something pays                 done
 
 M6 persistence across sessions                      done
@@ -60,6 +60,17 @@ both spawn and signal), so retail's wave sequencing lived in server-side encount
 the state-machine relationship `Thumper` already has. Waves belong in the encounter's own state,
 not in a spawn-wait-spawn script. Detail in
 [streams/m7-encounter-combat.md](streams/m7-encounter-combat.md).
+
+**M7 was built on 2026-08-15 to exactly that shape, and now waits on a client.** The thumper spawns
+four escalating Aranha waves off its own progress, split into sappers that march on the machine and
+escorts that fight the defender; the machine itself is damageable (retail shipped its health,
+4000–5000, on every calldown row), destruction is a real failure that pays nothing, and a survived
+defence scales the payout by remaining health. Under it, three pieces every future encounter
+inherits: the AI can target any damageable entity via an assigned objective, character deaths route
+to the encounter that owns them through `EncounterComponent`, and destructible non-characters
+report their destruction the same way. 222 offline tests pass; the two questions only a sitting can
+answer — does the collision asset load, and can Aranha claws actually kill the machine — are
+written as [Thumper-Defence F1–F6](In-Game-Tests/Thumper-Defence.md).
 
 **M8 was built entirely out of measurements rather than choices, which is the part worth carrying
 forward.** The 2016 capture holds 24 resent packets across 456619, and reading them settled the
@@ -282,9 +293,9 @@ under [Systems/AI](../UdpHosts/GameServer/Systems/AI/) and driven from
 [AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick.
 [N1–N7](In-Game-Tests/NPC-Combat.md) ran on 2026-08-12 and all pass: an NPC notices you, turns to
 face you, respects cover, opens fire, damages you, disengages when you leave, and dies mid-burst
-without leaving a corpse stuck firing. Death notification is the exception, and only because it has
-nothing to show — `CharacterEntity.Die` publishes `CharacterDiedEvent` onto the `EventBus` and
-nothing subscribes yet; M5 and M7 are what give it a listener.
+without leaving a corpse stuck firing. Death notification waited longest for an audience:
+`CharacterEntity.Die` publishes `CharacterDiedEvent` onto the `EventBus`, M5's kill rewards became
+its first subscriber, and M7's encounter routing its second.
 
 Building it paid for itself twice over. [DATA-11](ISSUE-REGISTER.md) — a `WeaponTemplateModifiers`
 multiplier of 0 read literally instead of as "unset" — had been zeroing the range of 269 weapons and

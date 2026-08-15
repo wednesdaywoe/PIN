@@ -51,6 +51,13 @@ never recharge (blocks P1), and Hover's lift never engaging (a gameplay gap reco
 effects 1184 and 10812–10815 and read the two `requirecstate` targets in the SDB (NET-26), and
 diff the partial item message against the capture (NET-18).
 
+**[M7](PROGRESS.md) was built on 2026-08-15 and [Thumper Defence](In-Game-Tests/Thumper-Defence.md)
+is the queue's newest stream, F1–F6, unrun.** A thumper is now a fight: four escalating Aranha
+waves, a machine that can be destroyed, a failure that pays nothing, a payout scaled by remaining
+health. F1 is the milestone's exit; F3 and F5 carry the two questions offline tests can't reach
+(does the collision asset load, and can the waves actually kill the machine). It wants two full
+7.5-minute cycles, one defended and one abandoned.
+
 **Everything below this line predates the 2026-08-14 evening sitting.**
 
 **The queue is paused, and for once not because something is blocked.** [M6](PROGRESS.md) and
@@ -366,6 +373,12 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   log (fixed the same morning — outgoing logs now rotate into `logs/previous/`), and S6 failed once
   for a reason outside itself, because a plain `./start-pin.sh` reinstalls the repo's copy of the
   very file the `deposit` command writes. **S6 needs `--no-build`**
+- [ ] [Thumper Defence](In-Game-Tests/Thumper-Defence.md) — 0 of 6, written 2026-08-15 with
+  [M7](PROGRESS.md)'s code and unrun. F1 is the milestone's exit condition: a thumper defended
+  through four Aranha waves pays, scaled by the health it kept. The stream carries the two
+  questions no offline test can answer — F3, whether the beacon's collision asset loads so sapper
+  claws actually land on the machine, and F5, whether the waves can destroy a 4000-point pool at
+  all. Both cycles it needs run 7.5 minutes each; plan the sitting around two
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and
