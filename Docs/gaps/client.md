@@ -51,7 +51,7 @@ has to be reapplied after any Steam-initiated verify or update. Worth a line in
 
 <a id="client-3"></a>
 
-### CLIENT-3 — Some creature models don't render along the orientation the server sends [ ] open, cosmetic
+### CLIENT-3 — Some creature models don't render along the orientation the server sends [ ] fix built, awaiting the in-game look
 
 A Melded Aranha (528) engaged at melee range stands and attacks about 90° off from the player it is
 attacking. Confirmed as a model property rather than a server defect on 2026-08-13, by the only test
@@ -90,3 +90,33 @@ first appears, because that observation is free during a sitting and unrecoverab
 Not to be confused with the Aranha's `PosetypeId` of 0, which sounds alarming and isn't:
 `GetCharacterPoseAsset` already falls back to the visual record's `HitboxCollisionId` for those, and
 the session log has no `No suitable collisionId found` warnings.
+
+**Solved from the retail capture on 2026-08-15, and everything above about a per-model axis was the
+wrong frame.** The third route nobody had tried — read what the real server sent — settled it in one
+run: `CaptureReplay --facing` opens the capture's `RoutedMultipleMessage` envelopes (where every
+remote pose actually travels; none are standalone) and compares each entity's sent orientation with
+its travel and its aim. Every rig retail ever oriented sits at exactly **−90° under PIN's +X-forward
+reading** — 40+ monster types, walkers with spreads under 20°, and, decisively, the session's remote
+*players*, whose quaternions are client-authored and therefore state the client's own convention.
+There is no per-model table, in retail or anywhere: **the client's local forward is +Y, and PIN's
++X convention was 90° wrong for every character it oriented.**
+
+Why only the Aranha showed it: a humanoid's rendered body tracks the aim vector — a plain direction,
+convention-free, which PIN always sent correctly — so the Chosen masked the bad quaternion and N1's
+"+X confirmed" was really confirming the aim path. A creature rig follows the quaternion, and the
+sideways Aranha was the one honest witness. The coverage worry above dissolves with the cause: the
+~3,100 unrendered monsters were all being sent the same wrong convention, and now all get the same
+right one.
+
+The fix is one constant: `Facing.Towards` yaws a quarter turn short of the bearing
+(`ForwardAxisOffset`, [NpcCombat.cs](../../UdpHosts/GameServer/Systems/AI/NpcCombat.cs)), which is
+the convention player orientations already arrive in, so every consumer — muzzle origin, physics
+pose, the wire — now treats manufactured and client-authored orientations alike. Pinned by
+[FacingTests](../../Tests/GameServer.Tests/AI/FacingTests.cs). Closes on seeing an Aranha attack
+head-on in game.
+
+One landmine found on the way, worth its own flag: AeroMessages' `QuantisedFloat` float conversion
+doesn't invert its own quantise — positives come back mirrored. PIN only ever *encodes* on the live
+path, so nothing in the server is currently wrong, but any future inbound read of a quantised field
+(or capture analysis, which is how it surfaced) must decode by the encoder's convention, as
+`FacingReport.Dequantise` does.

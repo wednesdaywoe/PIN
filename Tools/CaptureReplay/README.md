@@ -25,6 +25,7 @@ dotnet run --project Tools/CaptureReplay -- <capture.pcapng[.gz]> [options]
 | `--server <ip>` | Override server detection |
 | `--no-deserialize` | Framing and histogram only |
 | `--transport` | Resends, resend delays and ack behaviour, underneath the messages |
+| `--facing` | Opens the `RoutedMultipleMessage` envelopes and compares each NPC's sent orientation with its travel and aim, grouped by monster type |
 
 With no filter it prints framing health, the channel mix, a `(controller, message)` histogram, and
 the pairs that have no AeroMessages definition.
@@ -107,6 +108,25 @@ Two things the report can say that a live server can't. A resend whose original 
 capture means the data arrived and the *ack* was lost, and 15 of the 24 are that case. And the
 capture was taken at the client, so "the original never reached the capture point" is a genuine
 network drop rather than a missing record.
+
+## Reading the facing
+
+`--facing` answers the question CLIENT-3 asked for two days: did retail bake per-model facing
+offsets into the orientations it sent? Remote-entity poses never appear as standalone messages —
+they ride inside `RoutedMultipleMessage1` envelopes, addressed by the shorthand ids that
+`RoutedMessageIdAssign` establishes (the assignments themselves also ride inside the envelopes) —
+so this mode is the first thing in the repo that opens them: 706k blocks, 314k poses, zero rejects
+against the one-message-id-byte-then-body layout in the 2016 capture.
+
+The answer, run 2026-08-15: no per-model offsets exist. Every rig retail ever oriented — 40+
+monster types and the session's remote players, whose quaternions are client-authored — sits at
+exactly −90° under a +X-forward reading, so the client's character-local forward is +Y and PIN's
+`Facing.Towards` convention was a quarter turn wrong for everything, not just the Aranha that
+showed it. The writeup lives in [gaps/client.md](../../Docs/gaps/client.md#client-3).
+
+One decode caveat the mode carries its own fix for: AeroMessages' `QuantisedFloat` float conversion
+mirrors positive values instead of inverting its own encoder, so `FacingReport` dequantises by the
+encoder's convention rather than trusting the implicit operator.
 
 ## Known gaps
 

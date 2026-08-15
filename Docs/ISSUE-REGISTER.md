@@ -282,12 +282,15 @@ has no entries in that category, which reflects nothing having run rather than n
 - [x] **CLIENT-2** — HTTPS login fails under Proton's WinHTTP; closed via all-HTTP client APIs
   plus a binary patch (must be reapplied after Steam file verification)
 - [ ] **CLIENT-3** — A Melded Aranha renders about 90° off the orientation it is sent; a Chosen in
-  the same place faces correctly, so it is the creature model's forward axis, not the server's
-  maths. Nothing PIN can read carries a per-model facing offset. Cosmetic — shots are aimed from
-  live positions, never from the rendered facing — and left open rather than papered over with an
-  invented table. Still present 2026-08-14, and only two creature types have ever rendered in game,
-  so how many of the other ~3,100 monsters share it is unknown; check facing on every new creature
-  an M7 wave introduces
+  the same place faces correctly, which read as a per-model forward axis until the 2016 capture was
+  measured (2026-08-15, `CaptureReplay --facing`): every rig retail ever oriented — 40+ monster
+  types and the clients' own remote players — sits at exactly −90° under PIN's +X-forward reading,
+  spreads under 20°. So there was never a per-model offset: PIN's convention was 90° wrong for
+  every character, the client's local forward is +Y, and the Chosen only looked right because a
+  humanoid's rendered body follows the aim vector closely enough to mask the quaternion.
+  **Fix built 2026-08-15** — `Facing.Towards` now yaws a quarter turn short of the bearing,
+  matching the convention players' client-authored orientations already use — awaiting the in-game
+  look at the Aranha to close
 
 ---
 

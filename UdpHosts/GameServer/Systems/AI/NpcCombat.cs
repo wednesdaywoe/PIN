@@ -253,16 +253,28 @@ public static class NpcCombat
 public static class Facing
 {
     /// <summary>
+    ///     A quarter turn. The client's characters carry their local forward along +Y, so facing a
+    ///     bearing means yawing to a quarter turn short of it. Measured, not chosen: the 2016 capture's
+    ///     pose stream puts every rig retail ever oriented — 40+ monster types and the clients' own
+    ///     remote players alike — at exactly this offset from both travel and aim under a +X reading
+    ///     (`CaptureReplay --facing`, run 2026-08-15, spreads under 20° on everything that walks).
+    /// </summary>
+    private const float ForwardAxisOffset = MathF.PI / 2f;
+
+    /// <summary>
     ///     The orientation to store on a character so it stands looking along <paramref name="direction"/>,
     ///     or <paramref name="current"/> when the direction is straight up or down and says nothing about
     ///     which way to stand. Yaw only — characters don't lean back to shoot upwards.
     ///
-    ///     Both halves of the convention are now settled. The stored orientation is the inverse of the
-    ///     world rotation — never in doubt, since <c>GetProjectileOrigin</c> and the physics engine both
-    ///     invert it on the way out. Local forward being +X started as a guess and was confirmed in game
-    ///     (N1, 2026-08-12): an NPC built this way turns to face what it has noticed. This is the only
-    ///     place in the server that derives an orientation from a direction, so it's the thing to reuse
-    ///     rather than re-derive.
+    ///     The stored orientation is the inverse of the world rotation — never in doubt, since
+    ///     <c>GetProjectileOrigin</c> and the physics engine both invert it on the way out. Local forward
+    ///     is +Y, per <see cref="ForwardAxisOffset"/>; it was +X until 2026-08-15, a guess N1 seemed to
+    ///     confirm because a humanoid's rendered body follows the aim vector closely enough to mask a
+    ///     wrong quaternion. A creature's doesn't, which was the whole of CLIENT-3: the sideways Aranha
+    ///     was the one rig honest enough to show the convention error every character had. Player
+    ///     orientations never pass through here — clients author them in their own convention, which is
+    ///     exactly the one this now matches. This is the only place in the server that derives an
+    ///     orientation from a direction, so it's the thing to reuse rather than re-derive.
     /// </summary>
     public static Quaternion Towards(Vector3 direction, Quaternion current)
     {
@@ -271,7 +283,7 @@ public static class Facing
             return current;
         }
 
-        var yaw = MathF.Atan2(direction.Y, direction.X);
+        var yaw = MathF.Atan2(direction.Y, direction.X) - ForwardAxisOffset;
         return Quaternion.Inverse(Quaternion.CreateFromAxisAngle(Vector3.UnitZ, yaw));
     }
 }

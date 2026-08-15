@@ -31,6 +31,7 @@ Console.WriteLine($"client {client}  <->  server {server}   ({datagrams.Count} d
 Console.WriteLine($"registry: {registry.GssCount} GSS (controller, message) pairs from AeroMessages\n");
 
 var transport = options.Transport ? new TransportReport() : null;
+var facing = options.Facing ? new FacingReport() : null;
 var replay = new SessionReplay(registry, deserialize: !options.NoDeserialize) { Transport = transport };
 var histogram = new Dictionary<(byte Controller, byte Message, string Name), int>();
 var unknownBytes = new Dictionary<(byte Controller, byte Message), int>();
@@ -38,6 +39,8 @@ var shown = 0;
 
 foreach (var message in replay.Replay(datagrams, server))
 {
+    facing?.Observe(message);
+
     var key = (message.ControllerId, message.MessageId, message.MessageName);
     histogram[key] = histogram.GetValueOrDefault(key) + 1;
 
@@ -65,6 +68,7 @@ Console.WriteLine($"  resent (XOR undone)  {stats.ResentPackets}");
 Console.WriteLine($"  split fragments      {stats.SplitFragments} -> {stats.SplitsReassembled} reassembled");
 
 transport?.Write();
+facing?.Write();
 
 Console.WriteLine("\n=== channels ===");
 foreach (var (channel, count) in stats.ByChannel.OrderByDescending(kv => kv.Value))
@@ -220,6 +224,8 @@ internal sealed class Options
 
     public bool Transport { get; init; }
 
+    public bool Facing { get; init; }
+
     public bool Matches(DecodedMessage message)
         => (Controller == null || message.ControllerId == Controller)
            && (Message == null || message.MessageId == Message)
@@ -244,6 +250,7 @@ internal static class CommandLine
         var top = 25;
         var noDeserialize = false;
         var transport = false;
+        var facing = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -258,6 +265,7 @@ internal static class CommandLine
                 case "--direction": direction = args[++i] is "c2s" ? CaptureReplay.Direction.ClientToServer : CaptureReplay.Direction.ServerToClient; break;
                 case "--no-deserialize": noDeserialize = true; break;
                 case "--transport": transport = true; break;
+                case "--facing": facing = true; break;
                 default:
                     if (path != null)
                     {
@@ -292,7 +300,8 @@ internal static class CommandLine
                    DumpCount = dump,
                    TopCount = top,
                    NoDeserialize = noDeserialize,
-                   Transport = transport
+                   Transport = transport,
+                   Facing = facing
                };
     }
 
@@ -318,6 +327,7 @@ internal static class CommandLine
                             --server <ip>            Override server detection
                             --no-deserialize         Framing and histogram only, skip Aero
                             --transport              Report resends, resend delays and ack behaviour instead of guessing them
+                            --facing                 Open RoutedMultipleMessage envelopes and compare each NPC's sent orientation with its travel, by monster type
 
                           Examples:
                             CaptureReplay capture.pcapng
