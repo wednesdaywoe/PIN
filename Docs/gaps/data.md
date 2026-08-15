@@ -652,3 +652,25 @@ resolved in `OnSuccess`, which neither branch changes.
 
 `aptfs::ResourceNodeBeaconCalldownCommandDef` also carries a `death_ability` (33978 on most rows,
 0 on two) that nothing in PIN reads at all, so a destroyed thumper has no departure of any kind.
+
+<a id="data-19"></a>
+
+### DATA-19 — No ultimate-charge model [ ] open, found 2026-08-14
+
+Found by [Prediction-Sweep P1](../In-Game-Tests/Prediction-Sweep.md) rather than by reading:
+module 141814 — the second owner of the camera-lock effect, ability 41232 — turns out to be an
+**Ultimate**. Slotting it empties the ultimate charge meter, the meter is supposed to refill
+through combat, and in PIN it never does, so the ability can never be pressed. P1 is blocked on
+this, and so is any other sweep candidate that turns out to sit on an Ultimate.
+
+Retail charged the meter through combat activity. Whatever carries that gain — a stat the server
+ticks, a per-hit grant, a message the client waits for — PIN never sends it, so the client's meter
+sits where slotting left it. Same family as [DATA-7](#data-7)'s hardcoded progression: a
+regeneration the server is supposed to drive and doesn't. Untouched so far by every ability test in
+the queue because nothing before P1 ever equipped an Ultimate.
+
+Open questions for whoever picks it up: where the charge lives (a character stat? an item stat?),
+whether the 2016 capture's session ever gains charge (worth a `CaptureReplay` look before
+guessing), and whether `ability <id>` server-side bypasses the meter — if it does, the sweep can
+test an Ultimate's *chain* today even though the keypress route stays blocked, at the cost of not
+testing prediction.

@@ -19,6 +19,40 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**The 2026-08-14 evening sitting closed two milestones, three issue entries, and the queue's
+biggest gate, in one pass.** [Persistence](In-Game-Tests/Persistence.md) went **7 of 7** and
+closed [M6](PROGRESS.md): crystite and items survive a menu logout, a double relog with nothing
+doubling, a killed client, and — beyond what any entry asked — a killed and restarted *server*;
+the login returns you to the outpost you left from (Copacabana); and a deliberately corrupted save
+was quarantined to a `.corrupt-<stamp>` file with a precise parse error, costing the character its
+progress rather than its ability to log in. [Reliability Under Loss](In-Game-Tests/Reliability.md)
+went **6 of 6** and closed [M8](PROGRESS.md) — the rollup line below has the numbers — and its L6
+closed [NET-24](ISSUE-REGISTER.md): the haunted thumper really was one lost scope-out on a channel
+that never resent. **The loop the project promises now closes end to end and survives both a bad
+link and a logout.**
+
+**Inventory went 2 of 3 and turned [NET-18](ISSUE-REGISTER.md) from a question into a defect with
+a workaround**: the client declines PIN's partial item update, so a created item appears only
+after `dbg_inventory resend` — and in the garage picker, not the inventory window, whose search
+doesn't match created items. I3 killed the fullness theory with a measurement (246 → 247 items,
+all Gear, no UI ceiling). The remaining defect is confined to the item arrays of one message; the
+next comparison is capture message [9].
+
+**The prediction sweep opened the same night and earned its keep immediately.**
+[P0 passed](In-Game-Tests/Prediction-Sweep.md) — the cert-gated 86074 slotted on the Dreadnaught,
+every frame reads 45, [NET-19](ISSUE-REGISTER.md) closed — and the first presses after it found a
+class bug, [NET-26](ISSUE-REGISTER.md): Turret Mode (P2) and Frontline Medic (P6) both self-cancel
+seconds after engaging while the server keeps the effect set, and the two effects share only one
+duration element, the `requirecstate` check. Hover Mode (P3) was the control and held — its
+required state, airborne, is one the client tracks itself — so the failing states are specifically
+**server-owned**. Two more findings fell out on the way: [DATA-19](ISSUE-REGISTER.md), Ultimates
+never recharge (blocks P1), and Hover's lift never engaging (a gameplay gap recorded in P3, likely
+[DATA-5](ISSUE-REGISTER.md) territory). Offline next steps are written where they belong: name
+effects 1184 and 10812–10815 and read the two `requirecstate` targets in the SDB (NET-26), and
+diff the partial item message against the capture (NET-18).
+
+**Everything below this line predates the 2026-08-14 evening sitting.**
+
 **The queue is paused, and for once not because something is blocked.** [M6](PROGRESS.md) and
 [M8](PROGRESS.md) were both built on a machine with no client installed, so nothing here can run
 until the work reaches one. Two things follow. Everything the next sitting should carry is written
@@ -275,14 +309,16 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 - [ ] [Capture Replay](In-Game-Tests/Capture-Replay.md) — reference, not a pass/fail stream: reads
   wire-format and data questions off a 2016 capture instead of a game-machine trip
 
-## Blocks most of the queue
+## Inventory
 
-- [ ] [Inventory Delivery](In-Game-Tests/Inventory.md) — 0 of 3 passing. `createitem` shows a
-  pickup toast and delivers nothing; the wire-format fix is unverified
-  ([NET-18](ISSUE-REGISTER.md)). Gates every entry that spawns an item, all of P0–P6.
-  **I3 is new and should be run first**: every other line of investigation asks whether the item
-  was built right, and none asks whether the client had room for it — PIN hands out all 20
-  battleframes and their modules at login, which no retail character carried
+- [~] [Inventory Delivery](In-Game-Tests/Inventory.md) — **2 of 3, run 2026-08-14.** I1 landed on
+  its own middle branch, confirmed twice: a created item is real, equippable and usable, but only
+  appears after `dbg_inventory resend` — the client declines PIN's partial item update
+  ([NET-18](ISSUE-REGISTER.md) re-scoped to exactly that, still open). I2 passed: the created
+  20003 was hand-equipped and the flags round-tripped. I3 killed the fullness theory: 246 → 247
+  items, all in Gear, no capacity ceiling in the UI (only a weight meter at 0/255). **The gate on
+  P0–P6 is open in practice**: `createitem`, then `resend`, then look in the garage picker — the
+  inventory window's search doesn't find created items
 
 ## Combat
 
@@ -340,21 +376,25 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Persistence
 
-- [ ] [Persistence](In-Game-Tests/Persistence.md) — 0 of 7 passing, not yet run. [M6](PROGRESS.md)'s
-  check, written as the code landed. **C1 is the exit condition**: earn crystite, log out, log back
-  in, it's still there. C3 (relog twice, nothing doubles) and C5 (a session that ends without logging
-  out) are the two most likely to find something, and C7 checks that a save file which can't be read
-  costs a character its progress rather than its ability to log in
+- [x] [Persistence](In-Game-Tests/Persistence.md) — **7 of 7, closed 2026-08-14 in one sitting.**
+  [M6](PROGRESS.md)'s exit condition (C1) passed: 37 crystite survived a menu logout. So did
+  everything around it: the save file reads correctly (C2), nothing doubles across a double relog
+  (C3), the login returns you to the outpost you left from (C4, Copacabana), a killed client keeps
+  its last-earned crystite (C5), and a created item survives relogs (C6). Beyond what any entry
+  asked, the character also survived a full **server** kill and restart intact. C7 closed the
+  stream: a deliberately corrupted save cost the character its progress, not its ability to log
+  in — quarantined to a `.corrupt-<stamp>` file with a precise parse error in the log, fresh save
+  created, login clean
 
 ## Session stability
 
-- [ ] [Reliability Under Loss](In-Game-Tests/Reliability.md) — 0 of 6 passing, not yet run.
-  [M8](PROGRESS.md)'s check, written as the code landed. **L1 is the exit condition**: play ten
-  minutes under 5% induced loss and nothing ends up invisible, immortal or somewhere it isn't. L2 is
-  the diagnosis to run first and is pure log-reading — a resend that keeps escalating to attempt 3
-  means the client is rejecting the resend encoding, not that the link is bad. **L6 is the one with
-  something riding on it beyond the milestone**: it says whether [NET-24](ISSUE-REGISTER.md), the
-  thumper the client never removes, was [NET-1](ISSUE-REGISTER.md) in costume all along
+- [x] [Reliability Under Loss](In-Game-Tests/Reliability.md) — **6 of 6, closed 2026-08-14, the
+  day the stream first ran.** L1, [M8](PROGRESS.md)'s exit condition, passed on the tester's
+  verdict: ten minutes at 5% induced loss was "indistinguishable from any other session", over
+  ~2,550 server resends (94% attempt 1, zero attempt 3), ~100 client resends correctly
+  deduplicated, nothing abandoned, and a queue peaking at 82 unacked. L6 closed
+  [NET-24](ISSUE-REGISTER.md): 2 stale keyframe requests against a baseline of 648, model gone
+  from the ground. [NET-1](ISSUE-REGISTER.md) closed with the stream
 
 ## Client prediction
 

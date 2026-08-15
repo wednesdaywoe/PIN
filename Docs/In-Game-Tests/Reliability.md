@@ -58,9 +58,15 @@ because it is the only record anywhere that a client's copy of something is now 
 
 ---
 
-## [ ] L1: A session under 5% loss holds together
+## [x] L1: A session under 5% loss holds together
 
-**M8's exit condition.** Everything else in this file is diagnosis for when this fails.
+**Passed 2026-08-14, tester's verdict verbatim: "I didn't notice a single thing different.
+Shooting, calling a thumper, gliding, moving around — it was indistinguishable from any other
+session."** That, over ~10 minutes at 5% induced loss while the log recorded ~2,550 server
+resends and ~100 client resends doing the repair work invisibly. Nothing invisible, immortal, or
+misplaced.
+
+**M6's sibling closed the same night.** Everything else in this file is diagnosis for when this fails.
 
 1. Start the servers and get into the world **before** adding the qdisc, so a login failure can't be
    confused with a reliability one.
@@ -78,7 +84,12 @@ Fail: any of those. The value of this entry is entirely in *which* one, because 
 different view that lost a message. Note the entity and roughly when, then read
 `grep -a "has been dropped"` for the same window.
 
-## [ ] L2: A resend is accepted rather than resent again
+## [x] L2: A resend is accepted rather than resent again
+
+**Passed 2026-08-14**: 2399 at attempt 1, 153 at attempt 2, zero at attempt 3. The attempt-2
+fraction (~6%) is what 5%-each-way loss predicts for a resend itself getting lost — the client is
+accepting PIN's resend encoding without complaint. This was the one question in M8 no offline test
+could settle.
 
 Cheap, log-only, and the single most informative line in the stream. Run it off L1's session.
 
@@ -96,7 +107,9 @@ the client is a third party. The suspect is the resend count PIN stamps: retail 
 resends in the capture, in both directions, and PIN copies that, but nothing proves the client
 requires it.
 
-## [ ] L3: Nothing is abandoned
+## [x] L3: Nothing is abandoned
+
+**Passed 2026-08-14** — the grep printed nothing after a ~10-minute session under 5% loss.
 
 ```
 grep -a "has been dropped" ~/Games/PIN/logs/GameServer.log
@@ -110,7 +123,13 @@ Fail: record the channel and sequence number. This is a real message the client 
 never will, and pairing it against what went visibly wrong in L1 is the only way to learn what a
 given lost message costs.
 
-## [ ] L4: A resend the client sends is handled once, not twice
+## [x] L4: A resend the client sends is handled once, not twice
+
+**Passed 2026-08-14, exercised hard.** ~100 client resends arrived (the 2016 retail capture holds
+exactly one), split correctly: resends of genuinely lost originals were handled as first
+deliveries, resends caused by lost acks drew `Already had ... re-acked without handling it again`
+(~42 of them, both Matrix and ReliableGss). Sequence 2201 arrived as a resend twice and was
+deduplicated once — the exact pattern the mechanism promises.
 
 The other half of the same mechanism, and the one with the worse failure: a duplicate inbound
 message means whatever it asks for happens twice.
@@ -127,7 +146,9 @@ here, and means the client never had to resend anything; say so rather than mark
 Fail: a `Resent packet` with no matching line, followed by something happening twice in the world.
 Two fired shots from one trigger pull is the shape to look for.
 
-## [ ] L5: The queue drains rather than growing
+## [x] L5: The queue drains rather than growing
+
+**Passed 2026-08-14** — the session's maximum was 82 unacked. Tens, not thousands.
 
 ```
 grep -a "resending SeqNum" ~/Games/PIN/logs/GameServer.log | grep -oE "[0-9]+ unacked" | sort -n | tail -5
@@ -142,7 +163,14 @@ reading is wrong. Compare against the ack coverage the capture recorded (the cli
 server's reliable packets and the session still needed 24 resends, which only works if one ack
 covers the run behind it).
 
-## [ ] L6: Does the stale thumper still haunt the client?
+## [x] L6: Does the stale thumper still haunt the client?
+
+**Passed 2026-08-14, no qdisc.** A full-cycle thumper (paid 37 crystite) left behind exactly **2**
+`no longer exists` lines, and the count was static on a re-read minutes later — against a baseline
+of 648 across four thumpers, each climbing at one per ~5.5s forever. The loop is dead. What this
+entry cannot say is *which* fix killed it — the retransmit queue getting the scope-out through, or
+the failed-keyframe-answers-with-scope-out change ending the loop at request two —
+[G6](Resource-Payout.md) is written to date the loop from Debug lines and settle that.
 
 [NET-24](../gaps/network.md#net-24) is a finished thumper the client leaves standing in the world
 forever, asking for keyframes of it every 5.5 seconds. A code read pinned the suspicion on the

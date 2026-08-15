@@ -161,7 +161,15 @@ the same pass the prestocked fallback inventory (~240 items + ~140 resource stac
 the inventory now holds only each frame's chassis and default-slot items generated from
 `CharCreateLoadoutSlots`, and test items are created individually with `createitem`.
 
-## [ ] P0: Verify the gate fixes (certs delivered, frame levels real, clean inventory)
+## [x] P0: Verify the gate fixes (certs delivered, frame levels real, clean inventory)
+
+**Passed 2026-08-14.** 86074 — the exact module the garage refused on 2026-08-10 — slotted on the
+Dreadnaught; every battleframe in the garage reads level 45; and the prestock removal is live
+(`SendFullInventory: 246 item(s) [Gear 246], 0 resource(s), 20 loadout(s)`). One wrinkle found on
+the way, which every entry below inherits: a created module only reaches the garage after
+`dbg_inventory resend`, because the client declines PIN's partial item update
+([NET-18](../ISSUE-REGISTER.md), re-scoped the same day). So the working step 2 for P1–P6 is:
+`createitem <moduleId>`, then `dbg_inventory resend`, then slot it in the garage.
 
 The server-side fix for everything above, awaiting its first login. Everything in P1–P6 depends on
 this entry passing.
@@ -192,9 +200,14 @@ directly (toggle Turret Mode on/off, watch effect 10810).
 The cheapest possible test: the exact effect D5h fixed, applied by an ability nobody has pressed.
 If the fix generalizes at all, it generalizes here first.
 
-> **Blocked 2026-08-11:** module 141814 is cert-gated on 743 („Nashorn - Zerstörer-Baureihe") —
-> see the gate table. Unblocked by the P0 fix once P0 passes. Effect 15253's regression
-> coverage meanwhile is plain Charge (35366 / 77585), which is cert-free.
+> **Blocked again 2026-08-14, one gate behind the last one:** P0 cleared the cert gate (141814
+> created, resent, and slotted fine) — but ability 41232 turns out to be an **Ultimate**. Slotting
+> it empties the ultimate charge meter, the in-combat refill never happens in PIN, and an Ultimate
+> with an empty meter can never be pressed. That is [DATA-19](../ISSUE-REGISTER.md), new that day.
+> Effect 15253's regression coverage meanwhile is plain Charge (35366 / 77585), which is cert-free
+> and not an Ultimate.
+>
+> *(Superseded 2026-08-14 by the above: the original block was cert 743, cleared by P0.)*
 
 1. `createitem 141814`, slot it in the garage
 2. Activate by keypress, let the rush land
@@ -204,7 +217,31 @@ Pass: same signature as D5h's run — apply, `too many stacks` rejections, remov
 Fail: locked pitch again, meaning the fix is somehow chain-specific rather than effect-specific,
 which would be genuinely surprising and worth a full D5g-style log read.
 
-## [ ] P2: Turret Mode (ability 39434, effect 10810) — a predicted toggle
+## [!] P2: Turret Mode (ability 39434, effect 10810) — a predicted toggle
+
+**Failed 2026-08-14, first press after P0, in a shape the entry didn't predict.** The module
+slotted, the mode engages on keypress — and shuts itself off within seconds, unprompted. The
+client log shows the textbook end signature with nobody pressing toggle-off: apply, two
+`too many stacks` rejections (the server's confirmation landing on the predicted copy, same as
+D5h's pass), then `Successfully removed` and `Canceled`, twice in two attempts. The server's side
+is the telling half: **10810 was set and never cleared** — still standing at grep time — while its
+companions ran a rapid cascade: 10812, 10813, 10814, 10815 each set and cleared within ~40ms, 1184
+set alongside and cleared 1.5s later. So the client abandoned the mode while the server still
+holds it: the mirror image of the stuck camera, and a desync in the direction D5h's fix cannot
+cause.
+
+Suspects, in rough order: the `requirecstate` in 10810's duration chain failing client-side
+because the state it checks is never set by the server; one of the instantly-cleared companion
+effects (10812–10815) being what actually holds the stance, killed by the server's own chain; and
+[NET-16](../ISSUE-REGISTER.md)'s double delivery flipping the toggle straight back off. Next step
+is offline, no game time needed: name 1184 and 10812–10815 in the SDB and read 10810's duration
+chain to see which state it requires.
+
+**Same sitting, later: not a Turret quirk.** Frontline Medic I (P6's 34606, effect 2322 —
+FRAME+CSTATE, no `serverconfirmed`) self-cancelled the same way, which reorders the suspects: the
+CSTATE check is the common thread and the missing-confirmation theory is out as the common cause.
+[NET-26](../ISSUE-REGISTER.md) carries the analysis; P3 is the experiment that splits
+server-owned states from client-tracked ones.
 
 Different reconciliation path from Charge: `ImpactToggleEffect` rather than `ImpactApplyEffect`,
 and the duration chain carries `serverconfirmed`, so this effect is explicitly built to wait for
@@ -226,6 +263,22 @@ Fail: the mode's client-side state lingers after toggle-off — the toggle equiv
 camera.
 
 ## [ ] P3: Hover Mode (ability 34554, effect 2212) — duration gated on energy and airborne
+
+**Run 2026-08-14 as the control case for [NET-26](../ISSUE-REGISTER.md), and it behaved like
+one.** Tester-observed: activated mid-air, the ability and its FX kept running the whole time
+airborne — no instant self-cancel — while booster energy drained as normal. That is the split the
+experiment wanted: the two effects that self-cancel (10810, 2322) require server-owned states,
+and the one whose state the client tracks itself (airborne) holds. **What failed instead is the
+lift**: the character falls at normal speed with the effect running, so hover's actual physics
+never engage — a gameplay gap, not a prediction one, most likely one of
+[DATA-5](../ISSUE-REGISTER.md)'s empty aptitude-command stubs. The log half of the pass condition
+could not be recovered after the fact: the presses ran in a session where the `f7` aptitude
+logging was off, so no client log names 2212 (checked across the client's archived
+`*_last_run.log` files). The server's side was read instead — chain 426507 started five times in
+five seconds and **set no status effect at all**, confirming the whole effect ran client-side.
+Marker stays open for one detail only: a re-press with `f7` on, showing 2212's removal firing on
+landing rather than lingering — a lingering copy would be a D5-class ghost, and nothing yet rules
+it out.
 
 The duration chain is `requirecstate → airborneduration → requireenergy`: the predicted copy ends
 when the client itself decides you've landed or run dry. That makes it the control case — an
@@ -284,7 +337,17 @@ target-side prediction means `Entity` means the carrying entity, and the fix's n
 mirroring effects on *any* entity into the owning initiator's `LocalEffectsController` with
 `Entity = <carrier>` — a bigger change than D5h, now with a test to drive it.
 
-## [ ] P6: The rest of the table
+## [!] P6: The rest of the table
+
+**First candidate run 2026-08-14 and it failed like P2.** Frontline Medic I (34606 / module
+75579, effect 2322): engages on keypress, self-cancels seconds later, tester-observed as
+identical to Turret Mode's behaviour. Diagnostic weight is in the duration class — FRAME+CSTATE,
+no `serverconfirmed` — which makes the CSTATE check the common denominator across both failures.
+Rolled into [NET-26](../ISSUE-REGISTER.md) rather than filed separately. A post-sitting server
+read added the other half: chain 228949 started five times (20:59:05–19) and **set no status
+effect at all** — unlike Turret, whose chain ran in full — so this failure had no server half to
+lean on even in principle; the client-side signature itself was never captured because the
+session ran with `f7` off.
 
 Batch entry for the remaining candidates. Work down the table with the shared procedure; most are
 one keypress each once the module is slotted. Expected outcome for nearly all of them is the D5h

@@ -26,17 +26,32 @@ M1 confirm the combat models                        done
       │    └─> M7 an encounter that plays
       └─> M5 killing something pays                 done
 
-M6 persistence across sessions   built, unverified; M3 and M5 landed, so there's something to save
-M8 session stability             built, unverified; independent, but "playable" isn't honest without it
+M6 persistence across sessions                      done
+M8 session stability                                done
 ```
 
 ## Current frontier
 
-**M6 and M8 are both code-complete and both waiting on the same thing, a client.** M6 saves a
-session's gains to disk; M8 makes the server's own reliable messages survive a dropped packet. Between
-them they have thirteen unrun test entries, [C1–C7](In-Game-Tests/Persistence.md) and
-[L1–L6](In-Game-Tests/Reliability.md), and neither milestone closes until the first entry in its
-stream passes on screen.
+**M6 and M8 both closed on 2026-08-14, in one evening sitting, 13 of 13 entries.**
+[Persistence](In-Game-Tests/Persistence.md) went 7 of 7: a session's crystite and items survive a
+menu logout, a double relog with nothing doubling, a killed client, and — beyond what any entry
+asked — a killed and restarted server; the login returns you to the outpost you left from; and a
+deliberately corrupted save file costs the character its progress, not its ability to log in,
+quarantined to a `.corrupt-<stamp>` file with a precise parse error in the log.
+[Reliability Under Loss](In-Game-Tests/Reliability.md) went 6 of 6: ten minutes at 5% induced loss
+was, in the tester's words, "indistinguishable from any other session", while the log recorded
+~2,550 server resends (94% accepted on the first attempt, none reaching attempt 3) and ~100 client
+resends correctly split between first deliveries and re-acked duplicates. The open question NET-25
+left behind — what a lost client packet costs — stays open, but nothing in the session surfaced it.
+[L6](In-Game-Tests/Reliability.md) also closed [NET-24](ISSUE-REGISTER.md): the code read was
+right, the haunted thumper was one scope-out sent once on a channel that never resent, and the
+first post-fix thumper left the world cleanly.
+
+**With M6 and M8 closed, every built milestone is verified** and the loop the doc's header
+describes closes end to end for one player: log in, fight, thump, get paid, log out, come back to
+it. What remains unbuilt is M7 (an encounter that plays), and the sitting's other findings —
+[NET-26](ISSUE-REGISTER.md), [NET-18](ISSUE-REGISTER.md) re-scoped, [DATA-19](ISSUE-REGISTER.md)
+— live in the issue register rather than here.
 
 **M8 was built entirely out of measurements rather than choices, which is the part worth carrying
 forward.** The 2016 capture holds 24 resent packets across 456619, and reading them settled the

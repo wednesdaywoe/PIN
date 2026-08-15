@@ -16,7 +16,7 @@ subsystem; IDs are flat across all of them.
 
 <a id="net-1"></a>
 
-### NET-1 — No retransmit queue [~] built 2026-08-14, unverified in game
+### NET-1 — No retransmit queue [x] built and verified in game 2026-08-14
 
 `Control_PacketAvailable` logged client acks and discarded them; nothing tracked what PIN itself
 sent, so nothing could resend it. "Reliable" meant the server acked what the client sent, not that
@@ -26,8 +26,12 @@ connection.
 
 **Built 2026-08-14.** [RetransmitQueue](../../UdpHosts/GameServer/RetransmitQueue.cs) holds every
 Matrix and ReliableGss packet until the client acks it, and `Channel.SendOverdue` sends again what
-hasn't been answered in 450ms. [L1–L6](../In-Game-Tests/Reliability.md) are the check and none have
-run; L1 is the exit condition and needs a session played under induced loss.
+hasn't been answered in 450ms. **Verified the same day by
+[L1–L6](../In-Game-Tests/Reliability.md), 6 of 6**: ten minutes under a 5% `netem` loss rule
+played, in the tester's words, "indistinguishable from any other session", while the log recorded
+2,399 resends accepted on attempt 1, 153 on attempt 2, none on attempt 3, nothing abandoned, and a
+queue that peaked at 82 unacked. The client's own resends (~100, against exactly one in the whole
+retail capture) were correctly split between first deliveries and re-acked duplicates.
 
 **Every constant in it came off the 2016 capture rather than out of the air**, which is what
 `CaptureReplay --transport` was written for. That capture holds 24 resends across 456619
@@ -217,19 +221,25 @@ Blocks correctness for any effect predicted onto a target rather than the caster
 
 <a id="net-18"></a>
 
-### NET-18 — `createitem` delivery fix unverified against the original symptom [~] needs confirmation
+### NET-18 — partial item `InventoryUpdate` is not merged by the client [ ] re-scoped 2026-08-14
 
-[Inventory.md](../In-Game-Tests/Inventory.md): two wire-format divergences (`Item.Unk5`,
-`InventoryUpdate.Unk` ordering) were fixed, but I1 — does a created item actually show up in-game —
-is still unrun. The fix is plausible but not yet confirmed to resolve the original toast-with-no-item
-symptom it was meant to close.
+[Inventory.md](../In-Game-Tests/Inventory.md): I1 landed on its own middle branch, twice in one
+sitting (20003, then 86074): a created item appears only after `dbg_inventory resend` pushes the
+full inventory the client already accepted once at spawn. The item itself is right — the full send
+lists it, the garage equips it, flags round-trip (`IsBound, IsEquipped, slotted in a loadout`) —
+fullness is ruled out (I3 measured no ceiling), and resources merge fine (G1), so the defect is
+confined to the item arrays of the partial message. The two wire-format fixes (`Item.Unk5`,
+`InventoryUpdate.Unk`) match the capture but did not close it. Next comparison: capture message
+[9], the 37-byte retail single-item add.
 
 <a id="net-19"></a>
 
-### NET-19 — Two 2026-08-11 prediction fixes await confirmation [~] needs confirmation
+### NET-19 — Two 2026-08-11 prediction fixes await confirmation [x] confirmed 2026-08-14
 
-Two fixes deployed the same day, both unverified pending
-[Prediction-Sweep P0](../In-Game-Tests/Prediction-Sweep.md): PIN previously never sent
+**Both confirmed by [Prediction-Sweep P0](../In-Game-Tests/Prediction-Sweep.md) on 2026-08-14**:
+module 86074, refused outright on 2026-08-10, slotted on the Dreadnaught, and every garage frame
+reads level 45. The original entry, for the record — two fixes deployed the same day, both
+unverified pending P0: PIN previously never sent
 `UnlocksUpdate` (certificates), silently blocking cert-gated module slotting client-side; and
 `EntityManager.cs:1160` sent `ProgressionXPRefresh` with no `entityId`, so it addressed entity 0 and
 was dropped by the real client. If P0 doesn't hold, [DATA-9](data.md#data-9)'s stub endpoints are
@@ -407,7 +417,17 @@ tester who dies has to reconnect.
 
 <a id="net-24"></a>
 
-### NET-24 — A finished thumper never leaves the client [ ] open
+### NET-24 — A finished thumper never leaves the client [x] fixed 2026-08-14, verified by L6
+
+**Closed 2026-08-14 by [L6](../In-Game-Tests/Reliability.md), the first full-cycle thumper after
+M8's fixes went in.** Both halves of the symptom are gone: the log held exactly 2 stale keyframe
+requests, static on a re-read minutes later (baseline: 648 and climbing forever), and the ground
+was empty when the tester returned — no model left standing. Which of the two changes did it —
+the retransmit queue carrying the scope-out through, or a failed keyframe request now answering
+with a scope-out — is deliberately left undetermined here;
+[G6](../In-Game-Tests/Resource-Payout.md)'s Debug-line dating is the optional measurement if the
+UnreliableGss delta-loss question (below) ever needs a real answer. The history that led here is
+kept as written:
 
 A thumper that completes its cycle pays out correctly and is removed from the shard. **On screen it
 stays standing.** The tester's report, 2026-08-14: "on sending thumper away, sound effect and launch
@@ -527,3 +547,80 @@ fixed, which is why this is recorded rather than guessed at.
 Costs a lost client command — a shot, an interaction, an ability — roughly as often as the link
 drops a reliable packet, which is never on loopback and rarely anywhere else. Every session PIN has
 ever run has been on loopback.
+
+<a id="net-26"></a>
+
+### NET-26 — A predicted toggle cancels itself while the server holds the effect [ ] open, found 2026-08-14
+
+[Prediction-Sweep P2](../In-Game-Tests/Prediction-Sweep.md), the first prediction entry run after
+P0 opened the certificate gate. Turret Mode (ability 39434, effect 10810) engages on keypress and
+shuts itself off within seconds, nobody pressing toggle-off. The two logs disagree about who ended
+it, which is the finding:
+
+- **Client** (`console.log`, Aptitude debug): `Successfully applied effect 10810`, two
+  `Unable to apply status effect 10810: too many stacks (x1)` rejections — the server's
+  confirmation landing on the predicted copy, same as D5h's pass signature — then
+  `Successfully removed effect 10810` and `Canceled effect 10810`. Reproduced identically on two
+  attempts, ~20 minutes apart.
+- **Server** (`Character.SetStatusEffect`/`ClearStatusEffect`): 10810 set at Index 0 and **never
+  cleared** — still standing when the log was read. Around it, a cascade: 10812 set and cleared in
+  ~320ms, 10813 in ~20ms, 10814 in ~20ms, 10815 in ~20ms, 1184 set alongside and cleared 1.5s
+  later.
+
+So the client abandoned the mode while the server still holds it applied — the mirror image of the
+stuck camera. D5h's bug was the owner-private effects channel never being written, leaving the
+client holding a predicted effect forever; that write now happens (the `too many stacks` lines are
+it arriving), and this failure is on the other side of the reconciliation: something tells the
+client's copy to end.
+
+**Not a Turret quirk — a class bug.** The same sitting pressed Frontline Medic I (ability 34606,
+effect 2322) and got the same self-cancel. 2322's duration class is FRAME+CSTATE with **no
+`serverconfirmed`**, while 10810's is SERVERCONFIRMED+FRAME+CSTATE — so the element the two
+failures share is the CSTATE check, and "waiting for a server confirmation that never comes" is
+ruled out as the common cause. A FRAME duration only ends on a battleframe switch, which didn't
+happen; what remains is `requirecstate`: the client's predicted copy checks a character state (a
+stance or mode flag), the server never sets it, and the copy ends itself by design.
+
+Suspects, reordered by that second data point:
+
+1. **The `requirecstate` common to both chains** — now the prime suspect. The question is which
+   state each effect requires and who is supposed to set it; both answers are in the SDB.
+2. **[NET-16](#net-16)'s double delivery.** Both failed abilities are toggle/mode-shaped, so a
+   copy arriving twice reading as on-then-off still fits both — but it doesn't explain the server
+   keeping 10810 set.
+3. **The companion cascade** (10812–10815 cleared in ~20ms) — demoted: it could explain Turret,
+   but Medic failing the same way needs its own cascade for this to be the class-wide cause.
+
+**A server-side log read after the sitting (2026-08-14 late, run from the source machine) split
+the three presses three ways and sharpened the reading.** Every press reached the server —
+`ActivateAbility` and a chain start are logged for all of them (Turret 39434 twice, Hover 34554
+five times in five seconds, Medic 34606 five times in fifteen — the retry rhythm of a tester
+pressing a button that won't hold). What the chains then did differs:
+
+- **Turret** (chain 1605621): set 10810, 1184, 15223, and the 10812→10813→10814→10815 cascade.
+  The server's half ran in full — and the client cancelled anyway.
+- **Medic** (chain 228949): set **nothing**. Zero character status-effect writes in the whole
+  press window. The client's predicted 2322 had nothing from the server to hold onto at all.
+- **Hover** (chain 426507): also set **nothing** — and the client held anyway, because nothing in
+  hover's duration chain needs the server.
+
+So a status effect being set is neither necessary (Hover held without one) nor sufficient (Turret
+died with one) for the client's copy to survive. That points the `requirecstate` reading at
+something more specific: **a character *state*, not a status effect** — the stance/mode machine
+(the same family as the movement state [NET-12](#net-12) packs) that retail's server drove and
+PIN never writes. Turret setting effect 10810 doesn't satisfy a check on *state* "in turret
+mode"; nothing PIN sends does. The SDB read of the two `requirecstate` targets should land on
+exactly which state enum each one names.
+
+One incidental sighting in the same window: the shard short-time wrapped mid-log
+(`Time 64809` → `Time 1679` twelve seconds apart), [NET-2](#net-2) visible in the wild.
+
+**The critical experiment ran the same sitting and confirmed the split.**
+[P3](../In-Game-Tests/Prediction-Sweep.md), Hover Mode — whose required state (airborne) the
+client tracks locally — held for the whole flight, FX running, no self-cancel (tester-observed;
+the log half of P3's pass is still pending). So the failing CSTATEs are specifically
+**server-owned states**: the client's predicted copy checks a stance or mode flag only the server
+can set, the server never sets it, and the copy ends itself by design. The fix direction is the
+server setting those states — which states, and on what carrier, is the SDB read: name 1184 and
+10812–10815, and read the exact `requirecstate` targets of 10810 and 2322. (Hover's missing lift
+is a separate gameplay gap, likely [DATA-5](data.md#data-5) territory, recorded in P3.)

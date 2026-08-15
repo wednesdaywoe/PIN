@@ -20,6 +20,21 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 ## Current frontier
 
+**The 2026-08-14 evening sitting closed three NET entries and opened three, all on evidence from a
+screen.** Closed: [NET-18](gaps/network.md#net-18)'s question answered and re-scoped in the same
+stroke (delivery works; the client declines the *partial* item update, `dbg_inventory resend` is
+the workaround, and the remaining defect is confined to the item arrays of one message);
+[NET-19](gaps/network.md#net-19), both prediction-gate fixes confirmed by P0; and
+[NET-24](gaps/network.md#net-24), the haunted thumper, which really was one scope-out on a channel
+that never resent — 2 stale requests against a baseline of 648, model gone from the ground.
+Opened: [NET-26](gaps/network.md#net-26), the sitting's biggest find — predicted effects that
+require a **server-owned** character state self-cancel while the server keeps the effect, shown on
+two effects with different duration classes and bounded by a control case that held —
+[DATA-19](gaps/data.md#data-19), Ultimates never recharge, and Hover Mode's lift never engaging
+(recorded into [DATA-5](gaps/data.md#data-5)'s territory via P3). The same sitting closed
+[M6 and M8](PROGRESS.md) — 13 of 13 test entries — and with them [NET-1](gaps/network.md#net-1)
+itself; [NET-25](gaps/network.md#net-25)'s inbound mirror stays deliberately open.
+
 **Two days of sittings on, 2026-08-14, and every entry that moved moved on evidence.**
 [DATA-2](gaps/data.md#data-2) closed when four node types resolved from position in one sitting,
 [DATA-17](gaps/data.md#data-17) when the zone's richest deposit turned out to be sitting inside the
@@ -71,7 +86,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 4 of 18 closed
+[Full detail](gaps/data.md) — 4 of 19 closed
 
 - [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
   deliberate observability trade-off, one-line revert if fidelity wins later
@@ -140,17 +155,28 @@ has no entries in that category, which reflects nothing having run rather than n
   departure the client plays is the animation, and the model staying behind is the client never
   being told the entity is gone
 
+- [ ] **DATA-19** — No ultimate-charge model: slotting an Ultimate empties its charge meter and
+  nothing ever refills it, so every Ultimate is a one-way trip to unusable. Found 2026-08-14 by
+  [P1](In-Game-Tests/Prediction-Sweep.md): module 141814 (the second Charge, ability 41232) is an
+  Ultimate, slotting it emptied the meter, and the in-combat refill the client expects never came —
+  which blocks P1 outright and any other sweep candidate that turns out to be an Ultimate. Retail
+  charged the meter through combat activity; whatever stat or message carries that gain, PIN never
+  sends it. Same family as [DATA-7](gaps/data.md#data-7)'s hardcoded progression: a regeneration
+  the server is supposed to drive and doesn't
+
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 3 of 25 closed
+[Full detail](gaps/network.md) — 6 of 26 closed
 
-- [~] **NET-1** — No retransmit queue; "reliable" only acked, never resent. **Built 2026-08-14**,
-  unverified in game: `RetransmitQueue` holds every Matrix and ReliableGss packet until the client
-  acks it and resends after 450ms, giving up loudly after three attempts. Every constant in it was
-  measured off the 2016 capture rather than chosen — 24 resends across 456619 sub-packets say the
-  timeout is 322–665ms (median 452), the header's resend count is always 3, a resend is byte-identical
-  to its original, and an ack is cumulative.
-  [L1–L6](In-Game-Tests/Reliability.md) are the check and L1 is the exit condition
+- [x] **NET-1** — No retransmit queue; "reliable" only acked, never resent. Built 2026-08-14:
+  `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it and resends
+  after 450ms, giving up loudly after three attempts, every constant measured off the 2016 capture
+  rather than chosen. **Verified the same day by [L1–L6](In-Game-Tests/Reliability.md), 6 of 6**:
+  ten minutes at 5% induced loss played indistinguishably from a clean session while ~2,550
+  resends did the repair work — 94% accepted on the first attempt, none reaching attempt 3,
+  nothing abandoned, the queue peaking at 82 unacked. Closing it also closed
+  [NET-24](gaps/network.md#net-24). Its inbound mirror, [NET-25](gaps/network.md#net-25), remains
+  deliberately open
 - [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
   player
 - [x] **NET-3** — Inbound resend detection / XOR decode correctness was unverified, and the 2016
@@ -176,19 +202,18 @@ has no entries in that category, which reflects nothing having run rather than n
   by design
 - [ ] **NET-16** — Predicted effects reach the owning client twice, likely diverging from retail
 - [~] **NET-17** — `LocalEffectsData.Entity` semantics (initiator vs. target) unconfirmed
-- [~] **NET-18** — `createitem` makes the item; whether the client ever shows it is unproven.
-  2026-08-13 with the Scan Hammer (56826): toast fired, no item found, and `dbg_inventory` then
-  proved the server side is fine — 246 items before, **247 after**, logged as
-  `createitem 56826 as item, item type Weapon, x1`. So this is a display or lookup question, not a
-  creation one, and it has two live suspects that the next sitting can separate:
-  (a) the partial `InventoryUpdate` is declined — PIN's fresh item differed from the 2016 capture's
-  only live single-item add (82337) in exactly one field, `DynamicFlags = IsBound`, now matched and
-  untested; (b) nothing is wrong and a Weapon simply lands in the **Gear** sub-inventory among the
-  246 pieces every hardcoded loadout brings, where it is indistinguishable from clutter.
-  `dbg_inventory <typeId>` now answers (b) directly and `equipitem <typeId> [slot]` bypasses the
-  browsing entirely by slotting it server-side — the Scan Hammer was equipped that way the same
-  evening, so (b) is looking likely. `removeitem` undoes a session's mistakes
-- [~] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) await confirmation
+- [ ] **NET-18** — re-scoped 2026-08-14 from "unverified" to a confirmed live defect: **the
+  client declines to merge PIN's partial item `InventoryUpdate`** — a created item appears only
+  after `dbg_inventory resend` pushes the full inventory. Confirmed twice in one sitting (20003,
+  then 86074). Everything else is ruled out: the item struct is right (the full send lists it, the
+  garage equips it, flags round-trip), fullness is dead
+  ([I3](In-Game-Tests/Inventory.md) measured no ceiling), and resources merge fine (G1), so the
+  defect is confined to the item arrays of the partial message. Next comparison: capture message
+  [9], the 37-byte retail single-item add. The `createitem` → `resend` workaround unblocks the
+  queue meanwhile
+- [x] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) confirmed by
+  [P0](In-Game-Tests/Prediction-Sweep.md) on 2026-08-14: the cert-gated 86074 slots on the
+  Dreadnaught and every garage frame reads level 45
 - [~] **NET-20** — The 47-effect Prediction Sweep is almost entirely unverified
 - [x] **NET-21** — An encounter throwing from `Tick` killed the whole shard thread; the Coral Forest
   thumper did it every session via a null participant, a set mutated mid-iteration, and no isolation
@@ -199,28 +224,17 @@ has no entries in that category, which reflects nothing having run rather than n
   the burst itself travels on the combat view and arrived on time. Damage was always resolved from
   the live direction. Fixed 2026-08-13 with `NpcPose`, confirmed the same day by N8–N13 passing
 
-- [ ] **NET-24** — A finished thumper never leaves the client. Reported 2026-08-14: "on sending
-  thumper away, sound effect and launch prep animation played, thumper remained on the ground."
-  The server removes the entity and pays out correctly; the client keeps its copy and asks for a
-  fresh keyframe of the dead entity's `ResourceNode_ObserverView` every ~5.5 seconds, **forever**.
-  One 32-minute sitting accumulated **648 failed requests across four abandoned thumpers**
-  (259/218/134/37, each rate-constant from the moment its thumper was removed), and the loop grows
-  by one thumper each time. The server is answering correctly — `NetworkClient` masks the
-  controller byte and looks up an entity that is genuinely gone — so this is a scope-out that never
-  arrives or never takes. **Not universal**: the two thumpers cut short by a player that day left no
-  stale requests at all, and only the four that ran their full cycle did, which points at the same
-  `OnInteraction`/`OnUpdate` split as [DATA-18](#static-data--data) rather than at removal itself.
-  No session has yet been shown to end because of it, but the 2026-08-14 client quit with two loops
-  outstanding. **A code read the same day cleared the message and moved the suspicion to the
-  channel**: msg 6 on the sole view is how the 2016 capture shows retail removing a single-view
-  entity, and nothing else in the server ever names a thumper's entity id — so the likeliest reading
-  is that this is [NET-1](gaps/network.md#net-1) in costume, one scope-out sent once on a channel
-  that acks but never resends. The client's `AddView` at state 7 is the server *answering* a request
-  during `LEAVING`, which puts the loop before removal rather than after it and makes the split a
-  question of how many `UnreliableGss` deltas each path sends (~106 against ~7). Three changes
-  landed, unverified: a failed keyframe request for a view now answers with a scope-out instead of
-  only warning, successful requests log at Debug so the loop can be dated, and a queued scope-in
-  whose entity died is dropped. [G6](In-Game-Tests/Resource-Payout.md) is the check
+- [x] **NET-24** — A finished thumper never left the client: paid out and removed server-side, it
+  stayed standing on screen while the client asked for a fresh keyframe of the dead entity every
+  ~5.5 seconds forever — 648 failed requests across four full-cycle thumpers in one 32-minute
+  sitting, growing by one loop per thumper. A code read pinned it as [NET-1](gaps/network.md#net-1)
+  in costume — one scope-out, sent once, on a channel that never resent — and landed three changes
+  alongside the retransmit queue. **Closed 2026-08-14 by
+  [L6](In-Game-Tests/Reliability.md)**: the first post-fix full-cycle thumper left 2 stale requests,
+  static on a re-read, and the ground was empty when the tester returned. Which change did it —
+  the retransmit queue or the failed-request-answers-with-scope-out fallback — is undetermined;
+  [G6](In-Game-Tests/Resource-Payout.md)'s Debug-line dating remains the optional measurement, and
+  the full history is in [the gap entry](gaps/network.md#net-24)
 
 - [ ] **NET-23** — A dead player has no way back. `Die` runs correctly and `RequestRespawn` is
   implemented, but the client never sends it, so death ends the session. Found by
@@ -235,6 +249,29 @@ has no entries in that category, which reflects nothing having run rather than n
   evidence behind it, since a wrong answer stalls the channel for the session rather than losing one
   message. Costs a lost shot or interaction about as often as the link drops a reliable packet,
   which on loopback is never
+
+- [ ] **NET-26** — A predicted toggle cancels itself while the server still holds the effect.
+  Found by [P2](In-Game-Tests/Prediction-Sweep.md) on 2026-08-14, the first prediction entry run
+  after P0 opened the gate: Turret Mode (effect 10810) engages on keypress and shuts off seconds
+  later, unprompted. The client log shows apply, the server's confirmation landing (`too many
+  stacks`), then removal and cancel with no toggle-off pressed; the server log shows 10810 set and
+  **never cleared**, its companions 10812–10815 each set and cleared within ~40ms, and 1184 gone
+  after 1.5s. The mirror image of the stuck camera ([D5h](In-Game-Tests/Charge-Camera.md)): there
+  the client kept an effect the server had dropped, here it abandons one the server keeps.
+  **Confirmed a class bug the same sitting**: Frontline Medic I (effect 2322, FRAME+CSTATE, no
+  `serverconfirmed`) self-cancels identically, so the common denominator is the `requirecstate`
+  check — the client requiring a character state the server never sets — and the
+  missing-confirmation theory is out as the common cause. The critical experiment —
+  [P3](In-Game-Tests/Prediction-Sweep.md) Hover Mode, whose required state (airborne) the client
+  tracks locally — ran the same sitting and **held for the whole flight**, so the failing CSTATEs
+  are specifically **server-owned states** the server never sets. A post-sitting server-log read
+  sharpened it further: Turret's chain set its effects in full and the client cancelled anyway,
+  Medic's chain set nothing and the client cancelled, Hover's chain set nothing and the client
+  held — so a status effect is neither necessary nor sufficient, and the missing thing reads as a
+  character **state** (the stance/mode machine, [NET-12](gaps/network.md#net-12)'s family) that
+  retail's server drove and PIN never writes. Fix direction: write those states. Offline: read
+  10810's and 2322's `requirecstate` targets in the SDB. (Hover's missing lift is a separate gap,
+  likely [DATA-5](gaps/data.md#data-5), recorded in P3)
 
 ## Client & Environment — CLIENT
 

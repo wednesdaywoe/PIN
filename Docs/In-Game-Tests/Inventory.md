@@ -1,7 +1,7 @@
 ---
 project: pin
 kind: test-stream
-title: "Inventory Delivery (I1-I2)"
+title: "Inventory Delivery (I1-I3)"
 relates:
   - ../TEST-REGISTER.md
 ---
@@ -83,7 +83,25 @@ Ruled out along the way, so nobody re-checks them:
 Message order was also wrong and is now corrected: retail sent `SimulateLootPickup` first (seq
 55934) and the `InventoryUpdate` two sequence numbers later, PIN had them the other way round.
 
-## [ ] I1: `createitem` puts a visible item in the inventory
+## [!] I1: `createitem` puts a visible item in the inventory
+
+**Ran 2026-08-14 and landed on its own middle branch, confirmed twice.** The DevTEST Shotgun
+(20003) did **not** appear until `dbg_inventory resend` pushed the full inventory; module 86074
+repeated the same pattern later in the sitting. After the resend the item is entirely real: it sits
+in the garage's weapon picker, was dragged into the Secondary slot by hand, and works —
+`dbg_inventory 20003: guid 1F026F1900030DFD in Gear flags IsBound, IsEquipped, slotted in a loadout`
+(guid type byte `FD`, as the ruled-out list predicted). So creation, the item struct, and the full
+send are all right, and **the client declines to merge PIN's partial item update** — exactly the
+outcome the second bullet below describes. Not fullness: I3 measured no ceiling, and resend helping
+rules it out anyway. Resources merge fine ([G1](Resource-Payout.md)), so the defect is confined to
+the item arrays of the partial message; the next comparison is capture message [9], the 37-byte
+retail single-item add reproduced in [Capture Replay](Capture-Replay.md).
+[NET-18](../ISSUE-REGISTER.md) re-scoped to exactly this and stays open.
+
+**Workaround for every entry that spawns an item:** `createitem <id>`, then `dbg_inventory resend`,
+then look in the **garage picker** — not the inventory window, whose search doesn't find the item
+(searching "Dev" returns nothing; possibly the search matches localization entries a dev item
+doesn't have) and whose 246-piece Gear seed makes finding one by eye impractical.
 
 Blocks P0–P6. Run it before anything that spawns an item.
 
@@ -118,7 +136,13 @@ Read the console output from step 3 alongside what you see:
 grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
 ```
 
-## [ ] I2: Equipping still round-trips
+## [x] I2: Equipping still round-trips
+
+**Passed 2026-08-14, in a stronger form than written.** The swap wasn't between two seeded weapons
+but onto the freshly created 20003: dragged into the Secondary slot in the garage, and
+`dbg_inventory 20003` came back `flags IsBound, IsEquipped, slotted in a loadout` — the
+client-initiated equip reached the server and was recorded. The displaced weapon's cleared flag
+wasn't read separately; if a future session cares, that half-check is one `dbg_inventory` away.
 
 A regression check, not a feature check. `SendEquipmentChanges` sends the same partial
 `InventoryUpdate` and its `Unk` changed from 1 to 0 with everything else, so it wants one look.
@@ -129,7 +153,16 @@ A regression check, not a feature check. `SendEquipmentChanges` sends the same p
 Pass: the swap holds in the client, and `dbg_inventory` shows the new item carrying the `IsEquipped`
 flag and the old one without it.
 
-## [ ] I3: There is room for one more item
+## [x] I3: There is room for one more item
+
+**Ran 2026-08-14, and the measurement says the hypothesis is dead.** The UI states no slot
+capacity anywhere; its only meter is weight, reading **0/255** with the whole seed on board — so
+whatever the seed costs, the client isn't weighing it, and there is no visible ceiling to be at.
+The server's side: `SendFullInventory: 246 item(s) [Gear 246], 0 resource(s), 20 loadout(s)`,
+and after `createitem 20003`, `dbg_inventory: 247 item(s) [Gear 247]`. The entire seed lives in
+Gear; Bag and Cache are empty, so a created weapon isn't competing with the prestock for bag
+room either. Unless the client hides a Gear-only cap of exactly ~246, fullness is not what
+hides an item — I1's cause is back in the item struct or the item arrays.
 
 Run this before I1, and before trusting any conclusion I1 has already produced.
 
