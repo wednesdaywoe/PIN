@@ -196,16 +196,17 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         CharacterEntity.SetSpawnTime(AssignedShard.CurrentTime);
         CharacterEntity.SetCharacterState(CharacterStateData.CharacterStatus.Respawning, AssignedShard.CurrentTime);
         CharacterEntity.SetSpawnPose();
-        baseController.RespawnTimesProp = new RespawnTimesData(); 
-        baseController.RespawnTimesProp = null; // Make the field dirty so we send clear because we probably should send clear. At some point investigaste if this is neccessary.
+
+        // Takes down the countdown and the give-up prompt a downed player was offered. Harmless on
+        // the login path, where there was no offer to withdraw — this is also where the old
+        // write-then-null dance on RespawnTimesProp ends up, now that the field carries something.
+        CharacterEntity.ClearRespawnOffer();
         baseController.TimedDailyRewardProp = new TimedDailyRewardData { State = TimedDailyRewardData.TimedDailyRewardState.ROLLED, MaxRolls = 1, CountdownToTime = AssignedShard.CurrentTime };
         NetChannels[ChannelType.ReliableGss].SendChanges(baseController, CharacterEntity.EntityId);
 
         // Update 2
         CharacterEntity.SetCharacterState(CharacterStateData.CharacterStatus.Living, AssignedShard.CurrentTime + 1);
         baseController.GibVisualsIdProp = new GibVisuals { Id = 0, Time = AssignedShard.CurrentTime + 1 };
-        baseController.RespawnTimesProp = new RespawnTimesData(); // Shake it up
-        baseController.RespawnTimesProp = null; // It's dirt
         CharacterEntity.SetMaxHealth(HardcodedCharacterData.MaxHealth, true); // Also updates the entity fields, not just the controller props
         CharacterEntity.SetMaxShields(HardcodedCharacterData.MaxShields, true); // Was writing the prop straight, which left the entity thinking it still had no shields
         baseController.ZoneUnlocksProp = 0xFFFFFFFFFFFFFFFFUL;

@@ -98,6 +98,15 @@ the item arrays of the partial message; the next comparison is capture message [
 retail single-item add reproduced in [Capture Replay](Capture-Replay.md).
 [NET-18](../ISSUE-REGISTER.md) re-scoped to exactly this and stays open.
 
+**That comparison ran on 2026-08-15 and produced one change to re-run I1 against.** The envelope
+was already retail's exactly, so the message shape was never the problem — but message [9] turned
+out to be the session's *only* single-item add of its kind, and PIN's item flags were calibrated on
+it. The other 13 all carry `DynamicFlags = 2`, guessed as "is new", where PIN sent `1` (bound only).
+PIN now sends both bits. If that was it, the item appears without a resend and I1 passes outright;
+if it doesn't, the flag is eliminated and the remaining suspects are `Modules` (retail sends two
+empty slots, PIN sends none) and `Unk4` (non-zero and varying in retail, always zero in PIN). Either
+way the workaround below still works, so nothing downstream is blocked on the answer.
+
 **Workaround for every entry that spawns an item:** `createitem <id>`, then `dbg_inventory resend`,
 then look in the **garage picker** — not the inventory window, whose search doesn't find the item
 (searching "Dev" returns nothing; possibly the search matches localization entries a dev item

@@ -128,10 +128,23 @@ public class BaseController : Base
     [MessageID((byte)Commands.RequestRespawn)]
     public void RequestRespawn(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
     {
-        if (player.CharacterEntity?.CharacterState.State != CharacterStateData.CharacterStatus.Dead)
+        // A player who taps out is Incapacitated, not Dead — the give-up prompt lives in the bleedout
+        // screen, which closes the moment the state advances. Dead stays accepted because nothing
+        // guarantees this is the only way in.
+        var state = player.CharacterEntity?.CharacterState.State;
+
+        if (state != CharacterStateData.CharacterStatus.Incapacitated
+            && state != CharacterStateData.CharacterStatus.Dead)
         {
+            _logger.Information("Respawn requested from state {State}, declined", state);
             return;
         }
+
+        // Logged because the alternative is inferring it. This handler ran silently on 2026-08-15,
+        // a reader grepped for a string the code never emits, and reported a passing B1 as a client
+        // that had never sent the command — when the only thing separating a tap-out from the
+        // BleedoutSim fallback in the log was the absence of the fallback's own line.
+        _logger.Information("Player {EntityId} tapped out", player.CharacterEntity.EntityId);
 
         player.Respawn();
     }

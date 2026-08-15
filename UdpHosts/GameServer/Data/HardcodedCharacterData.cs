@@ -19,22 +19,42 @@ public static class HardcodedCharacterData
     // base, and the level and attribute scaling that turns it into 19192 isn't implemented.
     public static int MaxHealth = 19192;
 
-    // Still one flat pool for every creature in the game (DATA-6), just a smaller one: 2500 took about
-    // 64 rifle shots to kill anything, which is what N16 read as "bullet sponge". 500 is ~13. Chosen
-    // deliberately over the shipped figure — dbcharacter::MonsterScaling says 100 at level 1 — because
-    // level is the input PIN doesn't have, and 100 across the board would make everything trivial for
-    // the same reason 2500 made everything a slog. Replace the whole line, not the number, once level
-    // resolves.
-    public static int MonsterMaxHealth = 500;
+    // Still one flat pool for every creature in the game (DATA-6). 2500 was ~64 rifle shots, which N16
+    // read as "bullet sponge"; 500 replaced it on 2026-08-13, sourced from a tester's beta-video reading
+    // that a small Aranha died to "a few seconds of sustained chaingun or assault rifle fire".
+    //
+    // 2026-08-15: that conversion was redone with an actual rate of fire and 500 does not survive it.
+    // The Heavy MG lands 39 a round every 65ms (Rounds/burst is 1) = 600 dps, so 500 health is 0.83
+    // SECONDS, not a few. The assault rifle's 46 per 105ms = 438 dps puts it at 1.14s. "A few seconds"
+    // is 1200 at two and 1800 at three.
+    //
+    // 1200 is the conservative end of that band, deliberately: N16's sponge complaint at 2500 means the
+    // risk is approaching from above, and 500 -> 1200 is already a 2.4x move. Raise toward 1800 if two
+    // seconds reads as too quick. This is a testable prediction, not a preference — a tester with the
+    // Heavy MG should see a rated-20 creature die in about two seconds of held fire.
+    //
+    // Not sourced from MonsterScaling's own rows on purpose. 1200 sits near level 13, but the shipped
+    // curve is keyed by level and level is the input PIN doesn't have; using the curve here would imply
+    // a per-creature level that does not exist yet. The real fix is difficulty_cost -> level, which
+    // replaces this whole line rather than its number. See DATA-6 and DATA-20.
+    public static int MonsterMaxHealth = 1200;
 
     // The dump happened (MinimalSDB dump, prod-1962): build 1962 had no shields. base_shields is non-zero on
     // 5 of 1676 Battleframe rows, and the 2016 capture agrees — MaxShields reads 0 across every
-    // Character_BaseController message for the player. So the pool below is a deliberate divergence kept
-    // because the absorb-with-overflow path in TakeDamage is worth being able to see; 3000 at least appears
-    // in the table, unlike the 4800 it replaces. Set it to 0 to match retail exactly.
-    // The recharge pair is not invented: 150/sec and 10000ms are the values ~780 rows actually shipped with.
-    // Monsters stay shieldless so the divergence only lands on players.
-    public static int MaxShields = 3000;
+    // Character_BaseController message for the player. This was 3000 anyway, on the argument that the
+    // absorb-with-overflow path in TakeDamage was worth being able to see.
+    //
+    // It was worth the opposite. The 1962 client has no shield display at all: `ShieldBar` survives as a
+    // texture region in skin.xml with no reference anywhere in the UI, and HealthBar and Vitals both bind
+    // health and took-hit events with nothing for shields. Red 5 deleted the readout when they deleted the
+    // stat. So the pool was 3000 hit points a player could not see, and all it bought was a window at the
+    // start of every fight where damage lands, health does not move, and nothing on screen explains why —
+    // which on 2026-08-15 read as a broken `invuln` command to the person testing it.
+    //
+    // Zero now, which is both what retail shipped and the only value the client can render honestly.
+    // The recharge pair is left alone: 150/sec and 10000ms are the values ~780 rows actually shipped with,
+    // and they cost nothing against an empty pool if shields ever come back per-frame.
+    public static int MaxShields = 0;
     public static int MonsterMaxShields = 0;
     public static int ShieldRechargePerSec = 150;
     public static int ShieldRechargeDelayMs = 10000;

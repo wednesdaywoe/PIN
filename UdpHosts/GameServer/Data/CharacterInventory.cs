@@ -198,10 +198,13 @@ public class CharacterInventory
             SubInventory = GetInventoryTypeByItemTypeId(sdbId),
             Durability = 1000,
 
-            // The one item the 2016 capture shows being added to a live inventory — 82337, arriving
-            // on its own in a partial update — carries IsBound and nothing else. PIN sent no flags
-            // at all, which is the only field where a fresh item differed from the real thing.
-            DynamicFlags = (byte)ItemDynamicFlags.IsBound,
+            // 82337 — the capture's one 37-byte single-item add, and what this was originally
+            // calibrated on — carries IsBound alone. It is the outlier. The session's other 13
+            // single-item adds all carry IsBound|Unk_0x02, and 0x02 is guessed as "is new", which is
+            // what an inventory list would read to decide whether to draw an arriving row. NET-18 is
+            // exactly that symptom: the item is real and equippable but never listed until the whole
+            // inventory is redrawn. Untested against a client.
+            DynamicFlags = (byte)(ItemDynamicFlags.IsBound | ItemDynamicFlags.Unk_0x02),
             TimestampEpoch = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Modules = [],
             Unk1 = 0,

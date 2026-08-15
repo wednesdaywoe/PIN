@@ -35,6 +35,7 @@ public class Shard : IShard
     private const double _networkTickRate = 1.0 / 20.0;
 
     private readonly ShieldSim _shieldSim;
+    private readonly BleedoutSim _bleedout;
 
     /// <summary>Ticks nothing — it lives on <c>CharacterDiedEvent</c>. Held so it stays subscribed.</summary>
     private readonly KillRewardSim _killRewards;
@@ -66,6 +67,7 @@ public class Shard : IShard
         WeaponSim = new WeaponSim(this);
         ProjectileSim = new ProjectileSim(this);
         _shieldSim = new ShieldSim(this);
+        _bleedout = new BleedoutSim(this);
         Hazards = new HazardSim(this);
         Resources = new ResourceMapSim(this);
         CharacterStore = new CharacterStore(Settings.CharacterSavePath, Logger);
@@ -136,6 +138,7 @@ public class Shard : IShard
         Abilities.Tick(deltaTime, currentTime, ct);
         WeaponSim.Tick(deltaTime, currentTime, ct);
         _shieldSim.Tick(deltaTime, currentTime, ct);
+        _bleedout.Tick(deltaTime, currentTime, ct);
         Hazards.Tick(deltaTime, currentTime, ct);
         CharacterSaves.Tick(deltaTime, currentTime, ct);
         EventBus.Flush();

@@ -1,7 +1,7 @@
 ---
 project: pin
 kind: test-stream
-title: "Damage Loop (D1-D4)"
+title: "Damage Loop (D1-D4, D6)"
 relates:
   - ../TEST-REGISTER.md
 ---
@@ -56,3 +56,150 @@ by both the direct hit and the splash is only damaged once.
 
 Pass: the third number matches the first, so the `OnRemove` restore path in the active-command
 pattern actually ran.
+
+## [x] D6: A basic creature dies in about two seconds
+
+Written 2026-08-15, and it exists to falsify a number rather than to confirm a feature works.
+
+**Passed the same day on the health question, which is what it was for. Three kills, 31 hits each,
+no variance at all.** The counts came back 144 → 175 → 206 → 237, and the last kill's tail reads:
+
+```
+13:53:20 DBG CharacterEntity (2235630902493516800) took 39 damage ... 264 health left
+13:53:20 DBG ... 225 health left      13:53:20 DBG ... 108 health left
+13:53:20 DBG ... 186 health left      13:53:20 DBG ...  69 health left
+13:53:20 DBG ... 147 health left      13:53:20 DBG ...  30 health left
+                                      13:53:20 DBG ...   0 health left
+```
+
+Clean steps of 39 landing exactly on 0 from 1200. The pool is the value the code says it is, the
+creature dies, and 31 × 39 = 1209 against 1200 is the expected one-round overkill.
+
+**Time to kill was about 3.1 seconds**, not the 2.0 predicted — and that is the video's "a few
+seconds" more squarely than the prediction was. The number stands.
+
+**But it ran with the wrong weapon, and the entry as first written could not have told.** The
+observed rate of fire was a flat **10 rounds a second** — 10 in each of two complete seconds, across
+all three kills — which is 100 ms a round. That is the assault rifle's 105 ms, not the Heavy MG's
+65 ms. Confirming it: `equipitem` logs at Information on success and **there is no such line in the
+log**, only `13:50:59 INF createitem 85968 as item, item type Weapon, x1`. The equip bailed out at
+its not-carrying guard, which is [NET-18](../gaps/network.md#net-18) — a created item is not in the
+server's inventory list until it is resent.
+
+Two authoring mistakes, both worth keeping:
+
+1. **The damage figure cannot distinguish the two weapons.** 39 is the Heavy MG's full resolved
+   damage *and* the assault rifle's body-shot damage (46 × the ×0.85 step from
+   [D2](#-d2-headshot-and-crit)). The rate of fire is the only discriminator and it was written in
+   as a secondary check. An entry that picks between two hypotheses must key on a figure the two
+   do not share.
+2. **`dbg_inventory` was written as conditional advice rather than as a step.** The project already
+   knew created items need a resend before they can be equipped. Advice inside a fail-branch does not
+   get read before the run.
+
+### The re-run, same day — chaingun confirmed, ×0.85 question closed
+
+The corrected steps were run and the equip took this time:
+
+```
+14:12:56 INF equipitem 85968 guid 1F069FCE00040BFD into Primary of loadout 20030
+```
+
+Three more kills after it, at **31 hits each again**, counts 237 → 268 → 299 → 330. Six kills
+across two weapons and not one of them varied.
+
+**Every hit landed 39 — all 93 of them, with no other value in the set.** The Heavy MG's full
+resolved damage, with no reduction. So the ×0.85 step
+[D2](#-d2-headshot-and-crit) recorded on the rifle is **not a blanket rule and not a weapon
+property**, and reading the code says why:
+[ProjectileSim.cs](../../UdpHosts/GameServer/Systems/ProjectileSim/ProjectileSim.cs#L49) resolves
+`damage = decayed * hit.DamageMod`, and `hit.DamageMod` arrives **on the client's hit message**. It
+is a per-hit value the client supplies, most likely hit location. The rifle's 39-from-46 was one
+client-sent modifier on those particular shots, not a discount applied to a weapon. Question closed.
+
+### Left open by this entry: hits per second cap at 10 on both weapons
+
+| Weapon | ms/burst | Shots/sec it should manage | Best second observed |
+|--------|----------|----------------------------|----------------------|
+| Assault rifle | 105 | 9.5 | **10** |
+| Heavy MG | 65 | 15.4 | **10** |
+
+The rifle matches its data. The Heavy MG lands a third fewer hits than its rate of fire allows, and
+the two kills ran to the same ~3 seconds despite the chaingun firing 58% more rounds on paper.
+
+**This cannot be settled from the current logging, and the innocent explanation is the likely one.**
+Only *hits* are logged — a round that misses writes nothing — and the target is a melee creature
+closing on the player, so 10 hits from 15.4 shots is about 65% accuracy against a moving target,
+which is unremarkable. The other reading is that the server is dropping fire messages, and that
+would be a 35% damage shortfall on every automatic weapon in the game.
+
+Distinguishing them needs a shots-fired counter next to the hits, which does not exist. Worth adding
+before anyone tunes automatic weapons; not worth blocking on now.
+
+`MonsterMaxHealth` moved from 500 to 1200 that day ([DATA-6](../gaps/data.md#data-6)). The 500 came
+from a tester's beta-video reading that a small Aranha died to "a few seconds of sustained chaingun
+fire", and that reading had never been divided by a rate of fire. The Heavy Machine Gun lands **39 a
+round every 65 ms** — `Rounds/burst` is 1 — which is **600 damage a second**, so 500 health was
+0.83 seconds and not a few. 1200 is two seconds, the low end of a 1200–1800 band.
+
+**Count hits in the log rather than timing it.** A stopwatch measures the tester's reflexes; the hit
+count measures the server.
+
+The prediction is a **range, not a number, and which end it lands on is itself a result.**
+[D2](#-d2-headshot-and-crit) above records that a rifle resolving to 46 in
+[Weapons.md](../Wiki/Reference/Weapons.md) lands **39** on a body shot — an unexplained ×0.85 step
+applied at hit time, after item resolution. Whether the Heavy MG takes the same step is unknown:
+
+| If a body shot lands | Per hit | Hits to kill 1200 | Held fire at 65 ms apart |
+|----------------------|---------|-------------------|--------------------------|
+| the full resolved 39 | 39 | **31** | 2.0 s |
+| 39 with D2's ×0.85 | 33 | **36** | 2.4 s |
+
+Either is a pass for the health number. **Read the per-hit figure in the log first**, then judge the
+count against the matching row — do not compare a count against the wrong row and call it a failure.
+If the log says 33, that pins the ×0.85 step onto a second weapon and is worth writing up
+separately; if it says 39, the step is specific to the rifle and D2's note needs revisiting.
+
+Monster **528** (Melded Aranha) is the subject because it is the creature the video anchor is about,
+and it carries `difficulty_cost` 20 — near the bottom of the shipped threat ladder, so it is exactly
+the kind of thing that should die fast. It is a melee attacker with 5m reach, hence `invuln`.
+
+1. `invuln on` — this entry is about your damage, not theirs, and 528 closes to melee.
+2. `createitem 85968` — the Heavy Machine Gun, 39 a round, 250-round clip, 80m range.
+3. `dbg_inventory` — **required, not optional.** A created item is absent from the server's
+   inventory list until it is resent, and `equipitem` will silently refuse it
+   ([NET-18](../gaps/network.md#net-18)). Skipping this is what made the first run of this entry
+   measure the wrong gun.
+4. `equipitem 85968 Primary`, then **confirm it took**:
+   `grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1` must show
+   `equipitem 85968 guid ... into Primary`. No line means it did not equip and the run is void.
+   Run `equipitem` with no arguments to list slot names if `Primary` is rejected.
+5. `npc 528` to put one at your feet, then back off a few metres so every round connects.
+6. Hold fire until it dies. Do not stop and restart — a gap in fire makes the count unreadable.
+7. `grep -ac "took .* damage from" ~/Games/PIN/logs/GameServer.log` before and after, and subtract.
+   The damage line is at **Debug** level, so confirm Debug logging is on first by checking any
+   `DBG` line appears in the log at all.
+8. **Read the rate of fire, which is the step that identifies the weapon:**
+   `grep -a "took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -31 | awk '{print $1}' | uniq -c`
+   — about **15 a second** is the Heavy MG (65 ms). About **10 a second** is the assault rifle
+   (105 ms) and means the equip did not take.
+
+Pass: the per-hit figure reads **39 or 33**, the count matches that row of the table above, and the
+creature dies. Record both numbers, not just the count.
+
+Fail, hits log a per-hit figure that is neither 39 nor 33: the health number is not the problem and
+this entry is not the one to read. A wrong per-hit figure is weapon resolution, so go to
+[DATA-11](../gaps/data.md#data-11) — that bug stripped a rifle's damage once already and the melee
+weapon in [DATA-20](../gaps/data.md#data-20) is the only live confirmation it stays fixed.
+
+Fail, the count matches but it reads as far too long in the hand: the arithmetic is right and the
+target is wrong. Record how it felt — this is the one place a tester's judgement outranks the
+number, and it is why 1200 was taken from the bottom of the band rather than the middle. Note that
+[N16](NPC-Combat.md) called 2500 a bullet sponge, so there is a known ceiling somewhere below that.
+
+Fail, far more hits than either row predicts: something is adding health after spawn, or the
+creature is not 528. Check the spawn line named the type you asked for.
+
+**Whatever this returns, it does not close [DATA-6](../gaps/data.md#data-6).** One flat pool for
+every creature in the game is the entry, and 1200 is still one flat pool. What a pass buys is
+confidence in the *band*, which is what the `difficulty_cost` → level work will be anchored against.

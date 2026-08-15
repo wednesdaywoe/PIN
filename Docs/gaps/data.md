@@ -14,14 +14,35 @@ live and running, just running on a number nobody's checked.
 
 <a id="data-1"></a>
 
-### DATA-1 — Battleframe shield pool kept non-zero on purpose [x] closed, with a guard
+### DATA-1 — Battleframe shield pool [x] closed 2026-08-15 by reverting it to retail's 0
 
 `dbitems::Battleframe` confirmed in M1 that build 1962 shipped **no live shields** — only 5 of 1676
-rows carry a non-zero `base_shields`. [HardcodedCharacterData.cs](../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs)
-keeps the shield pool at 3000 anyway, because a character with zero shields is harder to observe
-and debug against than one with some. The recharge rate and delay (150/sec, 10000ms) are the real
-shipped values; only the pool size is the deliberate divergence. Revert is a one-line change
-whenever fidelity wins out over observability. See [M1](../streams/m1-combat-models.md).
+rows carry a non-zero `base_shields`, and the 2016 capture agrees, reading 0 on every
+`Character_BaseController` message for the player.
+[HardcodedCharacterData.cs](../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs) kept the pool
+at 3000 anyway, on the argument that a character with zero shields is harder to observe and debug
+against than one with some. The recharge rate and delay (150/sec, 10000ms) are the real shipped
+values and are unchanged; only the pool size was ever the divergence.
+See [M1](../streams/m1-combat-models.md).
+
+**The observability argument was backwards, and a tester walked into it on 2026-08-15.** The 1962
+client has no shield display at all. `ShieldBar` survives as a texture region in `skins/skin.xml`
+with **no reference anywhere else in the UI**, and both `HUD/HealthBar` and `HUD/Vitals` bind
+`ON_HEALTH_CHANGED` and `ON_TOOK_HIT` with nothing for shields — Red 5 deleted the readout when they
+deleted the stat, the same way they disabled the heat-blob overlay
+([Client UI Source](../Client-UI-Source.md)). So the pool was 3000 hit points the player could not
+see, and what it actually bought was a window at the start of every fight where hits land, health
+does not move, and nothing on screen explains why.
+
+That window is 45 seconds long against the Basin Mouth pack, because most NPC gunfire lands for 1
+point (see [DATA-20](#data-20)). The tester read it as a broken `invuln` command, toggled the
+command three times inside the shield window, filed it as a bug, and only found out otherwise from
+the server log: shields 3000 → 0 with health flat at 19192 across all three toggles.
+
+**Set to 0 on 2026-08-15** (user-chosen), which is retail's own value and the only one this client
+can render honestly. Fidelity and observability turned out to point the same way, so the trade the
+entry was built on no longer exists. If per-frame shields are ever restored from real data, the
+readout has to be authored in Lua first or the same trap comes straight back.
 
 <a id="data-2"></a>
 
@@ -174,6 +195,144 @@ only shipped data plus PIN's own placements, and it does not reintroduce player 
 [restoration charter](../PROGRESS.md) rules out. The interim lever was
 `HardcodedCharacterData.MonsterMaxHealth` and it has now been moved, so what is left here is the
 per-monster path rather than the number.
+
+#### `difficulty_cost` is a threat tier, not just a budget — read 2026-08-15
+
+The entry above called it "an encounter budget rather than a level", which understated it. Reading
+the ladder against `Monster.behavior` — a **string** column, so the creature's own AI script names
+itself in plain text — shows the rating tracks the design tier the way a hand-assigned tier would:
+
+| Rating | Types | Behaviour scripts found in the band |
+|--------|-------|-------------------------------------|
+| 20–30 | 120 | unnamed wanderers, `StockMelee` |
+| 50–100 | 424 | `EliteWanderer`, `ThresherSpitter`, `ThresherTailWhipper` |
+| 120 | 13 | `SiegebreakerWithCharge`, `Brontodon` |
+| 150–300 | 75 | every `*MiniBoss` script: `GiantAranha`, `LandShark`, `CrystalAranha`, `RaiderBaron` |
+| 400 / 1000 | 2 | one type each, the top of the scale |
+
+**`GiantAranhaMiniBoss` appears at 150 and again at 300, and `LandSharkMiniBoss` at both as well.**
+Red 5 shipped the same creature behaviour as separate monster types at separate ratings, which is
+exactly the "a worker aranha is weak, a sieger is dangerous" structure the
+[thumper reconstruction](../thumper-encounter-reconstruction.md#5-composition) tiers by hand. So the
+column orders 906 creature types against each other, for free, and the only decision left is where
+to anchor the band — two numbers instead of 906.
+
+Caveat on coverage: **2,203 of 3,109 types rate 0**, and that set includes `EliteWanderer` and
+`RaiderBaronMiniBoss` entries that plainly are not harmless. A 0 most likely means "not placed by
+the budgeted spawner" (mission and story NPCs) rather than "no threat", so a cost-driven scheme
+needs a fallback for the unrated two thirds rather than reading 0 as a level.
+
+#### The curve's shape, and where the player sits on it
+
+`MonsterScaling` is not one geometric run but **four segments**, each a fixed step per level:
+
+| Levels | Step per level |
+|--------|----------------|
+| 1–10 | ×1.25 |
+| 11–20 | ×1.18 |
+| 21–~35 | ×1.10 |
+| ~40–80 | ×1.05 |
+
+Growth decelerates deliberately, so a few levels are worth much more at the bottom than the top —
+which is what makes the low band the useful one for tiering ordinary fauna.
+
+The player's 19192 ([DATA-3](#data-3)) is **level 38** on this curve, not the 45 that
+`HardcodedCharacterData.Level` stamps. The two are independent numbers from different tables and the
+disagreement is minor, but any argument of the form "the player is level 45, so monsters should be
+too" is reading the stamp rather than the health.
+
+#### The 500 does not survive its own source — checked 2026-08-15
+
+The flat 500 came from a tester's beta-video reading: monster 528 took "just a few seconds of
+sustained fire with the chaingun or assault rifle", and a burst weapon like the Tigerclaw's plasma
+cannon "would probably 1-shot" it. **The conversion from that observation to 500 was never done with
+a fire rate**, and doing it moves the answer a long way.
+
+Resolved 1962 figures, via `Weapons.md` and `Weapon-Templates.md`. `Rounds/burst` is 1 on every one
+of these, so damage per second is simply `damage_per_round ÷ (ms_per_burst ÷ 1000)`:
+
+| Weapon | Damage/round | ms/burst | DPS | Time to kill 500 |
+|--------|--------------|----------|-----|------------------|
+| Heavy MG (the chaingun), tpl 32/12115 | 39 | 65 | **600** | **0.83 s** |
+| Assault rifle, tpl 12113 | 46 | 105 | **438** | **1.14 s** |
+
+**500 health is under one second of chaingun fire.** "A few seconds" is 1,200 at two seconds and
+1,800 at three — level **13 to 16** on the shipped curve, two and a half to four times the current
+figure. The tester's *feel* target and PIN's current number are not close.
+
+The one-shot half of the observation **cannot be checked as posed**, because the weapon it names
+does not behave that way in 1962:
+
+| Plasma weapon | Damage/round | ms/burst | Chargeup | One-shots up to |
+|---------------|--------------|----------|----------|-----------------|
+| `Plasma Cannon - Current` (12129) — the mainline player line, 262 items, tiers A4→A32 spanning levels 1–50 | 100 | 600 | **4,000 ms** | 100 |
+| `Plasma Cannon` (14) — the older template | 400 | 700 | 0 | 400 |
+
+The mainline plasma cannon does **100 a shot behind a four-second charge**. It one-shots almost
+nothing. What does one-shot in that range is a Tigerclaw *ability* — `Pulsar` reads
+`Base Damage 155 to 17763`, `Hellfire` 209 to 13322 dps — so a remembered one-shot is most likely an
+ability rather than the primary weapon, and it constrains nothing.
+
+**Era caveat, and why it does not rescue the 500.** The video is beta-era and these weapon numbers
+are 1962, which is exactly the mismatch the
+[thumper reconstruction](../thumper-encounter-reconstruction.md#0-why-this-one-is-hard) warns about.
+But PIN *ships* 1962 weapons, so converting a feel target through 1962 rates is the right arithmetic
+for PIN regardless of what the beta's own numbers were. The target is "a few seconds to kill with
+the weapon the player is actually holding", and 500 does not deliver it.
+
+One anchor does survive intact, because it is an absolute number rather than a converted one:
+**shell-less hissers and skivers at 200 HP**, from the 0.6 patch notes recording a 700 → 200 change
+`[notes]`. That is level **4** (195) on the curve, within 3%. It anchors the floor of the weakest
+tier; it says nothing about where a rated-20 melded aranha sits.
+
+**The two surviving anchors are in different units, which is why they look further apart than they
+are.** The 200 is a 0.6-era figure measured against 0.6-era weapons; the 1,200–1,800 is a 1962-era
+figure because it was converted through 1962 rates. They cannot be compared directly, and for PIN's
+purposes — PIN ships 1962 weapons — the 1962-unit number is the one that governs. The 200 is
+therefore useful as evidence that the curve is the right instrument, and not usable as a value to
+set.
+
+**Changed 2026-08-15 (user-approved): `MonsterMaxHealth` 500 → 1200.** Two seconds of held Heavy MG
+fire, the conservative end of the band. The band's top is 1,800 and the choice of its bottom is
+deliberate: [N16](../In-Game-Tests/NPC-Combat.md) reported a sponge at 2500, so the known failure
+direction is from above, and 500 → 1200 is already a 2.4× move. **Confirmed in game the same day by
+[D6](../In-Game-Tests/Damage-Loop.md#-d6-a-basic-creature-dies-in-about-two-seconds).** Three kills,
+31 hits each with no variance, health stepping down by 39 to land exactly on 0 from 1200. Time to
+kill was **about 3.1 seconds** rather than the predicted 2.0, because the run measured the assault
+rifle at 10 rounds a second and not the Heavy MG at 15 — the equip had silently failed on
+[NET-18](network.md#net-18). That makes the outcome *better* evidence than the prediction was: 3.1
+seconds is the video's "a few seconds" read directly, and the same pool under the Heavy MG would be
+about 2. Both sit inside the band, so **1200 holds** and nothing needs moving.
+
+**The re-run with the Heavy MG actually equipped gave the same 31 hits again** — six kills across
+two weapons, no variance in any of them — so 1200 is confirmed independently of which gun fired.
+
+It also closed the ×0.85 question. All 93 hits of the Heavy MG run landed a full **39**, with no
+other value in the set, so the 46-into-39 that
+[D2](../In-Game-Tests/Damage-Loop.md#-d2-headshot-and-crit) saw on the rifle is neither a blanket
+rule nor a weapon property: `ProjectileSim` resolves `damage = decayed * hit.DamageMod` and
+`hit.DamageMod` arrives on the **client's** hit message, so it is a per-hit value (most likely hit
+location) rather than anything the server or the item carries.
+
+One thing the run raised and could not settle: hits per second top out at **10 on both weapons**,
+which matches the rifle's 105 ms exactly and falls a third short of the Heavy MG's 65 ms. Only hits
+are logged, so a miss is indistinguishable from a dropped shot, and 65% accuracy against a closing
+melee target is the unremarkable explanation. The alternative is a 35% damage shortfall on every
+automatic weapon. A shots-fired counter beside the hit log would separate them; nothing depends on
+it until automatic weapons get tuned.
+
+Deliberately *not* read off `MonsterScaling` even though 1200 sits near its level 13 row. Taking a
+value from a level-keyed curve would imply a per-creature level that does not exist yet, and the
+point of this entry is that the level is the missing input. It stays a flat constant until
+`difficulty_cost` → level replaces the whole line.
+
+#### One table checked and ruled out
+
+`dbcharacter::MonsterAttributeRange` looks like the answer — it is per-monster, per-attribute, and
+carries `Base` and **`PerLevel`** columns. It is not. 167 rows covering 81 of 3,109 types,
+**`per_level` is 0.0 in every single row**, and its `attribute_id` values (1143, 1144, 1582, 1953,
+1954, 2005) are not in `AptitudeStat`'s 1–25 range, so none of them is health or damage. Recorded so
+the next reader does not spend the lookup.
 
 <a id="data-7"></a>
 
@@ -678,3 +837,75 @@ whether the 2016 capture's session ever gains charge (worth a `CaptureReplay` lo
 guessing), and whether `ability <id>` server-side bypasses the meter — if it does, the sweep can
 test an Ultimate's *chain* today even though the keypress route stays blocked, at the cost of not
 testing prediction.
+
+<a id="data-20"></a>
+
+### DATA-20 — Monster damage is never scaled, so most NPC gunfire lands for 1 point [ ] open, found 2026-08-15
+
+A whole pack shooting a player does almost nothing. Measured over five minutes in the Basin Mouth
+pack with `invuln` off: **8,977 hits of 1 damage against 265 of 49**, and a player taking 4 minutes
+40 seconds to die from 19192 health ([DATA-3](#data-3)).
+
+**The resolution code is correct — this was checked before it was blamed.** Both weapons in that
+fight read out of the db exactly as PIN computed them:
+
+| Weapon | Template `damage_per_round` | Modifier mult | PIN sends | Observed |
+|--------|------------------------------|---------------|-----------|----------|
+| 20046 (melee, range 2.6m) | 225 | 0.22 | 49.5 → **49** | 49 |
+| 85953 (rifle, range 100m, clip 30) | **1** | 1.0 | **1** | 1 |
+
+So the 49s are right to the unit, which also re-confirms [DATA-11](#data-11)'s modifier fix on a
+live path. And the rifle's 1 is what build 1962 actually shipped in
+`dbitems::WeaponTemplates`. Nothing is being annihilated.
+
+**The missing piece is level scaling, which makes this [DATA-6](#data-6)'s twin rather than
+DATA-11's.** `dbcharacter::MonsterScaling` ships whole — 80 rows — and carries a **`damage` column
+beside `health`**, keyed by level, at a flat 2:1 ratio the entire way up:
+
+| Level | Damage | Health |
+|-------|--------|--------|
+| 1 | 50 | 100 |
+| 5 | 122 | 244 |
+| 10 | 373 | 745 |
+| 20 | 1,950 | 3,900 |
+| 45 | 13,934 | 27,869 |
+| 80 | 76,863 | 153,726 |
+
+Retail scaled a monster's damage by its level the same way it scaled its health, and an NPC weapon
+template's `damage_per_round` is a unit value that scaling multiplied. PIN has no level for a
+monster — level was server content, the same wall DATA-6 hit — so it applies no scaling to either
+side and reads the raw 1.
+
+DATA-6 was half-answered on 2026-08-13 by dropping monster health to a flat 500, roughly level 8 on
+this curve. **The damage half never got the same treatment**, which is why monsters stopped being
+sponges while the player quietly became one. Whatever number is chosen here should be chosen against
+the same level DATA-6's 500 implies, or the two halves describe different creatures.
+
+**Not a regression.** Rotated logs from 2026-08-14, two builds earlier, carry the same split (253
+hits of 1 against 18 of 49).
+
+Open question before anything is applied: whether `MonsterScaling.damage` is damage per round, per
+burst, or a budget the weapon divides up. Health is plainly absolute, and the 2:1 ratio suggests a
+paired design figure rather than a per-round number, so applying it as a flat multiplier on
+`damage_per_round` is a guess that wants stating out loud rather than assuming.
+
+**The 2:1 holds on all 80 rows without one exception**, which sharpens that question rather than
+answering it. Numbers that exact are derived from each other, not tuned independently — someone
+wrote `damage = health / 2` in a spreadsheet. A per-shot damage figure would not survive that
+treatment, because per-shot damage has to interact with fire rate and clip size, and those vary
+enormously across the weapon templates. So the reading this entry now favours is that
+`MonsterScaling.damage` is a **per-creature damage budget** that its weapon spends, not a per-round
+value — but the arithmetic that would prove it has not been done.
+
+The top end argues the same way. Taking the [DATA-6](#data-6) tier read above and mapping
+`difficulty_cost` onto levels, a rating-300 mini-boss lands somewhere around level 20–30. Its
+`damage` column there is 1,950–5,057 against a player's 19192 — survivable per hit, brutal as a
+one-second budget, absurd if a 30-round clip delivers it per round. Any candidate reading can be
+sanity-checked against that bracket before it is built.
+
+**A cost-to-level mapping is what closes both halves at once.** Anchoring rating 20 at level 8 —
+which is where DATA-6's two independent health anchors put it — and letting the rating pick the row
+gives both `health` and `damage` from the same creature, which is the property this entry exists to
+restore. The alternative, another flat damage number beside the flat 500, repeats the mistake that
+created this entry: it fixes the symptom for one creature and leaves every other creature describing
+a different animal.

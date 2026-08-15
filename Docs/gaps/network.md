@@ -232,6 +232,36 @@ confined to the item arrays of the partial message. The two wire-format fixes (`
 `InventoryUpdate.Unk`) match the capture but did not close it. Next comparison: capture message
 [9], the 37-byte retail single-item add.
 
+**That comparison ran on 2026-08-15 and the message envelope is not the problem.** `SendItemUpdate`
+builds exactly retail's shape — `ClearExistingData = 0`, `ItemsPart1Length = 1`, one item, every
+other array empty, `Unk = 0`. What the read did find is that **the field-level calibration was done
+against the one message in the session that is an outlier**, and that it was done on 2026-08-11,
+three days *before* the sitting that still failed, so its failure is already evidence.
+
+Message [9] is item 82337, the only 37-byte single-item add in the capture. The session carries 13
+other single-item adds, and they disagree with it:
+
+| Field | 13 ordinary adds | message [9] (82337) | PIN sends |
+|-------|------------------|---------------------|-----------|
+| `DynamicFlags` | **2** | 1 | **1** |
+| `Modules` | 2 entries, both zero | none | none |
+| `Unk4` | non-zero, varies (3497, 15450, …) | 0 | 0 |
+| `Durability` | 1000 | 0 | 1000 |
+
+`DynamicFlags` bit `0x02` is guessed in [ItemDynamicFlags.cs](../../UdpHosts/GameServer/Enums/ItemDynamicFlags.cs)
+as `is_new?`, and PIN sends `IsBound` alone because 82337 did. An arrival flag is what an inventory
+list would read to decide whether to show a new row, and "the item is real, equippable and usable
+but is not listed until the whole inventory is redrawn" is what a missed arrival flag looks like.
+It is a one-line change and the next thing to try.
+
+**`Durability` is a dead end, recorded so it isn't re-run**: 82337's 0 looked like a divergence
+from PIN's 1000, but 1000 is retail's ordinary value and the 0 is the outlier's.
+
+Two caveats on the numbers above. `Unk4` and `Modules` are measured only on single-item messages,
+which are the complete ones — `CaptureReplay`'s printer truncates arrays at four entries, so the
+255-item full inventory can't be counted this way. And nothing here has been tested against a
+client; the flag is a suspect, not a finding.
+
 <a id="net-19"></a>
 
 ### NET-19 — Two 2026-08-11 prediction fixes await confirmation [x] confirmed 2026-08-14
@@ -399,9 +429,35 @@ So the gap is on the way out, not the way in: the client is not being told enoug
 respawn. The likely candidate is `RespawnTimesData` — `Respawn` writes `RespawnTimesProp` twice and
 clears it, with a comment saying it isn't understood, and `Die` never touches it at all. Retail drove
 the death screen's countdown and spawn-point list from that field, so a client with nothing in it
-plausibly has no UI to offer. Unconfirmed: nobody has watched what a retail server sends on death,
-and the [2016 capture](../In-Game-Tests/Capture-Replay.md) is the cheap place to look before guessing
-at the field's shape.
+plausibly has no UI to offer.
+
+**Answered 2026-08-15 out of the client's own UI source, and `RespawnTimesData` is the second half
+of it rather than the whole thing.** The [2016 capture](../In-Game-Tests/Capture-Replay.md) was the
+cheap place named here and it cannot help: **nobody dies in that session.** Zero `Killed` messages
+(`Character_CombatView` 108), one `Respawned`, which is the login spawn, and `RespawnTimes` null in
+all 500 of the player's `Character_BaseController` keyframes. Recorded so the trip isn't repeated.
+
+The death screen is `gui/components/MainUI/HUD/Bleedout/Bleedout.lua`, loose Lua in the shipped
+client, and it gates on three things:
+
+1. **`Player.GetCharacterState()` must read `incapacitated`.** That is what puts the screen into
+   MODE_BLEEDING and opens it at all.
+2. **`Player.GetPermissions().respawn_input`** must be set, which is what promotes it to MODE_TAPOUT
+   and draws the give-up prompt — the only thing on screen that sends command 198.
+3. **`Player.GetRespawnTimes()`** supplies `max_resurrect` and `resurrect`, which is
+   `RespawnTimesData`'s `ForcedAt`/`AvailableAt` pair, and drives the countdown once the screen is
+   already up.
+
+Retail's death was two stages — down and bleeding out, revivable, and only then dead.
+[CharacterEntity.cs](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs) `Die` goes
+straight to `CharacterStatus.Dead`, so stage one never happens, the screen never opens, and the
+field this entry suspected never gets a chance to be read. `CharacterStatus` has seven values and
+PIN writes four of them: `Spawning`, `Respawning`, `Living`, `Dead`. `Incapacitated`, `Ghost` and
+`Traumatized` are never written anywhere in the server.
+
+**This is not [NET-26](#net-26)'s missing state, which was checked the same day and ruled out** —
+that entry's effects require `living`, which PIN does write. The two share a state machine and not
+a bug.
 
 Two smaller things fall out of the same entry:
 
@@ -624,3 +680,32 @@ can set, the server never sets it, and the copy ends itself by design. The fix d
 server setting those states — which states, and on what carrier, is the SDB read: name 1184 and
 10812–10815, and read the exact `requirecstate` targets of 10810 and 2322. (Hover's missing lift
 is a separate gameplay gap, likely [DATA-5](data.md#data-5) territory, recorded in P3.)
+
+**The SDB read ran on 2026-08-15 and refutes the paragraph above.** Both effects require the same
+state, and it is `living`:
+
+```
+effect 10810  duration_chain head 1635028  step 1635028 subtype 67 -> REQUIRES: living
+              remove_chain            also step 1635019 subtype 67 -> REQUIRES: living
+effect 2322   duration_chain head  232062  step  232062 subtype 67 -> REQUIRES: living
+effect 15253  duration_chain head 1635111  step 1635111 subtype 67 -> REQUIRES: living
+```
+
+`aptfs::RequireCStateCommandDef` shipped in full — 4889 rows, all seven state columns present —
+so this is a read rather than an inference. `living` is one of the four `CharacterStatus` values
+PIN does write, `SetCharacterState` writes it to both the observer view and the base controller,
+and `NetworkPlayer.Respawn` sends the change. **So "a server-owned state the server never sets" is
+wrong**: there is no exotic stance flag behind these effects, and the same requirement sits on
+15253, the charge camera, whose duration chain is nothing but this one check.
+
+That leaves the check itself rather than the state behind it. What is still true is that the
+duration chain ends the predicted copy the moment the check fails, and that Hover held because its
+duration is airborne-based and never consults `cstate` at all. What is now open is why the client's
+own answer to "am I living?" goes false seconds after a keypress when the server says otherwise —
+the value, its `Time` stamp, or when the client last received it, rather than a state nobody sends.
+`CharacterStateData` carries `State` **and** `Time`, `Respawn` writes `Living` at
+`CurrentTime + 1`, and [NET-2](#net-2)'s ~65-second wrap was sighted in this very log window, which
+is the first thing to rule in or out.
+
+The lookup is reproducible: walk `apt::StatusEffectData` to the chain head, follow
+`apt::BaseCommandDef.next`, and read `aptfs::RequireCStateCommandDef` for any step of subtype 67.

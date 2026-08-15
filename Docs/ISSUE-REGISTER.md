@@ -20,6 +20,64 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 ## Current frontier
 
+**The 2026-08-15 sitting's most useful hour was spent on a bug that wasn't one, and it closed
+[DATA-1](gaps/data.md#data-1) by reversing its reasoning.** The tester reported `invuln` off but
+taking no damage. The server log said otherwise — 9,202 hits landed — and the explanation was that
+a 3000-point shield pool PIN adds on purpose absorbed all of it while health sat at 19192. The pool
+existed to make damage *observable*; the 1962 client turns out to have no shield display at all, so
+it did the exact opposite, and it is 0 now. Chasing it turned up
+[DATA-20](gaps/data.md#data-20), the last big combat gap: `MonsterScaling` ships a **damage** column
+next to health, keyed by level at a flat 2:1, and PIN scales neither because monsters have no level.
+[DATA-6](gaps/data.md#data-6) answered the health half in 2026-08-13 with a flat 500 and left the
+damage half alone, which is exactly why monsters stopped being sponges and the player became one.
+The weapon pipeline itself was checked and exonerated on the way past — a melee weapon resolving
+225 × 0.22 to an observed 49 re-confirms [DATA-11](gaps/data.md#data-11) on a live path.
+
+**The follow-up read the same day found the instrument both halves were missing, and it had been
+sitting in a column the project had already looked at once.** `Monster.difficulty_cost` was recorded
+in DATA-6 as "an encounter budget rather than a level", which was true and undersold it: read
+against `Monster.behavior` — AI script names that survive as plain strings — the rating grades 906
+creature types into exactly the tiers a designer would assign, every `*MiniBoss` script sitting at
+150–300 and `GiantAranhaMiniBoss` shipped at both 150 and 300. So the relative ordering of every
+rated creature is already done, and what is left is anchoring the band, which is two numbers rather
+than 906. Such a mapping closes [DATA-6](gaps/data.md#data-6) and
+[DATA-20](gaps/data.md#data-20) together, because one row yields health and damage for the same
+creature, which no second flat constant can do.
+
+**Then the anchor test was run, and it went the other way — the flat 500 lost the evidence it was
+built on.** The 500 came from a tester's beta-video reading that monster 528 died to "a few seconds
+of chaingun fire", and that conversion had never been done with a fire rate. The Heavy MG lands 39 a
+round every 65 ms, which is 600 dps, so **500 health is 0.83 seconds** — a few seconds is 1,200 to
+1,800, or level 13–16. The one-shot half of the same reading cannot be checked as posed: the
+mainline plasma cannon (12129, 262 items, the A4→A32 tier line) does 100 a shot behind a 4,000 ms
+chargeup and one-shots almost nothing, so a remembered one-shot is far more likely a Tigerclaw
+ability — `Pulsar` reads `Base Damage 155 to 17763`. One anchor survives because it is absolute
+rather than converted: 200 for shell-less hissers and skivers, from 0.6 patch notes, is level 4
+within 3% — though it is a 0.6-era figure measured against 0.6-era weapons, so it evidences the
+curve rather than supplying a value PIN can use. **`MonsterMaxHealth` is 1200 as of 2026-08-15**
+(user-approved), the conservative end of the 1200–1800 band, chosen from below because N16's sponge
+complaint at 2500 marks the known failure direction. It is a falsifiable prediction: a tester
+holding the Heavy MG on a rated-20 creature should see about two seconds.
+
+The same read paid the thumper reconstruction, whose §7 pulse sizes were invented for want of a
+mechanism: a column named *cost*, graded across 906 creatures, is a spawn currency, and spending
+points instead of counting bodies makes "squad thumpers draw more **and bigger** enemies" one dial
+instead of two rules. It also gives the concurrent-alive cap a unit that bounds threat rather than
+entity count. Recorded as §6a, the document's first `[shipped]`-tagged section.
+
+**A 2026-08-15 offline pass moved three NET entries without a client, and its most useful result is
+a theory it killed.** [NET-26](gaps/network.md#net-26) said the client was checking a server-owned
+character state PIN never writes; the SDB read it asked for says both failing effects — and 15253,
+the charge camera — require `living`, which PIN writes and sends. There is no missing stance flag.
+The entry survives, re-pointed at why the client's own answer to that check goes false.
+[NET-23](gaps/network.md#net-23) gained a root cause from the client's own Lua: the death screen
+opens on character state `incapacitated`, a stage PIN skips entirely by going straight from alive to
+`Dead`, so `RespawnTimesData` was the second half of the answer rather than the whole of it. And
+[NET-18](gaps/network.md#net-18)'s next comparison ran: the message envelope already matches retail,
+but the item's `DynamicFlags` was calibrated against the one single-item add in the capture that is
+an outlier — 13 ordinary ones carry `2`, PIN sends `1`. Two dead ends recorded so they aren't
+re-run: the capture contains no death at all, and item durability was never a divergence.
+
 **The 2026-08-14 evening sitting closed three NET entries and opened three, all on evidence from a
 screen.** Closed: [NET-18](gaps/network.md#net-18)'s question answered and re-scoped in the same
 stroke (delivery works; the client declines the *partial* item update, `dbg_inventory resend` is
@@ -86,10 +144,15 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 4 of 19 closed
+[Full detail](gaps/data.md) — 4 of 20 closed
 
-- [x] **DATA-1** — Battleframe shield pool kept at 3000 instead of build 1962's real 0, a
-  deliberate observability trade-off, one-line revert if fidelity wins later
+- [x] **DATA-1** — Battleframe shield pool was kept at 3000 instead of build 1962's real 0 as a
+  deliberate observability trade-off. **The trade was backwards and it is 0 now** (2026-08-15,
+  user-chosen): the 1962 client has no shield display at all — `ShieldBar` is an orphaned texture
+  region and both HUD vitals widgets bind health only — so the pool was 3000 invisible hit points
+  whose real effect was a 45-second window at the start of every fight where damage lands and
+  health doesn't move. A tester read that as a broken `invuln` command on 2026-08-15 and filed it.
+  Recharge values (150/sec, 10000ms) are shipped data and unchanged
 - [x] **DATA-2** — Thump `nodeType` hardcoded to `20`, every deposit identical. Fixed in code
   2026-08-13 by M4 — node type resolves from the deposit under the calldown, barren ground stays
   20 — and **confirmed in game 2026-08-14** by [S3–S5](In-Game-Tests/Thump-Placement.md): four
@@ -104,8 +167,23 @@ has no entries in that category, which reflects nothing having run rather than n
   pool for every creature, and at 2500 that was ~64 player rifle shots each — the "bullet sponge"
   reading [N16](In-Game-Tests/NPC-Combat.md) came back with. Researched 2026-08-13: `MonsterScaling`
   shipped whole (80 levels, 100..153726 health) but is keyed by level, and level was server content.
-  **Dropped to 500 on 2026-08-13** (~13 shots, about level 8 on the shipped curve), which fixes the
-  slog without fixing the entry — it is still one number for every creature, and unconfirmed in game
+  Dropped to 500 on 2026-08-13, then **raised to 1200 on 2026-08-15** when the beta-video reading
+  that produced the 500 was re-converted with a real rate of fire — 600 dps of Heavy MG makes 500
+  health 0.83 seconds, not the "few seconds" the video showed. 1200 is two seconds, the conservative
+  end of a 1200–1800 band. Still one number for every creature, so the entry stands, and the new
+  figure is unconfirmed in game.
+  **2026-08-15 found the missing input's substitute.** `Monster.difficulty_cost` is not merely an
+  encounter budget as this entry first read it: against the `behavior` script strings it grades 906
+  creature types into the same tiers a designer would, with every `*MiniBoss` script at 150–300 and
+  `GiantAranhaMiniBoss` shipped at *both* 150 and 300. It orders every creature for free, leaving
+  only the band anchor to choose. **That anchor is now the open part, and the 500 lost its own
+  evidence.** Converting the beta-video reading ("a few seconds of chaingun fire") through 1962's
+  real rates — Heavy MG 39 a round every 65 ms, so 600 dps — makes 500 health **0.83 seconds**, not
+  a few. A few seconds is 1,200–1,800, or level 13–16. The one-shot half can't be checked: the
+  mainline plasma cannon does 100 a shot behind a 4,000 ms chargeup, so a remembered one-shot was
+  almost certainly a Tigerclaw ability (`Pulsar` reads 155 to 17,763). Surviving anchor: 200 for
+  shell-less hissers, from 0.6 patch notes, = level 4. `MonsterAttributeRange` looks like a better
+  answer and is not: `per_level` is 0.0 in all 167 rows
 - [ ] **DATA-7** — Character level comes from `HardcodedCharacterData`, not real progression
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)
@@ -164,6 +242,22 @@ has no entries in that category, which reflects nothing having run rather than n
   sends it. Same family as [DATA-7](gaps/data.md#data-7)'s hardcoded progression: a regeneration
   the server is supposed to drive and doesn't
 
+- [ ] **DATA-20** — Monster damage is never scaled by level, so most NPC gunfire lands for **1
+  point**. Measured 2026-08-15: 8,977 hits of 1 damage against 265 of 49, and a player takes 4m40s
+  to die from 19192 health ([DATA-3](gaps/data.md#data-3)). **PIN's resolution is correct** — the
+  melee weapon reads 225 × 0.22 = 49 against an observed 49, and the rifle's `damage_per_round` is
+  genuinely `1` in shipped `WeaponTemplates`. What's missing is that
+  `dbcharacter::MonsterScaling` carries a **`damage` column beside `health`**, keyed by level at a
+  flat 2:1 ratio across all 80 rows, and PIN scales neither because a monster has no level. So this
+  is [DATA-6](gaps/data.md#data-6)'s twin: that entry dropped health to a flat 500 (~level 8) on
+  2026-08-13 and the damage half was never given the same treatment, which is how monsters stopped
+  being sponges while the player became one. **2026-08-15: a `difficulty_cost`-to-level mapping
+  closes both halves at once** — the rating picks the row and the row gives health *and* damage from
+  the same creature, which a second flat number cannot do. Open first: whether that column is per
+  round, per burst, or a budget. The 2:1 ratio holding on all 80 rows without one exception now
+  argues for a budget — per-shot damage has to interact with fire rate and clip size, and those vary
+  too much across templates to survive `damage = health / 2`
+
 ## Networking & Protocol — NET
 
 [Full detail](gaps/network.md) — 6 of 26 closed
@@ -208,9 +302,11 @@ has no entries in that category, which reflects nothing having run rather than n
   then 86074). Everything else is ruled out: the item struct is right (the full send lists it, the
   garage equips it, flags round-trip), fullness is dead
   ([I3](In-Game-Tests/Inventory.md) measured no ceiling), and resources merge fine (G1), so the
-  defect is confined to the item arrays of the partial message. Next comparison: capture message
-  [9], the 37-byte retail single-item add. The `createitem` → `resend` workaround unblocks the
-  queue meanwhile
+  defect is confined to the item arrays of the partial message. **Capture message [9] compared
+  2026-08-15**: the envelope is already retail's exactly, but message [9] is the session's one
+  outlier single-item add and PIN was calibrated on it — 13 ordinary adds carry `DynamicFlags = 2`
+  (guessed `is_new?`) where PIN sends `1`. Untested against a client. Durability ruled out. The
+  `createitem` → `resend` workaround unblocks the queue meanwhile
 - [x] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) confirmed by
   [P0](In-Game-Tests/Prediction-Sweep.md) on 2026-08-14: the cert-gated 86074 slots on the
   Dreadnaught and every garage frame reads level 45
@@ -236,10 +332,24 @@ has no entries in that category, which reflects nothing having run rather than n
   [G6](In-Game-Tests/Resource-Payout.md)'s Debug-line dating remains the optional measurement, and
   the full history is in [the gap entry](gaps/network.md#net-24)
 
-- [ ] **NET-23** — A dead player has no way back. `Die` runs correctly and `RequestRespawn` is
-  implemented, but the client never sends it, so death ends the session. Found by
+- [~] **NET-23** — A dead player had no way back: `Die` ran correctly and `RequestRespawn` was
+  implemented, but the client never sent it, so death ended the session in a reconnect. Found by
   [N16](In-Game-Tests/NPC-Combat.md) on 2026-08-13, the first time the game rather than a command
-  killed a player. Suspect `RespawnTimesData`, which `Die` never writes
+  killed a player. **Root-caused 2026-08-15 from the client's own `Bleedout.lua`**: retail's death
+  is two stages, and the screen carrying the give-up prompt opens only on character state
+  `incapacitated`. PIN went straight from alive to `Dead`, so the screen never opened and
+  `RespawnTimesData` — this entry's original suspect — never got a chance to be read; it feeds the
+  countdown once the screen is already up. `CharacterStatus` has seven values and PIN wrote four.
+  **Built the same day, unverified**: a player now goes to `Incapacitated` with the `respawn_input`
+  permission and a `RespawnTimesData` pair, taps out on Reload, and is respawned after 30s by
+  `BleedoutSim` if they don't. **Run the same day and both routes pass**:
+  [B1](In-Game-Tests/Death-And-Respawn.md) on the give-up key (down 11:17:02, respawned 11:17:05)
+  and B3 on the fallback (down 11:03:51, respawned 11:04:22), with both sessions ending in menu
+  logouts rather than the reconnect every previous death forced. **The symptom is gone.** B1 also
+  retires the units guess: the tap-out gate reads the same clock value the countdown does, so a
+  prompt appearing on time proves the client converts absolute shard times. Stays `[~]` on the
+  three entries still unrun — the visible countdown, monsters dying properly, and dying mid-thumper.
+  The 2016 capture cannot help — nobody dies in it
 
 - [ ] **NET-25** — An ack claims a packet that never arrived. `Channel` acks the highest inbound
   sequence it has seen rather than the highest with no gap behind it, so a lost client packet is
@@ -269,9 +379,13 @@ has no entries in that category, which reflects nothing having run rather than n
   Medic's chain set nothing and the client cancelled, Hover's chain set nothing and the client
   held — so a status effect is neither necessary nor sufficient, and the missing thing reads as a
   character **state** (the stance/mode machine, [NET-12](gaps/network.md#net-12)'s family) that
-  retail's server drove and PIN never writes. Fix direction: write those states. Offline: read
-  10810's and 2322's `requirecstate` targets in the SDB. (Hover's missing lift is a separate gap,
-  likely [DATA-5](gaps/data.md#data-5), recorded in P3)
+  retail's server drove and PIN never writes. **That SDB read ran 2026-08-15 and refutes it**:
+  10810, 2322 and 15253 all require `living`, one of the four states PIN does write and send.
+  There is no missing stance flag, so the fault is in why the client's own answer to that check
+  goes false — its value, its `Time` stamp, or when it was last delivered. `CharacterStateData`
+  carries a `Time` alongside the state and [NET-2](#networking--protocol--net)'s ~65-second wrap
+  was sighted in the same log window, which is the first thing to rule out. (Hover's missing lift
+  is a separate gap, likely [DATA-5](gaps/data.md#data-5), recorded in P3)
 
 ## Client & Environment — CLIENT
 

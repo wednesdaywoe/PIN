@@ -154,3 +154,14 @@ and the 15 pairs are the proof.
 Both ask whether *PIN's* loader reads an SDB column correctly — H1 about `hostility_stance`, R1
 about the `DamageDecay` family — and a recording of Red 5's server says nothing about how PIN
 parses a database. Read them off the GameServer log as written.
+
+**Nothing about death, checked 2026-08-15.** The session holds zero `Killed` messages
+(`Character_CombatView` 108), one `Respawned` — the login spawn — and a null `RespawnTimes` in all
+500 of the player's `Character_BaseController` keyframes. Nobody dies in it. So
+[NET-23](../ISSUE-REGISTER.md) cannot be answered here, and the trip is recorded rather than
+repeated. The client's own `Bleedout.lua` answered it instead; see
+[Client UI Source](../Client-UI-Source.md) for why that oracle usually wins for UI-gated questions.
+
+**Array-valued fields are truncated in the dump.** `PrintValue` stops after four entries per array,
+so a message carrying 255 items shows four. Counting field values across a whole inventory needs
+the printer changed first; single-item messages are complete and safe to count.

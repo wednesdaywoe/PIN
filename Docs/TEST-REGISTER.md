@@ -390,13 +390,42 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   NPC-owned debug thumper now loses its own cycle unattended every session, a changed zone
   behaviour recorded in F5. Tuning readings (claw rate vs pool vs payout curve, melee reach,
   grenade AoE vs spacing) recorded and deferred
-- [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
-  transport work paused the queue
+- [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 2 of 5 passing. D1–D4 carried over from before
+  the transport work paused the queue. **D6 added and passed 2026-08-15**: `MonsterMaxHealth` was
+  raised 500 → 1200 that day after the beta-video reading behind the 500 was re-converted with a
+  real rate of fire, and three kills came back at 31 hits each with no variance, health stepping by
+  39 onto exactly 0. Time to kill 3.1 seconds, which reads the video's "a few seconds" more directly
+  than the 2.0 predicted. **The entry measured the wrong gun and still passed** — the equip had
+  silently failed on NET-18, so the rifle fired rather than the Heavy MG, and the health result held
+  because it is read off the health column rather than off the hit count. **Re-run the same day with
+  the equip confirmed: 31 again, six kills across two weapons with no variance anywhere.** It also
+  closed D2's open ×0.85 — all 93 Heavy MG hits landed a full 39, and `ProjectileSim` shows the
+  modifier arrives on the *client's* hit message, so it is per-hit (hit location) rather than a
+  weapon or server rule. Two authoring lessons recorded in the entry: a test choosing between two
+  hypotheses must key on a figure they do not share (39 is both the Heavy MG's damage and the
+  rifle's body-shot damage), and a known prerequisite belongs in the steps rather than in a
+  fail-branch. Left open, deliberately not chased: hits/sec caps at 10 on both weapons where the
+  Heavy MG's data allows 15.4 — only hits are logged, so misses and dropped shots are
+  indistinguishable without a shots-fired counter
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and
   matches retail's own curve; `invuln` suppresses damage without stopping the hazard reading. The
   three melding entries are untouched, and E3 — which side of a perimeter is the lethal one — has to
   run before E4. E5 is half-evidenced: the damage stopped on surfacing, but the second dive of that
   session ran with `invuln` on, so the ramp reset was never seen
+
+## Death and respawn
+
+- [~] [Death and Respawn](In-Game-Tests/Death-And-Respawn.md) — **2 of 5, written and run
+  2026-08-15, the day the code landed, and the exit condition is one of the two.** The check on
+  [NET-23](ISSUE-REGISTER.md). **A player died and got back up by both routes** — B1's give-up key
+  (down 11:17:02, respawned 11:17:05) and B3's 30-second fallback (down 11:03:51, respawned
+  11:04:22) — **and both sessions ended in menu logouts instead of the reconnect every previous
+  death forced.** B1's pass also retires most of B2's risk: the tap-out gate reads the same clock
+  value the countdown does, so a prompt appearing on time means the client converts absolute shard
+  times correctly. Left: the countdown's visible reading (B2), monsters still dying rather than
+  bleeding out (B4), and dying mid-thumper (B5). **B1 was first recorded as unattempted from a bad
+  grep** — the handler had no log line, so a search for `RequestRespawn` could only ever return
+  nothing; it logs `tapped out` now. Run the stream with `invuln` off
 
 ## Persistence
 

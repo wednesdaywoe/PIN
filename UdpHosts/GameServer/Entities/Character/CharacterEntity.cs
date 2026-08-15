@@ -39,6 +39,14 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public const byte MaxMapMarkerCount = 64;
 
     /// <summary>
+    ///     How long a downed player waits before the give-up prompt appears, and how long before
+    ///     <see cref="Systems.Combat.BleedoutSim"/> stops waiting. Both invented: nothing shipped
+    ///     carries either number, and the client draws whatever it is told.
+    /// </summary>
+    private const uint TapOutAvailableAfterMs = 2_000;
+    private const uint TapOutForcedAfterMs = 30_000;
+
+    /// <summary>
     ///     Weapon/attribute pairs already reported missing by <see cref="ReadWeaponAttribute"/>. Static
     ///     because the fact belongs to the weapon, not to whoever is holding it, and every NPC carrying
     ///     the same rifle would otherwise report it again.
@@ -178,6 +186,18 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public ulong ArmyGUID { get; set; }
     public sbyte ArmyIsOfficer { get; set; }
     public CharacterStateData CharacterState { get; set; }
+
+    /// <summary>
+    ///     Shard time at which <see cref="Systems.Combat.BleedoutSim"/> stops waiting for a downed
+    ///     player to tap out and respawns them anyway. Zero when the character isn't down.
+    /// </summary>
+    /// <remarks>
+    ///     Held as the shard's long time rather than the <c>uint</c> that goes on the wire, because a
+    ///     deadline compared in <c>uint</c> milliseconds is wrong for one tick every 49 days and there
+    ///     is no reason to inherit that.
+    /// </remarks>
+    public ulong RespawnForcedAt { get; private set; }
+
     public int TimePlayed { get; set; }
     public MaxVital MaxShields { get; private set; }
     public MaxVital MaxHealth { get; private set; }
@@ -1625,12 +1645,28 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public void Die(CharacterEntity killer)
     {
         Alive = false;
-        SetCharacterState(CharacterStateData.CharacterStatus.Dead, Shard.CurrentTime);
+
+        // Retail's death is two stages and the client's own death screen only opens on the first of
+        // them: Bleedout.lua goes to MODE_BLEEDING on character state `incapacitated`, and the
+        // give-up prompt that sends RequestRespawn lives inside that screen. Going straight to Dead
+        // means no screen, no prompt, and a session that ends in a reconnect (NET-23). NPCs have no
+        // screen to open, so they still die outright.
+        SetCharacterState(
+            IsPlayerControlled
+                ? CharacterStateData.CharacterStatus.Incapacitated
+                : CharacterStateData.CharacterStatus.Dead,
+            Shard.CurrentTime);
+
+        if (IsPlayerControlled)
+        {
+            OfferRespawn();
+        }
 
         Logger.Information(
-            "{Who} {EntityId} died to {Killer}",
+            "{Who} {EntityId} {Outcome} to {Killer}",
             IsPlayerControlled ? "Player" : "NPC",
             EntityId,
+            IsPlayerControlled ? "went down" : "died",
             killer == null ? "nothing" : $"{killer.EntityId}");
 
         var killed = new KilledEvent
@@ -1651,6 +1687,62 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             // just despawns after a while
             Shard.EntityMan.SetRemainingLifetime(this, 30_000);
         }
+    }
+
+    /// <summary>
+    ///     Takes the respawn offer back down. Called from <see cref="INetworkPlayer.Respawn"/>, so it
+    ///     covers both the player tapping out and <see cref="Systems.Combat.BleedoutSim"/> giving up
+    ///     on them.
+    /// </summary>
+    public void ClearRespawnOffer()
+    {
+        RespawnForcedAt = 0;
+
+        SetPermissionFlag(PermissionFlagsData.CharacterPermissionFlags.respawn_input, false);
+
+        if (Character_BaseController != null)
+        {
+            Character_BaseController.RespawnTimesProp = null;
+        }
+
+        Character_ObserverView.RespawnTimesProp = null;
+    }
+
+    /// <summary>
+    ///     Fills in the two things the client's death screen reads once it is open: the countdown pair
+    ///     behind <c>Player.GetRespawnTimes()</c>, and the permission that draws the give-up prompt.
+    /// </summary>
+    /// <remarks>
+    ///     Both times go out as absolute shard times, following <c>TimedDailyRewardData</c>'s
+    ///     <c>CountdownToTime</c>, which is the only other countdown target in this protocol PIN
+    ///     already sends. The client's Lua consumes them as remaining seconds, so the engine does the
+    ///     subtraction — unverified, and the first thing to suspect if the screen opens with a wrong
+    ///     or missing timer.
+    /// </remarks>
+    private void OfferRespawn()
+    {
+        RespawnForcedAt = Shard.CurrentTimeLong + TapOutForcedAfterMs;
+
+        SetPermissionFlag(PermissionFlagsData.CharacterPermissionFlags.respawn_input, true);
+
+        var times = new RespawnTimesData
+        {
+            AvailableAt = Shard.CurrentTime + TapOutAvailableAfterMs,
+            ForcedAt = Shard.CurrentTime + TapOutForcedAfterMs,
+        };
+
+        if (Character_BaseController != null)
+        {
+            Character_BaseController.RespawnTimesProp = times;
+        }
+
+        Character_ObserverView.RespawnTimesProp = times;
+
+        Logger.Information(
+            "Player {EntityId} downed, tap-out in {AvailableMs}ms, forced at {ForcedMs}ms",
+            EntityId,
+            TapOutAvailableAfterMs,
+            TapOutForcedAfterMs);
     }
 
     /// <summary>
