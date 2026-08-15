@@ -23,7 +23,7 @@ M1 confirm the combat models                        done
  └─> M2 NPCs that fight back                        done
       ├─> M3 resources come out of the ground       done
       │    ├─> M4 where you thump matters           done
-      │    └─> M7 an encounter that plays           built, in test
+      │    └─> M7 an encounter that plays           done
       └─> M5 killing something pays                 done
 
 M6 persistence across sessions                      done
@@ -61,16 +61,24 @@ the state-machine relationship `Thumper` already has. Waves belong in the encoun
 not in a spawn-wait-spawn script. Detail in
 [streams/m7-encounter-combat.md](streams/m7-encounter-combat.md).
 
-**M7 was built on 2026-08-15 to exactly that shape, and now waits on a client.** The thumper spawns
-four escalating Aranha waves off its own progress, split into sappers that march on the machine and
-escorts that fight the defender; the machine itself is damageable (retail shipped its health,
-4000–5000, on every calldown row), destruction is a real failure that pays nothing, and a survived
-defence scales the payout by remaining health. Under it, three pieces every future encounter
-inherits: the AI can target any damageable entity via an assigned objective, character deaths route
-to the encounter that owns them through `EncounterComponent`, and destructible non-characters
-report their destruction the same way. 222 offline tests pass; the two questions only a sitting can
-answer — does the collision asset load, and can Aranha claws actually kill the machine — are
-written as [Thumper-Defence F1–F6](In-Game-Tests/Thumper-Defence.md).
+**M7 was built on the morning of 2026-08-15 and closed the same morning —
+[Thumper-Defence](In-Game-Tests/Thumper-Defence.md) went 6 of 6 in one sitting. The milestone plan
+is finished.** The thumper spawns four escalating Aranha waves off its own progress, split into
+sappers that march on the machine and escorts that fight the defender; the machine is damageable
+with retail's own health (4000–5000, shipped on every calldown row), destruction is a real failure
+that pays nothing, and a survived defence scales the payout by remaining health. The sitting
+proved all of it the hard way: the first defended cycle was **lost at 91%**, and the re-run paid
+25 crystite at `completion 1.00, defence 0.63`, ledger matched to the unit against the tester's
+screen. Under it, three pieces every future encounter inherits: the AI can target any damageable
+entity via an assigned objective, character deaths route to the encounter that owns them through
+`EncounterComponent`, and destructible non-characters report their destruction the same way.
+
+**Every milestone in the diagram is now done and verified in game.** The vertical slice the header
+promises is real: log in, get hunted, kill for crystite, read the ground, call a thumper down and
+*fight for it*, get paid for how it went, log out, come back to all of it. What the project does
+next is no longer on this list — the first balance data (claw rate against the health pool, the
+0.63 practical ceiling on solo defence) is recorded in the F-stream and waiting on a design pass,
+and everything else lives in the [Issue Register](ISSUE-REGISTER.md).
 
 **M8 was built entirely out of measurements rather than choices, which is the part worth carrying
 forward.** The 2016 capture holds 24 resent packets across 456619, and reading them settled the

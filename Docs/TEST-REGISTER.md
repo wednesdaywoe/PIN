@@ -51,12 +51,20 @@ never recharge (blocks P1), and Hover's lift never engaging (a gameplay gap reco
 effects 1184 and 10812–10815 and read the two `requirecstate` targets in the SDB (NET-26), and
 diff the partial item message against the capture (NET-18).
 
-**[M7](PROGRESS.md) was built on 2026-08-15 and [Thumper Defence](In-Game-Tests/Thumper-Defence.md)
-is the queue's newest stream, F1–F6, unrun.** A thumper is now a fight: four escalating Aranha
-waves, a machine that can be destroyed, a failure that pays nothing, a payout scaled by remaining
-health. F1 is the milestone's exit; F3 and F5 carry the two questions offline tests can't reach
-(does the collision asset load, and can the waves actually kill the machine). It wants two full
-7.5-minute cycles, one defended and one abandoned.
+**[M7](PROGRESS.md) was built on the morning of 2026-08-15 and closed the same morning —
+[Thumper Defence](In-Game-Tests/Thumper-Defence.md) went 6 of 6 in one sitting, and with it the
+milestone plan is finished.** Both offline unknowns resolved on the spot: the collision asset
+loads (no fallback line), and the waves can absolutely kill the machine — the tester's first
+defended cycle was **lost at 91%**, wave 4's three sappers erasing 1300 health in four seconds,
+which is F5 passing on a cycle meant for F1. The re-run went 14 kills for 14 spawns and paid
+`completion 1.00, defence 0.63 (1060/4000 health): 25 crystite`, and the tester's on-screen 43 is
+the session ledger balanced to the unit (25 machine + 18 kills). F5 also passed unattended before
+the tester was even in position: the zone's NPC-owned debug thumper now spawns its own waves and,
+undefended, loses to them every session — expect its destruction in future logs where G5 used to
+see a 0-participant completion. The sitting's product beyond the passes is the first balance data
+the encounter ever produced: 49 per claw at ~1 hit/s/sapper means a near-perfect solo defence
+still pays only ~63%, and the tester logged two more readings (Aranha melee reach long, grenade
+AoE smaller than Aranha spacing). All tuning deferred, deliberately.
 
 **Everything below this line predates the 2026-08-14 evening sitting.**
 
@@ -373,12 +381,15 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   log (fixed the same morning — outgoing logs now rotate into `logs/previous/`), and S6 failed once
   for a reason outside itself, because a plain `./start-pin.sh` reinstalls the repo's copy of the
   very file the `deposit` command writes. **S6 needs `--no-build`**
-- [ ] [Thumper Defence](In-Game-Tests/Thumper-Defence.md) — 0 of 6, written 2026-08-15 with
-  [M7](PROGRESS.md)'s code and unrun. F1 is the milestone's exit condition: a thumper defended
-  through four Aranha waves pays, scaled by the health it kept. The stream carries the two
-  questions no offline test can answer — F3, whether the beacon's collision asset loads so sapper
-  claws actually land on the machine, and F5, whether the waves can destroy a 4000-point pool at
-  all. Both cycles it needs run 7.5 minutes each; plan the sitting around two
+- [x] [Thumper Defence](In-Game-Tests/Thumper-Defence.md) — **6 of 6, closed 2026-08-15, written
+  and run the same morning the code landed.** [M7](PROGRESS.md)'s check. Three cycles instead of
+  the planned two, because the first defended attempt was lost at 91% — which passed F5 on a cycle
+  meant for F1 and proved the waves lethal beyond argument. The re-run paid 25 crystite at
+  defence 0.63, ledger balanced to the unit against the tester's screen. Collision asset loads;
+  claws are 49 a hit at ~1/s per sapper; a flawless solo defence keeps ~63% of the yield. The
+  NPC-owned debug thumper now loses its own cycle unattended every session, a changed zone
+  behaviour recorded in F5. Tuning readings (claw rate vs pool vs payout curve, melee reach,
+  grenade AoE vs spacing) recorded and deferred
 - [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 1 of 4 passing, carried over from before the
   transport work paused the queue
 - [~] [Environmental Damage](In-Game-Tests/Environment.md) — 3 of 7 passing. Drowning works and

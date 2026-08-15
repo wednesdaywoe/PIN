@@ -126,3 +126,15 @@ the schedule).
 
 Exit unchanged and now testable end to end: call one down, defend it against waves that get
 harder, and either extract with the resources or lose them.
+
+## Closed 2026-08-15, 6 of 6, the same morning
+
+[Thumper-Defence F1–F6](../In-Game-Tests/Thumper-Defence.md) all passed in one sitting, and the
+exit condition happened in both directions: the tester *lost* the first defended cycle at 91% (the
+F3 observation window plus wave 4's four-second kill of the remaining pool), then won the re-run
+14 kills for 14 spawns at `completion 1.00, defence 0.63`, ledger balanced to the unit. Both
+offline unknowns resolved: the collision asset loads, and the waves are lethal. The sitting's
+lasting product is the first balance reading — 49 per claw at ~1 hit/s/sapper against 4000 means
+a flawless solo defence keeps ~63% — recorded in the F-stream with the melee-reach and
+grenade-AoE observations, all deferred to a design pass. This closed the last milestone in
+[PROGRESS](../PROGRESS.md).
