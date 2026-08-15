@@ -19,25 +19,16 @@ public static class HardcodedCharacterData
     // base, and the level and attribute scaling that turns it into 19192 isn't implemented.
     public static int MaxHealth = 19192;
 
-    // Still one flat pool for every creature in the game (DATA-6). 2500 was ~64 rifle shots, which N16
-    // read as "bullet sponge"; 500 replaced it on 2026-08-13, sourced from a tester's beta-video reading
-    // that a small Aranha died to "a few seconds of sustained chaingun or assault rifle fire".
+    // No longer the health every creature gets. As of 2026-08-15 a creature's health comes from
+    // MonsterTier, which converts its shipped difficulty_cost into a level on dbcharacter::MonsterScaling
+    // and reads health and damage off that row. This constant survives as the anchor that fixes where the
+    // whole ladder sits, and it lives in MonsterTier.AnchorHealth now — see that file for how it was
+    // measured and why it is expressed as health-per-grade-point rather than as a value.
     //
-    // 2026-08-15: that conversion was redone with an actual rate of fire and 500 does not survive it.
-    // The Heavy MG lands 39 a round every 65ms (Rounds/burst is 1) = 600 dps, so 500 health is 0.83
-    // SECONDS, not a few. The assault rifle's 46 per 105ms = 438 dps puts it at 1.14s. "A few seconds"
-    // is 1200 at two and 1800 at three.
-    //
-    // 1200 is the conservative end of that band, deliberately: N16's sponge complaint at 2500 means the
-    // risk is approaching from above, and 500 -> 1200 is already a 2.4x move. Raise toward 1800 if two
-    // seconds reads as too quick. This is a testable prediction, not a preference — a tester with the
-    // Heavy MG should see a rated-20 creature die in about two seconds of held fire.
-    //
-    // Not sourced from MonsterScaling's own rows on purpose. 1200 sits near level 13, but the shipped
-    // curve is keyed by level and level is the input PIN doesn't have; using the curve here would imply
-    // a per-creature level that does not exist yet. The real fix is difficulty_cost -> level, which
-    // replaces this whole line rather than its number. See DATA-6 and DATA-20.
-    public static int MonsterMaxHealth = 1200;
+    // Kept here only for the creatures that still cannot be tiered: 2203 of 3109 creature types carry no
+    // grade at all, and they get this. That is exactly the behaviour PIN had before tiering, so the
+    // ungraded majority is unchanged and no spawn can regress. DATA-6 stays open for them.
+    public static int MonsterMaxHealth = Systems.Combat.MonsterTier.AnchorHealth;
 
     // The dump happened (MinimalSDB dump, prod-1962): build 1962 had no shields. base_shields is non-zero on
     // 5 of 1676 Battleframe rows, and the 2016 capture agrees — MaxShields reads 0 across every

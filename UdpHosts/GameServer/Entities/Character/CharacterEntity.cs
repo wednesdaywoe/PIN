@@ -144,6 +144,23 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public float WeaponDamageMultiplier { get; set; } = 1f;
     public byte? WeaponDamageTypeOverride { get; set; }
 
+    /// <summary>
+    ///     A creature's tier scalar, set once when it spawns and never afterwards. Deliberately not folded
+    ///     into <see cref="WeaponDamageMultiplier"/>: that one is owned by the SetWeaponDamage aptitude
+    ///     command, which saves the prior value and restores it when the effect ends, so a tier written
+    ///     there would be destroyed by the first ability that touched it. Players stay at 1.
+    /// </summary>
+    public float ScalingDamageMultiplier { get; set; } = 1f;
+
+    /// <summary>
+    ///     Where this creature landed on <c>dbcharacter::MonsterScaling</c>, or 0 for anything that is not
+    ///     a tiered monster. Internal only — nothing sends it to the client, and the 1962 client has no
+    ///     creature level readout to send it to. Kept because it is the honest name for what the health
+    ///     and damage figures were read off, and because a log line saying "level 29" explains a fight a
+    ///     health number alone does not.
+    /// </summary>
+    public byte MonsterLevel { get; set; }
+
     public Dictionary<PermissionFlagsData.CharacterPermissionFlags, bool> CurrentPermissions { get; set; } = new Dictionary<PermissionFlagsData.CharacterPermissionFlags, bool>()
     {
         { PermissionFlagsData.CharacterPermissionFlags.movement, true },
@@ -411,11 +428,27 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             FactionId = (byte)monsterInfo.FactionId
         });
 
-        // TODO: dbcharacter::MonsterScaling shipped whole — 80 rows of level, health and damage — but it
-        // is keyed by level, not by monsterInfo.ScalingTableId, which resolves to the party-size multiplier
-        // in dbencounterdata::ScalingTableEntry instead. What is missing is a monster's level, which was
-        // server content. See DATA-6 for the proposed per-placement level in spawn_group.json.
-        SetMaxHealth(HardcodedCharacterData.MonsterMaxHealth, true);
+        // dbcharacter::MonsterScaling is keyed by level, and a monster's level was server content that
+        // never shipped, so for a long time every creature in the game shared one flat health number.
+        // MonsterTier supplies the missing key from monsterInfo.DifficultyCost — the shipped threat grade
+        // — and the curve row then gives health and damage together. Note this is NOT ScalingTableId,
+        // which points at dbencounterdata::ScalingTableEntry and is the party-size multiplier.
+        var tier = MonsterTier.Resolve(monsterInfo.DifficultyCost, SDBInterface.GetMonsterScalingCurve());
+
+        MonsterLevel = tier.Level;
+        ScalingDamageMultiplier = tier.DamageMultiplier;
+        SetMaxHealth(tier.Health, true);
+
+        // Logged because the tier is otherwise invisible: it never reaches the client, and in game it can
+        // only be inferred by counting how many rounds a creature takes to die. This line is what D7 reads.
+        Log.Debug(
+            "Monster {monsterId} graded {grade} -> level {level}, {health} health, damage x{damageMultiplier:F2}{ungraded}",
+            monsterInfo.Id,
+            monsterInfo.DifficultyCost,
+            tier.Level,
+            tier.Health,
+            tier.DamageMultiplier,
+            tier.Graded ? string.Empty : " (ungraded, fell back to the anchor)");
 
         // Monsters stay shieldless until dbcharacter::Monster gives them a real number, so the placeholder
         // player shields in InitFields don't leak onto every NPC
@@ -1382,7 +1415,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
     public float GetEffectiveWeaponDamage(WeaponTemplateResult weapon)
     {
-        return (WeaponDamageOverride ?? weapon.DamagePerRound) * WeaponDamageMultiplier;
+        return (WeaponDamageOverride ?? weapon.DamagePerRound) * WeaponDamageMultiplier * ScalingDamageMultiplier;
     }
 
     public StatsData[] GetActiveWeaponAttributes()

@@ -390,7 +390,14 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   NPC-owned debug thumper now loses its own cycle unattended every session, a changed zone
   behaviour recorded in F5. Tuning readings (claw rate vs pool vs payout curve, melee reach,
   grenade AoE vs spacing) recorded and deferred
-- [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 2 of 5 passing. D1–D4 carried over from before
+- [~] [Damage Loop](In-Game-Tests/Damage-Loop.md) — 2 of 6 passing. **D7 written 2026-08-15 and not
+  yet run** — the check on creature tiering, which replaced one flat health pool with the shipped
+  `difficulty_cost` grade for 906 of 3109 creature types. It is built to isolate the tier and nothing
+  else: monsters **528** (grade 20) and **1189** (grade 45) carry the *same* weapon 20046, the same
+  empty behaviour script and the same regen, so any difference between them is the grade. Predicts
+  32 Heavy MG hits against 72, and 49 damage a swing against 113. Part A costs nothing and gates the
+  rest — spawn both and read the `graded` log line before firing at anything. 528 is the anchor and
+  resolves to ×1.00 by construction, so **if 528 moves, the cause is not tiering**. D1–D4 carried over from before
   the transport work paused the queue. **D6 added and passed 2026-08-15**: `MonsterMaxHealth` was
   raised 500 → 1200 that day after the beta-video reading behind the 500 was re-converted with a
   real rate of fire, and three kills came back at 31 hits each with no variance, health stepping by

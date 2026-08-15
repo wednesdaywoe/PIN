@@ -103,6 +103,12 @@ public class StaticDBLoader : ISDBLoader
         .ToDictionary(row => row.Id);
     }
 
+    public Dictionary<byte, MonsterScaling> LoadMonsterScaling()
+    {
+        return LoadStaticDB<MonsterScaling>("dbcharacter::MonsterScaling")
+        .ToDictionary(row => row.Level);
+    }
+
     public Dictionary<uint, Turret> LoadTurret()
     {
         return LoadStaticDB<Turret>("dbcharacter::Turret")

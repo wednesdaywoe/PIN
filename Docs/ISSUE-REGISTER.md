@@ -20,6 +20,30 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 ## Current frontier
 
+**Creatures stopped being interchangeable on 2026-08-15, and the change is small because both halves
+shipped.** PIN gave every NPC in the game the same health and the same damage, because the shipped
+power curve `dbcharacter::MonsterScaling` is keyed by a creature's *level* and levels were server
+content that never shipped. `Monster.difficulty_cost` — the threat grade 906 of 3109 creature types
+carry — now supplies that key: the grade picks the nearest row of the curve and the row gives health
+and damage together, which is the property that closes
+[DATA-6](gaps/data.md#data-6) and [DATA-20](gaps/data.md#data-20) with one lookup where two more flat
+constants could not. The only invented step is the conversion, and it has exactly one free parameter,
+expressed as a quotient of two constants so that moving it moves the whole ladder and keeps its
+shape: `1200 health / grade 20 = 60 health a grade point`, where both numbers come from
+[D6](In-Game-Tests/Damage-Loop.md#-d6-a-basic-creature-dies-in-about-two-seconds) rather than from
+preference. A grade-300 miniboss lands at 17,334 health against the player's 19,192 — a real fight
+that is still winnable — and nothing between the anchor and there had to be argued for separately,
+because the shipped grades already order them. Levels stay internal, which is what the
+[charter](../README.md)'s leveless goal actually requires and is already how the player character
+works. **Neither entry closes.** 2,203 creature types carry no grade at all and still share one pool;
+they fall back to the anchor row, so nothing regresses, but grade 0 means *unrated*, not harmless —
+`EliteWanderer` sits there. And DATA-20 keeps its own question, sharpened rather than answered: the
+tier multiplier is a *ratio* of two curve rows, which cancels whatever unit the `damage` column is
+in, but a weapon template shipping `damage_per_round` **1** still rounds to 1 or 2 across every grade
+below 65. Verified against the real SDB on the running server; the in-game check is
+[D7](In-Game-Tests/Damage-Loop.md#-d7-creatures-are-no-longer-all-the-same-size), which uses two
+creatures that share a weapon so the tier is the only thing that can differ.
+
 **The 2026-08-15 sitting's most useful hour was spent on a bug that wasn't one, and it closed
 [DATA-1](gaps/data.md#data-1) by reversing its reasoning.** The tester reported `invuln` off but
 taking no damage. The server log said otherwise — 9,202 hits landed — and the explanation was that
@@ -163,7 +187,7 @@ has no entries in that category, which reflects nothing having run rather than n
 - [ ] **DATA-4** — Splash and ability-projectile range falloff are guessed/unmodeled, unlike the
   confirmed weapon curve
 - [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs
-- [ ] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
+- [~] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
   pool for every creature, and at 2500 that was ~64 player rifle shots each — the "bullet sponge"
   reading [N16](In-Game-Tests/NPC-Combat.md) came back with. Researched 2026-08-13: `MonsterScaling`
   shipped whole (80 levels, 100..153726 health) but is keyed by level, and level was server content.
@@ -183,7 +207,19 @@ has no entries in that category, which reflects nothing having run rather than n
   mainline plasma cannon does 100 a shot behind a 4,000 ms chargeup, so a remembered one-shot was
   almost certainly a Tigerclaw ability (`Pulsar` reads 155 to 17,763). Surviving anchor: 200 for
   shell-less hissers, from 0.6 patch notes, = level 4. `MonsterAttributeRange` looks like a better
-  answer and is not: `per_level` is 0.0 in all 167 rows
+  answer and is not: `per_level` is 0.0 in all 167 rows.
+  **Built the same day and the entry is now partly closed.**
+  [`MonsterTier`](../UdpHosts/GameServer/Systems/Combat/MonsterTier.cs) converts the grade into a
+  level by taking health as proportional to it — a column named *cost*, graded across 906 types, is
+  what a spawn budget spends, so the grade is what the designers priced the creature at — and the
+  constant of proportionality is not chosen but falls out of D6's tested anchor: 1200 health at grade
+  20 gives **60 health a grade point**. The grade then picks the *nearest shipped row* rather than
+  becoming health directly, which puts every creature on a level Red 5 actually shipped and hands
+  back `damage` from the same row. 906 types are tiered; **2,203 carry no grade and still share one
+  pool**, falling back to the anchor row so nothing regresses — but 0 means unrated, not harmless
+  (`EliteWanderer` rates 0), which is what keeps this open. Verified against the real SDB on the
+  running server, 13 unit tests, in-game check is
+  [D7](In-Game-Tests/Damage-Loop.md#-d7-creatures-are-no-longer-all-the-same-size)
 - [ ] **DATA-7** — Character level comes from `HardcodedCharacterData`, not real progression
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)
@@ -242,7 +278,7 @@ has no entries in that category, which reflects nothing having run rather than n
   sends it. Same family as [DATA-7](gaps/data.md#data-7)'s hardcoded progression: a regeneration
   the server is supposed to drive and doesn't
 
-- [ ] **DATA-20** — Monster damage is never scaled by level, so most NPC gunfire lands for **1
+- [~] **DATA-20** — Monster damage is never scaled by level, so most NPC gunfire lands for **1
   point**. Measured 2026-08-15: 8,977 hits of 1 damage against 265 of 49, and a player takes 4m40s
   to die from 19192 health ([DATA-3](gaps/data.md#data-3)). **PIN's resolution is correct** — the
   melee weapon reads 225 × 0.22 = 49 against an observed 49, and the rifle's `damage_per_round` is
@@ -256,7 +292,19 @@ has no entries in that category, which reflects nothing having run rather than n
   the same creature, which a second flat number cannot do. Open first: whether that column is per
   round, per burst, or a budget. The 2:1 ratio holding on all 80 rows without one exception now
   argues for a budget — per-shot damage has to interact with fire rate and clip size, and those vary
-  too much across templates to survive `damage = health / 2`
+  too much across templates to survive `damage = health / 2`.
+  **Built the same day, and it sidesteps that question rather than answering it.** The tier scalar is
+  a **ratio of two curve rows**, not the column's absolute value, so whatever unit the column is in
+  cancels — the shipped 2:1 curve is used only for the thing it unambiguously encodes, how much more
+  dangerous one level is than another. Applied in `GetEffectiveWeaponDamage`, the single funnel every
+  damage path already resolves through, and kept in a **separate field** from
+  `WeaponDamageMultiplier` because that one is saved and restored by the `SetWeaponDamage` ability and
+  would destroy a tier written into it. **What survives is sharper than what it replaced**: the rifle
+  that named this entry ships `damage_per_round` 1, so ×1.64 rounds it to **2** — a real doubling that
+  is still 2 against 19,192 — and every grade below 65 rounds a unit template to 1 or 2, collapsing
+  the shipped ladder to two damage values at the bottom. So the open question is no longer "what unit
+  is the column" but "can a template value of 1 mean one point at all", and that is now the only
+  thing keeping this entry from closing
 
 ## Networking & Protocol — NET
 

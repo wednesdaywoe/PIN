@@ -1,7 +1,7 @@
 ---
 project: pin
 kind: test-stream
-title: "Damage Loop (D1-D4, D6)"
+title: "Damage Loop (D1-D4, D6-D7)"
 relates:
   - ../TEST-REGISTER.md
 ---
@@ -203,3 +203,137 @@ creature is not 528. Check the spawn line named the type you asked for.
 **Whatever this returns, it does not close [DATA-6](../gaps/data.md#data-6).** One flat pool for
 every creature in the game is the entry, and 1200 is still one flat pool. What a pass buys is
 confidence in the *band*, which is what the `difficulty_cost` → level work will be anchored against.
+
+## [ ] D7: Creatures are no longer all the same size
+
+Written 2026-08-15, after the `difficulty_cost` → level work landed. This is the entry that checks
+the thing D6 explicitly could not close: **one flat pool for every creature in the game**.
+
+Every NPC in PIN used to have identical health and identical damage, because the shipped power curve
+`dbcharacter::MonsterScaling` is keyed by a creature's *level* and levels were server content that
+never shipped. `Monster.difficulty_cost` — a threat grade 906 of the 3109 creature types carry — now
+supplies that missing key. A grade picks the nearest row of the curve, and the row gives health and
+damage together.
+
+### Why this pair of creatures and no other
+
+**528 and 1189 carry the same weapon, `20046`.** They also share an empty behaviour script, the same
+health regen, and hostile factions. The *only* thing that differs between them and matters here is
+the grade: 20 against 45. So any difference this test sees is the tier and nothing else — which is
+exactly the control D6 lacked when it could not tell a Heavy MG from an assault rifle.
+
+528 is the anchor, and that is deliberate. Its multiplier is **exactly** ×1.00 by construction, so it
+should behave the way it did in D6. **If 528 moves, the cause is not tiering.**
+
+| Creature | Grade | Level | Health | Damage scalar | HMG hits to kill, at 39 a round |
+|----------|-------|-------|--------|---------------|----------------------------------|
+| **528** (anchor/control) | 20 | 13 | 1224 | ×1.00 | **32** |
+| **1189** (subject) | 45 | 18 | 2801 | ×2.29 | **72** |
+
+528 reads 32 rather than D6's 31 because 1200 was the anchor *target* and level 13 ships at 1224 —
+the curve is quantised and 1224 is the nearest real row. A one-hit drift is the expected cost of
+landing on shipped rows instead of invented ones, and it is the whole reason 528 is still readable
+as a control.
+
+### Part A — the grades resolve (no combat, do this first)
+
+Costs nothing and tells you whether the rest of the test is worth running.
+
+1. `npc 528`
+2. `npc 1189`
+3. `grep -a "graded" ~/Games/PIN/logs/GameServer.log | tail -5`
+
+Pass: two lines reading
+
+```
+Monster 528 graded 20 -> level 13, 1224 health, damage x1.00
+Monster 1189 graded 45 -> level 18, 2801 health, damage x2.29
+```
+
+Fail, both lines say `(ungraded, fell back to the anchor)`: the curve did not load. The server reads
+the **full** `clientdb.sd2`, not the pruned one, so check the `Opening SDB from` line points at the
+Firefall install and not at `clientdb_minimal.sd2`.
+
+Fail, no `graded` lines at all: the damage line is at **Debug** level and so is this one. Confirm any
+`DBG` line appears in the log before concluding anything.
+
+**If Part A fails, stop.** Parts B and C cannot mean anything if the grade never resolved.
+
+### Part B — health differs, by hit count
+
+Same method as [D6](#-d6-a-basic-creature-dies-in-about-two-seconds), because counting hits in the
+log measures the server while a stopwatch measures the tester's reflexes.
+
+1. `invuln on` — this part is about your damage, not theirs.
+2. `createitem 85968` — the Heavy Machine Gun, 39 a round, 250-round clip, 80m range.
+3. `dbg_inventory` — **required, not optional.** A created item is absent from the server's inventory
+   list until it is resent ([NET-18](../gaps/network.md#net-18)).
+4. `equipitem 85968 Primary`, then confirm it took:
+   `grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1` must show
+   `equipitem 85968 guid ... into Primary`. No line means the run is void.
+5. `grep -ac "took .* damage from" ~/Games/PIN/logs/GameServer.log` — the before count.
+6. `npc 528`, back off a few metres, hold fire until it dies. Take the count again and subtract.
+7. `npc 1189`, same. Take the count again and subtract.
+
+Pass: **32 for 528 and 72 for 1189.** The 250-round clip covers both without a reload.
+
+Confirm the per-hit figure is 39 while you are here:
+`grep -a "took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -5`
+
+Fail, both counts come back the same: the grade is resolving (Part A said so) but the health is not
+reaching the entity. That is the `SetMaxHealth` call in `CharacterEntity`, not `MonsterTier`.
+
+Fail, 1189 takes about 72 hits but 528 takes 31 rather than 32: harmless, and worth writing down
+rather than treating as a failure. It means a round landed slightly above 39 somewhere, and
+[D6](#-d6-a-basic-creature-dies-in-about-two-seconds) already found that per-hit damage carries a
+client-sent modifier.
+
+### Part C — damage differs, with the weapon held constant
+
+This is the half [DATA-20](../gaps/data.md#data-20) is about, and the shared weapon is what makes it
+readable.
+
+1. `invuln off` — **required for this part**, and it is the step that makes 1189 dangerous.
+2. `npc 528`, let it hit you several times, then kill it.
+3. `npc 1189`, let it hit you several times, then kill it.
+4. `grep -a "Fallback .* took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -20`
+   — `Fallback` is the player's placeholder name (`HardcodedCharacterData.MaleFallbackData.Name`),
+   not an error. These are the hits *you* took.
+
+Weapon 20046 is the melee weapon [DATA-20](../gaps/data.md#data-20) already measured: template
+`damage_per_round` 225 × modifier 0.22 = 49.5, observed as **49**. So the predicted pair is concrete
+rather than a ratio:
+
+| Creature | Damage scalar | 49.5 × scalar | Rounds to |
+|----------|---------------|---------------|-----------|
+| **528** | ×1.00 | 49.5 | **49** or 50 |
+| **1189** | ×2.29 | 113.4 | **113** |
+
+Pass: 528 lands about 49 and 1189 lands about 113. Both carry weapon 20046, so there is no second
+explanation for a difference.
+
+Damage is applied as `(int)MathF.Round(Amount)`, which is why 49.5 can read as either 49 or 50 — D6
+saw 49. A one-point wobble at the anchor is rounding, not a finding.
+
+Take several hits from each rather than one. Range decay applies to what monsters shoot too, so a
+single pair of numbers taken at different distances proves less than a handful taken at contact.
+
+Fail, the two numbers are equal: `ScalingDamageMultiplier` is not reaching
+`GetEffectiveWeaponDamage`. Note that an ability using `SetWeaponDamage` deliberately does *not*
+clobber it — the two multipliers are separate fields for that reason — so an active effect is not the
+explanation.
+
+Fail, 1189 kills you outright: record it and say so. ×2.29 on a grade-45 creature is the *low* end of
+the ladder; grade 300 minibosses resolve to ×14.16, and if the low end already reads as lethal then
+the anchor is wrong rather than the mapping. This is the failure mode most worth catching early, and
+a tester's judgement outranks the arithmetic here.
+
+### What this closes and what it does not
+
+A pass closes the health half of [DATA-6](../gaps/data.md#data-6) for the **906 graded creature
+types** and the damage half of [DATA-20](../gaps/data.md#data-20).
+
+It does not close either entry outright. **2203 of 3109 creature types carry no grade at all** and
+still share one flat pool, and `EliteWanderer` is among them — so an ungraded creature is unrated,
+not harmless, and the fallback is a known gap rather than an answer. Grade 0 is also why the log
+line says `(ungraded, fell back to the anchor)` out loud instead of quietly.

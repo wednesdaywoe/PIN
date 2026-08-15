@@ -282,6 +282,16 @@ Two cautions before building on it:
   against 1962's real rates (Heavy MG: 39 a round every 65 ms = 600 dps) and puts that creature at
   **1,200–1,800**, level 13–16, not the ~500 it had been recorded as. `[open]`
 
+**The pricing half is no longer open — PIN built it on 2026-08-15.**
+[`MonsterTier`](../UdpHosts/GameServer/Systems/Combat/MonsterTier.cs) converts a rating into a level
+by taking health as proportional to the rating, at **60 health a rating point**, and then snapping to
+the nearest shipped `MonsterScaling` row. That constant is the tested anchor written as a quotient
+(1,200 health at rating 20), not a preference. So a director written against this document can now
+ask the code what a rating is worth in health and damage instead of inventing it — which matters most
+for §7, where a wave's cost in rating points can be checked against what that wave will actually do
+to a thumper. The 0-rated fallback this section warned about is implemented as the warning suggested:
+unrated types get the anchor row and the server says so in the log rather than treating them as free.
+
 `[open]` Whether `difficulty_cost` was the *thumper's* currency specifically or a shared
 encounter-wide one. Nothing ties it to thumping in particular; the inference is from the column's
 name, its grading, and the absence of any other candidate.

@@ -138,7 +138,7 @@ shaped, how many spawn steps it took and in what order, without saying what any 
 
 <a id="data-6"></a>
 
-### DATA-6 — Monster health and shields are hardcoded placeholders [ ] open
+### DATA-6 — Monster health and shields are hardcoded placeholders [~] 906 of 3109 creature types tiered 2026-08-15, 2203 still flat
 
 `dbcharacter::Monster` and `MonsterScaling` exist but aren't read.
 [CharacterEntity.cs:342-347](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L342-L347)
@@ -333,6 +333,77 @@ carries `Base` and **`PerLevel`** columns. It is not. 167 rows covering 81 of 3,
 **`per_level` is 0.0 in every single row**, and its `attribute_id` values (1143, 1144, 1582, 1953,
 1954, 2005) are not in `AptitudeStat`'s 1–25 range, so none of them is health or damage. Recorded so
 the next reader does not spend the lookup.
+
+#### Built 2026-08-15: `difficulty_cost` → level → the shipped curve
+
+[`MonsterTier`](../../UdpHosts/GameServer/Systems/Combat/MonsterTier.cs) supplies the join this entry
+spent three research passes looking for, and it is a small file because both halves shipped. The one
+invented step is the conversion itself.
+
+**Health is taken as proportional to grade.** The justification is what the column is called: a
+*cost* graded across 906 creature types is what an encounter budget spends, so a creature's grade is
+what the designers priced it at, and a price tracks power. The constant of proportionality is not
+chosen — it falls out of the one anchor that was measured in game:
+
+```
+HealthPerGradePoint = AnchorHealth / AnchorGrade = 1200 / 20 = 60
+```
+
+`AnchorGrade` 20 is monster 528's shipped grade; `AnchorHealth` 1200 is what
+[D6](../In-Game-Tests/Damage-Loop.md#-d6-a-basic-creature-dies-in-about-two-seconds) confirmed for it
+across six kills. Moving the anchor moves the whole ladder and keeps its shape, which is why it is
+expressed as a quotient rather than as a table anyone can edit row by row.
+
+**The grade does not become health directly — it picks the nearest row of `MonsterScaling`.** That
+detour buys three things a plain multiply does not. Every creature lands on a level Red 5 actually
+shipped rather than on an interpolated invention. `damage` arrives from the same row as `health`,
+which is what lets one lookup close two entries. And the quantisation is the curve's own: fine at
+the bottom where ordinary creatures live, coarse at the top where bosses do.
+
+Where the shipped grades land:
+
+| Grade | Types | Level | Health | Damage scalar | What sits here |
+|-------|-------|-------|--------|---------------|----------------|
+| 20 | 33 | 13 | 1,224 | ×1.00 | the anchor; monster 528 |
+| 35 | 36 | 16 | 2,011 | ×1.64 | monster 1196 |
+| 50 | 150 | 18 | 2,801 | ×2.29 | the single most common grade in the game |
+| 100 | 117 | 25 | 6,280 | ×5.13 | |
+| 150 | 40 | 29 | 9,195 | ×7.51 | where the `*MiniBoss` behaviour scripts start |
+| 300 | 35 | 37 | 17,334 | ×14.16 | `GiantAranhaMiniBoss`, `LandSharkMiniBoss` at their larger grade |
+| 1000 | 1 | 61 | 60,834 | ×49.70 | one row; three times the player's pool |
+
+The top of that ladder is a sanity check in itself. A grade-300 miniboss lands at 17,334 against the
+player's 19,192 — a real fight that is still winnable — and nothing between 20 and 300 has to be
+argued for separately, because the shipped grades already order them.
+
+**Levels stay internal.** Nothing sends `MonsterLevel` to the client, and the 1962 client has no
+creature-level readout to send it to. This does for creatures exactly what PIN already does for
+players: carry a level as a scalar and never show it, which is what the
+[charter](../../README.md)'s leveless goal actually requires.
+
+**What is still open, and it is the majority.** 2,203 of 3,109 creature types carry **no grade at
+all** and still share one flat pool — `MonsterMaxHealth`, now defined as `MonsterTier.AnchorHealth`.
+They fall back to the anchor row, which is byte-for-byte the behaviour PIN had before this change, so
+nothing regresses. But grade 0 is *unrated*, not harmless: `EliteWanderer` and `AggressiveWanderer`
+both sit there. Until those get a source, this entry stays open. The log line names the fallback out
+loud rather than letting it pass as a resolved tier.
+
+Two divergences from the earlier proposal in this entry, both deliberate. The per-placement `level`
+in `spawn_group.json` is **not** needed for graded creatures — the grade already carries the
+ordering, and a hand-authored level per placement would be 906 decisions where the shipped data has
+none. It may still be the answer for the ungraded 2,203, where there is nothing to read. And the
+`interim lever` framing is gone: `MonsterMaxHealth` is no longer a tuning knob for the game's feel,
+it is the anchor that positions a ladder, and the two should not be confused when someone next wants
+fights to be shorter.
+
+Verified against the real `clientdb.sd2` on the running server the same day — 528 resolved to level
+13/1,224/×1.00, 1196 to level 16/2,011/×1.64, and ungraded monster 356 fell back and said so.
+Thirteen unit tests pin the mapping in
+[`MonsterTierTests`](../../Tests/GameServer.Tests/Combat/MonsterTierTests.cs), including the two
+promises that keep a bad grade from breaking a spawn: monotonicity across every grade the game
+actually uses, and a missing curve costing tiering rather than throwing. The in-game check is
+[D7](../In-Game-Tests/Damage-Loop.md#-d7-creatures-are-no-longer-all-the-same-size), which isolates
+the tier by using two creatures that share a weapon.
 
 <a id="data-7"></a>
 
@@ -840,7 +911,7 @@ testing prediction.
 
 <a id="data-20"></a>
 
-### DATA-20 — Monster damage is never scaled, so most NPC gunfire lands for 1 point [ ] open, found 2026-08-15
+### DATA-20 — Monster damage is never scaled, so most NPC gunfire lands for 1 point [~] tiered creatures scale 2026-08-15, the unit problem survives
 
 A whole pack shooting a player does almost nothing. Measured over five minutes in the Basin Mouth
 pack with `invuln` off: **8,977 hits of 1 damage against 265 of 49**, and a player taking 4 minutes
@@ -903,9 +974,59 @@ The top end argues the same way. Taking the [DATA-6](#data-6) tier read above an
 one-second budget, absurd if a 30-round clip delivers it per round. Any candidate reading can be
 sanity-checked against that bracket before it is built.
 
-**A cost-to-level mapping is what closes both halves at once.** Anchoring rating 20 at level 8 —
-which is where DATA-6's two independent health anchors put it — and letting the rating pick the row
-gives both `health` and `damage` from the same creature, which is the property this entry exists to
-restore. The alternative, another flat damage number beside the flat 500, repeats the mistake that
+**A cost-to-level mapping is what closes both halves at once.** Letting the grade pick the row gives
+both `health` and `damage` from the same creature, which is the property this entry exists to
+restore. The alternative, another flat damage number beside the flat health, repeats the mistake that
 created this entry: it fixes the symptom for one creature and leaves every other creature describing
 a different animal.
+
+#### Built 2026-08-15, and it sidesteps the unit question rather than answering it
+
+That mapping exists now —
+[`MonsterTier`](../../UdpHosts/GameServer/Systems/Combat/MonsterTier.cs), written up in full under
+[DATA-6](#data-6). A graded creature's damage is scaled by `ScalingDamageMultiplier`, applied in
+`CharacterEntity.GetEffectiveWeaponDamage`, which is the single funnel every damage path already goes
+through — `ProjectileSim`, `FireProjectileCommand` and `InflictDamageCommand` all resolve there.
+
+**The multiplier is a ratio against the anchor, not the `damage` column's absolute value, and that is
+what dodges the open question above.** This entry could not decide whether `MonsterScaling.damage` is
+per round, per burst, or a budget. A *ratio* of two rows does not care: whatever unit the column is
+in, it cancels. So the shipped 2:1 curve is used for the one thing it unambiguously encodes — how
+much more dangerous level 18 is than level 13 — and not for the thing it does not.
+
+```
+ScalingDamageMultiplier = curve[creature.level].damage / curve[anchor.level].damage
+```
+
+Because `damage = health / 2` on all 80 rows, that ratio is identical to the health ratio. A
+grade-300 miniboss is ~14× the anchor creature in both, which is what "larger ones are individually
+more dangerous" has to mean if it is to mean anything mechanical.
+
+The anchor grade comes out at exactly **×1.00** by construction. That is not a rounding convenience —
+it is what makes monster 528 a usable control, and it is why
+[D7](../In-Game-Tests/Damage-Loop.md#-d7-creatures-are-no-longer-all-the-same-size) can isolate the
+tier: 528 (grade 20) and 1189 (grade 45) carry the **same weapon, 20046**, the same empty behaviour
+script and the same regen, so the only thing that can differ between them is the scalar.
+
+**Deliberately a separate field from `WeaponDamageMultiplier`.** That one is owned by the
+`SetWeaponDamage` aptitude command, which saves the prior value and restores it on effect end — a
+tier written there would be destroyed by the first ability that touched it. Players stay at 1.
+
+**What this does not fix, and the arithmetic is worth doing before anyone celebrates.** The rifle
+template that started this entry ships `damage_per_round` **1**, and its owner — monster 1196, grade
+35 — now scales by ×1.64. `DamageInfo.Points` is `(int)MathF.Round(Amount)`, so those 8,977 hits of
+1 become hits of **2**. A genuine doubling, and still 2 against a 19,192 health pool.
+
+That is the real shape of the problem this entry names. A unit-valued template multiplied by a tier
+scalar **quantises brutally at the bottom**: every grade from 20 through 45 rounds a 1 to either 1 or
+2, so the shipped grade ladder — which separates those creatures cleanly on health — collapses to two
+distinct damage values for them. Only from about grade 65 (×3.19) does a 1-damage weapon start
+resolving to distinguishable numbers.
+
+Whether that is a bug or the honest consequence of a correct model turns entirely on the open
+question above — whether retail scaled a unit `damage_per_round` multiplicatively at all, or whether
+`MonsterScaling.damage` is a budget the weapon divides and a 1 in the template means something other
+than one point. **That question is now the only thing keeping this entry from closing**, and it got
+sharper rather than vaguer: it is no longer "what unit is the column in" but "does a template value
+of 1 mean one point, given that scaling it cannot produce a meaningful spread". The 2,203 ungraded
+creature types are DATA-6's remainder, not this one's.

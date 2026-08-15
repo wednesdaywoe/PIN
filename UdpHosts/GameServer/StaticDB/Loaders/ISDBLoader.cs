@@ -23,6 +23,7 @@ public interface ISDBLoader
     List<FactionRelations> LoadFactionRelations();
     Dictionary<uint, List<FactionReputations>> LoadFactionReputations();
     Dictionary<uint, Monster> LoadMonster();
+    Dictionary<byte, MonsterScaling> LoadMonsterScaling();
     Dictionary<uint, Turret> LoadTurret();
     Dictionary<uint, PoseType> LoadPoseType();
     Dictionary<uint, CharInfo> LoadCharInfo();

@@ -25,6 +25,7 @@ public class SDBInterface
     private static List<FactionRelations> _factionRelations;
     private static Dictionary<uint, List<FactionReputations>> _factionReputations;
     private static Dictionary<uint, Monster> _monster;
+    private static Dictionary<byte, MonsterScaling> _monsterScaling;
     private static Dictionary<uint, Turret> _turret;
     private static Dictionary<uint, PoseType> _poseType;
     private static Dictionary<uint, CharInfo> _charInfo;
@@ -291,6 +292,7 @@ public class SDBInterface
         _factionRelations = loader.LoadFactionRelations();
         _factionReputations = loader.LoadFactionReputations();
         _monster = loader.LoadMonster();
+        _monsterScaling = loader.LoadMonsterScaling();
         _turret = loader.LoadTurret();
         _poseType = loader.LoadPoseType();
         _charInfo = loader.LoadCharInfo();
@@ -590,6 +592,15 @@ public class SDBInterface
     public static List<FactionReputations> GetFactionReputations(uint id) => _factionReputations.GetValueOrDefault(id);
 
     public static Monster GetMonster(uint id) => _monster.GetValueOrDefault(id);
+
+    /// <summary>
+    ///     The shipped creature power curve: 80 rows of level, health and damage. Nothing keys into it by
+    ///     id — a creature reaches it through <see cref="GameServer.Systems.Combat.MonsterTier"/>, which
+    ///     converts <c>Monster.difficulty_cost</c> into a level first.
+    /// </summary>
+    public static IReadOnlyCollection<MonsterScaling> GetMonsterScalingCurve() => _monsterScaling.Values;
+
+    public static MonsterScaling GetMonsterScaling(byte level) => _monsterScaling.GetValueOrDefault(level);
     public static Turret GetTurret(uint id) => _turret.GetValueOrDefault(id);
     public static PoseType GetPoseType(uint id) => _poseType.GetValueOrDefault(id);
     public static CharInfo GetCharInfo(uint id) => _charInfo.GetValueOrDefault(id);
