@@ -275,22 +275,22 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Client & Environment — CLIENT
 
-[Full detail](gaps/client.md) — 1 of 3 closed
+[Full detail](gaps/client.md) — 2 of 3 closed
 
 - [~] **CLIENT-1** — World-entry freeze traced to a lost wakeup in Wine's fsync path; closed via
   `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over 4 sessions, not yet proven un-recurring
 - [x] **CLIENT-2** — HTTPS login fails under Proton's WinHTTP; closed via all-HTTP client APIs
   plus a binary patch (must be reapplied after Steam file verification)
-- [ ] **CLIENT-3** — A Melded Aranha renders about 90° off the orientation it is sent; a Chosen in
-  the same place faces correctly, which read as a per-model forward axis until the 2016 capture was
-  measured (2026-08-15, `CaptureReplay --facing`): every rig retail ever oriented — 40+ monster
-  types and the clients' own remote players — sits at exactly −90° under PIN's +X-forward reading,
-  spreads under 20°. So there was never a per-model offset: PIN's convention was 90° wrong for
-  every character, the client's local forward is +Y, and the Chosen only looked right because a
-  humanoid's rendered body follows the aim vector closely enough to mask the quaternion.
-  **Fix built 2026-08-15** — `Facing.Towards` now yaws a quarter turn short of the bearing,
-  matching the convention players' client-authored orientations already use — awaiting the in-game
-  look at the Aranha to close
+- [x] **CLIENT-3** — **FIXED & VERIFIED 2026-08-15.** A Melded Aranha rendered about 90° off while
+  a Chosen faced correctly, which read as a per-model forward axis until the 2016 capture was
+  measured (`CaptureReplay --facing`): every rig retail ever oriented — 40+ monster types and the
+  clients' own remote players — sits at exactly −90° under PIN's +X-forward reading. There was
+  never a per-model offset: PIN's convention was 90° wrong for every character, the client's local
+  forward is +Y, and the Chosen only looked right because a humanoid's rendered body follows the
+  aim vector closely enough to mask the quaternion. `Facing.Towards` now yaws a quarter turn short
+  of the bearing, the convention client-authored orientations already use. Verified same day:
+  Aranha attack head-on, and the watchtower thumper's own wave sappers face the machine correctly,
+  which checks the convention against a non-character objective too
 
 ---
 

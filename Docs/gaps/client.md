@@ -51,7 +51,7 @@ has to be reapplied after any Steam-initiated verify or update. Worth a line in
 
 <a id="client-3"></a>
 
-### CLIENT-3 — Some creature models don't render along the orientation the server sends [ ] fix built, awaiting the in-game look
+### CLIENT-3 — Some creature models don't render along the orientation the server sends [x] FIXED &amp; VERIFIED 2026-08-15
 
 A Melded Aranha (528) engaged at melee range stands and attacks about 90° off from the player it is
 attacking. Confirmed as a model property rather than a server defect on 2026-08-13, by the only test
@@ -112,8 +112,12 @@ The fix is one constant: `Facing.Towards` yaws a quarter turn short of the beari
 (`ForwardAxisOffset`, [NpcCombat.cs](../../UdpHosts/GameServer/Systems/AI/NpcCombat.cs)), which is
 the convention player orientations already arrive in, so every consumer — muzzle origin, physics
 pose, the wire — now treats manufactured and client-authored orientations alike. Pinned by
-[FacingTests](../../Tests/GameServer.Tests/AI/FacingTests.cs). Closes on seeing an Aranha attack
-head-on in game.
+[FacingTests](../../Tests/GameServer.Tests/AI/FacingTests.cs).
+
+**Verified in game the same day, twice over.** The tester's Aranha square up and attack head-on.
+And the watchtower's NPC-owned debug thumper had already called its own wave by login, so two
+sappers were standing at it — both facing the machine correctly, which checks the fixed convention
+against a non-character objective nobody set out to test.
 
 One landmine found on the way, worth its own flag: AeroMessages' `QuantisedFloat` float conversion
 doesn't invert its own quantise — positives come back mirrored. PIN only ever *encodes* on the live
