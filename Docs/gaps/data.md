@@ -105,6 +105,10 @@ For the population question specifically, the calls break down as:
 | 15 | `agsUpdateSpawnTableCommandDef` | retuned a live spawn table |
 | 3 | `agsCreateSpawnPointCommandDef` | made a spawn point at runtime |
 
+The chains these steps sit in were walked on 2026-08-14 by [Tools/ChainWalk](../../Tools/ChainWalk/)
+for M7: they are one-shot verbs, not wave scripts, and the reading is in
+[streams/m7-encounter-combat.md](../streams/m7-encounter-combat.md).
+
 Two conclusions worth carrying. Firefall populated a zone by **running scripts**, not by reading a
 placement list, which is why no spawn table turns up anywhere and why looking for one was the wrong
 search. And the surviving skeleton is usable on its own terms: it says how a retail encounter was

@@ -53,6 +53,14 @@ it. What remains unbuilt is M7 (an encounter that plays), and the sitting's othe
 [NET-26](ISSUE-REGISTER.md), [NET-18](ISSUE-REGISTER.md) re-scoped, [DATA-19](ISSUE-REGISTER.md)
 — live in the issue register rather than here.
 
+**M7's research pass ran on 2026-08-14 and settled the design question before any code.**
+[Tools/ChainWalk](../Tools/ChainWalk/) walked all 2,157 shipped script chains that touch a
+population or encounter command: chains are one-shot verbs (median 3 steps, and only 2 of 2,157
+both spawn and signal), so retail's wave sequencing lived in server-side encounter logic, which is
+the state-machine relationship `Thumper` already has. Waves belong in the encounter's own state,
+not in a spawn-wait-spawn script. Detail in
+[streams/m7-encounter-combat.md](streams/m7-encounter-combat.md).
+
 **M8 was built entirely out of measurements rather than choices, which is the part worth carrying
 forward.** The 2016 capture holds 24 resent packets across 456619, and reading them settled the
 retransmit timeout (322–665ms, median 452, so PIN waits 450), the resend count the header carries

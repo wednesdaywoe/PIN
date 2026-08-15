@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="FauFau" Version="1.5.1"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\Lib\Bitter\Bitter\Bitter.csproj"/>
+    </ItemGroup>
+</Project>

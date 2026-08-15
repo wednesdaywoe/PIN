@@ -285,7 +285,9 @@ has no entries in that category, which reflects nothing having run rather than n
   the same place faces correctly, so it is the creature model's forward axis, not the server's
   maths. Nothing PIN can read carries a per-model facing offset. Cosmetic — shots are aimed from
   live positions, never from the rendered facing — and left open rather than papered over with an
-  invented table
+  invented table. Still present 2026-08-14, and only two creature types have ever rendered in game,
+  so how many of the other ~3,100 monsters share it is unknown; check facing on every new creature
+  an M7 wave introduces
 
 ---
 

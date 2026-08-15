@@ -42,5 +42,43 @@ spawned is missing.
 Nothing needs writing yet. The thing to do before designing waves from scratch is walk the chains
 that call `agsEncounterSignalCommandDef` and `agsActivateSpawnTableCommandDef` and read the shape.
 
+## The chains were walked, and the shape answer is a design answer
+
+Run 2026-08-14 with [Tools/ChainWalk](../../Tools/ChainWalk/), which walks every
+`apt::BaseCommandDef` chain containing a population or encounter command and reports the shapes.
+2,157 chains qualify. Median length is 3 steps, the longest is 19, and none starts at an ambiguous
+merge point.
+
+The finding that matters: retail did not script waves inside the chains. Across all 2,157, exactly
+2 both spawn something and raise an encounter signal, and 530 of the 552 chains that spawn at all
+carry exactly one spawn step. The most common shapes are single verbs: a bare `EncounterSignal`
+(292 chains), a bare `DeployableSpawn` (95), a bare `SpawnLoot` (88), a bare `ActivateSpawnTable`
+(84), a bare `NPCSpawn` (46). The recurring spawn pattern is `TargetClear > NPCSpawn >
+ImpactApplyEffect` (39 chains), a spawn with an arrival effect. So a chain is a one-shot verb, and
+the sequencing that turned verbs into an encounter lived in the server-side encounter logic that
+never shipped.
+
+That is an endorsement of the architecture PIN already has. `Thumper` is a state machine that
+fires abilities at transitions, which is exactly the relationship the retail data shows: the state
+machine decides when, the chain does one thing. Waves for this milestone should be built the same
+way, with the encounter's own state driving spawn calls, not as a script chain that spawns, waits
+and spawns again. No such chain exists in the shipped data to copy.
+
+Two smaller readings from the same run. `StatRequirement > EncounterSignal` appears 43 times, a
+signal gated on a stat check, which is the natural shape for a failure path (health hits zero,
+signal the encounter). And one 19-step chain is nothing but `ActivateSpawnTable` eighteen more
+times, which reads as a zone's population being switched on in one stroke.
+
+The command names come from the server's own
+[CommandType.cs](../../UdpHosts/GameServer/Systems/Aptitude/CommandType.cs) enum, because the
+client db's `apt::CommandType` leaves the name columns blank on every server-side command. The
+walk is linear and doesn't follow `ConditionalBranch` or `Call` jumps; only 48 of the 2,157
+chains contain a branch, so the shapes above are read from whole chains, not fragments.
+
 Small once M2 and M3 exist, and almost entirely blocked on them. Worth resisting the urge to start
 here, since an encounter with no combat in it is what already exists.
+
+One standing check for wave authoring: every creature type a wave introduces is a creature type
+nobody has seen render, and one of the only two so far faces 90° sideways
+([CLIENT-3](../gaps/client.md#client-3)). Look at each new monster's facing the first time it
+stands in a session — the observation is free then and unrecoverable later.

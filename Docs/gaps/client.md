@@ -79,6 +79,14 @@ and never from the rendered facing, so a sideways Aranha hits exactly as hard as
 wrong in a *different* direction, since two data points would say whether the offsets are per-model
 or whether every non-humanoid shares one.
 
+**Still present as of 2026-08-14, and the real unknown is coverage, not the Aranha.** Only two
+creature types have ever stood in a PIN session — the Chosen Fiend (1196, faces correctly) and the
+Melded Aranha (528, 90° off) — so the sample is one humanoid rig and one creature rig, and the
+creature rig is wrong. `dbcharacter::Monster` has ~3,100 more rows nobody has seen render. There is
+no way to know how many share this until they are spawned, which makes M7's wave authoring the next
+place this bites: every creature type a wave introduces should get a ten-second facing check when it
+first appears, because that observation is free during a sitting and unrecoverable after it.
+
 Not to be confused with the Aranha's `PosetypeId` of 0, which sounds alarming and isn't:
 `GetCharacterPoseAsset` already falls back to the visual record's `HitboxCollisionId` for those, and
 the session log has no `No suitable collisionId found` warnings.
