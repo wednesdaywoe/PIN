@@ -259,8 +259,8 @@ Ordered by how much each needs data that does not exist yet.
 
 1. **~~Creature rate of fire.~~** Built and **verified in game** 2026-08-16: 3.28 s between claws
    against a predicted 3.266 — see §9.
-2. **~~Player health, 19,192 → ~1,000.~~** Built 2026-08-16, **still unverified** and structurally
-   hard to verify: sappers ignore return fire, so a solo defender never gets hit. See §10.
+2. **~~Player health, 19,192 → ~1,000.~~** Built and **verified in game** 2026-08-16: downed once
+   and brought to 118 and 510 twice more — see §9.
 3. **Four tiers replacing the `MonsterScaling` lookup.** Larger, and it wants the tier-to-creature
    mapping filled in for 3,109 types. Health comes from the tier; `MonsterScaling` stops being read.
 4. **Per-zone wave tables.** Once tiers exist, difficulty becomes a property of place and the stock
@@ -406,6 +406,48 @@ The evening's *other* thumper was destroyed outright at 19:16, so the failure pa
 zero. It was fed by hand-spawned creatures rather than the wave table, so it is a proof that failure
 is reachable and not a reading of the table.
 
+#### Item 2 verified: the player can now be killed by ordinary creatures `[measured]`
+
+Same evening, and the strongest result of the sitting. **The player went down** — the first combat
+death in the project's history that was not staged.
+
+| Episode | Attacker | Pool 1,000 fell to | Over |
+|---|---|---|---|
+| 18:51, near the watchtower | one monster 1189, 112 a hit | **0 — downed** | 9 hits, ~28 s |
+| 19:15, tabbed out | one Melded Aranha, 49 a hit | 118 | 18 hits, 59 s |
+| 19:26, defending the thumper | wave 3's escort, 49 a hit | 510 | 9 hits, 57 s |
+
+§7's prediction was that three attackers in contact kill the player in ~22 seconds. One Aranha alone
+took 1,000 to 118 in 59 seconds and would have finished at about 69, which is the same arithmetic
+divided by three. **The prediction holds within the noise, from a direction nobody aimed at it.**
+
+Three further readings fall out of the same lines:
+
+- **The player has no shields at all.** Every line reads `0 of it on shields, 0 shields`, in all
+  three episodes. The 1,000 is the entire pool, so §4's routes were sizing the whole thing and not
+  the health half of a health-plus-shields budget. Whether that is intended is a separate question
+  from whether 1,000 is right.
+- **Health regenerates, and generously.** 118 at 19:16 was a full 1,000 by 19:26 with no
+  intervention. Ten minutes is not a measurement of the rate, but it rules out the pool being
+  one-way.
+- **Creatures are not all 49.** Monster 1189 hits for 112, against Aranha's 49. That is
+  `MonsterTier` grading working on live creatures for the first time, and it means the wave tables
+  in §8 item 4 have more than one dial: which creature, not only how many.
+
+**And the death was two-stage, correctly.** `Player … downed, tap-out in 2000ms, forced at 30000ms`
+— NET-23's bleedout path, which until now had only been exercised deliberately, firing on a real
+kill.
+
+##### Why this was nearly recorded as a failure `[method]`
+
+The first pass over the logs concluded the player had never been hit, in any log, all day. It was
+wrong, and the way it was wrong is worth keeping: **a player-controlled character logs under its
+display name, not its entity id.** `CharacterEntity.ToString` returns `StaticInfo.DisplayName` when
+`IsPlayerControlled`, so every hit on the tester reads `Fallback took 49 damage from
+CharacterEntity (…)` — the id is on the *attacker*. A grep built around the player's entity id
+matches nothing and looks exactly like a system that never ran. See
+[the method notes](../In-Game-Tests/README.md#a-player-logs-under-its-name-and-everything-else-under-an-id).
+
 ---
 
 ## 10. Open questions
@@ -423,6 +465,7 @@ is reachable and not a reading of the table.
       does. Measured 2026-08-16: swapping the player's weapon moved it further than a 2.6× cut to
       creature output. Player pool is now pinned at 1,000 and creature output at 15 DPS, so player
       throughput is the last input to the event still varying freely and nothing bounds it
-- [ ] Player health at 1,000 remains unconfirmed in game. Three sittings have now failed to test it
-      for the same structural reason: sappers march on the machine and ignore return fire, so a solo
-      defender is never hit. It needs an escort-only wave, or a creature told to prefer the player
+- [ ] Whether the player should have shields at all. Measured 2026-08-16: every hit reads `0 shields`,
+      so 1,000 is the whole pool and §4's three routes were sizing the whole pool without saying so.
+      Retail battleframes carried both, and `MaxShields` exists and is being written — it is simply
+      zero. Deciding this moves the effective pool, so it belongs before the tier work in §8 item 3

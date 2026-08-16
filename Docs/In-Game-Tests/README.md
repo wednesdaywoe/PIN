@@ -43,6 +43,36 @@ a position somebody has actually stood on. `grep -a "Ground sample" ~/Games/PIN/
 is the record of every footing the server has ever measured, which is where a trustworthy one comes
 from.
 
+## A player logs under its name, and everything else under an id
+
+**Grepping the log for the player's entity id finds nothing, and that is not evidence of anything.**
+`CharacterEntity.ToString` returns the display name when `IsPlayerControlled` and falls back to
+`CharacterEntity (<id>)` otherwise, so a hit on the tester reads:
+
+```
+[19:15:01 DBG] Fallback took 49 damage from CharacterEntity (2237404354619578112), 0 of it on shields, 0 shields and 951 health left
+```
+
+The id in that line is the **attacker's**. The player is `Fallback` — the character name, whatever
+it happens to be on the account being used.
+
+This cost a real conclusion on 2026-08-16: a sweep of every log for the day reported that the player
+had never taken damage and that the 1,000-health change was therefore untestable, when in fact the
+player had been downed once and brought under 15% twice. The tester's own account of the session was
+what corrected it. **When a grep says a system never ran, check that the grep can match the subject
+before believing it.**
+
+So: grep for damage *by name* when the subject is a player, and by id when it is anything else. If
+the character name is not known, this finds it and every other actor in one pass:
+
+```
+grep -aoE "^\[[0-9:]+ [A-Z]+\] [^(]+ took [0-9]+ damage" ~/Games/PIN/logs/GameServer.log \
+  | sed -E 's/^\[[0-9:]+ [A-Z]+\] //' | sort -u
+```
+
+Anything in that list that is not `CharacterEntity`, `Thumper`, `Deployable` or `Vehicle` is a
+player.
+
 ## Health bars are aim-driven, so splash cannot be read off them
 
 **A creature's health bar is not a readout of its health. It is a readout of what you are looking

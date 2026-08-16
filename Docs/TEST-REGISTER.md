@@ -43,12 +43,28 @@ reading if the weapon is stated.** The finding that outranks the one being chase
 player's weapon moved the defence multiplier further (0.83 → 0.71) than a 2.6× cut to creature
 output did.
 
-**Player health at 1,000 failed to get tested for the third sitting running, and the reason is
-structural rather than bad luck**: sappers march on the machine ignoring return fire, so a solo
-defender is never hit. It needs an escort-only wave or a creature told to prefer the player. The
-scope-in delivery fix shipped in the same build logged **zero** `sent nothing -- views not ready`
-warnings and no errors across the session, and the tester did not report missing entities — which is
-consistent with the fix and does not prove it, since the race may simply not have fired.
+**Player health at 1,000 is verified, and the player went down** — the first unstaged combat death
+the project has had. One monster 1189 hitting for 112 took the full pool to zero in 9 hits at
+18:51, and the two-stage bleedout fired correctly (`downed, tap-out in 2000ms, forced at 30000ms`),
+which is [NET-23](ISSUE-REGISTER.md)'s path running on a real kill rather than a staged one. A
+single Melded Aranha separately took the tester from 1,000 to 118 in 59 seconds, which is §7's
+"three attackers kill in ~22 s" divided by three, holding within the noise from a direction nobody
+aimed at it. Three readings came free: **the player has no shields at all** (every line reads
+`0 shields`, so 1,000 is the whole pool and not the health half of a budget — now an open question
+in [Combat-Scale §10](Design/Combat-Scale.md)), health regenerates fully within ten minutes, and
+creature damage is no longer one number, since 1189 hits for 112 where Aranha hits for 49.
+
+**This was nearly filed as "untestable" instead, and the near-miss is now a method note.** A sweep
+of every log for the day reported the player had never been hit — because
+[a player-controlled character logs under its display name, not its entity
+id](In-Game-Tests/README.md#a-player-logs-under-its-name-and-everything-else-under-an-id), so a grep
+keyed on the id matches nothing and reads exactly like a system that never ran. The tester's own
+account of the session is what corrected it. **When a grep says a system never ran, check the grep
+can match the subject before believing it.**
+
+The scope-in delivery fix shipped in the same build logged **zero** `sent nothing -- views not
+ready` warnings and no errors, and the tester confirmed nothing was missing this time — consistent
+with the fix, though one clean session does not prove the race cannot fire.
 
 **The 2026-08-14 evening sitting closed two milestones, three issue entries, and the queue's
 biggest gate, in one pass.** [Persistence](In-Game-Tests/Persistence.md) went **7 of 7** and

@@ -221,6 +221,13 @@ has no entries in that category, which reflects nothing having run rather than n
   almost certainly a Tigerclaw ability (`Pulsar` reads 155 to 17,763). Surviving anchor: 200 for
   shell-less hissers, from 0.6 patch notes, = level 4. `MonsterAttributeRange` looks like a better
   answer and is not: `per_level` is 0.0 in all 167 rows.
+  **First live evidence that the grading reaches the game, 2026-08-16.** Two creature types were
+  seen hitting a player in one evening for materially different amounts — monster **1189 for 112 a
+  hit**, monster **528 for 49** — so damage is no longer one number for everything that walks.
+  That is the `damage` column of the matched `MonsterScaling` row arriving intact, and it is what
+  [D7](In-Game-Tests/Damage-Loop.md#-d7-creatures-are-no-longer-all-the-same-size) was written to
+  ask. It does not close D7, which wants *health* read off two graded creatures side by side; it
+  does say the path from grade to live number is not broken anywhere along its length.
   **Built the same day and the entry is now partly closed.**
   [`MonsterTier`](../UdpHosts/GameServer/Systems/Combat/MonsterTier.cs) converts the grade into a
   level by taking health as proportional to it — a column named *cost*, graded across 906 types, is
@@ -464,7 +471,13 @@ has no entries in that category, which reflects nothing having run rather than n
   retires the units guess: the tap-out gate reads the same clock value the countdown does, so a
   prompt appearing on time proves the client converts absolute shard times. Stays `[~]` on the
   three entries still unrun — the visible countdown, monsters dying properly, and dying mid-thumper.
-  The 2016 capture cannot help — nobody dies in it
+  The 2016 capture cannot help — nobody dies in it.
+  **The path now runs unprompted, which B1 and B3 could not show.** On 2026-08-16 a monster 1189
+  took the tester's new 1,000-health pool to zero in nine hits with no test in progress, and the log
+  reads `Player … downed, tap-out in 2000ms, forced at 30000ms` exactly as it does when the entries
+  stage it. Both earlier passes were runs of this entry; this was the game killing somebody who was
+  doing something else, which is the condition it will actually meet. Dying mid-thumper is still
+  unrun — no thumper was active
 
 - [ ] **NET-25** — An ack claims a packet that never arrived. `Channel` acks the highest inbound
   sequence it has seen rather than the highest with no gap behind it, so a lost client packet is
