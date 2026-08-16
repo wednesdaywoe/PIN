@@ -36,7 +36,19 @@ public class EntityManager
     private readonly ILogger _logger;
     private readonly ulong _updateFlushIntervalMs = 5;
     private readonly ulong _scopeInIntervalMs = 20;
-    private readonly ulong _scopeCheckIntervalMs = 5000;
+    private readonly int _scopeInsPerTick = 10;
+
+    // Was 5000. The pass is the only thing that ever notices a player has moved toward something, so the
+    // interval is a hard floor on how late anything can appear: at a run, 5 s of travel put creatures well
+    // inside their own scope range before the server thought to mention them. Cost is a distance check per
+    // entity per player, so 500 ms is still nothing. Needs _scopeOutRangeMultiplier to stay flicker-free.
+    private readonly ulong _scopeCheckIntervalMs = 500;
+
+    // Scope in at the entity's range, scope out only past this much of it. A player standing on the
+    // boundary otherwise flips the same entity in and out on every pass, which was a slow blink at 5 s
+    // and would be a strobe at 500 ms -- plus a keyframe every time.
+    private readonly float _scopeOutRangeMultiplier = 1.1f;
+
     private readonly ulong _lifetimeCheckIntervalMs = 1000;
     private readonly ConcurrentDictionary<ulong, HashSet<INetworkPlayer>> _scopedPlayersByEntity = new();
     private readonly ConcurrentQueue<ScopeInRequest> _queuedScopeIn = new();
@@ -443,8 +455,11 @@ public class EntityManager
         // Process queued scope-ins
         if (!_queuedScopeIn.IsEmpty && currentTime > _lastScopeIn + _scopeInIntervalMs)
         {
-            bool ok = _queuedScopeIn.TryDequeue(out ScopeInRequest request);
-            if (ok)
+            // One dequeue per 20 ms capped arrivals at 50 a second, so walking into a camp of thirty
+            // delivered it over most of a second, one creature at a time -- pop-in the queue caused
+            // rather than relieved. Drain a batch per tick and keep the tick, which is the part that
+            // actually spreads the keyframe cost out.
+            for (int i = 0; i < _scopeInsPerTick && _queuedScopeIn.TryDequeue(out ScopeInRequest request); i++)
             {
                 ScopeIn(request.Player, request.Entity);
             }
@@ -526,7 +541,11 @@ public class EntityManager
                     {
                         var playerPosition = player.CharacterEntity.Position;
                         float distance = Vector3.Distance(entityPosition, playerPosition);
-                        shouldBeScoped = distance <= distanceThreshold;
+
+                        // Already-scoped entities get the wider threshold, so leaving costs more distance
+                        // than arriving did and nothing can oscillate on the boundary.
+                        float threshold = isScoped ? distanceThreshold * _scopeOutRangeMultiplier : distanceThreshold;
+                        shouldBeScoped = distance <= threshold;
                     }
 
                     // Resolve shouldBeScoped
@@ -1146,7 +1165,7 @@ public class EntityManager
             return;
         }
 
-        // A scope-in can outlive the entity it is for: the queue drains one per 20ms, and Remove takes
+        // A scope-in can outlive the entity it is for: the queue drains on a tick, and Remove takes
         // the scope set with it. Sending the keyframe regardless would hand the client a fresh copy of
         // something the shard has already forgotten, which is NET-24's symptom arriving by a second
         // route -- a client holding an entity nothing will ever scope out again.

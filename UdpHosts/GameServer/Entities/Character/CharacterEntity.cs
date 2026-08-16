@@ -925,6 +925,19 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         {
             Character_BaseController.StaticInfoProp = StaticInfo;
         }
+
+        // How far away a character stays visible is per-type data Red 5 shipped and nothing was reading:
+        // dbcharacter::CharInfo.scope_range, 123 rows, all non-zero, 9 distinct values from 60 to 1500.
+        // "Player Character" (id 1) and most NPCs sit at 150, Aranha at 100. Without this every character
+        // fell through to BaseEntity's flat fallback, so a Brontodon scoped in at the same distance as a
+        // beetle and everything alive appeared far closer than the client's far clip could draw it.
+        // Applied here rather than in LoadMonster/Load because CharInfoId is what decides the range, and
+        // this is the one place it is ever assigned -- including the `StaticInfo with { }` updates.
+        var charInfo = SDBInterface.GetCharInfo(StaticInfo.CharInfoId);
+        if (charInfo != null && charInfo.ScopeRange > 0)
+        {
+            Scoping = new ScopingComponent { Range = charInfo.ScopeRange };
+        }
     }
 
     public void SetTimePlayed(int value)

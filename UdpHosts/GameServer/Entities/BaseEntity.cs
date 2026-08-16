@@ -55,6 +55,9 @@ public class BaseEntity : IEntity
 
     public float GetScopeRange()
     {
-        return (Scoping != null) ? Scoping.Range : 100f;
+        // 150 rather than the old 100 because that is the game's own baseline: it is the value on
+        // dbcharacter::CharInfo's "Player Character" row and on most NPC rows, and the floor of
+        // vcs::ScopingComponentDef. Anything that knows its real range sets Scoping and never reaches here.
+        return (Scoping != null) ? Scoping.Range : 150f;
     }
 }
