@@ -101,7 +101,7 @@ the `Remove(Turret)` in `Destroy` didn't take.
 ## [ ] V4: A destroyed deployable doesn't leave an invisible wall
 
 1. Do V3, then wait for the model to disappear
-2. `npc 1196 <coords past where it stood>` so there's something to hit behind it
+2. Walk to a spot past where it stood and `npc 1196` there, so there's something to hit behind it
 3. Shoot through where it was
 
 Pass: shots hit whatever is behind it. This is what the `Physics.RemoveEntity` call in
@@ -143,8 +143,9 @@ deployable is the case that would actually fail.
 
 ## [ ] V7: Splash reaches deployables and vehicles
 
-1. `deployable 211 0 0 0` and `vehicle 116 3 0 0` — substitute your own coordinates, close enough
-   that one splash covers both
+1. `deployable 211`, walk three or four paces, `vehicle 116` — close enough that one blast covers
+   both. Spawn them by walking rather than typing coordinates: the numbers on these commands are
+   absolute world positions, not offsets from you ([method notes](README.md))
 2. Fire a splash ability into the gap between them
 3. ```
    grep -aE "Deployable .* took|Vehicle .* took" ~/Games/PIN/logs/GameServer.log | tail -20
@@ -181,6 +182,6 @@ Pass adds one clause for the weapon path: the direct target, if you hit one, is 
 not twice — its own round and the blast are separate numbers in the log and the blast must skip it.
 
 If you would rather run the ability path, and you don't know which of your abilities splashes, find
-out rather than guessing: `npc 1196 0 0 0` and `npc 1196 2 0 0`, fire each ability at the gap in
-turn, and grep for an `ExecutionId` that produced two `damage from` lines. One execution damaging
+out rather than guessing: `npc 1196`, walk two paces, `npc 1196`, then fire each ability at the gap
+in turn, and grep for an `ExecutionId` that produced two `damage from` lines. One execution damaging
 two entities is the splash.

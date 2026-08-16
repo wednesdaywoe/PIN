@@ -327,7 +327,7 @@ client binds target-applied predictions there, this class still has the D5 gap t
 > 42009/42013/42023 rows.
 
 1. `createitem 143906`, slot it
-2. `npc 1196 0 0 0` for a target dummy, then activate at it by keypress
+2. `npc 1196` for a target dummy, then activate at it by keypress
 3. Client log for 15422: does the predicted copy on the target reconcile and end, or linger?
 4. `listeffects` with the NPC targeted, and the server log, to see what the server thinks the
    NPC carries

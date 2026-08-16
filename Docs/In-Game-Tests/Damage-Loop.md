@@ -47,9 +47,11 @@ The weapon path is the unverified one and is the better run.
 0), direct hits only` for most weapons, or a radius and what the blast is worth at four distances.
 Nothing below works on a weapon that reads `none`, and most rifles do.
 
-1. `npc 1196 0 0 0`, `npc 1196 3 0 0`, `npc 1196 6 0 0` — three targets at increasing distance from
-   one splash centre. Keep the spacing inside the radius `dbg_weapon` printed, or the far one is
-   simply out of reach and reads as a failure
+1. `npc 1196`, walk three paces, `npc 1196`, walk three more, `npc 1196` — three targets at
+   increasing distance from one blast centre. Spawn them by walking rather than typing coordinates;
+   the numbers on this command are absolute world positions ([method notes](README.md)). Keep the
+   total spread inside the radius `dbg_weapon` printed, or the far one is simply out of reach and
+   reads as a failure
 2. Fire at the **ground under the first one**, not at it. That keeps the direct hit out of the
    numbers, so what each target took is the blast alone and comparable across the three. (For the
    ability path instead: fire the splash ability centred on the first.)

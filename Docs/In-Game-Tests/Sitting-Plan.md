@@ -232,8 +232,10 @@ is fine; `tp` back afterwards.
 
 ## Block 8 — the two loose ends
 
-- [K4](Kill-Rewards.md) second half: `npc 528` next to a Chosen group and let them fight. Nothing
-  should be paid to anyone
+- [K4](Kill-Rewards.md) second half: `npc 1189`, walk five or six paces, `npc 1196`, stand clear and
+  let them fight. Nothing should be paid to anyone. **The pair changed on 2026-08-16** — this used
+  to say `npc 528` next to a Chosen group, and 528 and 1196 turn out to be allies in the shipped
+  faction table, so that run could never have produced a fight
 - [G3](Resource-Payout.md): look for a thumper beacon in the calldown interface. **"Nothing is
   offered" is the result**, not a failure — mark it `[-]` and say so
 

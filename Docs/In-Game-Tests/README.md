@@ -23,6 +23,26 @@ Read it when you are about to sit down, rather than picking entries off the regi
 Status markers: `[ ]` not run, `[x]` passed, `[!]` failed (leave it in with what happened),
 `[-]` skipped or not reproducible.
 
+## Spawn coordinates are absolute, and this file used to say otherwise
+
+**`npc <id> <x> <y> <z>` takes a position in the world, not an offset from you.** Entries across
+this queue used to write `npc 1196 5 0 0` and gloss it as "a Chosen Fiend five metres away". It is
+not: it is the point (5, 0, 0) in zone 448, roughly 500m sideways and 400m below anywhere a player
+stands. Corrected everywhere on 2026-08-16, and it really did happen — the log for that morning
+holds `Spawned monster 1196 ... at <10, 0, 0>` and `at <0, 0, 0>`, two Chosen Fiends dropped
+through the floor of the world by an entry that read as a distance.
+
+**Use the bare form.** `npc <id>` with no coordinates spawns on top of you, which is also the only
+ground the server can vouch for — there is no terrain data, so a typed coordinate can as easily be
+inside a hillside as on it, and nothing will tell you which. When an entry needs two things a set
+distance apart, spawn one, walk the distance, and spawn the next. The same holds for `deployable`
+and `vehicle`.
+
+A typed coordinate is worth it only when the entry needs a *specific* place, and then it should be
+a position somebody has actually stood on. `grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log`
+is the record of every footing the server has ever measured, which is where a trustworthy one comes
+from.
+
 Adding an entry: state the task, the steps in order, and every command in full with its arguments
 filled in — real type ids, coordinates, item ids, grep lines. These get run on the game machine
 away from the source, so a step that says "spawn a monster" instead of `npc 1196` costs a trip back

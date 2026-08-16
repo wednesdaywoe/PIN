@@ -114,7 +114,8 @@ spawn is correct and anything surprising afterwards is locomotion.
 
 ## [x] N1: An NPC notices you and turns to face you
 
-1. `npc 1196 5 0 0` — a Chosen Fiend five metres away
+1. `npc 1196`, then walk about five paces away — a Chosen Fiend five metres off. Coordinates on
+   this command are absolute world positions, not offsets; see the [method notes](README.md)
 2. Stand still and watch it for a few seconds
 3. `grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -5`
 
@@ -136,7 +137,7 @@ would look like. That's why the build check is in the preamble now.
 The headline check for the attack pass, and what [H5](Hostility.md) has been blocked on since it was
 written.
 
-1. `npc 1196 5 0 0`
+1. `npc 1196`, then step back a few paces
 2. Stand in front of it and do nothing
 3. `grep -a "opens fire" ~/Games/PIN/logs/GameServer.log | tail -5`
 4. `grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -10`
@@ -173,7 +174,7 @@ produced no output at all and could have been anything.
 
 ## [x] N3: Cover stops the shot
 
-1. `npc 1196 5 0 0`
+1. `npc 1196`, then step back a few paces
 2. Let it open fire, then step fully behind something solid
 3. `grep -a "opens fire" ~/Games/PIN/logs/GameServer.log | tail -5`
 
@@ -202,7 +203,7 @@ not just an NPC's.
 
 ## [x] N4: Walking out of range disengages
 
-1. `npc 1196 5 0 0`
+1. `npc 1196`, then step back a few paces
 2. Walk away in a straight line until it stops shooting, counting the distance
 3. `grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -5`
 
@@ -238,7 +239,7 @@ first seven entries this is the only one locomotion touches — the rest spawn t
 
 ## [x] N5: The firing rhythm reads as a weapon
 
-1. `npc 1196 5 0 0` and let it shoot for ten seconds or so
+1. `npc 1196`, step back a few paces, and let it shoot for ten seconds or so
 2. `grep -a "opens fire" ~/Games/PIN/logs/GameServer.log | tail -10`
 
 Pass: the gap between consecutive `opens fire` timestamps matches the `next burst in Nms` the line
@@ -253,8 +254,8 @@ capture is the only thing that answers that; see [Capture Replay](Capture-Replay
 
 Cheap, and the only entry here that doesn't need the player in the line of fire.
 
-1. `npc 290 0 0 0` — Accord Assault, faction 1
-2. `npc 1196 6 0 0` — Chosen Fiend, faction 2
+1. `npc 290` — Accord Assault, faction 1
+2. Walk about six paces, then `npc 1196` — Chosen Fiend, faction 2
 3. Stand well clear and watch
 4. `grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20`
 
@@ -277,7 +278,7 @@ and another losing its damage looks like two unrelated bugs right up until you r
 
 ## [x] N7: A burst that loses its target ends cleanly
 
-1. `npc 1196 5 0 0`
+1. `npc 1196`, then step back a few paces
 2. Let it open fire, then kill it mid-burst
 3. Repeat, this time killing it with `rment` while it's firing
 

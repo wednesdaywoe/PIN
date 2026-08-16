@@ -272,19 +272,31 @@ was not checked is step 3: nobody looked at the bag afterwards to confirm nothin
 appears anywhere around it. A death with no attacker pays nobody, which is the half that could
 plausibly have crashed or credited a null.
 
-**The NPC-on-NPC half did not happen.** No `NPC ... died to <another NPC>` line exists in the
-session at all. Aranha and Chosen are mutually hostile, but nothing put them in reach of each other
-this run. Still open, and it needs the two factions deliberately stood next to each other rather
-than a wave.
+**The NPC-on-NPC half did not happen, and the reason is that this entry named a pair that cannot
+fight.** It used to say Aranha and Chosen are mutually hostile. They are not. Read out of the
+shipped `dbcharacter::FactionRelations` on 2026-08-16: **528 is faction 6 ("melding"), 1196 is
+faction 2 ("chosen"), and the row for that pair is `hostility_stance=2, hostility_bidirectional=1`
+— positive, so allied, in both directions.** Zone 448's three standing groups mix 528 and 1196 for
+exactly that reason and have never fought each other.
+
+**Use 1189 instead.** It is faction **7 ("gaea")**, and gaea against chosen reads
+`hostility_stance=-1, hostility_bidirectional=1` — hostile, stated outright in both directions, so
+neither side has to be provoked. 1189 is also already proven in game: it is [D7](Damage-Loop.md)'s
+subject, spawns, renders and dies. 1189 against 528 works too (gaea against melding), but that one
+leans on a one-way row plus a default-stance fallback where gaea against chosen is stated flat out.
 
 The guards. Both are reachable without another player.
 
 1. Stand at a melding wall or walk into deep water and die to it. See [E1](Environment.md) for which
    hazards are live.
 2. `grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -3`
-3. Let two hostile NPCs fight — `npc 528` next to a Chosen group will do it, and it is the same
-   mutual hostility that killed zone 448 four times over in [N14](NPC-Combat.md).
-4. `grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -3`
+3. Let two hostile NPCs fight. `npc 1189`, walk five or six paces, `npc 1196` — a gaea creature and
+   a Chosen Fiend, which are hostile both ways. Stand well clear and watch. It is the same mutual
+   hostility that killed zone 448 four times over in [N14](NPC-Combat.md), only with a pair that
+   really is hostile; see the note above for why 528 was the wrong choice
+4. `grep -aE "died to|paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -6` — the `died
+   to` line is what says the fight happened at all, and without it a clean `paid` result means
+   nothing
 
 Pass: neither step adds a line. A hazard death has no killer at all, and an NPC killer has no
 `Player` to pay.

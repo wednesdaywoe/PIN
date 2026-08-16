@@ -252,7 +252,7 @@ Not just a convenience — it is what makes E3 runnable, so it has to be trustwo
 
 1. `invuln on`
 2. `tp 119 -2039 605` and stand in the melding for a minute
-3. `npc 1196 5 0 0` and let it shoot you
+3. `npc 1196`, step back a few paces, and let it shoot you
 4. `invuln off` and stay where you are
 
 Pass: no health or shield movement at all while it is on, the `entered the melding` line still
@@ -275,8 +275,9 @@ several minutes and neither took a point. Every one of the session's 49 `damage 
 names the player and nothing else. The decision holds exactly as written.
 
 1. `tp 119 -2039 605` with `invuln on`
-2. `npc 1196 0 0 0` and `npc 528 3 0 0` — a Chosen Fiend and a Melded Aranha, both standing in the
-   melding with you
+2. `npc 1196`, walk three paces, `npc 528` — a Chosen Fiend and a Melded Aranha, both standing in
+   the melding with you. Spawn them on yourself rather than at typed coordinates, or they land
+   outside the melding and the entry proves nothing
 3. Wait a minute, then `grep -a "damage from null" ~/Games/PIN/logs/GameServer.log | tail -10`
 
 Pass: neither monster takes any environmental damage. Nothing in the log names them.

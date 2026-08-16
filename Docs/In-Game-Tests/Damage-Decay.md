@@ -105,7 +105,7 @@ Use the shotgun. Decay starts at 5m there, so all three distances fit in a space
 an assault rifle needs a target more than 105m away before a single number moves.
 
 1. `createitem 20003`, equip it, then `dbg_weapon` and note `Range decay: full to Xm`
-2. `npc 1196 0 0 0` — substitute a flat spot you can back away from in a straight line
+2. Stand on a flat spot you can back away from in a straight line, then `npc 1196`
 3. `float` to toggle `cheat_float` on if you need height or distance the terrain won't give you
 4. Shoot it from contact range, from just past X, and from as far as it stays hittable
 5. `float` again to turn it off

@@ -138,8 +138,9 @@ fall damage.
 
 Verifies that splash respects faction, which is what changed.
 
-1. `npc 1196 0 0 0`, `npc 1196 2 0 0`, `npc 290 4 0 0` — two chosen and one accord, spawned two
-   metres apart. Substitute your own coordinates; any three points in a line work.
+1. `npc 1196`, walk two paces, `npc 1196`, walk two more, `npc 290` — two chosen and one accord,
+   roughly two metres apart in a line. Spawning as you walk keeps every one of them on ground you
+   have stood on; typed coordinates are absolute and can land inside terrain.
 2. Fire a splash ability into the middle of the group
 3. `grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20`
 

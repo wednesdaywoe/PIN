@@ -89,9 +89,17 @@ The whole milestone is wiring, as predicted, and the wave design follows the res
 directly: the thumper's own state machine decides when, and every spawn is a one-shot verb.
 Four waves of Melded Aranha stand up on a 20m ring at 15/40/65/90% of drilling progress
 (2+0, 2+1, 3+1, 3+2), each split into **sappers** that march on the machine ignoring return fire
-and **escorts** that fight what they perceive. Single-species deliberately — Aranha and Chosen are
-mutually hostile and a mixed wave fights itself, which is N14's lesson — and 528 specifically so no
-unchecked model renders (the CLIENT-3 rule above stands for whoever varies the waves).
+and **escorts** that fight what they perceive. Single-species deliberately, and 528 specifically so
+no unchecked model renders (the CLIENT-3 rule above stands for whoever varies the waves).
+
+**The reason given for single-species at the time was wrong, though the decision survives it.** It
+was written as "Aranha and Chosen are mutually hostile and a mixed wave fights itself, which is
+N14's lesson". Checked against `dbcharacter::FactionRelations` on 2026-08-16: 528 is faction 6
+("melding"), 1196 is faction 2 ("chosen"), and that pair reads `hostility_stance=2,
+hostility_bidirectional=1` — allied, both ways. Zone 448's three standing groups mix them for
+exactly that reason. N14's lesson was real but it was about a different set of three creatures.
+What still holds is the model rule: 528 and 1196 are the only two creatures ever confirmed to
+render correctly, so varying the waves is a CLIENT-3 risk whatever the factions say.
 
 What it took, by the work table:
 
