@@ -1,0 +1,1564 @@
+<title>PIN — One-Sitting Run Sheet</title>
+
+<style>
+  /* ============================================================
+     Tokens. Light is the bare :root. Dark is redefined twice —
+     once for the un-stamped system default, once for the explicit
+     stamp — so all three viewer states resolve as a full set.
+     ============================================================ */
+  :root {
+    --ground:      #eff1f4;
+    --surface:     #ffffff;
+    --surface-2:   #f6f7f9;
+    --ink:         #171b21;
+    --ink-soft:    #5b6675;
+    --ink-faint:   #8b94a2;
+    --rule:        #d7dbe1;
+    --rule-soft:   #e6e9ee;
+    --accent:      #a8412a;
+    --accent-ink:  #ffffff;
+    --accent-wash: #f6e7e2;
+    --ok:          #2f6b4f;
+    --ok-wash:     #e2efe8;
+    --warn:        #8a6212;
+    --warn-wash:   #f5ecd8;
+    --danger:      #9e2f26;
+    --danger-wash: #f7e4e2;
+    --code-bg:     #f2f4f7;
+    --shadow:      0 1px 2px rgba(23, 27, 33, .06), 0 8px 24px -16px rgba(23, 27, 33, .28);
+
+    --serif: ui-serif, Charter, "Bitstream Charter", Georgia, "Times New Roman", serif;
+    --sans:  ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono:  ui-monospace, "JetBrains Mono", "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #14171c;
+      --surface:     #1b1f26;
+      --surface-2:   #21262e;
+      --ink:         #e3e7ec;
+      --ink-soft:    #9ba5b3;
+      --ink-faint:   #6d7784;
+      --rule:        #2d333d;
+      --rule-soft:   #262c34;
+      --accent:      #e0805f;
+      --accent-ink:  #1b1109;
+      --accent-wash: #2e211b;
+      --ok:          #74c096;
+      --ok-wash:     #1c2a24;
+      --warn:        #d7a747;
+      --warn-wash:   #2b2519;
+      --danger:      #e5786c;
+      --danger-wash: #2e1d1c;
+      --code-bg:     #12161b;
+      --shadow:      0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #14171c;
+    --surface:     #1b1f26;
+    --surface-2:   #21262e;
+    --ink:         #e3e7ec;
+    --ink-soft:    #9ba5b3;
+    --ink-faint:   #6d7784;
+    --rule:        #2d333d;
+    --rule-soft:   #262c34;
+    --accent:      #e0805f;
+    --accent-ink:  #1b1109;
+    --accent-wash: #2e211b;
+    --ok:          #74c096;
+    --ok-wash:     #1c2a24;
+    --warn:        #d7a747;
+    --warn-wash:   #2b2519;
+    --danger:      #e5786c;
+    --danger-wash: #2e1d1c;
+    --code-bg:     #12161b;
+    --shadow:      0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0 1.25rem 6rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 3.5rem 0 1.75rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5vw, 3.1rem);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 46ch;
+    margin: 0;
+  }
+
+  /* ---------- sticky control bar ---------- */
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem 0;
+    margin-bottom: 2.5rem;
+    background: var(--ground);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .tally {
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    padding-right: .4rem;
+  }
+  .tally b { color: var(--ink); font-weight: 600; }
+
+  .meter {
+    flex: 1 1 8rem;
+    height: 4px;
+    min-width: 5rem;
+    background: var(--rule-soft);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .meter i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width .25s ease;
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: .3rem .7rem;
+    font-size: .78rem;
+    font-family: var(--mono);
+    letter-spacing: .02em;
+    transition: border-color .12s ease, background .12s ease, color .12s ease;
+  }
+  button:hover { border-color: var(--ink-faint); }
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  button.primary:hover { filter: brightness(1.06); }
+
+  /* ---------- blocks ---------- */
+
+  .block {
+    margin: 0 0 1rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .block-head {
+    display: grid;
+    grid-template-columns: 3.2rem 1fr auto;
+    align-items: baseline;
+    gap: .9rem;
+    width: 100%;
+    text-align: left;
+    padding: 1.05rem 1.25rem;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    font-family: var(--sans);
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+  .block-head:hover { background: var(--surface-2); }
+
+  .block-n {
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .block-t {
+    font-family: var(--serif);
+    font-size: 1.32rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+  .block-t small {
+    display: block;
+    font-family: var(--sans);
+    font-size: .84rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+    letter-spacing: 0;
+    margin-top: .15rem;
+  }
+
+  .block-meta {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .chev {
+    display: inline-block;
+    width: .55rem;
+    height: .55rem;
+    border-right: 1.5px solid var(--ink-faint);
+    border-bottom: 1.5px solid var(--ink-faint);
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform .18s ease;
+  }
+  .block[data-open="false"] .chev { transform: rotate(-45deg) translate(-1px, 1px); }
+
+  .block-body { padding: 0 1.25rem 1.4rem; border-top: 1px solid var(--rule-soft); }
+  .block[data-open="false"] .block-body { display: none; }
+
+  /* a block where you are meant to be killed */
+  .block.lethal .block-n { color: var(--danger); }
+
+  /* ---------- entries ---------- */
+
+  .entry {
+    padding: 1.3rem 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .entry:last-child { border-bottom: 0; padding-bottom: .2rem; }
+
+  .entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .6rem;
+    margin-bottom: .4rem;
+  }
+
+  .id {
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: .12rem .45rem;
+    border-radius: 3px;
+    background: var(--accent-wash);
+    color: var(--accent);
+  }
+  .id.none { background: var(--rule-soft); color: var(--ink-soft); }
+
+  .marker {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-faint);
+  }
+  .marker.fail { color: var(--danger); }
+  .marker.pass { color: var(--ok); font-weight: 700; }
+
+  .entry-t {
+    font-family: var(--serif);
+    font-size: 1.06rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .note {
+    font-size: .9rem;
+    color: var(--ink-soft);
+    margin: .35rem 0 .7rem;
+    max-width: 68ch;
+  }
+  .note strong { color: var(--ink); font-weight: 600; }
+
+  .callout {
+    border-left: 2px solid var(--warn);
+    background: var(--warn-wash);
+    padding: .6rem .85rem;
+    margin: .7rem 0;
+    font-size: .88rem;
+    color: var(--ink);
+    border-radius: 0 4px 4px 0;
+    max-width: 68ch;
+  }
+  .callout.stop { border-left-color: var(--danger); background: var(--danger-wash); }
+  .callout.pass { border-left-color: var(--ok); background: var(--ok-wash); }
+  .callout b { font-family: var(--mono); font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; display: block; margin-bottom: .15rem; }
+
+  /* ---------- steps ---------- */
+
+  .steps { display: flex; flex-direction: column; gap: .45rem; margin: .6rem 0; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 1.15rem 1fr;
+    gap: .6rem;
+    align-items: start;
+    font-size: .93rem;
+    cursor: pointer;
+  }
+  .step input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: .22rem 0 0;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    flex: none;
+  }
+  .step input:checked { background: var(--ok); border-color: var(--ok); }
+  .step input:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px; top: 1px;
+    width: 4px; height: 9px;
+    border: solid var(--surface);
+    border-width: 0 2px 2px 0;
+    transform: rotate(42deg);
+  }
+  .step input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .step input:checked ~ .step-body { color: var(--ink-faint); }
+  .step input:checked ~ .step-body .lede { text-decoration: line-through; }
+
+  .step-body { min-width: 0; }
+  .lede { display: block; }
+
+  /* ---------- commands ---------- */
+
+  .cmd {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: .4rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+  .cmd pre {
+    margin: 0;
+    padding: .5rem .7rem;
+    flex: 1 1 auto;
+    min-width: 0;          /* without this the pre refuses to shrink and the page scrolls sideways */
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.55;
+    color: var(--ink);
+    tab-size: 2;
+  }
+  .cmd code { font: inherit; white-space: pre; }
+
+  .copy {
+    flex: none;
+    border: 0;
+    border-left: 1px solid var(--rule);
+    border-radius: 0;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 0 .8rem;
+    min-width: 4.6rem;
+  }
+  .copy:hover { background: var(--accent); color: var(--accent-ink); }
+  .copy[data-done="1"] { background: var(--ok); color: var(--surface); }
+
+  /* ---------- data table ---------- */
+
+  .tbl-scroll { overflow-x: auto; margin: .7rem 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .86rem;
+    min-width: 30rem;
+  }
+  th, td {
+    text-align: left;
+    padding: .42rem .7rem .42rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom-color: var(--rule);
+  }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- result box ---------- */
+
+  .result { margin-top: .9rem; }
+  .result label {
+    display: block;
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: .3rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 3.2rem;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .5rem .65rem;
+  }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+  /* ---------- closing sections ---------- */
+
+  .closer {
+    margin-top: 2.5rem;
+    padding-top: 1.6rem;
+    border-top: 2px solid var(--ink);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 1.8rem 0 .5rem;
+  }
+  h2:first-child { margin-top: 0; }
+  .closer p { font-size: .93rem; color: var(--ink-soft); max-width: 68ch; }
+  .closer p strong { color: var(--ink); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.6rem;
+    transform: translate(-50%, 1.5rem);
+    background: var(--ink);
+    color: var(--ground);
+    font-family: var(--mono);
+    font-size: .78rem;
+    padding: .5rem .9rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 50;
+  }
+  .toast[data-on="1"] { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; }
+  }
+
+  @media (max-width: 34rem) {
+    .block-head { grid-template-columns: 1fr auto; }
+    .block-n { grid-column: 1 / -1; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>One-Sitting Run Sheet</h1>
+    <p class="standfirst">Every check that can be run alone, in one unbroken session. One server start
+      at the beginning, one login, no logout and no restart until the end.</p>
+  </header>
+
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+
+  <!-- ============================== BLOCK 0 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 0</span>
+      <span class="block-t">Setup and baselines<small>Start the servers, turn on the client's own logging, write down four numbers.</small></span>
+      <span class="block-meta">10 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id none">Setup</span><span class="entry-t">Build, deploy, launch</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b0-1"><span class="step-body">
+            <span class="lede">Tests green before leaving the desk.</span>
+            <span class="cmd"><pre><code>dotnet test PIN.sln</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b0-2"><span class="step-body">
+            <span class="lede">Build, install and launch all three servers.</span>
+            <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b0-3"><span class="step-body">
+            <span class="lede">Confirm the server is running the build the banner announced.</span>
+            <span class="cmd"><pre><code>grep -a "Running build" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id none">Setup</span><span class="entry-t">Log in and arm the client log</span></div>
+        <p class="note">Press <code style="font-family:var(--mono)">f7</code> in game. That switches on the client's own
+          ability logging. Block 9 is unreadable without it, and the last two sittings both lost their
+          client-side evidence to a session where it was off.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b0-4"><span class="step-body"><span class="lede">Logged in to zone 448.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b0-5"><span class="step-body"><span class="lede">Pressed <b>f7</b>. Client logging on.</span></span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id none">Setup</span><span class="entry-t">Baseline counts</span></div>
+        <p class="note">Several entries below are counts, and a count only means something against a number
+          taken before it. Write all four down.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b0-6"><span class="step-body">
+            <span class="lede">All four baselines.</span>
+            <span class="cmd"><pre><code>grep -ac "took .* damage from" ~/Games/PIN/logs/GameServer.log
+grep -ac "paid .* of resource 10" ~/Games/PIN/logs/GameServer.log
+grep -ac "rolled nothing" ~/Games/PIN/logs/GameServer.log
+grep -ac "died to" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b0">Baselines</label><textarea id="r-b0" data-k="n-b0" placeholder="damage= / paid= / nothing= / died="></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 1 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 1</span>
+      <span class="block-t">D7 Part A — do the grades resolve<small>Two commands. The gate for blocks 2 and 3.</small></span>
+      <span class="block-meta">3 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">D7·A</span><span class="marker pass">[x] passed 22:45 — both grade lines exact</span><span class="entry-t">Creatures are no longer all the same size</span></div>
+        <p class="note">Every creature used to have identical health and damage, because the shipped power
+          curve is looked up by level and levels never shipped. A creature's threat grade now supplies that
+          key. These two share a weapon and differ only in grade — 20 against 45.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b1-1"><span class="step-body">
+            <span class="lede">Spawn both.</span>
+            <span class="cmd"><pre><code>npc 528
+npc 1189</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b1-2"><span class="step-body">
+            <span class="lede">Read the grading lines.</span>
+            <span class="cmd"><pre><code>grep -a "graded" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          <code style="font-family:var(--mono);font-size:.8rem">Monster 528 graded 20 -&gt; level 13, 1224 health, damage x1.00</code><br>
+          <code style="font-family:var(--mono);font-size:.8rem">Monster 1189 graded 45 -&gt; level 18, 2801 health, damage x2.29</code>
+        </div>
+        <div class="callout stop"><b>If this fails, skip blocks 2 and 3</b>
+          Both lines saying <i>ungraded, fell back to the anchor</i> means the curve did not load — check the
+          server opened the full <code style="font-family:var(--mono)">clientdb.sd2</code> and not the pruned one.
+          No <code style="font-family:var(--mono)">graded</code> lines at all means the log is not at Debug.
+          Nothing else in the sitting depends on this.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b1-3"><span class="step-body">
+            <span class="lede">Clear the field before the next block.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b1">Result</label><textarea id="r-b1" data-k="n-b1"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 2 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 2</span>
+      <span class="block-t">D7 Part B — health differs<small>Count hits, not seconds. The log measures the server; a stopwatch measures your reflexes.</small></span>
+      <span class="block-meta">10 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">D7·B</span><span class="marker pass">[x] passed — 32 / 72, twice on fresh spawns</span><span class="entry-t">Hits to kill, at 39 damage a round</span></div>
+        <div class="callout"><b>Not optional</b>
+          The <code style="font-family:var(--mono)">dbg_inventory</code> line is a step, not advice. A created
+          item is not in the server's inventory list until it is resent, and the previous run of this entry was
+          voided by skipping it — the equip silently failed and the wrong weapon was used for three kills.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b2-1"><span class="step-body">
+            <span class="lede">This part is about your damage, not theirs.</span>
+            <span class="cmd"><pre><code>invuln on</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b2-2"><span class="step-body">
+            <span class="lede">Heavy Machine Gun — 39 a round, 250-round clip, 80m range.</span>
+            <span class="cmd"><pre><code>createitem 85968
+dbg_inventory
+equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b2-3"><span class="step-body">
+            <span class="lede">Confirm the equip took. <b>No line means the run is void.</b></span>
+            <span class="cmd"><pre><code>grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b2-4"><span class="step-body">
+            <span class="lede">The before count.</span>
+            <span class="cmd"><pre><code>grep -ac "took .* damage from" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b2-5"><span class="step-body">
+            <span class="lede">Spawn the anchor, back off a few metres, hold fire until it dies. Count again and subtract.</span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b2-6"><span class="step-body">
+            <span class="lede">Same for the subject.</span>
+            <span class="cmd"><pre><code>npc 1189</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b2-7"><span class="step-body">
+            <span class="lede">Confirm the per-hit figure is 39 while you are here.</span>
+            <span class="cmd"><pre><code>grep -a "took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="tbl-scroll"><table>
+          <thead><tr><th>Creature</th><th>Grade</th><th>Level</th><th>Health</th><th>Expected hits</th></tr></thead>
+          <tbody>
+            <tr><td>528 — anchor</td><td class="num">20</td><td class="num">13</td><td class="num">1224</td><td class="num"><b>32</b></td></tr>
+            <tr><td>1189 — subject</td><td class="num">45</td><td class="num">18</td><td class="num">2801</td><td class="num"><b>72</b></td></tr>
+          </tbody>
+        </table></div>
+        <p class="note"><strong>If 528 moves, the cause is not the grading</strong> — its multiplier is exactly
+          ×1.00 by construction. 31 instead of 32 is rounding, not a failure. Both counts coming back
+          <em>equal</em> is the real failure: the grade resolved but the health never reached the creature.</p>
+        <div class="result"><label for="r-b2">528 hits / 1189 hits / per-hit damage</label><textarea id="r-b2" data-k="n-b2"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 3 ============================== -->
+  <section class="block lethal" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 3</span>
+      <span class="block-t">D7 Part C — damage differs<small>Same weapon on both creatures, so the grade is the only thing that can differ.</small></span>
+      <span class="block-meta">5 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">D7·C</span><span class="marker pass">[x] passed — 49 vs 112 a hit</span><span class="entry-t">Take hits from each and read what landed</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b3-1"><span class="step-body">
+            <span class="lede">Required for this part, and the step that makes 1189 dangerous.</span>
+            <span class="cmd"><pre><code>invuln off</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b3-2"><span class="step-body">
+            <span class="lede">Let it hit you several times, then kill it. Take several hits, not one — range decay applies to what monsters shoot too.</span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b3-3"><span class="step-body">
+            <span class="lede">Same again.</span>
+            <span class="cmd"><pre><code>npc 1189</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b3-4"><span class="step-body">
+            <span class="lede">These are the hits <em>you</em> took. <code style="font-family:var(--mono)">Fallback</code> is the player's placeholder name, not an error. This counts the two figures for you rather than making you read them off a tail — the monsters' hits interleave with your own.</span>
+            <span class="cmd"><pre><code>grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | sed 's/.*took \([0-9]*\) damage.*/\1/' | sort -n | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="lede">Raw lines instead, if you want to see the times:</span>
+            <span class="cmd"><pre><code>grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="tbl-scroll"><table>
+          <thead><tr><th>Creature</th><th>Scalar</th><th>49.5 × scalar</th><th>Should read</th></tr></thead>
+          <tbody>
+            <tr><td>528</td><td class="num">×1.00</td><td class="num">49.5</td><td class="num"><b>49</b> or 50</td></tr>
+            <tr><td>1189</td><td class="num">×2.29</td><td class="num">113.4</td><td class="num"><b>113</b></td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout stop"><b>If 1189 kills you outright</b>
+          Record it and say so. ×2.29 is the <i>low</i> end of the ladder — grade-300 minibosses resolve to
+          ×14.16 — so if the low end already reads as lethal, the anchor is wrong rather than the mapping.
+          Your judgement outranks the arithmetic here.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b3-5"><span class="step-body">
+            <span class="lede">Clear the field.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Result, 2026-08-15 22:31–22:44</b>
+          49 a hit from 528, 112 from 1189 — against predictions of 49 and 113. All three parts passed,
+          and Part B's counts came out twice on separate spawns.
+          <br><br>
+          <b>What the numbers also say:</b> 112 a hit against your 19192 health means 1189 needs roughly
+          <b>170 uninterrupted hits</b> to kill you — close to four minutes of standing still. It is not
+          dangerous, it is slow. Every block below that needs a death by monster will take longer than
+          the time on its heading.</div>
+        <div class="result"><label for="r-b3">528 damage / 1189 damage / how it felt</label><textarea id="r-b3" data-k="n-b3"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 4 ============================== -->
+  <section class="block lethal" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 4</span>
+      <span class="block-t">The cheap combat leftovers<small>Four entries off two kills and one death.</small></span>
+      <span class="block-meta">10 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">B4</span><span class="marker pass">[x] passed — 5 died-to lines, body dissolves</span><span class="entry-t">Monsters still die properly</span></div>
+        <p class="note">Death now branches on who is dying. A monster must <strong>die</strong>, not go down
+          waiting for a respawn prompt it will never get.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b4-1"><span class="step-body">
+            <span class="lede">Kill it, then watch the corpse for 30 seconds.</span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b4-2"><span class="step-body">
+            <span class="lede">The line must say <b>died to</b>, not went down.</span>
+            <span class="cmd"><pre><code>grep -a "died to" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b4a">Result</label><textarea id="r-b4a" data-k="n-b4a"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">K3</span><span class="marker pass">[x] passed — rolled twice, bag unchanged</span><span class="entry-t">Equipment and powerups are rolled and visibly not paid</span></div>
+        <p class="note">Half-answered already: the roll is recorded and named. <strong>The half nobody has
+          checked is the bag</strong> — look at it.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b4-3"><span class="step-body">
+            <span class="lede">Find a line naming an item id and quantity.</span>
+            <span class="cmd"><pre><code>grep -a "not paid — item drops are unbuilt" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b4-4"><span class="step-body">
+            <span class="lede">Confirm no new item arrived.</span>
+            <span class="cmd"><pre><code>dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b4b">Result</label><textarea id="r-b4b" data-k="n-b4b"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">D1 + B2</span><span class="marker pass">[x] passed — downed, 2000ms tap-out, forced at 30000ms</span><span class="entry-t">Die once, and watch the timer before pressing anything</span></div>
+        <p class="note">Both entries come off the same death. B2 is one glance: <strong>watch the bleedout
+          timer for a few seconds before touching the keyboard.</strong> It should count down from roughly 30,
+          one second per second, and the give-up prompt should become available about 2 seconds in.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b4-5"><span class="step-body">
+            <span class="lede">Turn protection off and let a monster kill you.</span>
+            <span class="cmd"><pre><code>invuln off</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b4-6"><span class="step-body"><span class="lede"><b>B2:</b> watched the countdown for a few seconds without pressing anything.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b4-7"><span class="step-body">
+            <span class="lede">Confirm the gate the countdown is drawn from.</span>
+            <span class="cmd"><pre><code>grep -a "downed, tap-out" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b4-8"><span class="step-body"><span class="lede"><b>D1:</b> tapped out on Reload, respawned at the nearest uncaptured outpost, movement accepted again.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b4-9"><span class="step-body">
+            <span class="lede">Clear the field.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout"><b>If you miss the countdown</b>
+          Blocks 6 and 7 both kill you again. Take it there instead.</div>
+        <div class="result"><label for="r-b4c">What the timer read</label><textarea id="r-b4c" data-k="n-b4c"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 5 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 5</span>
+      <span class="block-t">Deployables<small>No travel, no setup, and the only block where nothing can kill you.</small></span>
+      <span class="block-meta">20 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="callout stop"><b>Type changed 2026-08-15 — 356 and 517 do not work</b>
+        Health and a hitbox are different columns. <code style="font-family:var(--mono)">start_hitpoints</code>
+        decides whether damage may land; <code style="font-family:var(--mono)">collision_id</code> decides whether
+        a bullet ever arrives to land it. <b>Type 517 ships with no collision at all</b>, so shots pass through and
+        it can never be destroyed — that is the shipped data, not a bug in the damage code. Type 356 is sound but
+        needs 257 rounds, more than one clip, and it never spawned on the first attempt.
+        <br><br>
+        <b>Use 1229 for V1 through V4.</b> 2400 health, large enough to hit, faction 2, a hitbox that loads, turret 23,
+        and the same death ability 517 had. 62 rounds at 39 damage — one clip, with the bar moving the whole way.
+        <br><br>
+        Of 3902 deployable types, 1017 have health and no hitbox. Only 101 of the 274 you are allowed to shoot have both.</div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">V1</span><span class="marker">[ ] not run</span><span class="entry-t">Deployables have health at all — gates V2 to V4</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b5-1"><span class="step-body">
+            <span class="lede">2400 health, faction 2, and a hitbox that loads. Then shoot it.</span>
+            <span class="cmd"><pre><code>deployable 1229</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-2"><span class="step-body">
+            <span class="lede">No <i>has no StartHitpoints</i> and no <i>has no collision id</i> line for 1229, and hits print a took-damage line. If either warning appears, the type is unusable — pick another.</span>
+            <span class="cmd"><pre><code>grep -aE "has no StartHitpoints|has no collision id|Deployable .* took" ~/Games/PIN/logs/GameServer.log | tail -20</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-3"><span class="step-body"><span class="lede"><b>V2:</b> the health bar on screen actually drops. First time anything has written that field on a deployable.</span></span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">V3 + V4</span><span class="marker">[ ] not run</span><span class="entry-t">Destroy one, then shoot through where it stood</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b5-4"><span class="step-body">
+            <span class="lede">Same one as V1, if it is still standing. 2400 health and turret 23 to lose. Shoot it until it dies.</span>
+            <span class="cmd"><pre><code>deployable 1229</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-5"><span class="step-body">
+            <span class="lede">The last line reaching 0 of 2400 is the signal. Watch for a turret left floating.</span>
+            <span class="cmd"><pre><code>grep -a "Deployable .* took" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-6"><span class="step-body">
+            <span class="lede"><b>V4:</b> put something behind where it stood, then shoot through. Shots must land on it.</span>
+            <span class="cmd"><pre><code>npc 1196 10 0 0</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">V6</span><span class="marker">[ ] not run</span><span class="entry-t">Friendly deployables are still safe</span></div>
+        <p class="note">Read this one carefully before trusting it. 348's faction is already 1, so it comes out
+          right by accident — <strong>this passing says nothing about the two paths that are broken.</strong>
+          A player-placed deployable is the case that would actually fail.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b5-7"><span class="step-body">
+            <span class="lede">Faction 1, same as you.</span>
+            <span class="cmd"><pre><code>deployable 348</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-8"><span class="step-body">
+            <span class="lede">Aim at it, then read the pair. Expect Friendly, can damage: False. Then shoot — nothing should log.</span>
+            <span class="cmd"><pre><code>target
+hostility</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">V7 + D3</span><span class="marker fail">[!] weapons do not splash — DATA-21</span><span class="entry-t">Splash — find the ability first</span></div>
+        <div class="callout stop"><b>It has to be an ability — no weapon splashes</b>
+          Confirmed 2026-08-16, from a Grenade Launcher fired between two touching enemies that killed neither.
+          A weapon shot traces one ray and damages exactly what it struck; the grenade hit the ground, and the
+          ground has no health. The blast radius is in the shipped ammunition data on 612 of 1264 rows and PIN
+          never reads it. That is a real finding and it is now recorded as DATA-21 — but it is not V7, which
+          needs the ability path, where splash actually is implemented.</div>
+        <div class="callout"><b>Do the discovery step</b>
+          D3 has sat unrun purely for want of knowing which ability splashes. Find it here and you get both
+          entries. Spawn two targets close together, fire each <b>ability</b> at the gap in turn, and look for one
+          <code style="font-family:var(--mono)">ExecutionId</code> that produced two damage lines. That one
+          execution damaging two entities is the splash. No weapon will ever produce it, however large the
+          explosion looks on screen.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b5-9"><span class="step-body">
+            <span class="lede">Discovery pair.</span>
+            <span class="cmd"><pre><code>npc 1196 0 0 0
+npc 1196 2 0 0</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-10"><span class="step-body">
+            <span class="lede"><b>D3:</b> three targets at increasing distance from one splash centre. Fire centred on the first.</span>
+            <span class="cmd"><pre><code>npc 1196 0 0 0
+npc 1196 3 0 0
+npc 1196 6 0 0</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-11"><span class="step-body">
+            <span class="lede">Damage should scale down with distance, and the target caught by both the direct hit and the splash must only be damaged once.</span>
+            <span class="cmd"><pre><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-12"><span class="step-body">
+            <span class="lede"><b>V7:</b> one deployable and one vehicle close enough that a single splash covers both.</span>
+            <span class="cmd"><pre><code>deployable 211 0 0 0
+vehicle 116 3 0 0</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-13"><span class="step-body">
+            <span class="lede">Both take splash, neither takes it twice from one execution.</span>
+            <span class="cmd"><pre><code>grep -aE "Deployable .* took|Vehicle .* took" ~/Games/PIN/logs/GameServer.log | tail -20</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b5-14"><span class="step-body">
+            <span class="lede">Clear the field.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b5">Which ability splashes, and the deployable results</label><textarea id="r-b5" data-k="n-b5"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 6 ============================== -->
+  <section class="block lethal" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 6</span>
+      <span class="block-t">The thumper block<small>The longest block and the one that pays for the sitting — three unrun entries, and a fourth for free.</small></span>
+      <span class="block-meta">45 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="callout stop"><b>Redeploy before running this block</b>
+        The 2026-08-16 attempt ended with the <b>server process crashing</b>, not a network problem. When a
+        thumper is destroyed it removes its surviving wave members outright, and the artificial-intelligence
+        pass already under way then asked one of those removed attackers for a line of sight. There was no
+        physics body left to answer, and the error was never caught, so the whole server thread died. It will
+        happen again on every lost thumper until the fix is deployed.
+        <br><br>
+        Fixed in <code style="font-family:var(--mono)">PhysicsEngine.cs</code>: a shooter with no body now
+        reports no shot instead of throwing. Build and deploy first, then start here.
+        <span class="cmd"><pre><code>dotnet test PIN.sln
+cd ~/Games/PIN &amp;&amp; ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+        Confirm the banner names a build newer than <code style="font-family:var(--mono)">b15b68d2aea5</code>:
+        <span class="cmd"><pre><code>grep -a "Running build" ~/Games/PIN/logs/GameServer.log | tail -1</code></pre><button class="copy" type="button">Copy</button></span></div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">K2</span><span class="marker pass">[x] counts taken</span><span class="entry-t">Take the counts before you start</span></div>
+        <p class="note">K2 needs about forty kills of one creature type counted in a single session, and has
+          sat unrun because that sounded like its own errand. <strong>Every thumper wave member is monster
+          528 — exactly the type K2 asks for</strong> — and three defended cycles stand up roughly forty of
+          them. Take these three numbers now and again at the end of the block.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b6-1"><span class="step-body">
+            <span class="lede">Before.</span>
+            <span class="cmd"><pre><code>grep -ac "died to" ~/Games/PIN/logs/GameServer.log
+grep -ac "paid .* of resource 10" ~/Games/PIN/logs/GameServer.log
+grep -ac "rolled nothing" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b6-2"><span class="step-body"><span class="lede">Walked — not teleported — to within a few metres of <b>199.8, 315.7</b>. Basin Head Crystite, about 67m from the Battleframe Station.</span></span></label>
+        </div>
+        <div class="callout"><b>Do not run rment inside this block</b>
+          It removes every entity except players, which takes a standing thumper with it.</div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">G4</span><span class="marker pass">[x] passed — 0.51 completion, paid 30</span><span class="entry-t">Collecting early pays the fraction it managed</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b6-3"><span class="step-body">
+            <span class="lede">Note your crystite count first. Expect <i>in deposit [1] Basin Head Crystite</i>.</span>
+            <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b6-4"><span class="step-body">
+            <span class="lede">Confirm it reached THUMPING, then wait about 2½ minutes — half the 300-second window.</span>
+            <span class="cmd"><pre><code>grep -a "Thumper .* entered" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b6-5"><span class="step-body"><span class="lede">Interact with it (hold to use) to cut it short.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b6-6"><span class="step-body">
+            <span class="lede">Completion should read near 0.50, and the payout should be about half a 40–100 centre roll.</span>
+            <span class="cmd"><pre><code>grep -a "mined node type" ~/Games/PIN/logs/GameServer.log | tail -1
+grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log | tail -1</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout"><b>Watch the departure, not just the payout</b>
+          This is the only entry that takes the early path deliberately, and that path fires retail's own
+          extraction ability while the ordinary path fires a stand-in written into PIN's source.
+          <strong>Note whether the departure had an animation and a sound.</strong> That single observation is
+          what the open issue has been waiting on.</div>
+        <div class="result"><label for="r-b6a">Completion, payout, and what the departure looked like</label><textarea id="r-b6a" data-k="n-b6a"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">G6</span><span class="marker pass">[x] server removed it both cycles</span><span class="entry-t">A finished thumper leaves the world</span></div>
+        <p class="note">Until August a finished thumper paid out, vanished from the server, and
+          <strong>stayed standing on screen</strong> while the client asked for a fresh copy of the dead thing
+          every 5½ seconds forever. One 32-minute sitting logged 648 of those requests.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b6-7"><span class="step-body">
+            <span class="lede">Second cycle. Let the whole thing run and collect at COMPLETED.</span>
+            <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b6-8"><span class="step-body"><span class="lede">Watched the spot for a full minute after the payout. Model gone?</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b6-9"><span class="step-body">
+            <span class="lede">Note the timestamp of the <b>first</b> request naming the thumper's entity id, and whether it falls before or after the mined line.</span>
+            <span class="cmd"><pre><code>grep -a "KeyframeRequest" ~/Games/PIN/logs/GameServer.log
+grep -a "Dropped a queued scope-in" ~/Games/PIN/logs/GameServer.log
+grep -a "entered LEAVING\|mined node type" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b6b">Model gone? First keyframe request?</label><textarea id="r-b6b" data-k="n-b6b"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">B5</span><span class="marker pass">[x] passed — died mid-defence, cycle finished</span><span class="entry-t">Dying in a thumper defence doesn't break the encounter</span></div>
+        <p class="note">A code read says this should be uneventful, and the entry exists to confirm the read.
+          What no read can settle is whether the defence survives you being absent for thirty seconds.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b6-10"><span class="step-body">
+            <span class="lede">Third cycle, at the deposit centre.</span>
+            <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b6-11"><span class="step-body">
+            <span class="lede">No protection. Let wave 2 or 3 kill you.</span>
+            <span class="cmd"><pre><code>invuln off</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b6-12"><span class="step-body"><span class="lede">Respawned by either route, walked back, finished the defence.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b6-13"><span class="step-body">
+            <span class="lede">The cycle must still end in a payout or a destruction line, and <b>your death must not appear as a wave-member kill</b>.</span>
+            <span class="cmd"><pre><code>grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b6c">Result</label><textarea id="r-b6c" data-k="n-b6c"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">K2</span><span class="marker pass">[x] passed — 39 kills, 20.5% crystite</span><span class="entry-t">Close the count</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b6-14"><span class="step-body">
+            <span class="lede">After. The difference against the numbers at the top of this block is K2.</span>
+            <span class="cmd"><pre><code>grep -ac "died to" ~/Games/PIN/logs/GameServer.log
+grep -ac "paid .* of resource 10" ~/Games/PIN/logs/GameServer.log
+grep -ac "rolled nothing" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Paid and rolled-nothing add up to about the number of kills, and paid is somewhere near a quarter of
+          them. Two to nine out of twenty is a normal spread. <strong>Every kill paying</strong> is the failure
+          that looks like success — watch for it.</div>
+        <div class="result"><label for="r-b6d">Kills / paid / nothing</label><textarea id="r-b6d" data-k="n-b6d"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 7 ============================== -->
+  <section class="block lethal" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 7</span>
+      <span class="block-t">The melding trip<small>Four entries at the same four walls, plus half of a fifth.</small></span>
+      <span class="block-meta">25 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">E3</span><span class="marker pass">[x] passed</span><span class="entry-t">The melded side of a wall is the melded side</span></div>
+        <p class="note">The entry this whole stream exists for. Which side is lethal is inferred from how the
+          boundary's control points are wound, and is stated nowhere in the data. Backwards, it would make the
+          safe world lethal and the melding safe.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b7-1"><span class="step-body">
+            <span class="lede">Do not skip this. The coordinates are the wall's own altitude and sit above the ground in places.</span>
+            <span class="cmd"><pre><code>invuln on
+pflags</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <p class="note">For each pair: teleport to the safe point, run <code style="font-family:var(--mono)">hazard</code>,
+          teleport to the melded point, run it again.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b7-2"><span class="step-body">
+            <span class="lede">New Eden Melding 03 — safe, then melded.</span>
+            <span class="cmd"><pre><code>tp 129 -1920 605
+hazard
+tp 119 -2039 605
+hazard</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-3"><span class="step-body">
+            <span class="lede">New Eden Melding 09.</span>
+            <span class="cmd"><pre><code>tp -1967 1094 518
+hazard
+tp -2064 1165 518
+hazard</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-4"><span class="step-body">
+            <span class="lede">New Eden Melding Defence Base.</span>
+            <span class="cmd"><pre><code>tp 866 -1745 548
+hazard
+tp 922 -1851 548
+hazard</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-5"><span class="step-body">
+            <span class="lede">Hydro Core Melding 03.</span>
+            <span class="cmd"><pre><code>tp 266 1264 434
+hazard
+tp 330 1366 434
+hazard</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          At each safe point the wall is named at about 60m with <code style="font-family:var(--mono)">melded: False</code>,
+          at each melded point the same wall with <code style="font-family:var(--mono)">melded: True</code> — and
+          <strong>the melded point is the one that looks like it is inside the melding from the camera.</strong>
+          That last clause is the actual test. The numbers only confirm the server agrees with itself.</div>
+        <div class="callout stop"><b>If any wall comes out swapped, stop here</b>
+          Note which one and skip the rest of this block. A consistent swap is a one-line fix; a swap on some
+          walls and not others means each perimeter needs its own answer.</div>
+        <div class="result"><label for="r-b7a">Per wall: did the sides match the camera?</label><textarea id="r-b7a" data-k="n-b7a"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">E7</span><span class="marker pass">[x] passed — no NPC took a tick</span><span class="entry-t">NPCs are unaffected, on purpose</span></div>
+        <p class="note">Deliberate, not an oversight — melded creatures live in the melding, and no monster has
+          a client to report a water level. Recorded so a later session finding a trooper wading unharmed
+          through a river knows it was a decision.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b7-6"><span class="step-body">
+            <span class="lede">Stand in the melding with two monsters and wait a minute.</span>
+            <span class="cmd"><pre><code>tp 119 -2039 605
+npc 1196 0 0 0
+npc 528 3 0 0</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-7"><span class="step-body">
+            <span class="lede">Nothing in the log should name either of them.</span>
+            <span class="cmd"><pre><code>grep -a "damage from null" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">E4 + K4</span><span class="marker pass">[x] both passed — 960 a tick, nobody paid</span><span class="entry-t">Walking into the melding kills you</span></div>
+        <p class="note">That death is also K4's first half — a hazard death has no killer, so it must pay
+          nobody.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b7-8"><span class="step-body">
+            <span class="lede">Start on the safe side of New Eden Melding 03, then walk north-east across the wall towards 119 -2039 605 and stay there.</span>
+            <span class="cmd"><pre><code>invuln off
+tp 129 -1920 605</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-9"><span class="step-body">
+            <span class="lede">Expect an <i>entered the melding</i> line as you cross, then death in about twelve seconds.</span>
+            <span class="cmd"><pre><code>grep -aE "the melding at|damage from null" ~/Games/PIN/logs/GameServer.log | tail -20</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-10"><span class="step-body">
+            <span class="lede"><b>K4:</b> no new payment line should have appeared.</span>
+            <span class="cmd"><pre><code>grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout"><b>The rate is invented</b>
+          5% of maximum health every half second is the only made-up number in this stream, tuned to be
+          unmistakably lethal while still leaving time to turn around. Retail killed you faster.
+          <strong>If it feels wrong in play, say how it felt</strong> — that is the only evidence available.</div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">E5</span><span class="marker pass">[x] passed — ramp resets exactly</span><span class="entry-t">Leaving a hazard stops it, and the ramp resets</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b7-11"><span class="step-body"><span class="lede">Cross in, take a few ticks, walk back out. Damage must stop within half a second.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b7-12"><span class="step-body"><span class="lede">Let shields recharge, then cross again. The second crossing must hurt the same as the first, not pick up where it left off.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b7-13"><span class="step-body">
+            <span class="lede">Read both crossings.</span>
+            <span class="cmd"><pre><code>grep -aE "the melding at" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b7-14"><span class="step-body"><span class="lede">Water half: surface, breathe, dive again — <b>with protection off</b>. The 2026-08-12 run left this open by diving the second time with it on.</span></span></label>
+        </div>
+        <div class="result"><label for="r-b7b">Result</label><textarea id="r-b7b" data-k="n-b7b"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 8 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 8</span>
+      <span class="block-t">The two loose ends<small>Both cheap. One of them is designed to come back empty.</small></span>
+      <span class="block-meta">10 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">K4</span><span class="marker pass">[~] hazard half passed; no NPC-on-NPC kill occurred</span><span class="entry-t">An NPC-on-NPC kill pays nobody</span></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b8-1"><span class="step-body">
+            <span class="lede">Put one next to a Chosen group and let them fight — the same mutual hostility that killed zone 448 four times over.</span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b8-2"><span class="step-body">
+            <span class="lede">No new line. An NPC killer has no player to pay.</span>
+            <span class="cmd"><pre><code>grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">G3</span><span class="marker">[ ] not run</span><span class="entry-t">Can the client call a thumper down on its own?</span></div>
+        <div class="callout pass"><b>"Nothing is offered" is the result</b>
+          This is the entry most likely to come back with nothing, and that is worth having: it decides whether
+          the milestone closed on the real route or on an admin command. Mark it skipped and say so.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b8-3"><span class="step-body"><span class="lede">Looked for a thumper or beacon in the calldown interface, however the client offers it.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b8-4"><span class="step-body">
+            <span class="lede">If one was offered and called down, the request should appear here.</span>
+            <span class="cmd"><pre><code>grep -a "ResourceNodeBeaconCalldown" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b8">Result</label><textarea id="r-b8" data-k="n-b8"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 9 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 9</span>
+      <span class="block-t">Prediction sweep, and the Biotech question<small>Last on purpose. This is the only block that has to open the battleframe station.</small></span>
+      <span class="block-meta">30 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="callout stop"><b>Why this is last</b>
+        The battleframe station is the one open freeze case on record. Everything above is finished and
+        written down before you take that risk. If the client dies here, you lose this block and nothing else.</div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">P6</span><span class="marker fail">[!] failed once</span><span class="entry-t">Frontline Medic, on a frame that is allowed to use it</span></div>
+        <p class="note">This ability switched itself off seconds after being pressed on 2026-08-14, and that
+          press is one of the two legs the open issue stands on. Reading the client's own database this morning
+          showed <strong>its effect requires battleframe archtype 13 — the Biotech family.</strong> The sweep
+          has been run on a Dreadnaught, which is archtype 8. So the cancel may simply have been correct.</p>
+        <div class="tbl-scroll"><table>
+          <thead><tr><th>Family</th><th>Archtype</th><th>Chassis</th></tr></thead>
+          <tbody>
+            <tr><td>Biotech</td><td class="num">13</td><td class="num">75774</td></tr>
+            <tr><td>Dragonfly</td><td class="num">13</td><td class="num">76335</td></tr>
+            <tr><td>Recluse</td><td class="num">13</td><td class="num">76336</td></tr>
+            <tr><td>Dreadnaught — what the sweep has used</td><td class="num">8</td><td class="num">75772</td></tr>
+          </tbody>
+        </table></div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b9-1"><span class="step-body"><span class="lede">Switched to a Biotech-family frame at the station.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b9-2"><span class="step-body">
+            <span class="lede">Create the module and make the server aware of it, then slot it in the garage.</span>
+            <span class="cmd"><pre><code>createitem 75579
+dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b9-3"><span class="step-body"><span class="lede">Activated <b>by keypress</b> — not by the <code style="font-family:var(--mono)">ability</code> command, which predicts nothing and so tests the wrong half.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="b9-4"><span class="step-body">
+            <span class="lede">The client's own view of the effect.</span>
+            <span class="cmd"><pre><code>grep -a "effect 2322" "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log"</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b9-5"><span class="step-body">
+            <span class="lede">The server's side.</span>
+            <span class="cmd"><pre><code>grep -a "StatusEffect" ~/Games/PIN/logs/GameServer.log | tail -30</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Either answer is worth the sitting</b>
+          <strong>It holds</strong> — the client was right to cancel it on a Dreadnaught, that press was never
+          evidence, and the open issue shrinks to Turret Mode alone.
+          <strong>It cancels anyway</strong> — the frame requirement is not the explanation, and the issue keeps
+          both legs.</div>
+        <div class="result"><label for="r-b9a">Held, or cancelled?</label><textarea id="r-b9a" data-k="n-b9a"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">P6</span><span class="marker">[ ] not run</span><span class="entry-t">The rest of the runnable rows</span></div>
+        <p class="note">Each is the same loop: create, resend, slot, one keypress, read both logs. Expected
+          outcome for nearly all of them is a clean apply-and-remove. <strong>The value is the sweep
+          itself</strong> — after it, "the client mispredicted it" stops being a plausible write-off anywhere.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="b9-6"><span class="step-body">
+            <span class="lede">Effect 1875 — Chosen Grunt shotgun mode.</span>
+            <span class="cmd"><pre><code>createitem 52501
+dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b9-7"><span class="step-body">
+            <span class="lede">Effect 2562.</span>
+            <span class="cmd"><pre><code>createitem 76118
+dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b9-8"><span class="step-body">
+            <span class="lede">Effect 1651.</span>
+            <span class="cmd"><pre><code>createitem 34146
+dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="b9-9"><span class="step-body">
+            <span class="lede">Five effects on one ability — 274, 278, 279, 2211 and 7168.</span>
+            <span class="cmd"><pre><code>createitem 34461
+dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-b9b">Per effect: applied, removed, cancelled?</label><textarea id="r-b9b" data-k="n-b9b"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== CLOSERS ============================== -->
+  <section class="closer">
+    <h2>Not in this sitting</h2>
+    <div class="tbl-scroll"><table>
+      <thead><tr><th>Entry</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>K5, H7, V5</td><td>Need a second client.</td></tr>
+        <tr><td>P1</td><td>Its ability is an Ultimate, and the charge meter never refills in PIN.</td></tr>
+        <tr><td>D4, R5</td><td>Both need an ability that changes weapon damage, and nobody has identified which one that is. Desk work, not sitting work.</td></tr>
+        <tr><td>D5c</td><td>Diagnoses a camera that no longer gets stuck.</td></tr>
+        <tr><td>C1–C7, L1–L6</td><td>Already passed, and both need the restarts this sitting is avoiding.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>If the sitting is short</h2>
+    <p>Run blocks 0 to 4 and block 6, then stop. That is the grading check whole, four cheap combat entries,
+      three thumper entries and the loot rate — the newest code checked, and the block with the most unrun
+      entries in it.</p>
+
+    <h2>Why this order</h2>
+    <p><strong>The grading check leads because it is the cheapest gate.</strong> Four unverified changes from
+      the last two days ride on it: the creature grading, the health figure of 1200, the shield pool going to
+      zero, and a one-line inventory fix. Its first part costs two commands.</p>
+    <p><strong>Counts come before the things they count.</strong> Take the numbers immediately before and
+      after the block that produces them, rather than greping the whole log at the end where everything is
+      mixed together.</p>
+    <p><strong>Clear the field between blocks, never inside one.</strong> <code style="font-family:var(--mono)">rment</code>
+      removes every entity except players — which also takes a standing thumper mid-cycle.</p>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var LS = "pin-sitting-v1";
+  var state = {};
+
+  try {
+    state = JSON.parse(localStorage.getItem(LS) || "{}") || {};
+  } catch (e) {
+    state = {};
+  }
+
+  function save() {
+    try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) { /* private mode: page still works */ }
+  }
+
+  var toastEl = document.getElementById("toast");
+  var toastTimer = null;
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.setAttribute("data-on", "1");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.removeAttribute("data-on"); }, 1400);
+  }
+
+  /* ---- copy, with a fallback for sandboxes that block the clipboard API ---- */
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      ok ? resolve() : reject(new Error("copy blocked"));
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest(".copy");
+    if (!btn) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    var code = btn.parentNode.querySelector("code");
+    if (!code) { return; }
+    copyText(code.textContent).then(function () {
+      btn.setAttribute("data-done", "1");
+      btn.textContent = "Copied";
+      setTimeout(function () {
+        btn.removeAttribute("data-done");
+        btn.textContent = "Copy";
+      }, 1100);
+    }).catch(function () {
+      toast("Copy blocked — select the text instead");
+    });
+  });
+
+  /* ---- checkboxes ---- */
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll(".step input[type=checkbox]"));
+  document.getElementById("total").textContent = boxes.length;
+
+  var doneEl = document.getElementById("done");
+  var meterEl = document.getElementById("meter");
+
+  function tally() {
+    var n = 0;
+    for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) { n++; } }
+    doneEl.textContent = n;
+    meterEl.style.width = boxes.length ? (n / boxes.length * 100) + "%" : "0%";
+  }
+
+  boxes.forEach(function (box) {
+    var k = box.getAttribute("data-k");
+    if (state[k]) { box.checked = true; }
+    box.addEventListener("change", function () {
+      state[k] = box.checked ? 1 : 0;
+      if (!box.checked) { delete state[k]; }
+      save();
+      tally();
+    });
+  });
+  tally();
+
+  /* ---- result notes ---- */
+
+  var notes = Array.prototype.slice.call(document.querySelectorAll("textarea[data-k]"));
+  notes.forEach(function (ta) {
+    var k = ta.getAttribute("data-k");
+    if (state[k]) { ta.value = state[k]; }
+    ta.addEventListener("input", function () {
+      if (ta.value.trim()) { state[k] = ta.value; } else { delete state[k]; }
+      save();
+    });
+  });
+
+  /* ---- blocks ---- */
+
+  document.addEventListener("click", function (ev) {
+    var head = ev.target.closest(".block-head");
+    if (!head) { return; }
+    var block = head.parentNode;
+    block.setAttribute("data-open", block.getAttribute("data-open") === "false" ? "true" : "false");
+  });
+
+  var expandBtn = document.getElementById("expand");
+  expandBtn.addEventListener("click", function () {
+    var blocks = document.querySelectorAll(".block");
+    var anyClosed = document.querySelector('.block[data-open="false"]') !== null;
+    for (var i = 0; i < blocks.length; i++) {
+      blocks[i].setAttribute("data-open", anyClosed ? "true" : "false");
+    }
+    expandBtn.textContent = anyClosed ? "Collapse all" : "Expand all";
+  });
+
+  /* ---- run report ---- */
+
+  document.getElementById("report").addEventListener("click", function () {
+    var out = ["# Sitting report", ""];
+    var blocks = document.querySelectorAll(".block");
+
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i];
+      var n = b.querySelector(".block-n").textContent.trim();
+      var t = b.querySelector(".block-t").childNodes[0].textContent.trim();
+      var bx = b.querySelectorAll(".step input[type=checkbox]");
+      var checked = 0;
+      for (var j = 0; j < bx.length; j++) { if (bx[j].checked) { checked++; } }
+
+      out.push("## " + n + " — " + t + "  (" + checked + "/" + bx.length + " steps)");
+
+      var entries = b.querySelectorAll(".entry");
+      for (var e = 0; e < entries.length; e++) {
+        var ta = entries[e].querySelector("textarea[data-k]");
+        if (ta && ta.value.trim()) {
+          var idEl = entries[e].querySelector(".id");
+          var titleEl = entries[e].querySelector(".entry-t");
+          out.push("");
+          out.push("**" + (idEl ? idEl.textContent.trim() + " — " : "") + (titleEl ? titleEl.textContent.trim() : "") + "**");
+          out.push("");
+          out.push(ta.value.trim());
+        }
+      }
+      out.push("");
+    }
+
+    copyText(out.join("\n")).then(function () {
+      toast("Run report copied");
+    }).catch(function () {
+      toast("Copy blocked");
+    });
+  });
+
+  /* ---- reset ---- */
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!window.confirm("Clear every tick and every note on this page?")) { return; }
+    state = {};
+    save();
+    boxes.forEach(function (b) { b.checked = false; });
+    notes.forEach(function (t) { t.value = ""; });
+    tally();
+    toast("Cleared");
+  });
+})();
+</script>

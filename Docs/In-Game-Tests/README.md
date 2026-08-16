@@ -16,6 +16,10 @@ The index of streams — what's passing, what's blocked, what's not started — 
 [Test Register](../TEST-REGISTER.md). This file is just the method: how an entry is written and
 the marker legend it uses.
 
+[One-Sitting Run Order](Sitting-Plan.md) is the other direction through the same entries: every
+check that can be run solo without a logout or a restart, in the order that shares the most setup.
+Read it when you are about to sit down, rather than picking entries off the register one at a time.
+
 Status markers: `[ ]` not run, `[x]` passed, `[!]` failed (leave it in with what happened),
 `[-]` skipped or not reproducible.
 
