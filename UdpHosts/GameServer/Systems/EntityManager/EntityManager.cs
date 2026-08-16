@@ -1175,7 +1175,19 @@ public class EntityManager
             return;
         }
 
-        scopedPlayers.Add(player);
+        // Whether this scope-in actually put the entity on the wire.
+        //
+        // Every branch below sends only if the views it needs have been built, and at login they often
+        // have not: the zone's own entities exist before anyone connects, so the first scope-in attempt
+        // for whatever stands near the spawn point can land before that entity's views do. This used to
+        // mark the entity scoped BEFORE the send, which made a missed keyframe permanent -- the periodic
+        // pass only ever acts on a mismatch between "is scoped" and "should be scoped", and an entity
+        // marked without being sent matches. The player then stood next to something the server was
+        // certain it had already delivered, forever.
+        //
+        // So nothing is recorded until something is sent, and a failed attempt is simply left for the
+        // next pass, which is 500ms away.
+        var delivered = true;
 
         if (entity is CharacterEntity character)
         {
@@ -1258,6 +1270,10 @@ public class EntityManager
                         entity.EntityId);
                     }
                 }
+                else
+                {
+                    delivered = false;
+                }
             }
 
             var observer = character.Character_ObserverView;
@@ -1279,6 +1295,10 @@ public class EntityManager
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(combat, entity.EntityId);
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(movement, entity.EntityId);
             }
+            else
+            {
+                delivered = false;
+            }
 
             if (haveTinyObject)
             {
@@ -1293,6 +1313,10 @@ public class EntityManager
             {
                  player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
             }
+            else
+            {
+                delivered = false;
+            }
         }
         else if (entity is MeldingBubbleEntity meldingBubble)
         {
@@ -1301,6 +1325,10 @@ public class EntityManager
             if (haveObserver)
             {
                  player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
+            }
+            else
+            {
+                delivered = false;
             }
         }
         else if (entity is VehicleEntity vehicle)
@@ -1318,6 +1346,10 @@ public class EntityManager
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(baseController, entity.EntityId, player.PlayerId);
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(combatController, entity.EntityId, player.PlayerId);
                 }
+                else
+                {
+                    delivered = false;
+                }
             }
 
             var observer = vehicle.Vehicle_ObserverView;
@@ -1334,6 +1366,10 @@ public class EntityManager
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(combat, entity.EntityId);
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(movement, entity.EntityId);
             }
+            else
+            {
+                delivered = false;
+            }
         }
         else if (entity is DeployableEntity deployable)
         {
@@ -1342,6 +1378,10 @@ public class EntityManager
             if (haveObserver)
             {
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
+            }
+            else
+            {
+                delivered = false;
             }
         }
         else if (entity is TurretEntity turret)
@@ -1356,6 +1396,10 @@ public class EntityManager
                 {
                     player.NetChannels[ChannelType.ReliableGss].SendControllerKeyframe(baseController, entity.EntityId, player.PlayerId);
                 }
+                else
+                {
+                    delivered = false;
+                }
             }
 
             var observer = turret.Turret_ObserverView;
@@ -1366,6 +1410,10 @@ public class EntityManager
             {
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
             }
+            else
+            {
+                delivered = false;
+            }
         }
         else if (entity is OutpostEntity outpost)
         {
@@ -1374,6 +1422,10 @@ public class EntityManager
             if (haveObserver)
             {
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
+            }
+            else
+            {
+                delivered = false;
             }
         }
         else if (entity is ThumperEntity thumper)
@@ -1384,6 +1436,10 @@ public class EntityManager
             {
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
             }
+            else
+            {
+                delivered = false;
+            }
         }
         else if (entity is CarryableEntity carryable)
         {
@@ -1392,6 +1448,10 @@ public class EntityManager
             if (haveObserver)
             {
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(observer, entity.EntityId);
+            }
+            else
+            {
+                delivered = false;
             }
         }
         else if (entity is AreaVisualDataEntity avd)
@@ -1432,6 +1492,21 @@ public class EntityManager
                 player.NetChannels[ChannelType.ReliableGss].SendViewKeyframe(forceShield, entity.EntityId);
             }
         }
+
+        if (!delivered)
+        {
+            // Left unscoped on purpose, so the next pass tries again. Warning rather than Debug because a
+            // handful at login is the race resolving itself, and the same entity every pass for a minute
+            // is a view that is never going to be built -- which is a different bug and needs to be loud.
+            _logger.Warning(
+                "Scope-in of {EntityId} ({Type}) for {Player} sent nothing -- views not ready. Will retry",
+                entity.EntityId,
+                entity.GetType().Name,
+                player.PlayerId);
+            return;
+        }
+
+        scopedPlayers.Add(player);
     }
 
     public void ScopeOut(INetworkPlayer player, IEntity entity)
