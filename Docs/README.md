@@ -11,7 +11,8 @@ What the game itself was — the client build PIN targets, and what survives of 
 documentation — lives in the [Wiki](Wiki/README.md).
 
 Which of Firefall's systems are being brought back, and which deliberately aren't, is in
-[Restoration](Restoration.md).
+[Restoration](Restoration.md). What a hit and a body are worth once they are back — the numbers every
+other combat number is chosen against — is in [Combat Scale](Design/Combat-Scale.md).
 
 This project tracks its own state in three living docs, kept current session to session rather
 than written up after the fact:

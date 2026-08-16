@@ -21,6 +21,15 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     ///     The ring is placed at the thumper's own Z because that's the only ground height the server
     ///     can vouch for; a thumper on a steep slope will stand its waves in the hillside, which is the
     ///     same bet every offset spawn makes on this server.
+    ///     <para>
+    ///     "Watchable" turned out to be generous. An Aranha runs at 11m/s — shipped movement data, not
+    ///     ours — and stops 4m from the machine, so it crosses this ring in <b>1.5 seconds</b>. There is
+    ///     no interception window; a wave is on the thumper before the player has turned around. The
+    ///     radius stays at 20m anyway because widening it past 25m costs the escorts their perception of
+    ///     the defender, which is the behaviour the ring was sized for in the first place. The wave table
+    ///     below absorbs it instead, by never standing up more attackers than one player can work through.
+    ///     Untangling the two wants a spawn distance and a perception range that are set independently.
+    ///     </para>
     /// </summary>
     private const float WaveSpawnRadius = 20f;
 
@@ -37,13 +46,41 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     ///     hostile to each other, and a mixed wave fights itself at the foot of the thumper, which is
     ///     the zone-448 lesson the spawn audit exists to catch. 528 is also one of only two creatures
     ///     ever seen rendering (CLIENT-3), so the waves introduce no unchecked model.
+    ///     <para>
+    ///     <b>This table is the starting-zone stock thumper and nothing else.</b> A solo player has to be
+    ///     able to finish it. Retuned 2026-08-16 from a run that lost the machine at 93% having killed ten
+    ///     attackers — the previous table (2 / 2+1 / 3+1 / 3+2, ten sappers) put more damage on the thumper
+    ///     than it has health, so completing it solo was not possible rather than merely hard. See
+    ///     <c>Docs/Design/Combat-Scale.md</c> for the arithmetic and for the harder tables this one is
+    ///     eventually the easiest of.
+    ///     </para>
+    ///     <para>
+    ///     What the numbers are, all measured in game on 2026-08-16 rather than assumed. A sapper does 49 a
+    ///     swing every 1280ms, so <b>38 damage a second</b> while it stands at the machine. The player's
+    ///     effective output against these is <b>~234 a second</b> including aim and reposition time, so one
+    ///     1224-health Aranha takes <b>~5 seconds of fire</b>. The machine has 4000 health and that figure
+    ///     is shipped and invariant — 61 of 61 calldowns carry it, so it is the fixed point everything else
+    ///     is tuned against.
+    ///     </para>
+    ///     <para>
+    ///     The driver is not how many attackers arrive, it is <b>how many stand there at once</b>, because a
+    ///     player can only shoot one at a time and the rest keep swinging while they wait. Two sappers cost
+    ///     (5 + 10) seconds of chewing between them, three cost (5 + 10 + 15). That is why the old table's
+    ///     threes were fatal and why this one never exceeds two.
+    ///     </para>
+    ///     <para>
+    ///     Against a player who engages promptly this table lands roughly 2000 of the machine's 4000, so it
+    ///     finishes at about half health and the haul is visibly dented — the defence is worth something
+    ///     without being required. A player who is slow to react doubles that and loses it, which is the
+    ///     tension the event is for.
+    ///     </para>
     /// </summary>
     private static readonly Wave[] _waves =
     {
-        new(0.15f, Sappers: 2, Escorts: 0),
-        new(0.40f, Sappers: 2, Escorts: 1),
-        new(0.65f, Sappers: 3, Escorts: 1),
-        new(0.90f, Sappers: 3, Escorts: 2),
+        new(0.20f, Sappers: 1, Escorts: 0),
+        new(0.45f, Sappers: 2, Escorts: 0),
+        new(0.70f, Sappers: 2, Escorts: 1),
+        new(0.90f, Sappers: 2, Escorts: 1),
     };
 
     private static readonly uint _updateFrequency = ThumperState.THUMPING.CountdownTime() / 100;

@@ -298,6 +298,12 @@ name, its grading, and the absence of any other candidate.
 
 ## 7. Pressure budget `[derived]`
 
+> The numbers this section works backwards from are now settled in
+> [Combat Scale](Design/Combat-Scale.md), which uses this same reasoning as one of its three routes
+> to a player health pool. Two things from there change what follows: the thumper is **4,000** health
+> and invariant across all 61 shipped calldowns — the 15,000 figure below is 0.5-era and does not
+> apply to 1962 — and creatures currently swing 2.5× faster than the pressure budget wants.
+
 The structure-damage side is the one place real numbers can be worked backwards.
 
 - 0.5-era Advanced: 15,000 HP over a 300 s cycle `[period]`.
