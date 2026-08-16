@@ -155,9 +155,23 @@ rment
 No travel, no setup, and the only block where nothing can kill you. Run
 [V1–V4, V6, V7](Deployables-And-Vehicles.md) in that order; V1 gates V2–V4.
 
-V7 tells you how to find which of your abilities splashes. **Do that discovery step, because it is
-also what [D3](Damage-Loop.md) needs** — D3 has sat unrun purely for want of knowing which ability
-to press. Once you know it, D3 is three `npc 1196` spawns and one shot.
+**V7 and D3 both changed on 2026-08-16 and are now weapon entries as well as ability ones.** Weapons
+never splashed until that day, which is why both have sat unrun. Start with one command:
+
+```
+dbg_weapon
+```
+
+Its `Splash:` line either reads `none (ammo impact_radius 0), direct hits only` — correct for any
+ordinary rifle — or gives a radius and what the blast is worth at four distances. **Equip something
+that explodes before running either entry**; a grenade launcher or a mortar altfire, not a rifle.
+
+Then V7 and D3 are the same setup twice: spawn two or three targets inside that radius, fire at the
+**ground between them**, and read `grep -a "Splash from" ~/Games/PIN/logs/GameServer.log`. Aiming at
+the ground is the point — it is the case that used to do nothing at all.
+
+Both entries still document the ability path if you would rather run that; V7 tells you how to find
+which of your abilities splashes.
 
 V5 is skipped: it needs a second person in the vehicle.
 

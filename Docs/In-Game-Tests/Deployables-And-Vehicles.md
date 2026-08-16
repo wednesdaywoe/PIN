@@ -152,14 +152,35 @@ deployable is the case that would actually fail.
 
 Pass: both take splash damage, and neither takes it twice from one execution.
 
-**It has to be an ability, not a weapon.** No weapon splashes in PIN — the shot traces one ray and
-damages exactly what it struck, and a shipped blast radius on the ammunition is never read
-([DATA-21](../ISSUE-REGISTER.md)). The 2026-08-16 run found this by firing a Grenade Launcher
-between two touching enemies and killing neither: the grenade hit the ground, and the ground has no
-health. That result is real and recorded, but it is not V7 — V7 needs the ability path, which is
-where splash is actually implemented.
+**A weapon works for this now, and that is new.** The 2026-08-16 run found that no weapon splashed
+at all — a Grenade Launcher fired between two touching enemies killed neither, because the grenade
+hit the ground and the ground has no health ([DATA-21](../ISSUE-REGISTER.md)). That was built the
+same day and is unverified, so **this entry is now also the check on it**. Either path is a valid
+run; say which one you used.
 
-If you don't know which of your abilities splashes, find out rather than guessing: `npc 1196 0 0 0`
-and `npc 1196 2 0 0`, fire each ability at the gap in turn, and grep for an `ExecutionId` that
-produced two `damage from` lines. One execution damaging two entities is the splash. A weapon will
-never produce that line, however large its blast looks on screen.
+**Find out whether your weapon explodes before you fire it**, rather than reading a miss as a
+defect:
+
+```
+dbg_weapon
+```
+
+The `Splash:` line says either `none (ammo impact_radius 0), direct hits only` — which is correct
+for most weapons, including every ordinary rifle — or a radius and a table of what the blast is
+worth at four distances from the impact. Only a weapon with a radius can pass this entry. If yours
+reads `none`, switch to a grenade launcher or a mortar rather than concluding anything.
+
+Then, on a weapon that does explode, aim at the **ground between the two targets** rather than at
+either one. That is the case that used to do nothing at all, and it is the one worth running:
+
+```
+grep -a "Splash from" ~/Games/PIN/logs/GameServer.log | tail -5
+```
+
+Pass adds one clause for the weapon path: the direct target, if you hit one, is damaged once and
+not twice — its own round and the blast are separate numbers in the log and the blast must skip it.
+
+If you would rather run the ability path, and you don't know which of your abilities splashes, find
+out rather than guessing: `npc 1196 0 0 0` and `npc 1196 2 0 0`, fire each ability at the gap in
+turn, and grep for an `ExecutionId` that produced two `damage from` lines. One execution damaging
+two entities is the splash.

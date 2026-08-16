@@ -36,15 +36,34 @@ Pass: `hit.DamageMod` and `weapon.HeadshotMult` visibly change the number; the `
 flag reaches the client on headshots and crit materials. With the 46-damage assault rifle the
 expected pair is 39 body and 58 head.
 
-## [ ] D3: `InflictDamage` splash falloff
+## [ ] D3: Splash falloff
+
+**Renamed 2026-08-16.** This used to say `InflictDamage` splash falloff, because that command was
+the only splash in the game. Weapons have their own now, off the ammunition's shipped blast radius
+([DATA-21](../ISSUE-REGISTER.md)), and both use the same linear falloff, so the entry covers either.
+The weapon path is the unverified one and is the better run.
+
+**Check the weapon explodes first.** `dbg_weapon` prints a `Splash:` line: `none (ammo impact_radius
+0), direct hits only` for most weapons, or a radius and what the blast is worth at four distances.
+Nothing below works on a weapon that reads `none`, and most rifles do.
 
 1. `npc 1196 0 0 0`, `npc 1196 3 0 0`, `npc 1196 6 0 0` — three targets at increasing distance from
-   one splash centre
-2. Fire the splash ability centred on the first
-3. `grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20`
+   one splash centre. Keep the spacing inside the radius `dbg_weapon` printed, or the far one is
+   simply out of reach and reads as a failure
+2. Fire at the **ground under the first one**, not at it. That keeps the direct hit out of the
+   numbers, so what each target took is the blast alone and comparable across the three. (For the
+   ability path instead: fire the splash ability centred on the first.)
+3. ```
+   grep -aE "damage from|Splash from" ~/Games/PIN/logs/GameServer.log | tail -20
+   ```
 
-Pass: damage scales down linearly from `Pointblankrange` to the splash range, and the target caught
-by both the direct hit and the splash is only damaged once.
+Pass: damage scales down linearly from the point blank range to the edge of the radius, and the
+target caught by both a direct hit and the blast is damaged once by each and no more — two numbers,
+not one doubled and not three.
+
+The four figures `dbg_weapon` prints are the prediction. Compare the log against them rather than
+judging the shape by eye; the falloff curve itself is a guess about how the client interpolates
+([DATA-4](../ISSUE-REGISTER.md)) and this entry is the only thing that can say whether it is right.
 
 ## [ ] D4: `SetWeaponDamage` restores on effect end
 

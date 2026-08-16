@@ -1,6 +1,7 @@
 using System.Text;
 using GameServer.Entities.Character;
 using GameServer.StaticDB;
+using GameServer.Systems.Combat;
 using GameServer.Systems.ProjectileSim;
 
 namespace GameServer.Systems.Admin.Commands;
@@ -90,6 +91,7 @@ public class DebugWeaponTemplateServerCommand : ServerCommand
         stringBuilder.AppendLine($"DamagePerRound: {info.Weapon.DamagePerRound}");
         stringBuilder.AppendLine($"HeadshotMult: {info.Weapon.HeadshotMult}");
         AppendDamageFalloff(stringBuilder, character, info.Weapon);
+        AppendSplash(stringBuilder, character, info.Weapon);
 
         stringBuilder.AppendLine($"----- ?");
         stringBuilder.AppendLine($"MsReturn: {info.Weapon.MsReturn}");
@@ -165,6 +167,34 @@ public class DebugWeaponTemplateServerCommand : ServerCommand
         {
             var distance = falloff.MaxRange * fraction;
             stringBuilder.AppendLine($"  {distance:0.#}m: {falloff.DamageAt(distance):0.##}");
+        }
+    }
+
+    /// <summary>
+    ///     Says whether the equipped weapon explodes, and what the blast is worth at range. Worth printing
+    ///     before firing anything, because most weapons do not: only 612 of 1264 ammo rows carry a radius,
+    ///     so "nothing splashed" is the expected result for a rifle and a defect for a grenade launcher, and
+    ///     this is the only way to tell those apart without reading the db.
+    /// </summary>
+    private static void AppendSplash(StringBuilder stringBuilder, CharacterEntity character, WeaponTemplateResult weapon)
+    {
+        var ammo = SDBInterface.GetAmmo(weapon.AmmoId);
+        var splash = WeaponSplash.Resolve(ammo);
+
+        if (!splash.Enabled)
+        {
+            stringBuilder.AppendLine($"Splash: none (ammo impact_radius {ammo?.ImpactRadius ?? 0f}), direct hits only");
+            return;
+        }
+
+        var baseDamage = character.GetEffectiveWeaponDamage(weapon);
+
+        stringBuilder.AppendLine($"Splash: {splash.Radius}m radius, full damage inside {splash.PointBlankRange}m");
+
+        foreach (var fraction in new[] { 0f, 0.25f, 0.5f, 0.75f, 1f })
+        {
+            var distance = splash.Radius * fraction;
+            stringBuilder.AppendLine($"  {distance:0.#}m from impact: {baseDamage * splash.ScaleAt(distance):0.##}");
         }
     }
 }

@@ -327,7 +327,21 @@ has no entries in that category, which reflects nothing having run rather than n
   the shipped ladder to two damage values at the bottom. So the open question is no longer "what unit
   is the column" but "can a template value of 1 mean one point at all", and that is now the only
   thing keeping this entry from closing
-- [ ] **DATA-21** — A weapon's blast radius is shipped and never read, so no weapon splashes.
+- [~] **DATA-21** — A weapon's blast radius is shipped and never read, so no weapon splashes.
+  **Built 2026-08-16, unverified in game.** `WeaponSplash` resolves the ammo columns and
+  `ProjectileSim` runs a second pass over everything in reach of the impact, sharing `SplashFalloff`
+  with the ability path so both fall off the same way. The load-bearing change is underneath it: a
+  shot that struck the world used to be discarded by the raycast, which is why the grenade did
+  nothing — the impact position is now reported with no entity attached and the weapon path decides
+  whether a miss still explodes. Three readings of the shipped columns are pinned by tests because
+  each could have gone the other way: **-1 is a sentinel** (3 rows, all "Desecrated" ammo), **a
+  radius of 0 means no blast** so "Normal Bullet (assault rifle)" and 648 other rows are untouched,
+  and **`max_hits` is not a splash cap** — it reads 1 on 584 of the 612 rows that do carry a radius,
+  including every thrown grenade and mortar shell, so it counts projectile penetration instead.
+  `dbg_weapon` now prints the resolved radius and what the blast is worth at four distances, which
+  is how to tell a weapon that cannot splash from one that should have.
+  [V7](In-Game-Tests/Deployables-And-Vehicles.md) and [D3](In-Game-Tests/Damage-Loop.md) are the
+  check and both are rewritten to run against a weapon.
   `dbitems::Ammo.impact_radius` carries a real radius on **612 of 1264 ammo rows**, from 2m up to
   30m, and PIN loads the record without ever looking at that field. `ProjectileSim.TryResolveHit`
   traces one ray and damages exactly what it struck; there is no second pass over anything nearby.

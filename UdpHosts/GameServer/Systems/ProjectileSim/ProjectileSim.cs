@@ -23,6 +23,8 @@ public class ProjectileSim
 
     public void FireProjectile(CharacterEntity entity, uint trace, Vector3 origin, Vector3 direction, Ammo ammo, WeaponTemplateResult weapon)
     {
+        // A shot that struck the world still resolves, because it may still explode. `target` is null in
+        // that case and everything below is written to expect it.
         if (!TryResolveHit(entity, origin, direction, trace, out var hit, out var target))
         {
             return;
@@ -46,19 +48,29 @@ public class ProjectileSim
                 falloff.MaxRange);
         }
 
-        float damage = decayed * hit.DamageMod;
-        if (hit.Headshot && weapon.HeadshotMult > 0)
+        var damageType = entity.WeaponDamageTypeOverride ?? ammo.Damagetype;
+
+        if (target != null)
         {
-            damage *= weapon.HeadshotMult;
+            float damage = decayed * hit.DamageMod;
+            if (hit.Headshot && weapon.HeadshotMult > 0)
+            {
+                damage *= weapon.HeadshotMult;
+            }
+
+            target.TakeDamage(new DamageInfo
+            {
+                Amount = damage,
+                Attacker = entity,
+                DamageType = damageType,
+                Flags = ResolveFlags(hit),
+            });
         }
 
-        target.TakeDamage(new DamageInfo
-        {
-            Amount = damage,
-            Attacker = entity,
-            DamageType = entity.WeaponDamageTypeOverride ?? ammo.Damagetype,
-            Flags = ResolveFlags(hit),
-        });
+        // Splash is deliberately based on `decayed` rather than on what the direct target took: a headshot
+        // multiplier and a hit-location modifier belong to the body they were read off, not to everyone
+        // standing near it.
+        ApplySplash(entity, hit.Position, ammo, decayed, damageType, target, weapon);
     }
 
     /// <summary>
@@ -69,7 +81,11 @@ public class ProjectileSim
     /// </summary>
     public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage)
     {
-        if (!TryResolveHit(shooter, origin, direction, 0, out var hit, out var target))
+        // Deliberately still nothing on a world hit, unlike the weapon path above. An ability's area damage
+        // is InflictDamageCommand's job and it has its own radius off the command def, so reading the ammo
+        // radius here as well would apply two blasts to any chain that fires a projectile and then inflicts
+        // damage. DATA-21 is about weapons.
+        if (!TryResolveHit(shooter, origin, direction, 0, out var hit, out var target) || target == null)
         {
             return;
         }
@@ -95,8 +111,89 @@ public class ProjectileSim
     }
 
     /// <summary>
-    ///     Traces a shot and reports back what it landed on, if that's something the shooter is allowed to
-    ///     hurt. Everything past this point differs between a weapon and an ability.
+    ///     Damages everything the blast reaches, having already dealt with whatever the round struck
+    ///     directly. Does nothing at all for a weapon whose ammo carries no radius, which is most of them.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///     Which ammo explodes and how the blast falls off is <see cref="WeaponSplash"/>'s reading of the
+    ///     shipped columns, and the notes on why those columns read the way they do live there. Ability
+    ///     splash is a separate path that was never affected — <c>InflictDamageCommand</c> has always had
+    ///     its own, off <c>Splashrange</c> — and this deliberately does not touch it. DATA-21.
+    ///     </para>
+    ///     <para>
+    ///     Walking every entity in the shard per shot is the same thing <c>InflictDamageCommand</c> does and
+    ///     is affordable for the same reason: the loop is not entered at all unless the ammo explodes, so
+    ///     ordinary rifle fire costs one comparison.
+    ///     </para>
+    /// </remarks>
+    private void ApplySplash(
+        CharacterEntity shooter,
+        Vector3 center,
+        Ammo ammo,
+        float baseDamage,
+        byte damageType,
+        IDamageable directTarget,
+        WeaponTemplateResult weapon)
+    {
+        var splash = WeaponSplash.Resolve(ammo);
+        if (!splash.Enabled || baseDamage <= 0f)
+        {
+            return;
+        }
+
+        var hits = 0;
+
+        foreach (var pair in _shard.Entities)
+        {
+            // The direct target already took its own round, at its own hit location. Damaging it again here
+            // would charge one shot twice, which is the mistake V7 is written to catch.
+            if (pair.Value is not IDamageable splashTarget
+                || !splashTarget.IsAlive
+                || ReferenceEquals(splashTarget, shooter)
+                || ReferenceEquals(splashTarget, directTarget))
+            {
+                continue;
+            }
+
+            var scale = splash.ScaleAt(Vector3.Distance(center, splashTarget.Position));
+            if (scale <= 0f || !HostilityRules.CanDamage(shooter, splashTarget))
+            {
+                continue;
+            }
+
+            splashTarget.TakeDamage(new DamageInfo
+            {
+                Amount = baseDamage * scale,
+                Attacker = shooter,
+                DamageType = damageType,
+            });
+
+            hits++;
+        }
+
+        if (hits > 0)
+        {
+            _logger.Debug(
+                "Splash from {Weapon} ({Ammo}) at {Radius}m caught {Hits} entities beyond the direct hit",
+                weapon?.DebugName,
+                ammo.Name,
+                splash.Radius,
+                hits);
+        }
+    }
+
+    /// <summary>
+    ///     Traces a shot and reports back where it landed, and separately what it landed on if that is
+    ///     something the shooter is allowed to hurt. Everything past this point differs between a weapon
+    ///     and an ability.
+    ///     <para>
+    ///     The two answers are separate on purpose. False means the round touched nothing at all and there
+    ///     is no impact anywhere to reason about. True with a null <paramref name="target"/> means it
+    ///     landed somewhere real that cannot bleed — terrain, a wall, a corpse — which is a miss for a
+    ///     rifle and an explosion for a grenade. Reporting those two as the same thing is what made every
+    ///     shot into the ground disappear.
+    ///     </para>
     /// </summary>
     private bool TryResolveHit(CharacterEntity shooter, Vector3 origin, Vector3 direction, uint trace, out ProjectileHitResult hit, out IDamageable target)
     {
@@ -108,15 +205,16 @@ public class ProjectileSim
             return false;
         }
 
-        // Plenty of things have collision without being able to bleed, and a shot into one of those is a miss
+        // Plenty of things have collision without being able to bleed. A shot into one of those still
+        // happened somewhere, so the impact stands and only the target is left unset.
         if (!_shard.Entities.TryGetValue(hit.HitEntityId, out var hitEntity) || hitEntity is not IDamageable damageable || ReferenceEquals(damageable, shooter))
         {
-            return false;
+            return true;
         }
 
         if (!damageable.IsAlive || !HostilityRules.CanDamage(shooter, damageable))
         {
-            return false;
+            return true;
         }
 
         target = damageable;

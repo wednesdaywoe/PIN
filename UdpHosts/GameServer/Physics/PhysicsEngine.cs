@@ -312,6 +312,17 @@ public partial class PhysicsEngine
                     };
                 }
             }
+
+            // Struck the world, or a body with no entity behind it. This used to return null and the shot
+            // was simply discarded, which is right for a rifle and wrong for anything that explodes: a
+            // grenade landing between two enemies hit the ground, the ground has no health, and the shot
+            // did nothing at all. The impact POSITION is real whatever was standing there, so it is
+            // reported with no entity attached and the caller decides whether a miss still does damage.
+            return new ProjectileHitResult
+            {
+                HitEntityId = 0,
+                Position = hitPosition,
+            };
         }
         else
         {
