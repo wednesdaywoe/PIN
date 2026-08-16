@@ -250,12 +250,18 @@ public partial class PhysicsEngine
         var speed = 500f;
         var maxRange = 500f;
 
+        // Same guard as TargetRayCast: a shooter whose body has already been removed has no shot to fire.
+        if (!_entityIdToBody.TryGetValue(source.EntityId, out var sourceBody))
+        {
+            return null;
+        }
+
         DebugProjectileHitCallbacks?.SendDebugProjectileSpawn(source, trace, origin, direction, speed);
 
         var hitHandler = default(RayHitHandler);
         hitHandler.T = maxRange;
         hitHandler.AvoidSourceBody = true;
-        hitHandler.SourceBody = _entityIdToBody[source.EntityId];
+        hitHandler.SourceBody = sourceBody;
 
         Simulation.RayCast(origin, direction, float.MaxValue, BufferPool, ref hitHandler);
         if (hitHandler.T < maxRange)
@@ -323,16 +329,29 @@ public partial class PhysicsEngine
         Vector3 outPos = Vector3.Zero;
         ulong outEnt = 0;
 
+        // An entity can lose its physics body while something else is still holding a reference to it.
+        // A destroyed thumper removes its surviving wave members outright, and the AI tick already under
+        // way then asks one of them for a line of sight. There is no body to cast from, so the answer is
+        // "nothing hit". Indexing here instead threw KeyNotFoundException on the shard thread, which is
+        // unhandled and takes the whole server down with it -- the 2026-08-16 crash in Block 6.
+        if (!_entityIdToBody.TryGetValue(source.EntityId, out var sourceBody))
+        {
+            return (outHit, outPos, outEnt);
+        }
+
         var hitHandler = default(RayHitHandler);
         hitHandler.T = maxRange;
         hitHandler.AvoidSourceBody = true;
-        hitHandler.SourceBody = _entityIdToBody[source.EntityId];
+        hitHandler.SourceBody = sourceBody;
         Simulation.RayCast(origin, direction, float.MaxValue, BufferPool, ref hitHandler);
         if (hitHandler.T < maxRange)
         {
             outHit = true;
             outPos = origin + (direction * hitHandler.T);
-            outEnt = _bodyToEntityId[hitHandler.HitCollidable.BodyHandle];
+
+            // Same race from the other side: whatever the ray struck can be gone by the time it is named.
+            // Zero reads as "hit something that is not an entity", which every caller already handles.
+            outEnt = _bodyToEntityId.GetValueOrDefault(hitHandler.HitCollidable.BodyHandle);
         }
 
         return (outHit, outPos, outEnt);
