@@ -204,7 +204,20 @@ creature is not 528. Check the spawn line named the type you asked for.
 every creature in the game is the entry, and 1200 is still one flat pool. What a pass buys is
 confidence in the *band*, which is what the `difficulty_cost` → level work will be anchored against.
 
-## [ ] D7: Creatures are no longer all the same size
+## [x] D7: Creatures are no longer all the same size
+
+**Passed 2026-08-15, 22:31–22:44, all three parts.** Part A: both grade lines exact. Part B: **32**
+hits for 528 and **72** for 1189, and the pair repeated a second time on fresh spawns — four kills,
+four counts, no drift, every round 39. Part C: **49** a hit from 528 against **112** from 1189
+(predicted 49 and 113; a point of rounding on the subject, none on the anchor). 528 held its ×1.00
+anchor on all six spawns, so the difference is the grade and nothing else.
+
+The Part C grep did not match at first. That was the pattern, not the run — see step 4 below.
+
+One thing the numbers say that the entry did not anticipate: at 112 a hit against the player's
+19192 health, **1189 needs about 170 uninterrupted hits to kill you** — nearly four minutes of
+standing still. It is not dangerous, it is slow. Any entry that needs a death by monster should
+expect to wait, or be killed by something else. See [B4](Death-And-Respawn.md).
 
 Written 2026-08-15, after the `difficulty_cost` → level work landed. This is the entry that checks
 the thing D6 explicitly could not close: **one flat pool for every creature in the game**.
@@ -296,9 +309,20 @@ readable.
 1. `invuln off` — **required for this part**, and it is the step that makes 1189 dangerous.
 2. `npc 528`, let it hit you several times, then kill it.
 3. `npc 1189`, let it hit you several times, then kill it.
-4. `grep -a "Fallback .* took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -20`
-   — `Fallback` is the player's placeholder name (`HardcodedCharacterData.MaleFallbackData.Name`),
-   not an error. These are the hits *you* took.
+4. Count the two figures rather than reading them off a tail — the hits interleave with your own,
+   and a monster shooting once every 1280ms fills 20 lines fast:
+
+   ```
+   grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | sed 's/.*took \([0-9]*\) damage.*/\1/' | sort -n | uniq -c
+   ```
+
+   `Fallback` is the player's placeholder name (`HardcodedCharacterData.MaleFallbackData.Name`),
+   not an error. These are the hits *you* took. **Match the name exactly — the line is
+   `Fallback took`, with nothing between.** A pattern of `Fallback .* took` matches nothing at all,
+   which is how the 2026-08-15 run briefly read as "no damage logged" while the log held 63 hits.
+
+   To see the raw lines instead:
+   `grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -20`
 
 Weapon 20046 is the melee weapon [DATA-20](../gaps/data.md#data-20) already measured: template
 `damage_per_round` 225 × modifier 0.22 = 49.5, observed as **49**. So the predicted pair is concrete

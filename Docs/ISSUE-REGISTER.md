@@ -183,9 +183,17 @@ has no entries in that category, which reflects nothing having run rather than n
   distinct node types resolved from position in one sitting (242, 241, 233, and 20 for barren), and
   the same deposit paid 48 near its center against 33 at 59% out
 - [ ] **DATA-3** — `Battleframe.base_health` reads ~1000 in SDB vs. 19192 observed live, no scaling
-  logic
+  logic. **2026-08-16: the ~1000 is corroborated from two further directions that share no
+  assumptions with it** — beta trash health (0.6 cut shell-less Hissers and Skivers to 200, six times
+  under `MonsterScaling`'s level-13 row) and the thumper worked backwards (4000 health invariant, a
+  ~180s undefended death, ~48 DPS from three attackers, a 20-second player death → 960). Three routes,
+  one number. This stopped being an unexplained discrepancy and became **the entry that governs
+  combat balance**: 19192 is a 1962 figure produced by the level-40 progression system PIN is not
+  building, which is exactly the case [Restoration](Restoration.md)'s numbers-from-1962,
+  design-from-0.7 rule exists to arbitrate. See [Combat Scale](Design/Combat-Scale.md)
 - [ ] **DATA-4** — Splash and ability-projectile range falloff are guessed/unmodeled, unlike the
-  confirmed weapon curve
+  confirmed weapon curve. Only reachable through an ability — weapons never splash at all, see
+  **DATA-21**
 - [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs
 - [~] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
   pool for every creature, and at 2500 that was ~64 player rifle shots each — the "bullet sponge"
@@ -263,7 +271,16 @@ has no entries in that category, which reflects nothing having run rather than n
   split between the two paths, so the hardcoded `34216` is the suspect and the shipped
   `completed_ability` (123 on all 40 `aptfs::ResourceNodeBeaconCalldownCommandDef` rows) is what
   retail played. Cosmetic, and a one-line read to fix once a side-by-side confirms it —
-  [G4](In-Game-Tests/Resource-Payout.md) is written to take that reading. A second report the same
+  [G4](In-Game-Tests/Resource-Payout.md) is written to take that reading.
+  **The side-by-side ran 2026-08-16 and confirms the split, but rules out the mechanism this entry
+  assumed.** Early collection played the full launch animation; the ordinary departure shot straight
+  up with none, in the same session on the same deposit. However **both abilities carry a
+  `NO-OP (Client PlayAnimation)`** in their chains, so `34216` is not missing an animation step and
+  swapping the ability is not obviously the fix. What differs is the status effect applied — 123
+  applies effect **154**, 34216 applies effect **155** — which puts the launch on the *effect*, not
+  the ability. `34216` additionally runs an `ImpactRemoveEffectCommand` that fails outright
+  (`Don't know which effect to remove`) with both 154 and 155 active. Next step is to read effects
+  154 and 155, not to hunt a missing animation command. A second report the same
   day — "sound effect and launch prep animation played, thumper remained on the ground" — is a
   different fault on the same event and belongs to [NET-24](#networking--protocol--net): the
   departure the client plays is the animation, and the model staying behind is the client never
@@ -305,6 +322,18 @@ has no entries in that category, which reflects nothing having run rather than n
   the shipped ladder to two damage values at the bottom. So the open question is no longer "what unit
   is the column" but "can a template value of 1 mean one point at all", and that is now the only
   thing keeping this entry from closing
+- [ ] **DATA-21** — A weapon's blast radius is shipped and never read, so no weapon splashes.
+  `dbitems::Ammo.impact_radius` carries a real radius on **612 of 1264 ammo rows**, from 2m up to
+  30m, and PIN loads the record without ever looking at that field. `ProjectileSim.TryResolveHit`
+  traces one ray and damages exactly what it struck; there is no second pass over anything nearby.
+  Found in game 2026-08-16 by a tester firing a Grenade Launcher between two touching enemies and
+  killing neither — the grenade hit the ground, the ground is not damageable, and the shot was a
+  miss. **Ability splash is a different path and does work**: `InflictDamageCommand` reads
+  `Splashrange` (set on 2081 of 2449 damage steps) and applies `SplashFalloff`, so the falloff
+  curve [DATA-4](gaps/data.md#data-4) questions is only ever reached through an ability. Closing
+  this means giving the weapon path the same second pass, keyed on the ammo radius rather than on a
+  command def. It also blocks [V7 and D3](In-Game-Tests/Deployables-And-Vehicles.md) from being run
+  with a weapon at all
 
 ## Networking & Protocol — NET
 

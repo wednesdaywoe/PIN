@@ -143,7 +143,7 @@ and `Drowning -> Dying` at 15.
 **Level 15 is reachable**, which the entry used to hedge on — `dying_percent` of 1.0 is a threshold
 the client can actually reach, so the top of the scale needs no re-reading.
 
-## [ ] E3: The melded side of a wall is the melded side
+## [x] E3: The melded side of a wall is the melded side
 
 **The entry this whole stream exists for.** Melded ground is taken to be on the left of the directed
 perimeter curve, which is inferred from how the control points are wound and not stated anywhere in
@@ -183,7 +183,12 @@ Fail: if the sides come out swapped for a wall, note which wall. The convention 
 `MeldingField.Locate`, so a consistent swap is a one-line fix; a swap on some walls and not others
 means the perimeters are not consistently wound and each one needs its own answer.
 
-## [ ] E4: Walking into the melding kills you
+## [x] E4: Walking into the melding kills you
+
+**Passed 2026-08-16.** Twenty ticks of a flat **960** each, ten seconds from full health to down —
+19,200 against a 19,192 pool, so the melding is tuned to kill outright rather than to warn. The
+death registered as `went down to nothing`, which is the two-stage death path handling a killer that
+is not a character.
 
 1. `invuln off`
 2. `tp 129 -1920 605` — the safe side of New Eden Melding 03
@@ -200,7 +205,28 @@ you before the log line renders is harder to test than one that doesn't. If it f
 say how it felt — that is the only evidence available, since no melding-wall effect survives in the
 db to read a real rate from.
 
-## [ ] E5: Leaving a hazard stops it, and the ramp resets
+## [x] E5: Leaving a hazard stops it, and the ramp resets
+
+**Passed 2026-08-16 on the half that still exists.** Three consecutive dives, surfacing between each:
+
+```
+dive 1   192 (Drowning)  ->  384  403  423   (Dying, climbing)
+dive 2   192 192 192     ->  384  403  423   (identical restart)
+dive 3   192             ->  384  403  423  444  467
+```
+
+Every Dying stage restarts at **384** and climbs about 5% a tick. Surfacing resets it completely —
+dive 2 repeats dive 1's sequence exactly, and dive 3 only goes further because the tester stayed
+under longer. Damage stopped inside one tick of surfacing each time. That is the whole of what this
+entry was asking.
+
+**The shield step is void and should be ignored, not retried.** Step 3 says "let shields recharge",
+and the pool has been 0 since [DATA-1](../ISSUE-REGISTER.md) closed — the 1962 client has no shield
+display and PIN no longer invents one. Shields were never what this entry measured; the ramp was.
+Read step 3 as "surface, wait a moment, go back under".
+
+For reference, the melding does **not** ramp: it lands a flat 960 a tick and killed the player in
+ten ticks. Ramping is the water hazard's own behaviour, not a shared one.
 
 1. `invuln off`
 2. `tp 129 -1920 605`, cross into the melding, take a few ticks of damage, walk back out
@@ -242,7 +268,11 @@ Two clauses of this entry are still unevidenced — the melding, because none of
 have run, and the NPC half, because the monster in that session was shot before `invuln` went on.
 Neither changes the conclusion but neither has been seen.
 
-## [ ] E7: NPCs are unaffected, on purpose
+## [x] E7: NPCs are unaffected, on purpose
+
+**Passed 2026-08-16.** A Chosen Fiend (1196) and a Melded Aranha (528) stood in the melding for
+several minutes and neither took a point. Every one of the session's 49 `damage from null` lines
+names the player and nothing else. The decision holds exactly as written.
 
 1. `tp 119 -2039 605` with `invuln on`
 2. `npc 1196 0 0 0` and `npc 528 3 0 0` — a Chosen Fiend and a Melded Aranha, both standing in the

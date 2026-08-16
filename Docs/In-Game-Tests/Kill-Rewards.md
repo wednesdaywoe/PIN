@@ -26,8 +26,11 @@ Common" (5463) is reached from monster 528's second loot table and its rows are 
 as percentages that is a distribution that drops something every time; it is out of 10000.
 `LootRoller` now decides the scale per table from its own rows. See [DATA-16](../gaps/data.md).
 
-**Nothing else in the stream has run**, and K2's measurement is still open — the two sessions
-disagree with each other and neither is big enough to settle it. See K2.
+**K2 settled on 2026-08-16 and the stream is now 3 of 5.** Thirty-nine kills of monster 528 in one
+post-fix session paid crystite on **8**, which is 20.5% against an expected 25% — inside the noise
+band, and large enough to mean something where the two earlier sessions were not. K3 passed the day
+before. K4's hazard half passed; its NPC-on-NPC half has still never had the two hostile factions
+put in reach of each other, and K5 needs a second client.
 
 ## What changed about this milestone
 
@@ -171,7 +174,30 @@ so a kill that logs `died to` and nothing after it means the subscription didn't
 `KillRewardSim` is constructed in the `Shard` constructor and held in a field for exactly that
 reason.
 
-## [ ] K2: The rate is about one kill in four
+## [x] K2: The rate is about one kill in four
+
+**Measured 2026-08-16, and it settles.** Thirty-nine kills of monster 528 in one post-fix session —
+the sample this entry asked for and two earlier sessions could not supply.
+
+| Outcome | Kills | Share |
+|---|---|---|
+| Paid crystite (resource 10) | **8** | **20.5%** |
+| Paid resource 77343 | 4 | 10% |
+| Rolled an item, unpaid (33815 / 33816) | 13 | 33% |
+| Rolled nothing | 14 | 36% |
+
+**20.5% against an expected 25%, on 39 kills.** That is comfortably inside the noise band and it is
+the answer: the weighted pick is happening and mode 2 is not being misapplied. The two disagreeing
+sessions above (48% and 8%) were both too small to mean anything, and this supersedes them.
+
+**Steps 2 and 3 do not add up to the kill count, and that is the entry's arithmetic being wrong
+rather than a defect.** 8 + 14 = 22 against 39 kills, because a third outcome exists that the entry
+never allowed for: 13 kills rolled an *item* instead of crystite or nothing. Any future run should
+count four outcomes, not two.
+
+The 4 payments of **resource 77343** are the melded sub-loot this stream already documents above,
+arriving as designed — worth noting only because a tester counting crystite alone will read those
+four kills as dry when the resource pane says otherwise.
 
 The only check that exists on the `roll_mode` reading, and the reason it is written as a count.
 
@@ -208,7 +234,17 @@ probability isn't a percentage on this path after all.
 
 Record the actual count either way. It is the only measurement of these tables anyone has.
 
-## [ ] K3: Equipment and powerups are rolled and visibly not paid
+## [x] K3: Equipment and powerups are rolled and visibly not paid
+
+**Passed 2026-08-15.** Both halves, including the one K1 left open. Two rolls of powerup 33816 —
+22:36:11 off a 528 and 22:37:43 off a 1189 — each logged
+`rolled item 33816 x1, not paid — item drops are unbuilt`. The bag was counted either side:
+`249 item(s) [Gear 249], 2 resource(s), 20 loadout(s)` at 22:34:51 and the identical line at
+22:47:57. Nothing arrived, and the log said so both times rather than staying quiet. The
+`Resource` flag is behaving.
+
+Resource payout kept working across the same kills — 2, 3 and 4 of resource 10 on three separate
+kills — so the unpaid item path is not swallowing the paid resource path.
 
 A check that the gap is honest rather than silent — the thing G5 taught, that "nothing arrived" and
 "nothing was owed" must be distinguishable from the log alone.
@@ -229,7 +265,17 @@ blaming the code — the powerups 33815 and 33816 both read 8192, with bit 0x10 
 `rolled item 33815 x1, not paid — item drops are unbuilt`, so the roll is recorded and named. What
 was not checked is step 3: nobody looked at the bag afterwards to confirm nothing arrived.
 
-## [ ] K4: An environmental death and an NPC-on-NPC kill pay nobody
+## [~] K4: An environmental death and an NPC-on-NPC kill pay nobody
+
+**Hazard half passed 2026-08-16.** The player was killed outright by the melding at 11:44:59 —
+`went down to nothing`, no killer entity — and no `paid`, `rolled` or `Kill of monster type` line
+appears anywhere around it. A death with no attacker pays nobody, which is the half that could
+plausibly have crashed or credited a null.
+
+**The NPC-on-NPC half did not happen.** No `NPC ... died to <another NPC>` line exists in the
+session at all. Aranha and Chosen are mutually hostile, but nothing put them in reach of each other
+this run. Still open, and it needs the two factions deliberately stood next to each other rather
+than a wave.
 
 The guards. Both are reachable without another player.
 

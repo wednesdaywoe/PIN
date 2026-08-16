@@ -211,7 +211,35 @@ returned the request to a chain that didn't run, or the ability the client fired
 contains a `ResourceNodeBeaconCalldownCommand`. The request is logged as discarded if a second one
 arrives unconsumed — `grep -a "unconsumed thumper" ~/Games/PIN/logs/GameServer.log`.
 
-## [ ] G4: Collecting early pays the fraction it managed
+## [x] G4: Collecting early pays the fraction it managed
+
+**Passed 2026-08-16, and the departure observation this entry was holding for DATA-18 is in.**
+
+```
+completion 0.51, defence 0.96 (3657/4000 health, 3 attacker(s) down): 1 resource kind(s), 30 total
+```
+
+Collected at just past half, paid **30** against a 40–100 centre roll — squarely in the 20–50 band
+and consistent with `payout ≈ roll × completion`. Paid once. No second payout when the natural cycle
+would have ended.
+
+### The departure, and what it tells DATA-18
+
+| Collected | Ability that fires | Departure |
+|---|---|---|
+| Early, during `THUMPING` | the beacon's shipped `CompletedAbility` (**123**) | **full launch animation** |
+| After the cycle, during `COMPLETED` | PIN's literal **34216** | **none — shoots straight up, instantly** |
+
+Exactly the split this entry predicted. What it did *not* predict is where the difference lives:
+**both abilities carry a `NO-OP (Client PlayAnimation)`**, so PIN is not dropping an animation step
+on either path. They differ in the status effect they apply — 123 applies effect **154**, 34216
+applies effect **155** — and the client is evidently binding the launch to the effect rather than to
+the ability. 34216 also runs an `ImpactRemoveEffectCommand` that fails outright
+(`Don't know which effect to remove`) with both 154 and 155 active at the time.
+
+So the next step for [DATA-18](../ISSUE-REGISTER.md) is to read effects 154 and 155, not to hunt for
+a missing animation command. Swapping 34216 for the shipped `CompletedAbility` is the obvious
+candidate fix and is now evidenced, but it has not been tried.
 
 Rewritten for M4 on 2026-08-13, before ever running. The original entry asked whether the flat
 grant was genuinely flat (it was, by code reading); now `Thumper.OnSuccess` multiplies every rolled

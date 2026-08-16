@@ -173,7 +173,17 @@ Pass: the line appears once and you respawn without touching the keyboard.
 Fail, nothing after a minute: the sim is not seeing the character. This is the failure that looks
 identical to NET-23 unfixed from the player's seat, which is why it has its own entry.
 
-## [ ] B4: Monsters still die properly
+## [x] B4: Monsters still die properly
+
+**Passed 2026-08-15.** Five `NPC <id> died to <id>` lines — died, not went down — and the kills kept
+paying resources and rolling items alongside. The tester saw the body dissolve with visual effects
+after about five seconds.
+
+**Five seconds is right, and the "about 30 seconds" below is measuring something else.** The server
+holds the corpse for 30,000ms (`SetRemainingLifetime` in `Die`) before the entity is removed. What
+the client does inside that window is its own dissolve animation, and it hides the body when the
+animation finishes. So the pass condition is: the body stays put, then goes, and no respawn prompt
+appears. The wall-clock number belongs to the server and is not visible in game.
 
 The regression. `Die` now branches on who is dying, and NPCs take the other path.
 
@@ -187,7 +197,22 @@ disappears after about 30 seconds, and the kill still pays as in [Kill Rewards](
 Fail, a monster goes down instead of dying: the player check in `Die` is wrong and every corpse in
 the zone is now waiting for a respawn prompt it will never get.
 
-## [ ] B5: Dying in a thumper defence doesn't break the encounter
+## [x] B5: Dying in a thumper defence doesn't break the encounter
+
+**Passed 2026-08-16.** The player went down at 11:33:16, mid-defence, between waves 2 and 3. The
+encounter carried on without them and finished at **completion 1.00** at 11:35:39, with waves 3 and 4
+standing up on schedule after the death. Nothing about the encounter depended on the defender being
+alive.
+
+**The kill did not come from the wave, and that is its own finding.** The tester had to move the
+thumper to ground that already had creatures on it, because *the thumper event cannot kill the player
+at all* — with a 19,192 health pool against attackers landing 49 a swing, no table of this size
+threatens anything. What killed them was a standing spawn-group Aranha, not a wave member.
+
+That is the player-scale problem in [Combat Scale](../Design/Combat-Scale.md) showing up as a testing
+obstacle rather than a balance complaint. Note that the 2026-08-16 wave retune cut escorts from four
+to two, which makes it *less* lethal still — the retune was aimed at the machine surviving, and it
+moved this in the wrong direction on purpose, because the player's pool is the thing to fix.
 
 The interaction worth checking deliberately, because [M7](Thumper-Defence.md) is where players will
 actually die, and death now leaves a character in a state no encounter has ever seen.
