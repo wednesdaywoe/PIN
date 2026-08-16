@@ -43,6 +43,41 @@ a position somebody has actually stood on. `grep -a "Ground sample" ~/Games/PIN/
 is the record of every footing the server has ever measured, which is where a trustworthy one comes
 from.
 
+## Health bars are aim-driven, so splash cannot be read off them
+
+**A creature's health bar is not a readout of its health. It is a readout of what you are looking
+at.** Established 2026-08-16 from the client's own interface source, after the splash run came back
+"I think it's technically working, it's hard to tell".
+
+`system/gui/components/MainUI/HUD/EntityPlates/EntityPlates.lua` decides this, and the rule is one
+line (1223):
+
+```lua
+local interested = ((PLATE.focus and PLATE.status.visible) or PLATE.inMediview or (g_sinView and PLATE.rules.use_icon));
+```
+
+If `interested` is false the bar is hidden outright, whatever the creature's health is. `focus`
+means the client's aim tracking has settled on that entity; losing it schedules the fade after
+`RELEASE_PLATE_FOCUS_DELAY = 1.5` seconds. Damage does not enter into it — damage only animates a
+bar that is already on screen. So a bar that comes and goes as you sweep past two enemies is the
+shipped behaviour working, not a delivery problem, and nothing the server does will change it.
+
+**What this means for any test that damages something you are not aiming at** — splash, damage over
+time, a hazard, an ability that hits behind you: the screen structurally cannot show it. The second
+target's bar is hidden *because* it is the second target. Do not tune, re-run, or open an issue on
+the strength of not seeing a bar move.
+
+Read the log instead. Every damage application prints the amount and the health remaining:
+
+```
+grep -aE "took [0-9]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -20
+```
+
+Two entities inside one second, with the larger number on the one you aimed at, is a blast landing.
+For splash specifically the `Splash from` line names the weapon, the radius and the count. If a
+sitting needs a live reading rather than an after-the-fact one, aim at the *far* target and let the
+blast reach the near one, which puts the bar you can see on the entity the splash has to travel to.
+
 Adding an entry: state the task, the steps in order, and every command in full with its arguments
 filled in — real type ids, coordinates, item ids, grep lines. These get run on the game machine
 away from the source, so a step that says "spawn a monster" instead of `npc 1196` costs a trip back

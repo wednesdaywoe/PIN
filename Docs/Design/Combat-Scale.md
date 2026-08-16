@@ -257,8 +257,10 @@ against.
 
 Ordered by how much each needs data that does not exist yet.
 
-1. **~~Creature rate of fire.~~** Built 2026-08-16, unverified in game — see §9.
-2. **~~Player health, 19,192 → ~1,000.~~** Built 2026-08-16, unverified in game — see §9.
+1. **~~Creature rate of fire.~~** Built and **verified in game** 2026-08-16: 3.28 s between claws
+   against a predicted 3.266 — see §9.
+2. **~~Player health, 19,192 → ~1,000.~~** Built 2026-08-16, **still unverified** and structurally
+   hard to verify: sappers ignore return fire, so a solo defender never gets hit. See §10.
 3. **Four tiers replacing the `MonsterScaling` lookup.** Larger, and it wants the tier-to-creature
    mapping filled in for 3,109 types. Health comes from the tier; `MonsterScaling` stops being read.
 4. **Per-zone wave tables.** Once tiers exist, difficulty becomes a property of place and the stock
@@ -367,6 +369,43 @@ Left alone deliberately, and recorded here rather than fixed, because growing th
 choosing whether the stock event threatens the machine or the player, and that choice belongs with
 the per-zone tables in §8 item 4.
 
+#### The cadence change reached the game, and the prediction above is still untested `[measured]`
+
+Run the evening of 2026-08-16 on build `271e6023`. **The rate change works and the log says so to
+the millisecond**: claws land 3.28 seconds apart where they used to land 1.28 apart, against a
+predicted 3.266. That is item 1 confirmed and there is nothing left to check about it.
+
+The prediction of ~87% machine health did not survive, and the reason is not the prediction:
+
+| Completed cycle, same 9-member table | Creature cadence | Machine left | Defence |
+|---|---|---|---|
+| 2026-08-16 morning, run 1 | 1.28 s | 2628 / 4000 | 0.83 |
+| 2026-08-16 morning, run 2 | 1.28 s | 2089 / 4000 | 0.76 |
+| 2026-08-16 evening | **3.28 s** | 1697 / 4000 | **0.71** |
+
+Slower creatures took *more* off the machine, which cannot be a cadence effect. **The player's
+weapon changed between the sittings and it moved the result further than the cadence did.** The
+morning runs are 121 shots of 200; the evening run is 39 shots, mostly of 350 — a grenade launcher,
+because splash was what the evening was for. Player throughput fell to roughly 45%, and wave members
+consequently lived **~26 seconds instead of ~7**. A creature swinging 2.6× slower for 3.6× longer
+lands more claws, not fewer, and the arithmetic lands where the log did.
+
+So §9's ~87% figure is neither confirmed nor refuted, because the run that could have tested it held
+the wrong thing constant. **A balance reading is only a balance reading if the weapon is stated.**
+Any future entry in this table must name it.
+
+The finding underneath is worth more than the one that was being chased. **Which weapon the defender
+carries swings the defence multiplier by more than a 2.6× change to creature output did** — 0.83 to
+0.71 across a weapon switch, against 0.83 to 0.76 across two runs with the same one. The worry in
+the previous subsection was that the multiplier would pin near 0.9 and stop saying anything; on this
+evidence it still varies, but it is reporting the player's kit at least as much as the player's
+defending. That is a different problem from the one recorded above and it is not obviously worse —
+it is only invisible while every run uses whatever was convenient.
+
+The evening's *other* thumper was destroyed outright at 19:16, so the failure path still reaches
+zero. It was fed by hand-spawned creatures rather than the wave table, so it is a proof that failure
+is reachable and not a reading of the table.
+
 ---
 
 ## 10. Open questions
@@ -380,3 +419,10 @@ the per-zone tables in §8 item 4.
 - [ ] Stage II and III of the band, which §7 interpolates rather than sources
 - [ ] Whether the stock thumper's threat should sit on the machine or on the defender, now that
       §9's second entry has moved it onto the defender by arithmetic rather than by choice
+- [ ] Whether the defence multiplier should be reporting the defender's *weapon* as strongly as it
+      does. Measured 2026-08-16: swapping the player's weapon moved it further than a 2.6× cut to
+      creature output. Player pool is now pinned at 1,000 and creature output at 15 DPS, so player
+      throughput is the last input to the event still varying freely and nothing bounds it
+- [ ] Player health at 1,000 remains unconfirmed in game. Three sittings have now failed to test it
+      for the same structural reason: sappers march on the machine and ignore return fire, so a solo
+      defender is never hit. It needs an escort-only wave, or a creature told to prefer the player

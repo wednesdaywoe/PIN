@@ -153,11 +153,18 @@ deployable is the case that would actually fail.
 
 Pass: both take splash damage, and neither takes it twice from one execution.
 
-**A weapon works for this now, and that is new.** The 2026-08-16 run found that no weapon splashed
-at all — a Grenade Launcher fired between two touching enemies killed neither, because the grenade
-hit the ground and the ground has no health ([DATA-21](../ISSUE-REGISTER.md)). That was built the
-same day and is unverified, so **this entry is now also the check on it**. Either path is a valid
-run; say which one you used.
+**A weapon works for this now, and that is new.** The 2026-08-16 morning run found that no weapon
+splashed at all — a Grenade Launcher fired between two touching enemies killed neither, because the
+grenade hit the ground and the ground has no health ([DATA-21](../ISSUE-REGISTER.md)). That was
+built and verified the same day, **against creatures**, so what is left for this entry is the
+narrower and still-open half: whether a deployable and a vehicle *accept* splash the way a character
+does. They reach `TakeDamage` through `IDamageable` like anything else, but neither has ever been
+paid by a second damage pass, and `ApplySplash` walks the shard's entities rather than a filtered
+list. Either the weapon or the ability path is a valid run; say which one you used.
+
+Do not judge this one by watching health bars — they are drawn only while your aim is on the target
+([method notes](README.md#health-bars-are-aim-driven-so-splash-cannot-be-read-off-them)), which the
+second thing a blast reaches never is. The greps below are the reading.
 
 **Find out whether your weapon explodes before you fire it**, rather than reading a miss as a
 defect:

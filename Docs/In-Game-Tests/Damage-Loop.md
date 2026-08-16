@@ -36,7 +36,18 @@ Pass: `hit.DamageMod` and `weapon.HeadshotMult` visibly change the number; the `
 flag reaches the client on headshots and crit materials. With the 46-damage assault rifle the
 expected pair is 39 body and 58 head.
 
-## [ ] D3: Splash falloff
+## [~] D3: Splash falloff
+
+**Half of this ran 2026-08-16 and passed.** A Grenade Launcher fired at two Melded Aranha put
+`350` into the one it struck and `38` into the other, twice in a row for the same pair of numbers.
+That settles the part of the entry that could have been silently broken: the blast **falls off**
+rather than paying everything inside the radius in full, and the direct target was billed once, not
+once for the round and again for the explosion. 38 is 11% of a round on a 4m blast, so that second
+creature was standing out near the edge, which is where it was.
+
+What is still open is the *shape*, which is the harder half and the reason the steps below want
+three targets rather than two. One reading cannot tell a straight line from a curve, and the line
+is a guess about how the client interpolates ([DATA-4](../ISSUE-REGISTER.md)). Run it as written.
 
 **Renamed 2026-08-16.** This used to say `InflictDamage` splash falloff, because that command was
 the only splash in the game. Weapons have their own now, off the ammunition's shipped blast radius

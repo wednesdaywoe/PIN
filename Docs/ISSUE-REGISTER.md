@@ -327,8 +327,27 @@ has no entries in that category, which reflects nothing having run rather than n
   the shipped ladder to two damage values at the bottom. So the open question is no longer "what unit
   is the column" but "can a template value of 1 mean one point at all", and that is now the only
   thing keeping this entry from closing
-- [~] **DATA-21** — A weapon's blast radius is shipped and never read, so no weapon splashes.
-  **Built 2026-08-16, unverified in game.** `WeaponSplash` resolves the ammo columns and
+- [x] **DATA-21** — A weapon's blast radius is shipped and never read, so no weapon splashes.
+  **Built and verified in game 2026-08-16**, both the same day. The evening run fired a Grenade
+  Launcher between two Melded Aranha and the log holds the shape this entry was opened for:
+
+  ```
+  [19:25:27 DBG] CharacterEntity (…305280) took 350 damage … 873 health left
+  [19:25:27 DBG] CharacterEntity (…305536) took 38 damage … 1186 health left
+  [19:25:27 DBG] Splash from Main 78062 (Type 11 - Grenade Launcher (secondary))
+                 (Frag Grenade (no DoT)) at 4m caught 1 entities beyond the direct hit
+  ```
+
+  Two entities off one round, 350 to the one struck and 38 to the one standing near the edge of a
+  4m blast, and the direct target appears exactly once — the blast skipped it rather than paying it
+  twice, which was the failure mode most likely to be silently wrong. Fired again a second later
+  for the identical pair of numbers, so the falloff is stable rather than a one-off.
+  **Reading the result in game is the hard part, and it is not this system's fault**: the shipped
+  client only draws a creature's health bar while your aim is on it, so the entity the splash
+  reaches is by definition the one whose bar is hidden (see
+  [the method notes](In-Game-Tests/README.md#health-bars-are-aim-driven-so-splash-cannot-be-read-off-them)).
+  The `Splash from` line is the reading, not the screen.
+  `WeaponSplash` resolves the ammo columns and
   `ProjectileSim` runs a second pass over everything in reach of the impact, sharing `SplashFalloff`
   with the ability path so both fall off the same way. The load-bearing change is underneath it: a
   shot that struck the world used to be discarded by the raycast, which is why the grenade did

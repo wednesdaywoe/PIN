@@ -19,6 +19,37 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**The 2026-08-16 evening sitting closed [DATA-21](ISSUE-REGISTER.md) and confirmed the creature
+cadence change, and its most useful product is a lesson about reading the game rather than a pass.**
+Weapon splash works: a Grenade Launcher put 350 into the creature it struck and 38 into one near the
+edge of a 4m blast, twice for identical numbers, with the direct target billed once and not twice.
+The tester's report was "I think it's technically working, it's hard to tell", and that hedge was
+correct and unavoidable — **the shipped client only draws a health bar while your aim is on the
+entity**, so the target a blast reaches is by definition the one whose bar is hidden. Established
+from the client's own `EntityPlates.lua` and written up in
+[the method notes](In-Game-Tests/README.md#health-bars-are-aim-driven-so-splash-cannot-be-read-off-them);
+it retires a whole class of false negatives, since damage over time, hazards and anything hitting
+behind you are unreadable on screen for the same reason. [D3](In-Game-Tests/Damage-Loop.md) is `[~]`:
+falloff demonstrably applies, but two targets cannot tell a straight line from a curve, so the
+three-target run still wants doing.
+
+**Creature rate of fire is verified — 3.28 seconds between claws against a predicted 3.266.** The
+cycle it appeared in did *not* test the balance question it was meant to, and
+[Combat-Scale §9](Design/Combat-Scale.md) now says so at length: the machine finished at 42% where
+the prediction said ~87%, but the tester was carrying a grenade launcher rather than the morning's
+rapid-fire weapon, player throughput fell to ~45%, and wave members consequently lived ~26 seconds
+instead of ~7. Slower creatures living longer land more claws. **A balance reading is only a balance
+reading if the weapon is stated.** The finding that outranks the one being chased: swapping the
+player's weapon moved the defence multiplier further (0.83 → 0.71) than a 2.6× cut to creature
+output did.
+
+**Player health at 1,000 failed to get tested for the third sitting running, and the reason is
+structural rather than bad luck**: sappers march on the machine ignoring return fire, so a solo
+defender is never hit. It needs an escort-only wave or a creature told to prefer the player. The
+scope-in delivery fix shipped in the same build logged **zero** `sent nothing -- views not ready`
+warnings and no errors across the session, and the tester did not report missing entities — which is
+consistent with the fix and does not prove it, since the race may simply not have fired.
+
 **The 2026-08-14 evening sitting closed two milestones, three issue entries, and the queue's
 biggest gate, in one pass.** [Persistence](In-Game-Tests/Persistence.md) went **7 of 7** and
 closed [M6](PROGRESS.md): crystite and items survive a menu logout, a double relog with nothing
