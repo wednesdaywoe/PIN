@@ -112,7 +112,12 @@ public static class NpcCombat
 
         state.CachedWeaponId = weaponId;
         state.CachedWeaponName = details.Weapon.DebugName;
-        state.CachedWindow = AttackWindow.Resolve(details.Weapon, details.RateOfFire);
+
+        // details.RateOfFire is 1 for every creature in the game and always has been: it is read off the
+        // weapon's item attributes and monster weapons carry none, so the fallback is what arrives. The
+        // tier scalar is the only thing that has ever moved it, and it is applied here rather than inside
+        // GetActiveWeaponDetails because that method answers for players too, where a tier means nothing.
+        state.CachedWindow = AttackWindow.Resolve(details.Weapon, details.RateOfFire * npc.ScalingRateOfFireMultiplier);
         return true;
     }
 

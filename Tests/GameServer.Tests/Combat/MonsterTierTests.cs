@@ -49,6 +49,41 @@ public class MonsterTierTests
     }
 
     [Fact]
+    public void TheAnchorCadenceComesOutAtTheDamagePerSecondItWasDerivedFrom()
+    {
+        // The constant is written as a quotient of measurements, so the check worth having is that the
+        // quotient still lands where the derivation says: 49 damage on a 1280ms swing is 38 a second, and
+        // stretching by this multiplier has to produce 15. If someone edits any of the three inputs, this
+        // is what says whether the result is still the number Combat-Scale.md argues for.
+        var stretchedIntervalMs = MonsterTier.AnchorSwingIntervalMs / MonsterTier.RateOfFireMultiplier;
+        var dps = MonsterTier.AnchorDamagePerSwing / (stretchedIntervalMs / 1000f);
+
+        Assert.Equal(15f, dps, 2);
+        Assert.Equal(3267f, stretchedIntervalMs, 0);
+    }
+
+    [Fact]
+    public void EveryGradeCarriesTheSameCadenceForNow()
+    {
+        // Uniform today and deliberately still carried on the tier: when four difficulty tiers replace the
+        // eighty-row curve this becomes per-tier, and the only thing that should have to change is the
+        // value. MonsterScaling itself cannot supply it - the table has level, health and damage and no
+        // cadence column - so a per-creature reading is not being left on the table here.
+        Assert.Equal(MonsterTier.RateOfFireMultiplier, MonsterTier.Resolve(MonsterTier.AnchorGrade, Curve()).RateOfFireMultiplier);
+        Assert.Equal(MonsterTier.RateOfFireMultiplier, MonsterTier.Resolve(300u, Curve()).RateOfFireMultiplier);
+        Assert.Equal(MonsterTier.RateOfFireMultiplier, MonsterTier.Resolve(0u, Curve()).RateOfFireMultiplier);
+    }
+
+    [Fact]
+    public void AMissingCurveStillSlowsTheCadence()
+    {
+        // The fallback exists so a missing table costs tiering rather than breaking spawns, and cadence has
+        // to come with it - otherwise losing the curve would silently hand every creature back its 38 a
+        // second while looking like nothing had happened.
+        Assert.Equal(MonsterTier.RateOfFireMultiplier, MonsterTier.Resolve(MonsterTier.AnchorGrade, null).RateOfFireMultiplier);
+    }
+
+    [Fact]
     public void TheAnchorGradeTakesNoDamageScalarAtAll()
     {
         // The whole point of expressing the multiplier relative to the anchor. Monster 528 is grade 20, so

@@ -182,8 +182,13 @@ has no entries in that category, which reflects nothing having run rather than n
   20 — and **confirmed in game 2026-08-14** by [S3–S5](In-Game-Tests/Thump-Placement.md): four
   distinct node types resolved from position in one sitting (242, 241, 233, and 20 for barren), and
   the same deposit paid 48 near its center against 33 at 59% out
-- [ ] **DATA-3** — `Battleframe.base_health` reads ~1000 in SDB vs. 19192 observed live, no scaling
-  logic. **2026-08-16: the ~1000 is corroborated from two further directions that share no
+- [~] **DATA-3** — `Battleframe.base_health` reads ~1000 in SDB vs. 19192 observed live, no scaling
+  logic. **Changed 2026-08-16, unverified in game: the player pool is now 1000.** Taken as a build
+  override under [Restoration](Restoration.md)'s rule rather than as a correction to the reading —
+  19192 was always what the capture said, it is simply the output of a progression system PIN is not
+  building. Player damage output is deliberately untouched, so the two-second creature anchor does
+  not move. Stays open until a sitting confirms it, and stays open afterwards on the real fix, which
+  is reading the shipped column per battleframe instead of carrying one constant. **2026-08-16: the ~1000 is corroborated from two further directions that share no
   assumptions with it** — beta trash health (0.6 cut shell-less Hissers and Skivers to 200, six times
   under `MonsterScaling`'s level-13 row) and the thumper worked backwards (4000 health invariant, a
   ~180s undefended death, ~48 DPS from three attackers, a 20-second player death → 960). Three routes,

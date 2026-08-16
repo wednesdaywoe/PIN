@@ -153,6 +153,16 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public float ScalingDamageMultiplier { get; set; } = 1f;
 
     /// <summary>
+    ///     The other half of the tier scalar: how fast this creature cycles its weapon, where larger is
+    ///     faster. Separate from <see cref="ScalingDamageMultiplier"/> because it is not damage — it
+    ///     multiplies the rate-of-fire attribute the AI resolves an attack window with, and a creature
+    ///     that swings for the same 49 every 3.3 seconds instead of every 1.3 is doing less per second
+    ///     without any single hit changing. Players stay at 1, and so does anything a player shoots with,
+    ///     because only the NPC path reads it.
+    /// </summary>
+    public float ScalingRateOfFireMultiplier { get; set; } = 1f;
+
+    /// <summary>
     ///     Where this creature landed on <c>dbcharacter::MonsterScaling</c>, or 0 for anything that is not
     ///     a tiered monster. Internal only — nothing sends it to the client, and the 1962 client has no
     ///     creature level readout to send it to. Kept because it is the honest name for what the health
@@ -437,17 +447,19 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         MonsterLevel = tier.Level;
         ScalingDamageMultiplier = tier.DamageMultiplier;
+        ScalingRateOfFireMultiplier = tier.RateOfFireMultiplier;
         SetMaxHealth(tier.Health, true);
 
         // Logged because the tier is otherwise invisible: it never reaches the client, and in game it can
         // only be inferred by counting how many rounds a creature takes to die. This line is what D7 reads.
         Log.Debug(
-            "Monster {monsterId} graded {grade} -> level {level}, {health} health, damage x{damageMultiplier:F2}{ungraded}",
+            "Monster {monsterId} graded {grade} -> level {level}, {health} health, damage x{damageMultiplier:F2}, rate x{rateMultiplier:F2}{ungraded}",
             monsterInfo.Id,
             monsterInfo.DifficultyCost,
             tier.Level,
             tier.Health,
             tier.DamageMultiplier,
+            tier.RateOfFireMultiplier,
             tier.Graded ? string.Empty : " (ungraded, fell back to the anchor)");
 
         // Monsters stay shieldless until dbcharacter::Monster gives them a real number, so the placeholder

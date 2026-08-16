@@ -257,11 +257,8 @@ against.
 
 Ordered by how much each needs data that does not exist yet.
 
-1. **Creature rate of fire.** Needs no new data and no new plumbing — a multiplier into
-   `AttackWindow.Resolve`. Largest single effect on the thumper. Do this first.
-2. **Player health, 19,192 → ~1,000.** Corroborated three ways (§4). A build override under
-   [Restoration](../Restoration.md)'s rule, recorded against [DATA-3](../ISSUE-REGISTER.md).
-   Hold player *output* while doing it, or the two-second anchor moves.
+1. **~~Creature rate of fire.~~** Built 2026-08-16, unverified in game — see §9.
+2. **~~Player health, 19,192 → ~1,000.~~** Built 2026-08-16, unverified in game — see §9.
 3. **Four tiers replacing the `MonsterScaling` lookup.** Larger, and it wants the tier-to-creature
    mapping filled in for 3,109 types. Health comes from the tier; `MonsterScaling` stops being read.
 4. **Per-zone wave tables.** Once tiers exist, difficulty becomes a property of place and the stock
@@ -317,6 +314,59 @@ to die at all, because 49 a swing against 19,192 threatens nothing. Cutting esco
 made that worse. That is deliberate: this pass was aimed at the machine surviving, and the defender's
 survivability is §8 item 2's problem, not a wave table's.
 
+### Items 1 and 2, built 2026-08-16 `[derived]`
+
+Both of §8's first two items, in one pass, because they are one change: creature output down and
+player pool down are the two halves of closing the 18× band, and either alone leaves the game
+worse than it started.
+
+**Creature rate of fire.** `MonsterTier.RateOfFireMultiplier`, written as a quotient of the three
+measured numbers rather than as a value — 15 target DPS × 1280ms shipped interval ÷ 49 damage a
+swing, which is **0.392**. A swing every 1,280ms becomes one every **3,266ms**, and creature output
+goes from 38 a second to 15. It rides on `MonsterTier.Result` alongside the damage scalar and
+reaches the AI through a new `CharacterEntity.ScalingRateOfFireMultiplier`, so when four tiers
+replace the curve it becomes a per-tier value with nothing downstream changing. `MonsterScaling`
+cannot supply it — the table has level, health and damage and no cadence column at all.
+
+**Player health.** `HardcodedCharacterData.MaxHealth`, 19,192 → **1,000**. Player *output* is
+untouched, so the two-second anchor does not move (§2). Both hazards charge damage as a fraction of
+max health, so drowning and the melding keep the exact tick counts E4 and E5 measured and need no
+rebalancing.
+
+#### What this does to the numbers
+
+| | Before | After |
+|---|---|---|
+| Creature output | 38 DPS | **15 DPS** |
+| Player pool | 19,192 | **1,000** |
+| Player killed by three attackers in contact | never, in practice | **~22 s** |
+| One Melded Aranha, time to kill | ~5 s | ~5 s (unchanged) |
+| Thumper damage taken, this wave table | 1,372–1,911 measured | **~540–750** |
+
+#### The consequence, and it is not settled
+
+**The wave table committed hours earlier was tuned against 38 DPS creatures and is now much too
+easy.** The two verified runs finished at 66% and 52% machine health; the same table at 15 DPS
+finishes at roughly **87% and 81%**, so the defence multiplier sits near 0.9 whatever the player
+does and the payout stops responding to how the defence went.
+
+The threat has moved rather than vanished — the player can now die to the event, which is what §9's
+retune explicitly could not deliver and what B5 had to import creatures from a spawn group to
+produce. Three attackers at 15 DPS kill a 1,000 pool in 22 seconds.
+
+Whether the machine's share should be restored is a real design question, not a correction:
+
+- §7's own sanity check wants an undefended stock thumper to survive **2–4 minutes**, and one leaker
+  at 15 DPS gives 267 seconds, so the machine surviving comfortably at stock is the intended
+  behaviour rather than a bug.
+- At stock scale the defender dies about four times faster than the objective does (1,000 at 120 DPS
+  against 4,000 at 120 DPS), where §7 describes them as closely matched at Stage IV.
+- But a defence multiplier pinned near 0.9 costs the event one of its two feedback signals.
+
+Left alone deliberately, and recorded here rather than fixed, because growing the table again means
+choosing whether the stock event threatens the machine or the player, and that choice belongs with
+the per-zone tables in §8 item 4.
+
 ---
 
 ## 10. Open questions
@@ -328,3 +378,5 @@ survivability is §8 item 2's problem, not a wave table's.
       m/s a 20m ring gives 1.5 seconds of warning; widening it past 25m costs escorts their
       perception of the defender, so the two are currently entangled
 - [ ] Stage II and III of the band, which §7 interpolates rather than sources
+- [ ] Whether the stock thumper's threat should sit on the machine or on the defender, now that
+      §9's second entry has moved it onto the defender by arithmetic rather than by choice

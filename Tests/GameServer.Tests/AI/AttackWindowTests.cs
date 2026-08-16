@@ -1,5 +1,6 @@
 using GameServer.StaticDB;
 using GameServer.Systems.AI;
+using GameServer.Systems.Combat;
 using Xunit;
 
 namespace GameServer.Tests.AI;
@@ -86,6 +87,22 @@ public class AttackWindowTests
 
         Assert.Equal(600ul, window.BurstIntervalMs);
         Assert.Equal(100ul, window.ShotIntervalMs);
+    }
+
+    [Fact]
+    public void ARateOfFireBelowOneLengthensTheCycleInstead()
+    {
+        // The direction creatures actually use it in. MonsterTier hands the AI a multiplier under 1 to
+        // stretch a swing every 1280ms out to one every ~3270ms, which is the whole of the fix to a
+        // thumper that could not outlast its own cycle. Nothing else in the game passes less than 1.
+        var weapon = Automatic();
+        weapon.MsPerBurst = 1280;
+
+        var window = AttackWindow.Resolve(weapon, MonsterTier.RateOfFireMultiplier);
+
+        // 3266 rather than 3267: the interval is truncated to whole milliseconds, not rounded. A third of
+        // a millisecond a swing is not worth a rounding pass, but the test has to know which way it went.
+        Assert.Equal(3266ul, window.BurstIntervalMs);
     }
 
     [Fact]

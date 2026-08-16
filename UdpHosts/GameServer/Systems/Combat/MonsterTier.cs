@@ -66,6 +66,55 @@ public static class MonsterTier
     public const double HealthPerGradePoint = (double)AnchorHealth / AnchorGrade;
 
     /// <summary>
+    ///     Damage a creature at <see cref="AnchorGrade"/> lands in one swing. Measured in game on
+    ///     2026-08-16 and it agrees with the template arithmetic: weapon 20046's <c>damage_per_round</c>
+    ///     225 × modifier 0.22 = 49.5, observed as 49.
+    /// </summary>
+    public const float AnchorDamagePerSwing = 49f;
+
+    /// <summary>
+    ///     Milliseconds between those swings, which is the weapon template's own <c>MsPerBurst</c> read
+    ///     straight through. Confirmed against the log in the same session.
+    /// </summary>
+    public const float AnchorSwingIntervalMs = 1280f;
+
+    /// <summary>
+    ///     What a creature at the anchor grade should actually be doing per second, and the only number
+    ///     here that is a position rather than a measurement.
+    ///     <para>
+    ///     It is worked backwards from the one structure in the game whose health is fixed and shipped.
+    ///     A thumper has 4000 health on all 61 calldown rows, and an undefended one dies around 60% of a
+    ///     300-second cycle with one or two attackers in contact — about 180 seconds, so roughly 22
+    ///     damage a second arriving, so about 15 a second from each creature. Running the same figure at
+    ///     the player gives a twenty-second death against three attackers, which is one of the three
+    ///     routes to the ~1000 player pool in <c>Docs/Design/Combat-Scale.md</c>.
+    ///     </para>
+    /// </summary>
+    public const float AnchorTargetDps = 15f;
+
+    /// <summary>
+    ///     How much to stretch a creature's firing cadence by, expressed the same way the health constant
+    ///     is: a quotient of measurements rather than a preference. At the anchor it works out to about
+    ///     0.39, so a swing every 1280ms becomes one every ~3270ms and the creature lands 15 damage a
+    ///     second instead of 38.
+    ///     <para>
+    ///     Nothing chose the 38. Monster weapons carry no item attributes, so the rate-of-fire attribute
+    ///     every shooter is resolved with comes back as 1 for every creature in the game, and the
+    ///     template's cadence was reaching the AI unmodified. This is the correction, and it is the
+    ///     single largest lever on whether a thumper survives its own cycle: 4000 health at 38 a second
+    ///     is 105 seconds of one attacker, at 15 it is 267.
+    ///     </para>
+    ///     <para>
+    ///     Uniform across every creature today, and on <see cref="Result"/> anyway so that it travels the
+    ///     same path <see cref="Result.DamageMultiplier"/> already does. When difficulty becomes four
+    ///     tiers rather than eighty curve rows, this becomes a per-tier value and nothing downstream
+    ///     changes. <c>MonsterScaling</c> cannot supply it — the table carries level, health and damage
+    ///     and no cadence column at all.
+    ///     </para>
+    /// </summary>
+    public const float RateOfFireMultiplier = AnchorTargetDps * AnchorSwingIntervalMs / (1000f * AnchorDamagePerSwing);
+
+    /// <summary>
     ///     Resolves a creature's <c>difficulty_cost</c> against the shipped curve.
     /// </summary>
     /// <param name="difficultyCost">
@@ -82,7 +131,7 @@ public static class MonsterTier
     {
         if (curve == null || curve.Count == 0)
         {
-            return new Result(0, AnchorHealth, AnchorHealth / 2, 1f, false);
+            return new Result(0, AnchorHealth, AnchorHealth / 2, 1f, RateOfFireMultiplier, false);
         }
 
         bool graded = difficultyCost > 0;
@@ -98,7 +147,7 @@ public static class MonsterTier
             ? 1f
             : (float)row.Damage / anchorRow.Damage;
 
-        return new Result(row.Level, (int)row.Health, (int)row.Damage, damageMultiplier, graded);
+        return new Result(row.Level, (int)row.Health, (int)row.Damage, damageMultiplier, RateOfFireMultiplier, graded);
     }
 
     private static MonsterScaling NearestByHealth(double targetHealth, IReadOnlyCollection<MonsterScaling> curve)
@@ -112,6 +161,11 @@ public static class MonsterTier
     /// <summary>
     ///     What a creature's grade resolved to. <see cref="Graded"/> is false when the creature carries no
     ///     grade at all, which is the majority case — see <see cref="Resolve"/>.
+    ///     <para>
+    ///     <see cref="RateOfFireMultiplier"/> is the same for every creature today and is carried here
+    ///     rather than read as a constant at the far end, so that the tier stays the one place a
+    ///     creature's power is decided.
+    ///     </para>
     /// </summary>
-    public readonly record struct Result(byte Level, int Health, int Damage, float DamageMultiplier, bool Graded);
+    public readonly record struct Result(byte Level, int Health, int Damage, float DamageMultiplier, float RateOfFireMultiplier, bool Graded);
 }

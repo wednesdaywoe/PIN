@@ -14,10 +14,32 @@ public static class HardcodedCharacterData
     public static byte Level = 45;
     public static byte EffectiveLevel = 45;
 
-    // 19192 is what the 2016 capture's player entity reported, so this one is a reading rather than a guess.
-    // Don't "fix" it from dbitems::Battleframe.base_health, which is ~1000 — that column is the pre-scaling
-    // base, and the level and attribute scaling that turns it into 19192 isn't implemented.
-    public static int MaxHealth = 19192;
+    // Was 19192, which is what the 2016 capture's player entity reported. That reading was never wrong; it
+    // was inherited from a system this project is not building. 19192 is the output of level-40 progression
+    // and PIN has no levels, so carrying the figure forward meant carrying retail's player scale into a
+    // game running beta's creature scale — a player eighteen times the size of everything shooting at it,
+    // which is why nothing could threaten a defender and no wave table could serve a newcomer and a veteran
+    // at once. Restoration's rule decides it: numbers from 1962, design from 0.7. This is a build override,
+    // taken deliberately, and it is DATA-3's entry in the issue register.
+    //
+    // ~1000 is corroborated three ways that share no assumptions. Beta trash health (0.6 cut shell-less
+    // Hissers and Skivers to 200) puts player output near 100 damage a second rather than the 612 the
+    // level-13 curve row implies. The thumper worked backwards — 4000 health invariant across all 61
+    // shipped calldowns, an undefended death around 180 seconds, three attackers at 15 a second each —
+    // gives a twenty-second player death at 960. And dbitems::Battleframe.base_health has read about 1000
+    // in the SDB the whole time. See Docs/Design/Combat-Scale.md for all three in full.
+    //
+    // Player DAMAGE OUTPUT is deliberately untouched. The one confirmed creature-tuning observation is
+    // that a basic creature dies in about two seconds, and that constrains creature_health / player_dps
+    // only. Player health is not in that equation, so moving it costs nothing against the anchor provided
+    // output is held. Moving output as well would move the anchor.
+    //
+    // Both hazards are unaffected by the change and need no rebalancing: HazardSim charges drowning and
+    // melding as fractions of max health, so the tick counts E4 and E5 measured hold at any pool size.
+    //
+    // base_health is the eventual source rather than this constant, but it is per-battleframe and its
+    // spread across 1676 rows has never been checked. That belongs with the four-tier work, not here.
+    public static int MaxHealth = 1000;
 
     // No longer the health every creature gets. As of 2026-08-15 a creature's health comes from
     // MonsterTier, which converts its shipped difficulty_cost into a level on dbcharacter::MonsterScaling
