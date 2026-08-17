@@ -1082,6 +1082,13 @@ grep across the game server: `ChunkWaterCollisionLayer`, which is the half
 `ChunkMovementBlockerCollisionLayer`, the invisible bounds nothing enforces. Neither is scenery and
 neither explains this entry; they are recorded here because the same rebuild is what proved it.
 
+**The instrument for finding these in game exists as of 2026-08-17**, which it did not when this
+entry was opened: `probe` casts a ray where you are aiming and says whether it met the world, an
+entity or nothing. Aiming squarely at something solid and being told nothing is this entry, standing
+in front of one instance of it. [X10](../In-Game-Tests/solid-world.html) is the sweep and has not
+run. Until then the only census is the offline rebuild above, which counts the failures without
+saying which object or where.
+
 Closing this means finding out why `ConvexHullHelper.ComputeHull` yields an empty hull for these
 inputs. The cheap mitigation, which is not the fix, is to place the fallback box at the object's own
 vertex centroid instead of at the origin, so a broken rock is solid and wrong rather than absent.
@@ -1145,7 +1152,9 @@ real defect in the first cut, caught by a test rather than by a session. The pro
 downward rays per moving creature per tick, which buys correctness in exactly the cases this entry
 was opened for.
 
-A third consumer is worth naming now rather than discovering later: no admin command can ask what a
-ray hits. `target` casts one, but reports "Failed to find target" when the ray strikes the world,
-which is indistinguishable from hitting nothing — so "does this rock have collision?" cannot be
-answered in game today, and [DATA-22](#data-22) had to be measured offline instead.
+A third consumer was named here and is now built. No admin command could ask what a ray hits:
+`target` casts one but reports "Failed to find target" when the ray strikes the world, which is
+indistinguishable from hitting nothing, so "does this rock have collision?" could not be answered in
+game and [DATA-22](#data-22) had to be measured offline. `probe` answers it — the ray's verdict,
+the distance, and the ground height under the caller, which is the same query this entry is about
+made visible from inside the game.

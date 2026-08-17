@@ -428,6 +428,42 @@ public partial class PhysicsEngine
         return (outHit, outPos, outEnt);
     }
 
+    /// <summary>
+    ///     Casts <paramref name="direction"/> from <paramref name="origin"/> and describes the first thing
+    ///     it meets. Excludes <paramref name="source"/>'s own body, as every other cast here does.
+    /// </summary>
+    public RayProbe ProbeRay(Vector3 origin, Vector3 direction, CharacterEntity source, float maxRange = 500f)
+    {
+        var hitHandler = default(RayHitHandler);
+        hitHandler.T = maxRange;
+
+        // A source with no body is not a failure here the way it is for a shot: probing from a character
+        // that has lost its collider still answers a useful question, so the cast runs either way and
+        // only the self-exclusion is skipped.
+        if (_entityIdToBody.TryGetValue(source.EntityId, out var sourceBody))
+        {
+            hitHandler.AvoidSourceBody = true;
+            hitHandler.SourceBody = sourceBody;
+        }
+
+        Simulation.RayCast(origin, direction, maxRange, BufferPool, ref hitHandler);
+
+        if (hitHandler.T >= maxRange)
+        {
+            return default;
+        }
+
+        var isWorld = hitHandler.HitCollidable.Mobility == CollidableMobility.Static;
+
+        return new RayProbe(
+            Hit: true,
+            IsWorld: isWorld,
+            Position: origin + (direction * hitHandler.T),
+            Distance: hitHandler.T,
+            EntityId: isWorld ? 0 : _bodyToEntityId.GetValueOrDefault(hitHandler.HitCollidable.BodyHandle),
+            ShapeHandle: isWorld ? hitHandler.HitCollidable.StaticHandle.Value : hitHandler.HitCollidable.BodyHandle.Value);
+    }
+
     partial void DebugInitialize(bool isDebugPipeClient, uint zoneId);
 
     private BodyDescription CreateTestBall(Vector3 pos)
@@ -438,6 +474,18 @@ public partial class PhysicsEngine
         Simulation.Bodies.Add(bulletDescription);
         return bulletDescription;
     }
+
+    /// <summary>
+    ///     What a ray meets first, described rather than resolved.
+    ///
+    ///     <see cref="TargetRayCast"/> answers the AI's question — "is my target the first thing in the
+    ///     way" — and throws away everything else, so a strike on the world and a ray that met nothing
+    ///     come back identically. That distinction is the whole of <c>DATA-22</c>: an object with no
+    ///     collision is invisible to the server, and telling it apart from one that simply is not there
+    ///     means being told which of the two happened. This reports the difference and does not look
+    ///     anything up.
+    /// </summary>
+    public readonly record struct RayProbe(bool Hit, bool IsWorld, Vector3 Position, float Distance, ulong EntityId, int ShapeHandle);
 
     private struct RayHitHandler : IRayHitHandler
     {

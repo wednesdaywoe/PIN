@@ -412,7 +412,7 @@ has no entries in that category, which reflects nothing having run rather than n
   is no phantom wall in the playable world — the whole cost is the object being absent. Killed on
   the way past: the loader reads only detail level 3 of five, which looks like the obvious culprit
   and is not — level 3 is the only level carrying collision at all. Same rebuild confirmed water and
-  movement-blocker collision are parsed and consumed by nobody
+  movement-blocker collision are parsed and consumed by nobody. **Findable in game as of 2026-08-17**: the new `probe` command reports whether the aim ray met the world, an entity or nothing, so an object that answers nothing is one of these — [X10](In-Game-Tests/solid-world.html) is the sweep, unrun
 - [~] **DATA-23** — **Terrain is loaded and nothing queries it**, found 2026-08-17, **built the same day and unverified in game**. Every height in
   the server is still borrowed or assumed, with two symptoms from one missing capability: a creature
   chasing a player uphill **walks into the air**, because `Steering` gives a destination the

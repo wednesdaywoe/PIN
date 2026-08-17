@@ -1059,6 +1059,59 @@ grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><b
     </div>
   </section>
 
+  <!-- ============================== BLOCK 9 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 9</span>
+      <span class="block-t">X10 — asking the server what is in front of you<small>Written 2026-08-17 with the command, unrun. The instrument the last sitting needed and did not have.</small></span>
+      <span class="block-meta">8 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X10</span><span class="marker">[ ]</span><span class="entry-t">probe names what the ray hits, and finds an object with no collision</span></div>
+        <p class="note"><code style="font-family:var(--mono)">probe</code> casts a ray where you are aiming
+          and says whether it met the world, an entity, or nothing — with the distance — then reports the
+          ground height under your feet. <code style="font-family:var(--mono)">target</code> casts the same
+          ray and reports a world strike as <i>Failed to find target</i>, which reads identically to hitting
+          nothing, and those are exactly the two answers that had to be told apart.</p>
+        <div class="callout"><b>The interesting answer is the boring one</b>
+          Aiming squarely at something solid and being told <b>nothing was found</b> means that object has
+          no collision on the server. That is <a href="../ISSUE-REGISTER.md">DATA-22</a> — 252 objects in
+          zone 448 convert to an empty shape at load. This is the first time it can be checked while
+          standing in front of one instead of by rebuilding the zone offline.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x10-1"><span class="step-body">
+            <span class="lede">Aim at open ground a few metres ahead. The control case: it must answer.</span>
+            <span class="cmd"><pre><code>probe</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x10-2"><span class="step-body"><span class="lede">Check the distance against what you can see, and the ground line against where you are standing — it should read close to 0.00m above.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x10-3"><span class="step-body">
+            <span class="lede">Aim at a creature. It should be named rather than reported as world.</span>
+            <span class="cmd"><pre><code>npc 528
+probe</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x10-4"><span class="step-body"><span class="lede"><b>Now go hunting.</b> Aim at rocks, boulders, fences, small formations — anything that is an object rather than the ground itself — and probe each one. Note every object that answers "nothing".</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x10-5"><span class="step-body"><span class="lede">If you can find the formation the Chosen shot you through on 2026-08-17, probe that one specifically. It is the case that opened DATA-22.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x10-6"><span class="step-body">
+            <span class="lede">Aim at the sky, as the negative control.</span>
+            <span class="cmd"><pre><code>probe</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Ground and buildings answer <code style="font-family:var(--mono)">world</code> at a plausible
+          distance, creatures answer by name, the sky answers nothing, and the ground line tracks your own
+          footing. Anything visible that answers nothing is a find worth writing down with a description of
+          the object.</div>
+        <div class="note"><strong>The range is optional</strong> —
+          <code style="font-family:var(--mono)">probe 30</code> looks 30m instead of 500m, which is the way
+          to check a near object without the ray carrying on to a hillside behind it.</div>
+        <div class="result"><label for="r-x10">Objects that answered nothing</label><textarea id="r-x10" data-k="n-x10"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- ============================== CLOSERS ============================== -->
   <section class="closer">
     <h2>What the run found that this sheet did not ask for</h2>
