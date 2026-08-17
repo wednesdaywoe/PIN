@@ -523,6 +523,21 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
   existing payload. A JSON `null` drops its key entirely rather than arriving as `nil` — send a
   value or send nothing. The probes were removed after the run
 
+## Terrain collision
+
+- [ ] [Solid World](In-Game-Tests/solid-world.html) — 0 of 7, written 2026-08-16 the day the
+  collision merge landed and not yet run. **The only stream in the queue with no markdown twin**: it
+  is a run sheet rather than a reference, so it was written straight into the page format the
+  sitting plan uses. X1 and X2 are the player's own shots against world geometry, and X2 already has
+  a reading from the preliminary session that nobody was looking for — **15 of 86 world hits landed
+  at under half a metre**, which is a shot dying at the muzzle. **X3 is the gate**: a creature fires
+  only if its sightline is clear, that line is tested from foot height at both ends, and it is now
+  tested against 1.36 million pieces of ground. If it fails, every combat entry in this register is
+  measuring a broken ray rather than the game, and it fails silently — a creature holding fire logs
+  at Debug and looks exactly like an AI that never ran. X4 is the same check inverted and is the one
+  the merge was for: a hill is cover now. Scoped in
+  [streams/solid-world.md](streams/solid-world.md)
+
 ## Known to need the client, not yet scheduled
 
 Not tests so much as things that can't be checked offline at all, kept here so they're not mistaken

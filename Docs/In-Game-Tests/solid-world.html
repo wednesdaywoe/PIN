@@ -1,0 +1,1160 @@
+<title>PIN — Solid World Run Sheet</title>
+
+<style>
+  /* ============================================================
+     Tokens. Light is the bare :root. Dark is redefined twice —
+     once for the un-stamped system default, once for the explicit
+     stamp — so all three viewer states resolve as a full set.
+     ============================================================ */
+  :root {
+    --ground:      #eff1f4;
+    --surface:     #ffffff;
+    --surface-2:   #f6f7f9;
+    --ink:         #171b21;
+    --ink-soft:    #5b6675;
+    --ink-faint:   #8b94a2;
+    --rule:        #d7dbe1;
+    --rule-soft:   #e6e9ee;
+    --accent:      #a8412a;
+    --accent-ink:  #ffffff;
+    --accent-wash: #f6e7e2;
+    --ok:          #2f6b4f;
+    --ok-wash:     #e2efe8;
+    --warn:        #8a6212;
+    --warn-wash:   #f5ecd8;
+    --danger:      #9e2f26;
+    --danger-wash: #f7e4e2;
+    --code-bg:     #f2f4f7;
+    --shadow:      0 1px 2px rgba(23, 27, 33, .06), 0 8px 24px -16px rgba(23, 27, 33, .28);
+
+    --serif: ui-serif, Charter, "Bitstream Charter", Georgia, "Times New Roman", serif;
+    --sans:  ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono:  ui-monospace, "JetBrains Mono", "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #14171c;
+      --surface:     #1b1f26;
+      --surface-2:   #21262e;
+      --ink:         #e3e7ec;
+      --ink-soft:    #9ba5b3;
+      --ink-faint:   #6d7784;
+      --rule:        #2d333d;
+      --rule-soft:   #262c34;
+      --accent:      #e0805f;
+      --accent-ink:  #1b1109;
+      --accent-wash: #2e211b;
+      --ok:          #74c096;
+      --ok-wash:     #1c2a24;
+      --warn:        #d7a747;
+      --warn-wash:   #2b2519;
+      --danger:      #e5786c;
+      --danger-wash: #2e1d1c;
+      --code-bg:     #12161b;
+      --shadow:      0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #14171c;
+    --surface:     #1b1f26;
+    --surface-2:   #21262e;
+    --ink:         #e3e7ec;
+    --ink-soft:    #9ba5b3;
+    --ink-faint:   #6d7784;
+    --rule:        #2d333d;
+    --rule-soft:   #262c34;
+    --accent:      #e0805f;
+    --accent-ink:  #1b1109;
+    --accent-wash: #2e211b;
+    --ok:          #74c096;
+    --ok-wash:     #1c2a24;
+    --warn:        #d7a747;
+    --warn-wash:   #2b2519;
+    --danger:      #e5786c;
+    --danger-wash: #2e1d1c;
+    --code-bg:     #12161b;
+    --shadow:      0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0 1.25rem 6rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 3.5rem 0 1.75rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5vw, 3.1rem);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 46ch;
+    margin: 0;
+  }
+
+  /* ---------- sticky control bar ---------- */
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem 0;
+    margin-bottom: 2.5rem;
+    background: var(--ground);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .tally {
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    padding-right: .4rem;
+  }
+  .tally b { color: var(--ink); font-weight: 600; }
+
+  .meter {
+    flex: 1 1 8rem;
+    height: 4px;
+    min-width: 5rem;
+    background: var(--rule-soft);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .meter i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width .25s ease;
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: .3rem .7rem;
+    font-size: .78rem;
+    font-family: var(--mono);
+    letter-spacing: .02em;
+    transition: border-color .12s ease, background .12s ease, color .12s ease;
+  }
+  button:hover { border-color: var(--ink-faint); }
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  button.primary:hover { filter: brightness(1.06); }
+
+  /* ---------- blocks ---------- */
+
+  .block {
+    margin: 0 0 1rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .block-head {
+    display: grid;
+    grid-template-columns: 3.2rem 1fr auto;
+    align-items: baseline;
+    gap: .9rem;
+    width: 100%;
+    text-align: left;
+    padding: 1.05rem 1.25rem;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    font-family: var(--sans);
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+  .block-head:hover { background: var(--surface-2); }
+
+  .block-n {
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .block-t {
+    font-family: var(--serif);
+    font-size: 1.32rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+  .block-t small {
+    display: block;
+    font-family: var(--sans);
+    font-size: .84rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+    letter-spacing: 0;
+    margin-top: .15rem;
+  }
+
+  .block-meta {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .chev {
+    display: inline-block;
+    width: .55rem;
+    height: .55rem;
+    border-right: 1.5px solid var(--ink-faint);
+    border-bottom: 1.5px solid var(--ink-faint);
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform .18s ease;
+  }
+  .block[data-open="false"] .chev { transform: rotate(-45deg) translate(-1px, 1px); }
+
+  .block-body { padding: 0 1.25rem 1.4rem; border-top: 1px solid var(--rule-soft); }
+  .block[data-open="false"] .block-body { display: none; }
+
+  /* a block where you are meant to be killed */
+  .block.lethal .block-n { color: var(--danger); }
+
+  /* ---------- entries ---------- */
+
+  .entry {
+    padding: 1.3rem 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .entry:last-child { border-bottom: 0; padding-bottom: .2rem; }
+
+  .entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .6rem;
+    margin-bottom: .4rem;
+  }
+
+  .id {
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: .12rem .45rem;
+    border-radius: 3px;
+    background: var(--accent-wash);
+    color: var(--accent);
+  }
+  .id.none { background: var(--rule-soft); color: var(--ink-soft); }
+
+  .marker {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-faint);
+  }
+  .marker.fail { color: var(--danger); }
+  .marker.pass { color: var(--ok); font-weight: 700; }
+
+  .entry-t {
+    font-family: var(--serif);
+    font-size: 1.06rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .note {
+    font-size: .9rem;
+    color: var(--ink-soft);
+    margin: .35rem 0 .7rem;
+    max-width: 68ch;
+  }
+  .note strong { color: var(--ink); font-weight: 600; }
+
+  .callout {
+    border-left: 2px solid var(--warn);
+    background: var(--warn-wash);
+    padding: .6rem .85rem;
+    margin: .7rem 0;
+    font-size: .88rem;
+    color: var(--ink);
+    border-radius: 0 4px 4px 0;
+    max-width: 68ch;
+  }
+  .callout.stop { border-left-color: var(--danger); background: var(--danger-wash); }
+  .callout.pass { border-left-color: var(--ok); background: var(--ok-wash); }
+  .callout b { font-family: var(--mono); font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; display: block; margin-bottom: .15rem; }
+
+  /* ---------- steps ---------- */
+
+  .steps { display: flex; flex-direction: column; gap: .45rem; margin: .6rem 0; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 1.15rem 1fr;
+    gap: .6rem;
+    align-items: start;
+    font-size: .93rem;
+    cursor: pointer;
+  }
+  .step input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: .22rem 0 0;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    flex: none;
+  }
+  .step input:checked { background: var(--ok); border-color: var(--ok); }
+  .step input:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px; top: 1px;
+    width: 4px; height: 9px;
+    border: solid var(--surface);
+    border-width: 0 2px 2px 0;
+    transform: rotate(42deg);
+  }
+  .step input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .step input:checked ~ .step-body { color: var(--ink-faint); }
+  .step input:checked ~ .step-body .lede { text-decoration: line-through; }
+
+  .step-body { min-width: 0; }
+  .lede { display: block; }
+
+  /* ---------- commands ---------- */
+
+  .cmd {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: .4rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+  .cmd pre {
+    margin: 0;
+    padding: .5rem .7rem;
+    flex: 1 1 auto;
+    min-width: 0;          /* without this the pre refuses to shrink and the page scrolls sideways */
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.55;
+    color: var(--ink);
+    tab-size: 2;
+  }
+  .cmd code { font: inherit; white-space: pre; }
+
+  .copy {
+    flex: none;
+    border: 0;
+    border-left: 1px solid var(--rule);
+    border-radius: 0;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 0 .8rem;
+    min-width: 4.6rem;
+  }
+  .copy:hover { background: var(--accent); color: var(--accent-ink); }
+  .copy[data-done="1"] { background: var(--ok); color: var(--surface); }
+
+  /* ---------- data table ---------- */
+
+  .tbl-scroll { overflow-x: auto; margin: .7rem 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .86rem;
+    min-width: 30rem;
+  }
+  th, td {
+    text-align: left;
+    padding: .42rem .7rem .42rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom-color: var(--rule);
+  }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- result box ---------- */
+
+  .result { margin-top: .9rem; }
+  .result label {
+    display: block;
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: .3rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 3.2rem;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .5rem .65rem;
+  }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+  /* ---------- closing sections ---------- */
+
+  .closer {
+    margin-top: 2.5rem;
+    padding-top: 1.6rem;
+    border-top: 2px solid var(--ink);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 1.8rem 0 .5rem;
+  }
+  h2:first-child { margin-top: 0; }
+  .closer p { font-size: .93rem; color: var(--ink-soft); max-width: 68ch; }
+  .closer p strong { color: var(--ink); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.6rem;
+    transform: translate(-50%, 1.5rem);
+    background: var(--ink);
+    color: var(--ground);
+    font-family: var(--mono);
+    font-size: .78rem;
+    padding: .5rem .9rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 50;
+  }
+  .toast[data-on="1"] { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; }
+  }
+
+  @media (max-width: 34rem) {
+    .block-head { grid-template-columns: 1fr auto; }
+    .block-n { grid-column: 1 / -1; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Solid World Run Sheet</h1>
+    <p class="standfirst">The first deliberate sitting against terrain collision. The server has held
+      New Eden's ground since 2026-08-16 and one casual session found nothing wrong; this is the pass
+      that checks the systems written when there was no ground at all. One server start, one login,
+      no restart until the end.</p>
+  </header>
+
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+
+  <!-- ============================== BLOCK 0 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 0</span>
+      <span class="block-t">Setup, and what the boot has to say<small>The zone now loads before the door opens. If the boot is wrong, nothing below means anything.</small></span>
+      <span class="block-meta">10 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id none">Setup</span><span class="entry-t">Build, deploy, launch</span></div>
+        <p class="note">The terrain settings live in the <strong>deployed</strong> config and are deliberately
+          not synced from the repo, whose copy still says <code style="font-family:var(--mono)">false</code>.
+          Deploying cannot switch terrain off, but it is worth seeing the three lines with your own eyes once.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="s0-1"><span class="step-body">
+            <span class="lede">Tests green before leaving the desk.</span>
+            <span class="cmd"><pre><code>dotnet test PIN.sln</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="s0-2"><span class="step-body">
+            <span class="lede">Confirm the deployment is pointed at the client's maps and its cache.</span>
+            <span class="cmd"><pre><code>grep -E "MapsPath|CachePath|LoadMapsCollision" ~/Games/PIN/GameServer/GameServer.dll.config</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="s0-3"><span class="step-body">
+            <span class="lede">Build, install and launch all three servers.</span>
+            <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id none">Setup</span><span class="entry-t">The zone came up whole</span></div>
+        <p class="note">Zone 448 is 93 chunks and about 1.36 million pieces of solid geometry, read from a
+          13&nbsp;GB cache in roughly six seconds. A chunk that fails is not an error — it is a
+          <strong>warning</strong> and a piece of world that silently is not there.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="s0-4"><span class="step-body">
+            <span class="lede">Count the chunks and add up the geometry. Expect 93 and ~1,364,781.</span>
+            <span class="cmd"><pre><code>grep -ac "Loading chunk" ~/Games/PIN/logs/GameServer.log
+grep -aoE "Loaded [0-9]+ statics" ~/Games/PIN/logs/GameServer.log | awk '{s+=$2} END {print s" statics"}'</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="s0-5"><span class="step-body">
+            <span class="lede">No chunk came up empty, and the door opened afterwards.</span>
+            <span class="cmd"><pre><code>grep -a "no LOD3 collision layers" ~/Games/PIN/logs/GameServer.log
+grep -a "Server is ready" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="s0-6"><span class="step-body">
+            <span class="lede">What it costs. Expect roughly 8.6&nbsp;GB resident.</span>
+            <span class="cmd"><pre><code>ps -o rss= -p $(pgrep -f "dotnet GameServer.dll") | awk '{printf "%.1f GB\n", $1/1048576}'</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-s0">Chunks / statics / RAM</label><textarea id="r-s0" data-k="n-s0" placeholder="chunks= / statics= / RAM="></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id none">Setup</span><span class="entry-t">Log in, and take the three baselines</span></div>
+        <p class="note">Every entry below is a count of something, and a count only means something against a
+          number taken before it. <code style="font-family:var(--mono)">Static</code> is a shot that struck the
+          world; <code style="font-family:var(--mono)">Kinematic</code> is a shot that struck an entity.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="s0-7"><span class="step-body"><span class="lede">Logged in to zone 448, standing on open flat ground.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="s0-8"><span class="step-body">
+            <span class="lede">All three baselines.</span>
+            <span class="cmd"><pre><code>grep -ac "HitHandler Static" ~/Games/PIN/logs/GameServer.log
+grep -ac "HitHandler Kinematic" ~/Games/PIN/logs/GameServer.log
+grep -ac "NoLineOfSight" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="s0-9"><span class="step-body">
+            <span class="lede">Write down where you are standing. Its first line is <code style="font-family:var(--mono)">&lt;your character&gt; at &lt;X, Y, Z&gt;</code>.</span>
+            <span class="cmd"><pre><code>hazard</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-s0b">Baselines and start position</label><textarea id="r-s0b" data-k="n-s0b" placeholder="static= / kinematic= / nolos= / at X,Y,Z"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 1 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 1</span>
+      <span class="block-t">X1 — your shots stop at the world<small>The thing terrain was for. Cheapest entry on the sheet.</small></span>
+      <span class="block-meta">5 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X1</span><span class="marker">[ ]</span><span class="entry-t">A bullet fired at a rock stops in the rock</span></div>
+        <p class="note">Until this week every shot that missed an enemy travelled 500m through the scenery and
+          vanished. The log already shows the new behaviour happening — 86 world hits in the preliminary
+          session — but nobody has yet checked that a hit lands <strong>where the rock is</strong> rather than
+          at some arbitrary distance.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x1-1"><span class="step-body">
+            <span class="lede">Any weapon you can aim precisely. The Heavy Machine Gun is the sheet's usual.</span>
+            <span class="cmd"><pre><code>createitem 85968
+dbg_inventory
+equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x1-2"><span class="step-body"><span class="lede">Find a wall, boulder or building you can judge the distance to. Note roughly how far it is.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x1-3"><span class="step-body"><span class="lede">Fire five rounds into it, standing well clear of anything else.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x1-4"><span class="step-body">
+            <span class="lede">Read the impacts. <code style="font-family:var(--mono)">T</code> is the distance in metres from your muzzle.</span>
+            <span class="cmd"><pre><code>grep -a "HitHandler Static" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Five <code style="font-family:var(--mono)">HitHandler Static</code> lines whose
+          <code style="font-family:var(--mono)">T</code> is about the distance you judged, all naming the same
+          <code style="font-family:var(--mono)">Static[…]</code> and clustered around one position.</div>
+        <div class="callout"><b>Not a failure</b>
+          Nothing visible happening on screen. The client draws its own impact effects off its own prediction
+          and has always done so; this entry is about what the server believes.</div>
+        <div class="result"><label for="r-x1">Judged distance vs T</label><textarea id="r-x1" data-k="n-x1"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 2 ============================== -->
+  <section class="block lethal" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 2</span>
+      <span class="block-t">X2 — the shot that dies at the muzzle<small>Already visible in the preliminary session: 15 of 86 world hits at zero range.</small></span>
+      <span class="block-meta">10 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X2</span><span class="marker">[ ]</span><span class="entry-t">How often does your own gun shoot the ground you are standing on</span></div>
+        <p class="note">A shot starts at the muzzle, which sits <strong>off to one side of your character</strong>
+          rather than in the middle of it. The raycast excludes your own body and nothing else — not the wall
+          you are pressed against, not the rise under your feet. When the muzzle starts inside solid geometry
+          the shot is dead the instant it is fired, and the log says so with
+          <code style="font-family:var(--mono)">T 0</code>.</p>
+        <div class="callout stop"><b>This already happened</b>
+          The 2026-08-16 session recorded 86 world hits, and <b>15 of them at under half a metre</b> — roughly
+          one world hit in six. That is a real reading from real play, not a prediction. What nobody knows is
+          whether those were all one awkward corner or whether it happens in the open.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x2-1"><span class="step-body">
+            <span class="lede">Count before.</span>
+            <span class="cmd"><pre><code>grep -ac "HitHandler Static" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x2-2"><span class="step-body"><span class="lede"><b>Open ground.</b> Standing clear of everything, fire 20 rounds at the horizon.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x2-3"><span class="step-body">
+            <span class="lede">Split the world hits by distance. Everything in the first column is a shot that died at the muzzle.</span>
+            <span class="cmd"><pre><code>grep -aoE "HitHandler Static T [0-9.E-]+" ~/Games/PIN/logs/GameServer.log \
+  | awk '{print ($4+0 &lt; 0.5) ? "muzzle" : (($4+0 &lt; 5) ? "0.5-5m" : "5m+")}' \
+  | sort | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x2-4"><span class="step-body"><span class="lede"><b>Shoulder to a wall.</b> Put your back or side against a building, fire 20 rounds straight ahead into the open, and run the split again.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x2-5"><span class="step-body"><span class="lede"><b>On a slope.</b> Stand on a hillside facing downhill, fire 20 rounds, split again.</span></span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Zero muzzle hits in the open. Whatever the wall and the slope produce is the measurement — record
+          the number for each of the three, because that is what decides the fix.</div>
+        <div class="note"><strong>What a failure buys.</strong> If shots die at the muzzle in the open, the ray
+          needs to start a short way forward of the muzzle, or ignore a first hit within arm's reach. Both are
+          small changes and both risk letting shots through walls you are touching, which is why this wants a
+          number rather than a hunch.</div>
+        <div class="result"><label for="r-x2">Muzzle hits: open / wall / slope</label><textarea id="r-x2" data-k="n-x2" placeholder="open= / wall= / slope="></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 3 ============================== -->
+  <section class="block lethal" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 3</span>
+      <span class="block-t">X3 — creatures can still shoot you<small>The gate. If this fails, every combat entry in the whole queue is now invalid.</small></span>
+      <span class="block-meta">8 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X3</span><span class="marker">[ ]</span><span class="entry-t">A rifleman on flat ground opens fire</span></div>
+        <p class="note">A creature fires only if the line to you is clear, and that line is now tested against
+          1.36 million pieces of ground. Both ends of it sit at <strong>foot height</strong>. On ground with any
+          texture to it, the shot can clip the dirt between two people standing in the open.</p>
+        <div class="callout stop"><b>What failure looks like</b>
+          Nothing. No error, no crash — creatures simply stand and watch you, because "no line of sight" is a
+          perfectly ordinary answer and the log records it at Debug. That is why this entry exists rather than
+          being left to the next combat sitting to notice.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x3-1"><span class="step-body"><span class="lede">Stand on the flattest open ground you can find. You want to be hit, so no invulnerability.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x3-2"><span class="step-body">
+            <span class="lede">Chosen Fiend — 180m rifle. Spawns at your feet.</span>
+            <span class="cmd"><pre><code>npc 1196</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x3-3"><span class="step-body"><span class="lede">Walk about 30m away in a straight line, turn, and stand still for 20 seconds.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x3-4"><span class="step-body">
+            <span class="lede">Did it fire? Your character is named on the left of a damage line, not numbered.</span>
+            <span class="cmd"><pre><code>grep -aE "took [0-9]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x3-5"><span class="step-body">
+            <span class="lede">And if it did not, this says why in one word.</span>
+            <span class="cmd"><pre><code>grep -a "holding fire" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Damage lines naming your character, and no <code style="font-family:var(--mono)">NoLineOfSight</code>
+          in the tail while you stood in the open.</div>
+        <div class="note"><strong>If it holds fire in the open, stop and read the position.</strong> A
+          <code style="font-family:var(--mono)">NoLineOfSight</code> line carries the range it wanted and the
+          distance you were at. Paste the whole line into the box — the two numbers together say whether the ray
+          hit the ground immediately or partway across.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x3-6"><span class="step-body">
+            <span class="lede">Clear the field before the next block.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-x3">Fired, or held?</label><textarea id="r-x3" data-k="n-x3"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 4 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 4</span>
+      <span class="block-t">X4 — a hill is cover now<small>The payoff entry. Cover used to have to be a spawned object.</small></span>
+      <span class="block-meta">8 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X4</span><span class="marker">[ ]</span><span class="entry-t">Stepping behind a rise stops the shooting</span></div>
+        <p class="note">This is the behaviour the whole merge was for, and it is the exact inverse of X3 — the
+          same check passing where it should and failing where it should. Run it immediately after X3, with the
+          same creature type, so the only thing that changed is where you are standing.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x4-1"><span class="step-body"><span class="lede">Find a rise, boulder or building big enough to hide behind, and stand beside it in the open.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x4-2"><span class="step-body">
+            <span class="lede">Spawn the same rifleman at your feet.</span>
+            <span class="cmd"><pre><code>npc 1196</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x4-3"><span class="step-body"><span class="lede">Walk 30m out where it can see you, and let it hit you once so you know it is engaged.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x4-4"><span class="step-body"><span class="lede">Now step behind the rise, staying about the same distance away. Wait 20 seconds.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x4-5"><span class="step-body">
+            <span class="lede">The hold reason should have changed the moment you broke sight.</span>
+            <span class="cmd"><pre><code>grep -a "holding fire" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x4-6"><span class="step-body">
+            <span class="lede">And no damage should have arrived while you were behind it.</span>
+            <span class="cmd"><pre><code>grep -aE "took [0-9]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          <code style="font-family:var(--mono)">NoLineOfSight</code> appears while you are hidden, with a
+          distance well inside the rifle's 180m reach, and the damage stops. Step back out and it resumes.</div>
+        <div class="callout"><b>Read the reason, not just the silence</b>
+          <code style="font-family:var(--mono)">OutOfRange</code> means you simply walked too far and the entry
+          proves nothing. The distance is printed on the same line, so the two are easy to tell apart.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x4-7"><span class="step-body">
+            <span class="lede">Clear the field.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-x4">Hold reason and distance while hidden</label><textarea id="r-x4" data-k="n-x4"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 5 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 5</span>
+      <span class="block-t">X5 — creatures on a slope<small>Nothing was changed here. This measures how bad the old workaround still is.</small></span>
+      <span class="block-meta">8 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X5</span><span class="marker">[ ]</span><span class="entry-t">A creature chasing you uphill</span></div>
+        <p class="note">A creature still has no idea where the floor is. It borrows <strong>your</strong> height
+          — a player standing on the ground is a ground measurement — and is capped at a 45° climb so it cannot
+          levitate onto a roof. Terrain being loaded changes none of that yet, because nothing casts a ray
+          downward. This entry records how wrong that is now that there is a real surface to be wrong about.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x5-1"><span class="step-body"><span class="lede">Stand at the bottom of a hillside you can walk up.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x5-2"><span class="step-body">
+            <span class="lede">Melded Aranha — closes to 5m, moves at 11 m/s, so it will follow hard.</span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x5-3"><span class="step-body"><span class="lede">Walk up the slope at a steady pace. Watch it: is it on the surface, sunk into it, or floating above it?</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x5-4"><span class="step-body"><span class="lede">Now walk along the side of the hill, so it has to cross a slope rather than climb it.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x5-5"><span class="step-body"><span class="lede">Last, jump down a drop of a few metres and watch what it does at the edge.</span></span></label>
+        </div>
+        <div class="callout"><b>There is no pass mark here</b>
+          This is a measurement, not a check. Write down what you saw in plain words — "sank to the knees on
+          the climb", "held the height it started at and ended up inside the hill", "fine going up, wrong going
+          down". That description is the specification for the fix.</div>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x5-6"><span class="step-body">
+            <span class="lede">Clear the field.</span>
+            <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-x5">Uphill / across the slope / off the drop</label><textarea id="r-x5" data-k="n-x5"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 6 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 6</span>
+      <span class="block-t">X6 — the thumper defence still plays<small>The biggest built feature, re-run against a world that can now block things.</small></span>
+      <span class="block-meta">15 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X6</span><span class="marker">[ ]</span><span class="entry-t">Four waves, a machine that survives, a payout</span></div>
+        <p class="note">The defence has attackers walking at a fixed object and shooting it. Both halves are
+          exactly what terrain interferes with: the walk is a straight line with no awareness of what is on it,
+          and the shot at the machine is the same foot-height ray as X3. This ran 6 of 6 on 2026-08-15 with an
+          empty world, so any difference is the terrain.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x6-1"><span class="step-body"><span class="lede">Stand somewhere with a bit of shape to it — not a parade ground, not a ravine.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x6-2"><span class="step-body">
+            <span class="lede">Count the sappers' hits on the machine before you start.</span>
+            <span class="cmd"><pre><code>grep -acE "Thumper [0-9]+ took" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x6-3"><span class="step-body">
+            <span class="lede">Call one down at your feet and defend it through the whole cycle.</span>
+            <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x6-4"><span class="step-body">
+            <span class="lede">Did every wave arrive? Each line names the wave, its size and how many are standing.</span>
+            <span class="cmd"><pre><code>grep -aE "wave [0-9] of 4" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x6-5"><span class="step-body">
+            <span class="lede">Did the sappers reach the machine and hit it?</span>
+            <span class="cmd"><pre><code>grep -aE "Thumper [0-9]+ took" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x6-6"><span class="step-body">
+            <span class="lede">Any creature that stood still and never engaged says so here.</span>
+            <span class="cmd"><pre><code>grep -a "holding fire" ~/Games/PIN/logs/GameServer.log | grep -ac "NoLineOfSight"</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x6-7"><span class="step-body">
+            <span class="lede">And the payout at the end.</span>
+            <span class="cmd"><pre><code>grep -aE "completion|defence" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          The cycle plays as it did on 2026-08-15: four waves, sappers landing hits on the machine, and a
+          <code style="font-family:var(--mono)">completion</code> line with a defence multiplier at the end.</div>
+        <div class="callout stop"><b>The failure to watch for</b>
+          Sappers that walk to the machine and then do nothing. That is X3's failure wearing a different hat —
+          the ray from a creature's feet to the machine's base clipping the ground between them.</div>
+        <div class="result"><label for="r-x6">Waves / machine hits / payout</label><textarea id="r-x6" data-k="n-x6"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== BLOCK 7 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 7</span>
+      <span class="block-t">X7 — the closing sweep<small>Two commands at the end of the sitting. Everything else was passive.</small></span>
+      <span class="block-meta">3 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X7</span><span class="marker">[ ]</span><span class="entry-t">An hour of a solid world, and what it cost</span></div>
+        <p class="note">A million static shapes is new load on a server that used to hold a few dozen. This is
+          not a stress test — it is the sweep that catches anything the sitting produced and nobody was looking
+          at.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x7-1"><span class="step-body">
+            <span class="lede">Anything at all above Debug, for the whole session.</span>
+            <span class="cmd"><pre><code>grep -aE "\[(ERR|WRN|FTL)" ~/Games/PIN/logs/GameServer.log | sort | uniq -c | sort -rn | head -20</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x7-2"><span class="step-body">
+            <span class="lede">Memory again. Compare against the Block 0 reading — it should not have climbed.</span>
+            <span class="cmd"><pre><code>ps -o rss= -p $(pgrep -f "dotnet GameServer.dll") | awk '{printf "%.1f GB\n", $1/1048576}'</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x7-3"><span class="step-body">
+            <span class="lede">The session's whole shot ledger, world against entity.</span>
+            <span class="cmd"><pre><code>grep -aoE "HitHandler [A-Za-z]+" ~/Games/PIN/logs/GameServer.log | sort | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="result"><label for="r-x7">Warnings, memory, ledger</label><textarea id="r-x7" data-k="n-x7"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== CLOSERS ============================== -->
+  <section class="closer">
+    <h2>If the sitting is short</h2>
+    <p>Run blocks 0, 2 and 3, then stop. Block 3 is the gate — whether creatures can still shoot at all decides
+      whether every combat entry in the rest of the queue is measuring the game or measuring a broken ray. Block 2
+      is the one finding that already has evidence behind it and only needs a number.</p>
+
+    <h2>What this sitting cannot answer</h2>
+    <div class="tbl-scroll"><table>
+      <thead><tr><th>Question</th><th>Why not</th></tr></thead>
+      <tbody>
+        <tr><td>How high is the ground at a given point?</td><td>No command asks the server that. Placement is still walk-there-and-spawn, and building the query is work this sitting is meant to justify.</td></tr>
+        <tr><td>Does water work server-side?</td><td>The water geometry is read out of the map files and handed to nobody. Depth still comes from the client, as it always has.</td></tr>
+        <tr><td>Do the invisible boundary walls hold?</td><td>Same: parsed, never used. Nothing enforces them.</td></tr>
+        <tr><td>Does any of this hold with two players?</td><td>Needs a second client, like every other two-player entry in the queue.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Why this order</h2>
+    <p><strong>Your own shots come before theirs.</strong> X1 and X2 need no creature, no hostility and no
+      health, so they cost five minutes and they tell you whether the ray behaves before anything harder depends
+      on it.</p>
+    <p><strong>X3 and X4 are the same check twice, and they belong together.</strong> One proves shooting still
+      works in the open, the other proves it stops behind cover. Either alone is ambiguous: a creature that never
+      fires passes X4 for the wrong reason.</p>
+    <p><strong>Clear the field between blocks, never inside one.</strong>
+      <code style="font-family:var(--mono)">rment</code> removes every entity except players — including a
+      thumper mid-cycle.</p>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var LS = "pin-solid-world-v1";
+  var state = {};
+
+  try {
+    state = JSON.parse(localStorage.getItem(LS) || "{}") || {};
+  } catch (e) {
+    state = {};
+  }
+
+  function save() {
+    try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) { /* private mode: page still works */ }
+  }
+
+  var toastEl = document.getElementById("toast");
+  var toastTimer = null;
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.setAttribute("data-on", "1");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.removeAttribute("data-on"); }, 1400);
+  }
+
+  /* ---- copy, with a fallback for sandboxes that block the clipboard API ---- */
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      ok ? resolve() : reject(new Error("copy blocked"));
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest(".copy");
+    if (!btn) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    var code = btn.parentNode.querySelector("code");
+    if (!code) { return; }
+    copyText(code.textContent).then(function () {
+      btn.setAttribute("data-done", "1");
+      btn.textContent = "Copied";
+      setTimeout(function () {
+        btn.removeAttribute("data-done");
+        btn.textContent = "Copy";
+      }, 1100);
+    }).catch(function () {
+      toast("Copy blocked — select the text instead");
+    });
+  });
+
+  /* ---- checkboxes ---- */
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll(".step input[type=checkbox]"));
+  document.getElementById("total").textContent = boxes.length;
+
+  var doneEl = document.getElementById("done");
+  var meterEl = document.getElementById("meter");
+
+  function tally() {
+    var n = 0;
+    for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) { n++; } }
+    doneEl.textContent = n;
+    meterEl.style.width = boxes.length ? (n / boxes.length * 100) + "%" : "0%";
+  }
+
+  boxes.forEach(function (box) {
+    var k = box.getAttribute("data-k");
+    if (state[k]) { box.checked = true; }
+    box.addEventListener("change", function () {
+      state[k] = box.checked ? 1 : 0;
+      if (!box.checked) { delete state[k]; }
+      save();
+      tally();
+    });
+  });
+  tally();
+
+  /* ---- result notes ---- */
+
+  var notes = Array.prototype.slice.call(document.querySelectorAll("textarea[data-k]"));
+  notes.forEach(function (ta) {
+    var k = ta.getAttribute("data-k");
+    if (state[k]) { ta.value = state[k]; }
+    ta.addEventListener("input", function () {
+      if (ta.value.trim()) { state[k] = ta.value; } else { delete state[k]; }
+      save();
+    });
+  });
+
+  /* ---- blocks ---- */
+
+  document.addEventListener("click", function (ev) {
+    var head = ev.target.closest(".block-head");
+    if (!head) { return; }
+    var block = head.parentNode;
+    block.setAttribute("data-open", block.getAttribute("data-open") === "false" ? "true" : "false");
+  });
+
+  var expandBtn = document.getElementById("expand");
+  expandBtn.addEventListener("click", function () {
+    var blocks = document.querySelectorAll(".block");
+    var anyClosed = document.querySelector('.block[data-open="false"]') !== null;
+    for (var i = 0; i < blocks.length; i++) {
+      blocks[i].setAttribute("data-open", anyClosed ? "true" : "false");
+    }
+    expandBtn.textContent = anyClosed ? "Collapse all" : "Expand all";
+  });
+
+  /* ---- run report ---- */
+
+  document.getElementById("report").addEventListener("click", function () {
+    var out = ["# Solid World sitting report", ""];
+    var blocks = document.querySelectorAll(".block");
+
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i];
+      var n = b.querySelector(".block-n").textContent.trim();
+      var t = b.querySelector(".block-t").childNodes[0].textContent.trim();
+      var bx = b.querySelectorAll(".step input[type=checkbox]");
+      var checked = 0;
+      for (var j = 0; j < bx.length; j++) { if (bx[j].checked) { checked++; } }
+
+      out.push("## " + n + " — " + t + "  (" + checked + "/" + bx.length + " steps)");
+
+      var entries = b.querySelectorAll(".entry");
+      for (var e = 0; e < entries.length; e++) {
+        var ta = entries[e].querySelector("textarea[data-k]");
+        if (ta && ta.value.trim()) {
+          var idEl = entries[e].querySelector(".id");
+          var titleEl = entries[e].querySelector(".entry-t");
+          out.push("");
+          out.push("**" + (idEl ? idEl.textContent.trim() + " — " : "") + (titleEl ? titleEl.textContent.trim() : "") + "**");
+          out.push("");
+          out.push(ta.value.trim());
+        }
+      }
+      out.push("");
+    }
+
+    copyText(out.join("\n")).then(function () {
+      toast("Run report copied");
+    }).catch(function () {
+      toast("Copy blocked");
+    });
+  });
+
+  /* ---- reset ---- */
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!window.confirm("Clear every tick and every note on this page?")) { return; }
+    state = {};
+    save();
+    boxes.forEach(function (b) { b.checked = false; });
+    notes.forEach(function (t) { t.value = ""; });
+    tally();
+    toast("Cleared");
+  });
+})();
+</script>

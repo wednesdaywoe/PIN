@@ -20,6 +20,11 @@ the marker legend it uses.
 check that can be run solo without a logout or a restart, in the order that shares the most setup.
 Read it when you are about to sit down, rather than picking entries off the register one at a time.
 
+[Solid World](solid-world.html) is the second run sheet and the first entries written straight into
+that format with no markdown twin: seven checks against the terrain collision that landed on
+2026-08-16, in the order that lets the cheap ones rule out the expensive ones. Open it in a browser
+— the ticks and the notes save themselves, and **Copy run report** produces the write-up.
+
 Status markers: `[ ]` not run, `[x]` passed, `[!]` failed (leave it in with what happened),
 `[-]` skipped or not reproducible.
 
