@@ -19,6 +19,38 @@ cross-references below. How to add an entry, and the full status-marker legend, 
 
 ## Current frontier
 
+**The 2026-08-17 sitting was the first deliberate pass against terrain, and the merge came out of it
+clean — every failure it found belongs to PIN.** [Solid World](In-Game-Tests/solid-world.html) went
+5 of 7. The headline is X4: a rifleman held fire four times at 12–15m with a 180m weapon because a
+rise was in the way, and resumed when the tester stepped out. **Cover is a place now rather than a
+spawned object**, which is the thing every combat entry written before this week had to work around.
+X3, the gate this sheet was ordered around, passed on 675 damage lines — the fear that 1.36 million
+pieces of ground would silently stop every creature from firing was wrong.
+
+**X2 passed by disproving the finding that created it**, which is the more useful outcome. The
+2026-08-16 log held 15 world hits under half a metre out of 86 — shots dying at the muzzle — and the
+sheet was built to measure that in three stances. The 2026-08-17 session produced **391 world hits
+and none nearer than a metre**. Same code, same weapon class. So it is something about where the
+tester was standing, not about how a shot starts, and it drops to a curiosity rather than the fix
+this slice was going to open with.
+
+**The two real findings were not both on the sheet, and one needed the tester's eyes rather than the
+log.** X5 has no pass mark by design — it asks what a creature does on a slope — and the answer was
+that it walks into the air, rising alongside the hill instead of onto it. Nothing in the log says
+that; 208 ground samples and 675 damage lines are all consistent with a perfectly behaved session.
+The second finding was not an entry at all: **sappers spawning inside a hillside**, which the tester
+noticed only because the ground now stops bullets and made them unkillable. Both are
+[DATA-23](ISSUE-REGISTER.md) — terrain loaded for a day and no code asking it where the ground is.
+
+**The third came from following the tester's own theory offline.** The report was a Chosen shooting
+through a rock formation, with a guess attached: that world terrain and environment meshes behave
+differently. Rebuilding zone 448's collision from the client's map files says the guess is right in
+substance and wrong in mechanism — the ground is a mesh and converts perfectly, while 252 individual
+objects ship as convex hulls that convert to nothing. That is
+[DATA-22](ISSUE-REGISTER.md). **A tester hypothesis stated as a guess is worth chasing**: this one
+was chased with a rebuild rather than a session, and it named a defect no in-game entry would have
+isolated.
+
 **The 2026-08-16 evening sitting closed [DATA-21](ISSUE-REGISTER.md) and confirmed the creature
 cadence change, and its most useful product is a lesson about reading the game rather than a pass.**
 Weapon splash works: a Grenade Launcher put 350 into the creature it struck and 38 into one near the
@@ -525,17 +557,22 @@ prediction fixes ([NET-19](ISSUE-REGISTER.md)) were already tracked before this 
 
 ## Terrain collision
 
-- [ ] [Solid World](In-Game-Tests/solid-world.html) — 0 of 7, written 2026-08-16 the day the
-  collision merge landed and not yet run. **The only stream in the queue with no markdown twin**: it
-  is a run sheet rather than a reference, so it was written straight into the page format the
-  sitting plan uses. X1 and X2 are the player's own shots against world geometry, and X2 already has
-  a reading from the preliminary session that nobody was looking for — **15 of 86 world hits landed
-  at under half a metre**, which is a shot dying at the muzzle. **X3 is the gate**: a creature fires
-  only if its sightline is clear, that line is tested from foot height at both ends, and it is now
-  tested against 1.36 million pieces of ground. If it fails, every combat entry in this register is
-  measuring a broken ray rather than the game, and it fails silently — a creature holding fire logs
-  at Debug and looks exactly like an AI that never ran. X4 is the same check inverted and is the one
-  the merge was for: a hill is cover now. Scoped in
+- [~] [Solid World](In-Game-Tests/solid-world.html) — **5 of 7, run 2026-08-17, written the day
+  before.** **The only stream in the queue with no markdown twin**: it is a run sheet rather than a
+  reference, so it was written straight into the page format the sitting plan uses. The world held.
+  X1 passed — 391 shots stopped in world geometry at sane distances. **X2 passed and retired its own
+  premise**: not one of those 391 landed under a metre, against 15 of 86 the day before, so the
+  shot-dying-at-the-muzzle reading is a place rather than a shape and drops to low priority. **X3,
+  the gate, passed** — 675 damage lines on the player, so ordinary ground does not block a creature's
+  sightline. **X4 passed and is the one the merge was for**: four holds for `NoLineOfSight` at 12–15m
+  against a 180m rifle, with damage resuming on stepping out. X6 passed with one wrinkle — all four
+  waves arrived and sappers landed 82 hits on each machine, but an attacker parked 4m away lost sight
+  of it three times, each for a single attack cycle. X7 clean: no new errors, and the 54 that look
+  alarming are the character service that has never run, retrying. **X5 failed** and is
+  [DATA-23](ISSUE-REGISTER.md): a creature chasing the tester uphill rose alongside the slope rather
+  than onto it. The sitting's second finding was not on the sheet at all — sappers spawning inside a
+  slope, unhittable now that the ground stops bullets — and the third came from chasing X4's one
+  surprise offline, [DATA-22](ISSUE-REGISTER.md), 252 objects with no collision. Scoped in
   [streams/solid-world.md](streams/solid-world.md)
 
 ## Known to need the client, not yet scheduled

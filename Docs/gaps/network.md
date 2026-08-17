@@ -128,7 +128,7 @@ it's the one with a gameplay-visible failure mode.
 ### NET-8 — Shapeless tagfiles fall back to a placeholder box [ ] open
 
 [PhysicsEngine.Shapes.cs:83](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L83) plus
-[TagfileLoader.cs:39,412,418](../../UdpHosts/GameServer/Physics/TagfileLoader/TagfileLoader.cs): a tagfile with no
+[TagfileLoader.cs:39,412,418](../../Lib/Shared.Collision/Tagfile/TagfileLoader.cs): a tagfile with no
 shapes gets a generic box collider instead of failing loud or being flagged. Makes a missing-shape
 bug look like working collision until someone notices the box doesn't match the model.
 

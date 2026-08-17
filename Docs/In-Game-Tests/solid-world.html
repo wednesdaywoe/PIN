@@ -535,10 +535,10 @@
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
     <h1>Solid World Run Sheet</h1>
-    <p class="standfirst">The first deliberate sitting against terrain collision. The server has held
-      New Eden's ground since 2026-08-16 and one casual session found nothing wrong; this is the pass
-      that checks the systems written when there was no ground at all. One server start, one login,
-      no restart until the end.</p>
+    <p class="standfirst">The first deliberate sitting against terrain collision. <b>Run 2026-08-17
+      against build dc241e5f — 5 of 7.</b> The world held: shots stop where it is, creatures still
+      fight on it, and a rise is cover now. Both failures belong to PIN's own code rather than to the
+      terrain, and one of them was never on this sheet.</p>
   </header>
 
   <div class="bar">
@@ -637,7 +637,7 @@ grep -ac "NoLineOfSight" ~/Games/PIN/logs/GameServer.log</code></pre><button cla
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X1</span><span class="marker">[ ]</span><span class="entry-t">A bullet fired at a rock stops in the rock</span></div>
+        <div class="entry-head"><span class="id">X1</span><span class="marker pass">[x] passed — 391 world hits at sane distances</span><span class="entry-t">A bullet fired at a rock stops in the rock</span></div>
         <p class="note">Until this week every shot that missed an enemy travelled 500m through the scenery and
           vanished. The log already shows the new behaviour happening — 86 world hits in the preliminary
           session — but nobody has yet checked that a hit lands <strong>where the rock is</strong> rather than
@@ -663,6 +663,10 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
         <div class="callout"><b>Not a failure</b>
           Nothing visible happening on screen. The client draws its own impact effects off its own prediction
           and has always done so; this entry is about what the server believes.</div>
+        <div class="callout pass"><b>Ran 2026-08-17 — passed</b>
+          391 shots struck world geometry across the session, spread 1&ndash;2m (5), 2&ndash;5m (152),
+          5&ndash;20m (150) and beyond 20m (84). Distances track what was aimed at. The world stops a
+          bullet.</div>
         <div class="result"><label for="r-x1">Judged distance vs T</label><textarea id="r-x1" data-k="n-x1"></textarea></div>
       </div>
 
@@ -679,7 +683,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X2</span><span class="marker">[ ]</span><span class="entry-t">How often does your own gun shoot the ground you are standing on</span></div>
+        <div class="entry-head"><span class="id">X2</span><span class="marker pass">[x] passed — zero muzzle hits, premise retired</span><span class="entry-t">How often does your own gun shoot the ground you are standing on</span></div>
         <p class="note">A shot starts at the muzzle, which sits <strong>off to one side of your character</strong>
           rather than in the middle of it. The raycast excludes your own body and nothing else — not the wall
           you are pressed against, not the rise under your feet. When the muzzle starts inside solid geometry
@@ -711,6 +715,11 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           needs to start a short way forward of the muzzle, or ignore a first hit within arm's reach. Both are
           small changes and both risk letting shots through walls you are touching, which is why this wants a
           number rather than a hunch.</div>
+        <div class="callout pass"><b>Ran 2026-08-17 — passed, and it retired its own premise</b>
+          <b>Not one of the 391 world hits landed under a metre</b>, and the closest five were 1&ndash;2m.
+          The previous day's 15-in-86 did not reappear on the same code with the same weapon class, so
+          the muzzle death is something about where the tester was standing rather than about how a shot
+          starts. Dropped to a curiosity. The three stances were not needed to settle it.</div>
         <div class="result"><label for="r-x2">Muzzle hits: open / wall / slope</label><textarea id="r-x2" data-k="n-x2" placeholder="open= / wall= / slope="></textarea></div>
       </div>
 
@@ -727,7 +736,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X3</span><span class="marker">[ ]</span><span class="entry-t">A rifleman on flat ground opens fire</span></div>
+        <div class="entry-head"><span class="id">X3</span><span class="marker pass">[x] passed — 675 damage lines on the player</span><span class="entry-t">A rifleman on flat ground opens fire</span></div>
         <p class="note">A creature fires only if the line to you is clear, and that line is now tested against
           1.36 million pieces of ground. Both ends of it sit at <strong>foot height</strong>. On ground with any
           texture to it, the shot can clip the dirt between two people standing in the open.</p>
@@ -764,6 +773,9 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
             <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
         </div>
+        <div class="callout pass"><b>Ran 2026-08-17 — passed, and the gate is open</b>
+          675 damage lines naming the player. Ordinary ground does not block a creature's sightline, so
+          every combat entry in the register still measures the game rather than a broken ray.</div>
         <div class="result"><label for="r-x3">Fired, or held?</label><textarea id="r-x3" data-k="n-x3"></textarea></div>
       </div>
 
@@ -780,7 +792,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X4</span><span class="marker">[ ]</span><span class="entry-t">Stepping behind a rise stops the shooting</span></div>
+        <div class="entry-head"><span class="id">X4</span><span class="marker pass">[x] passed — 4 holds at 12&ndash;15m with a 180m rifle</span><span class="entry-t">Stepping behind a rise stops the shooting</span></div>
         <p class="note">This is the behaviour the whole merge was for, and it is the exact inverse of X3 — the
           same check passing where it should and failing where it should. Run it immediately after X3, with the
           same creature type, so the only thing that changed is where you are standing.</p>
@@ -813,6 +825,11 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
             <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
         </div>
+        <div class="callout pass"><b>Ran 2026-08-17 — passed. This is the one the merge was for</b>
+          Four holds for <code style="font-family:var(--mono)">NoLineOfSight</code> at 12.0, 13.2, 15.3
+          and 12.0 metres, by riflemen carrying a 180m weapon — so the distance rules out
+          <code style="font-family:var(--mono)">OutOfRange</code> completely — and the damage resumed on
+          stepping back out. <b>Cover is a place now rather than a spawned object.</b></div>
         <div class="result"><label for="r-x4">Hold reason and distance while hidden</label><textarea id="r-x4" data-k="n-x4"></textarea></div>
       </div>
 
@@ -829,7 +846,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X5</span><span class="marker">[ ]</span><span class="entry-t">A creature chasing you uphill</span></div>
+        <div class="entry-head"><span class="id">X5</span><span class="marker fail">[!] failed — it climbs alongside the hill, in the air</span><span class="entry-t">A creature chasing you uphill</span></div>
         <p class="note">A creature still has no idea where the floor is. It borrows <strong>your</strong> height
           — a player standing on the ground is a ground measurement — and is capped at a 45° climb so it cannot
           levitate onto a roof. Terrain being loaded changes none of that yet, because nothing casts a ray
@@ -854,6 +871,14 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
             <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
         </div>
+        <div class="callout stop"><b>Ran 2026-08-17 — failed</b>
+          The creature tracks correctly on level ground, then <b>rises alongside the slope rather than
+          onto it</b>, holding a height that belongs to ground it has not reached. Cause is certain and
+          is not the terrain: nothing in the server casts a ray downward, so a destination carries the
+          <i>player's</i> height, and the creature's position lags the player's. Filed as
+          <a href="../ISSUE-REGISTER.md">DATA-23</a>. Nothing in the log shows this — 208 ground samples
+          and 675 damage lines are all consistent with a clean session, which is why the entry was
+          written for eyes rather than for a grep.</div>
         <div class="result"><label for="r-x5">Uphill / across the slope / off the drop</label><textarea id="r-x5" data-k="n-x5"></textarea></div>
       </div>
 
@@ -870,7 +895,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X6</span><span class="marker">[ ]</span><span class="entry-t">Four waves, a machine that survives, a payout</span></div>
+        <div class="entry-head"><span class="id">X6</span><span class="marker pass">[x] passed — 4 waves, 82 hits on each machine, 3 blips</span><span class="entry-t">Four waves, a machine that survives, a payout</span></div>
         <p class="note">The defence has attackers walking at a fixed object and shooting it. Both halves are
           exactly what terrain interferes with: the walk is a straight line with no awareness of what is on it,
           and the shot at the machine is the same foot-height ray as X3. This ran 6 of 6 on 2026-08-15 with an
@@ -908,6 +933,18 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
         <div class="callout stop"><b>The failure to watch for</b>
           Sappers that walk to the machine and then do nothing. That is X3's failure wearing a different hat —
           the ray from a creature's feet to the machine's base clipping the ground between them.</div>
+        <div class="callout pass"><b>Ran 2026-08-17 — passed, with the predicted wrinkle at one-tenth the size</b>
+          Two cycles. The defended one ran all four waves (1, 2, 2+1, 2+1 on a 20m ring) and sappers
+          landed <b>82 hits on each machine</b>. The blindness predicted above is real and tiny: one
+          attacker standing 4m away lost sight of the machine three times across the session, each for a
+          single attack cycle before it resumed. Both machines were destroyed — one unattended at 67%,
+          the tester's at 96% with 6 attackers down, which is balance rather than terrain.</div>
+        <div class="callout stop"><b>And the block found something no entry asked for</b>
+          The machine was on a slope, and <b>sappers spawned inside the hillside</b>. The wave ring places
+          them at the machine's own height, so on a slope an arc of it is underground. That was cosmetic
+          until this week; now the ground stops the player's bullets, so a buried sapper cannot be killed
+          while it goes on damaging the machine. Same root cause as X5, same fix, filed together as
+          <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
         <div class="result"><label for="r-x6">Waves / machine hits / payout</label><textarea id="r-x6" data-k="n-x6"></textarea></div>
       </div>
 
@@ -924,7 +961,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X7</span><span class="marker">[ ]</span><span class="entry-t">An hour of a solid world, and what it cost</span></div>
+        <div class="entry-head"><span class="id">X7</span><span class="marker pass">[x] passed — no new errors</span><span class="entry-t">An hour of a solid world, and what it cost</span></div>
         <p class="note">A million static shapes is new load on a server that used to hold a few dozen. This is
           not a stress test — it is the sweep that catches anything the sitting produced and nobody was looking
           at.</p>
@@ -942,6 +979,12 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
             <span class="cmd"><pre><code>grep -aoE "HitHandler [A-Za-z]+" ~/Games/PIN/logs/GameServer.log | sort | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
         </div>
+        <div class="callout pass"><b>Ran 2026-08-17 — clean</b>
+          No new error or warning kinds against the previous session. The 54
+          <code style="font-family:var(--mono)">ERR</code> lines are all
+          <code style="font-family:var(--mono)">Failed to establish GRPC stream</code> — the character
+          service that has never run in PIN, retrying every 30 seconds — and they were in the previous
+          log too. Session ledger: 1,193 hits on entities against 391 on the world.</div>
         <div class="result"><label for="r-x7">Warnings, memory, ledger</label><textarea id="r-x7" data-k="n-x7"></textarea></div>
       </div>
 
@@ -950,6 +993,33 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
 
   <!-- ============================== CLOSERS ============================== -->
   <section class="closer">
+    <h2>What the run found that this sheet did not ask for</h2>
+    <p><strong>A Chosen shot the tester through a rock formation</strong>, with a hypothesis attached: that
+      the world's ground and its separate objects behave differently. Chasing that offline — rebuilding zone
+      448's collision from the client's own map files — says the hypothesis is right in substance and wrong
+      in mechanism. The ground ships as a mesh and converts without a single failure. Individual objects ship
+      as a convex hull, a shape given by its corner points, and <strong>252 of those convert to nothing</strong>:
+      235 produce an empty hull, 17 are rejected as malformed, and no other shape type fails anywhere in the
+      zone. A failed object becomes a 1m placeholder at the chunk origin at height zero, about 400m under the
+      basin floor, so nothing invisible blocks anything — the object is simply absent, and you can shoot
+      through a rock that is visibly there. Filed as <a href="../ISSUE-REGISTER.md">DATA-22</a>.</p>
+    <p><strong>One theory died on the way</strong>, and it is worth recording so nobody re-runs it. These map
+      files store the world at five levels of detail and the loader reads only level 3, which looks exactly
+      like where small scenery would be lost. Parsing a raw chunk file directly says level 3 is the only level
+      that carries collision at all — 26.8MB of it in one chunk, against none in levels 0, 1, 2 and 4. The
+      loader reads everything there is to read.</p>
+    <p><strong>The rebuild is also the answer to "how do I regenerate the cache".</strong> All 93 chunks of
+      zone 448 took about four minutes and wrote 5.6&nbsp;GB:</p>
+    <div class="cmd"><pre><code>export OPENSSL_ENABLE_SHA1_SIGNATURES=1 OPENSSL_CONF=$PWD/Tools/Session/openssl-legacy.cnf
+dotnet build Tools/CollisionGenerator/CollisionGenerator.csproj -c Release
+dotnet Tools/CollisionGenerator/bin/Release/net10.0/CollisionGenerator.dll \
+  -c ~/Games/PIN/collision-cache \
+  -m ~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Firefall/system/maps \
+  -z 448</code></pre><button class="copy" type="button">Copy</button></div>
+    <p>It runs in parallel, so its log lines interleave and per-chunk attribution from that log is not
+      trustworthy — pass <code style="font-family:var(--mono)">-j 1</code> if you need to know which chunk
+      lost which object.</p>
+
     <h2>If the sitting is short</h2>
     <p>Run blocks 0, 2 and 3, then stop. Block 3 is the gate — whether creatures can still shoot at all decides
       whether every combat entry in the rest of the queue is measuring the game or measuring a broken ray. Block 2

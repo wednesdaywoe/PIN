@@ -602,12 +602,15 @@ Out of scope because the slice closes without them:
   [Tools/ConstraintSweep](../Tools/ConstraintSweep/) is written and waiting on a machine with the
   db: it prices every shipped loadout in all three, which is what an authored capacity has to be
   calibrated against. See [streams/battleframe-constraints.md](streams/battleframe-constraints.md)
-- **Server-side terrain** — `LoadMapsCollision` is off, so every raycast in the game sees an empty
-  world. The consumer is already built and proven: `ZoneLoader` plus `TagfileLoader` turn Havok
-  collision into Bepu statics, and that same path loads deployable collision today. Only the
-  extractor from the client's world chunks is missing. Deferred because the slice closes without
-  it, and flagged because it would close [DATA-15](ISSUE-REGISTER.md), replace the NPC
-  ground-clamping hack with a real downward raycast, and give every shot real cover. See
+- **Server-side terrain** — ~~`LoadMapsCollision` is off, so every raycast in the game sees an empty
+  world.~~ **Landed 2026-08-16 and verified in game 2026-08-17.** The missing extractor arrived in
+  `c58a177`: zone 448 loads 93 chunks and ~1.36 million Bepu statics out of the client's own
+  `system/maps` in six seconds, and a sitting confirmed shots stop at the world and **a rise breaks
+  a creature's line of sight**. What the entry predicted it would fix is only half done — cover is
+  real, but the NPC ground-clamping hack is untouched, because loading terrain and *querying* it are
+  two jobs and only the first is built. That is [DATA-23](ISSUE-REGISTER.md), and
+  [DATA-22](ISSUE-REGISTER.md) is the 252 objects that convert to nothing on the way in. See
+  [streams/solid-world.md](streams/solid-world.md), which supersedes the terrain half of
   [streams/world-authoring.md](streams/world-authoring.md)
 - **Public-server hardening** (identity/auth, input validation, topology, ops, distribution) — not
   scheduled and shouldn't start before the slice closes; full detail in

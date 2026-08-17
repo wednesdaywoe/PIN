@@ -1030,3 +1030,105 @@ than one point. **That question is now the only thing keeping this entry from cl
 sharper rather than vaguer: it is no longer "what unit is the column in" but "does a template value
 of 1 mean one point, given that scaling it cannot produce a meaningful spread". The 2,203 ungraded
 creature types are DATA-6's remainder, not this one's.
+
+<a id="data-22"></a>
+
+### DATA-22 — 252 objects in New Eden convert to nothing, so you can shoot through them [ ] open, found 2026-08-17
+
+**A tester was shot through a rock formation by a Chosen Fiend that should have had no line of
+sight, on the first deliberate sitting against terrain collision
+([X4](../In-Game-Tests/solid-world.html), 2026-08-17). The tester's own reading was that world
+terrain and environment meshes behave differently, and that reading is right in substance — but not
+because they are two systems. They are two shape formats with two different success rates.**
+
+The ground ships as a mesh. `TagfileLoader` converts meshes without a single failure across the
+whole zone. Individual objects — rocks, boulders, scenery — ship instead as `hkpConvexVerticesShape`,
+a shape given by its corner points, and that is the format that breaks.
+
+Measured by rebuilding zone 448's collision from the client's own map files with
+[CollisionGenerator](../../Tools/CollisionGenerator/) on 2026-08-17:
+
+| | |
+|---|---|
+| Chunks processed | 93 |
+| Shapes built | 1,364,781 |
+| `Produced a hull with 0 points` | **235** |
+| `IsHullFaceValid reports false` | **17** |
+| Failures that were not a convex hull | **0** |
+
+**What a failed object becomes is the part worth knowing.** All three failure paths in
+[`ProcessShape`](../../Lib/Shared.Collision/Tagfile/TagfileLoader.cs) return
+`new StaticDescription(RigidPose.Identity, PlaceholderBox)` — a 1m box at the chunk's local origin,
+which `ZoneLoader` then offsets to the chunk's world origin at **Z 0**. The basin floor of zone 448
+is at Z 401, so every one of those placeholders is roughly 400m underground. There is no phantom
+wall anywhere in the playable world, which is worth stating plainly because it is the failure mode
+this would otherwise look like. The cost is entirely the *absence*: the real object has no collision
+at any height, so a shot passes through a rock that is visibly there.
+
+252 objects against 1,364,781 shapes is 0.02% and the zone is not full of holes. But these are whole
+objects rather than fragments of one, and a player standing behind one of them has cover that the
+server does not know about — which is exactly the shape of a bug that gets reported as "the AI
+cheats".
+
+**One theory was checked and killed before this one was reached.** The chunk files store the world
+at five levels of detail and `ChunkProcessor` reads only level 3, which looks like an obvious place
+to be losing small scenery. Parsing a raw `.gtchunk` directly says otherwise: level 3 is the only
+level that carries a collision layer at all — 26.8MB of it in `1_0243_0917`, against zero in levels
+0, 1, 2 and 4. The loader is reading everything there is to read.
+
+**Two more layers in that same file are parsed into objects and consumed by nobody**, confirmed by
+grep across the game server: `ChunkWaterCollisionLayer`, which is the half
+[Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs) is missing, and
+`ChunkMovementBlockerCollisionLayer`, the invisible bounds nothing enforces. Neither is scenery and
+neither explains this entry; they are recorded here because the same rebuild is what proved it.
+
+Closing this means finding out why `ConvexHullHelper.ComputeHull` yields an empty hull for these
+inputs. The cheap mitigation, which is not the fix, is to place the fallback box at the object's own
+vertex centroid instead of at the origin, so a broken rock is solid and wrong rather than absent.
+The 17 `IsHullFaceValid` rejections may be a separate cause: that check sums signed tetrahedron
+volumes about the **origin** rather than about the shape's own centroid, which loses precision for
+geometry far from it.
+
+<a id="data-23"></a>
+
+### DATA-23 — Nothing asks the world where the ground is [ ] open, found 2026-08-17
+
+**Terrain has been loaded since 2026-08-16 and no code queries it. Every height in the server is
+still borrowed or assumed, and the first sitting on real ground produced two symptoms of the same
+missing capability.**
+
+**A creature chasing a player uphill walks into the air.** Observed 2026-08-17: it tracks the slope
+correctly from level ground, then rises alongside the hill rather than onto it, holding a height
+that belongs to ground it has not reached yet.
+[Steering](../../UdpHosts/GameServer/Systems/AI/Steering.cs) says why in its own comment — with no
+terrain to raycast against, a destination carries the *player's* Z, because a player standing on the
+ground is a ground measurement. The creature's horizontal position lags behind the player's, so its
+height is always the height of somewhere further up the hill. `MaxSlope` bounds how wrong it gets;
+it cannot make it right.
+
+**Wave members spawn inside hillsides, and terrain turned that from cosmetic into a defect.** A
+thumper places its sappers on a 20m ring at the machine's own height. On a slope, an arc of that
+ring is underground. Until this week a buried sapper was still shootable, because bullets passed
+through the ground too; now the ground stops them and the attacker cannot be killed while it damages
+the machine. The tester's report on 2026-08-17 — *"they spawned inside the ground which prevented my
+attacks from hitting them"* — reads as a terrain regression and is really an old placement bug that
+terrain made visible. It is [DATA-15](#data-15)'s problem inside the encounter rather than in
+authored content: `spawngroup add` refuses a footing nobody walked to, and nothing protects a
+runtime spawn the same way.
+
+Both symptoms close with one capability that is now possible for the first time: a downward raycast
+against the loaded statics, exposed off `PhysicsEngine` as a ground query, called from `Steering`
+for the vertical half of a step and from the wave ring at spawn time. `TargetRayCast` is not it —
+it needs a source `CharacterEntity` to exclude and reports an entity id rather than a surface.
+
+The same query is what
+[Authoring World Content](../streams/world-authoring.md) has been blocked on since 2026-08-13. Its
+whole method — walk there, place it at your feet, never type a coordinate — exists because
+`MovementRelay.RecordGroundSample` was the only ground truth reaching this server. It stops being
+the only one the moment this lands, which is the larger reason to do it before anything else in
+[the terrain slice](../streams/solid-world.md).
+
+A third consumer is worth naming now rather than discovering later: no admin command can ask what a
+ray hits. `target` casts one, but reports "Failed to find target" when the ray strikes the world,
+which is indistinguishable from hitting nothing — so "does this rock have collision?" cannot be
+answered in game today, and [DATA-22](#data-22) had to be measured offline instead.

@@ -20,6 +20,26 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 ## Current frontier
 
+**The first deliberate sitting on terrain ran on 2026-08-17 and the world held: five of seven
+entries passed, and the two findings are both PIN's, not the merge's.**
+[Solid World](In-Game-Tests/solid-world.html) went 5 of 7 with one measurement and one failure.
+Shots stop where the world is (391 world hits, none nearer than a metre), creatures still shoot on
+open ground (675 hits on the player), and **a rise is cover now** — four holds for `NoLineOfSight`
+at 12–15m against a 180m rifle, which is the behaviour the whole merge was for. The muzzle problem
+that opened this slice **did not recur**: 391 world hits and not one under a metre, against 15 of 86
+the day before, so it is a place rather than a shape and stays open at low priority.
+
+**The two new entries are [DATA-22](gaps/data.md#data-22) and [DATA-23](gaps/data.md#data-23), and
+between them they say the terrain is fine and the code around it is not.** DATA-22 is 252 objects
+that convert to nothing, all of them the one shape format scenery uses, found because a Chosen shot
+the tester through a rock — a tester hypothesis about two kinds of geometry that turned out right in
+substance and wrong in mechanism. DATA-23 is the capability nobody has built: terrain has been
+loaded for a day and **no code asks it where the ground is**, which is why a creature chasing you
+uphill walks into the air and why wave members spawn inside hillsides. That second symptom is the
+one worth watching, because it is an old placement bug that only became a defect when the ground
+started stopping bullets. The same raycast closes both and retires
+[DATA-15](gaps/data.md#data-15)'s walk-there-and-place discipline.
+
 **Creatures stopped being interchangeable on 2026-08-15, and the change is small because both halves
 shipped.** PIN gave every NPC in the game the same health and the same damage, because the shipped
 power curve `dbcharacter::MonsterScaling` is keyed by a creature's *level* and levels were server
@@ -168,7 +188,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 4 of 20 closed
+[Full detail](gaps/data.md) — 4 of 22 closed
 
 - [x] **DATA-1** — Battleframe shield pool was kept at 3000 instead of build 1962's real 0 as a
   deliberate observability trade-off. **The trade was backwards and it is 0 now** (2026-08-15,
@@ -379,6 +399,29 @@ has no entries in that category, which reflects nothing having run rather than n
   this means giving the weapon path the same second pass, keyed on the ammo radius rather than on a
   command def. It also blocks [V7 and D3](In-Game-Tests/Deployables-And-Vehicles.md) from being run
   with a weapon at all
+
+- [ ] **DATA-22** — **252 objects in New Eden have no collision on the server**, found 2026-08-17
+  when a Chosen Fiend shot a tester through a rock formation. Not terrain against scenery as two
+  systems: the ground ships as a mesh and converts without a single failure, while individual
+  objects ship as `hkpConvexVerticesShape` and 252 of those produce an empty hull. Measured by
+  rebuilding zone 448 from the client's map files — 93 chunks, 1,364,781 shapes, 235 hulls with zero
+  points and 17 rejected as malformed, and **no failure of any other shape type**. A failed object
+  becomes a 1m placeholder at the chunk origin at Z 0, roughly 400m under the basin floor, so there
+  is no phantom wall in the playable world — the whole cost is the object being absent. Killed on
+  the way past: the loader reads only detail level 3 of five, which looks like the obvious culprit
+  and is not — level 3 is the only level carrying collision at all. Same rebuild confirmed water and
+  movement-blocker collision are parsed and consumed by nobody
+- [ ] **DATA-23** — **Terrain is loaded and nothing queries it**, found 2026-08-17. Every height in
+  the server is still borrowed or assumed, with two symptoms from one missing capability: a creature
+  chasing a player uphill **walks into the air**, because `Steering` gives a destination the
+  *player's* Z and the creature's position lags behind the player's; and a thumper's wave members
+  spawn on a 20m ring at the machine's height, so on a slope an arc of that ring is **inside the
+  hillside** — which used to be cosmetic and is now a defect, because the ground stops the player's
+  bullets and an unreachable sapper still damages the machine. Both close with one downward raycast
+  against the loaded statics. So does [DATA-15](gaps/data.md#data-15)'s walk-there-and-place
+  discipline, which exists only because a player's own footing was the sole ground truth reaching
+  this server. No admin command can ask what a ray hits either — `target` reports a world strike as
+  "Failed to find target", so DATA-22 had to be measured offline
 
 ## Networking & Protocol — NET
 

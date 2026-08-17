@@ -39,8 +39,8 @@ The consumer side of terrain is built and proven.
 
 | Piece | State |
 |-------|-------|
-| [ZoneLoader](../../UdpHosts/GameServer/Physics/ZoneLoader/ZoneLoader.cs) | 160 lines, reads `{zoneId}.pinzone.json` plus `chunks/*.pinchunk.json`, adds statics per chunk at its origin |
-| [TagfileLoader](../../UdpHosts/GameServer/Physics/TagfileLoader/) | 972 lines, turns Havok `Hkp*` shapes (box, sphere, capsule, cylinder, extended mesh) into Bepu statics |
+| [ZoneLoader](../../Lib/Shared.Collision/ZoneLoading/ZoneLoader.cs) | 160 lines, reads `{zoneId}.pinzone.json` plus `chunks/*.pinchunk.json`, adds statics per chunk at its origin |
+| [TagfileLoader](../../Lib/Shared.Collision/Tagfile/) | 972 lines, turns Havok `Hkp*` shapes (box, sphere, capsule, cylinder, extended mesh) into Bepu statics |
 | `SimulationCache` | 392 lines, caches a built simulation so the cost is paid once |
 | Settings | `MapsPath`, `LoadMapsCollision`, `AssetDBPath` all plumbed through `GameServerModule` |
 
