@@ -41,7 +41,7 @@ public class GameServerSettings
     public string GrpcChannelAddress { get; set; } = "http://localhost:5201";
 
     /// <summary>
-    ///    File path to the clientdb.sd2 located in system\db\ of the Firefall installation
+    ///    File path to "clientdb.sd2" located in the "db" folder of the Firefall installation
     /// </summary>
     public string StaticDBPath { get; set; } = @"C:\Program Files\Steam\steamapps\common\Firefall\system\db\clientdb.sd2";
 
@@ -54,17 +54,27 @@ public class GameServerSettings
     public string CharacterSavePath { get; set; } = "save";
 
     /// <summary>
+    ///    Directory path to the "maps" folder of the Firefall installation
+    /// </summary>
+    public string MapsPath { get; set; } = string.Empty;
+
+    /// <summary>
+    ///    Directory path to the "assetdb" folder of the Firefall installation
+    /// </summary>
+    public string AssetDBPath { get; set; } = @"C:\Program Files\Steam\steamapps\common\Firefall\system\assetdb";
+
+    /// <summary>
+    ///    Directory path for collision cache files (.bincache, .rbcache). The cache can be pregenerated with the CollisionGenerator tool.
+    /// </summary>
+    public string CachePath { get; set; } = string.Empty;
+
+    /// <summary>
     ///    ZoneId to load
     /// </summary>
     public uint ZoneId { get; set; } = 448;
 
     /// <summary>
-    ///    File path to PIN Maps Data
-    /// </summary>
-    public string MapsPath { get; set; } = string.Empty;
-
-    /// <summary>
-    ///    Enable loading world collision data from PIN Maps Data
+    ///    Enable loading zone collision data
     /// </summary>
     public bool LoadMapsCollision { get; set; }
 
@@ -74,12 +84,7 @@ public class GameServerSettings
     public bool LoadZoneEntities { get; set; } = true;
 
     /// <summary>
-    ///    File path to the system\assetdb folder of the Firefall installation
+    ///    Force reload zone from source files, bypassing cache.
     /// </summary>
-    public string AssetDBPath { get; set; } = @"C:\Program Files\Steam\steamapps\common\Firefall\system\assetdb";
-
-    /// <summary>
-    ///    File path to PIN Asset Data
-    /// </summary>
-    public string AssetsPath { get; set; } = string.Empty;
+    public bool ForceReloadZone { get; set; }
 }
