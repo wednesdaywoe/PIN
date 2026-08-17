@@ -150,4 +150,117 @@ public class SteeringTests
     {
         Assert.Equal(3f, Steering.FlatDistance(Vector3.Zero, new Vector3(3f, 0f, 40f)), 4);
     }
+
+    /// <summary>
+    ///     Everything above is the pre-terrain answer, where height is borrowed from the destination
+    ///     because there was nothing to measure. Everything below is what a ground probe changes, and the
+    ///     case that matters is the one a tester found on 2026-08-17: a creature chasing a player uphill
+    ///     climbed <i>alongside</i> the slope, in the air, because the height it was given belonged to
+    ///     ground further up than the ground it was standing on.
+    /// </summary>
+    [Fact]
+    public void WithAProbeItStandsOnTheGroundUnderItRatherThanOnTheWayToTheTarget()
+    {
+        // A hill rising at 45 degrees, and a target 40m along it and 40m up.
+        Steering.GroundProbe hill = (Vector3 at, out float z) =>
+        {
+            z = at.X;
+            return true;
+        };
+
+        var position = Vector3.Zero;
+        for (var i = 0; i < 200; i++)
+        {
+            if (!Steering.TryStep(position, new Vector3(40f, 0f, 40f), stopWithin: 0f, Speed, Tick, out var next, hill))
+            {
+                break;
+            }
+
+            // Every step of the way, not only at the end: the height is the hill's, at the position
+            // reached, rather than a fraction of the climb still to come.
+            Assert.Equal(next.X, next.Z, 3);
+            position = next;
+        }
+
+        Assert.True(position.X > 5f);
+    }
+
+    /// <summary>
+    ///     Ground rising faster than <see cref="Steering.MaxSlope"/> across one step is a wall rather than
+    ///     a hill. Per-step is the right measure here and a trap without a probe — see the remark on
+    ///     <see cref="Steering.MaxSlope"/>.
+    /// </summary>
+    [Fact]
+    public void WithAProbeAWallIsNotClimbed()
+    {
+        Steering.GroundProbe cliff = (Vector3 at, out float z) =>
+        {
+            z = at.X > 1f ? 50f : 0f;
+            return true;
+        };
+
+        var position = new Vector3(0.9f, 0f, 0f);
+        var moved = Steering.TryStep(position, new Vector3(20f, 0f, 50f), stopWithin: 0f, Speed, Tick, out var next, cliff);
+
+        Assert.False(moved);
+        Assert.Equal(position, next);
+    }
+
+    /// <summary>
+    ///     A drop is taken in full and never refused. Refusing one leaves the creature hovering over the
+    ///     edge it walked to, which is the failure this whole change exists to remove.
+    /// </summary>
+    [Fact]
+    public void WithAProbeItWalksOffALedgeRatherThanHoveringOverIt()
+    {
+        Steering.GroundProbe ledge = (Vector3 at, out float z) =>
+        {
+            z = at.X > 1f ? -20f : 0f;
+            return true;
+        };
+
+        var moved = Steering.TryStep(new Vector3(0.9f, 0f, 0f), new Vector3(20f, 0f, -20f), stopWithin: 0f, Speed, Tick, out var next, ledge);
+
+        Assert.True(moved);
+        Assert.Equal(-20f, next.Z, 4);
+    }
+
+    /// <summary>
+    ///     A probe answers false over a hole in the collision and everywhere outside the loaded chunks,
+    ///     and the old behaviour has to still be there underneath when it does.
+    /// </summary>
+    [Fact]
+    public void AProbeThatKnowsNothingLeavesTheBorrowedHeightAlone()
+    {
+        Steering.GroundProbe nothing = (Vector3 at, out float z) =>
+        {
+            z = 0f;
+            return false;
+        };
+
+        Steering.TryStep(Vector3.Zero, new Vector3(40f, 0f, 20f), stopWithin: 0f, Speed, Tick, out var probed, nothing);
+        Steering.TryStep(Vector3.Zero, new Vector3(40f, 0f, 20f), stopWithin: 0f, Speed, Tick, out var unprobed);
+
+        Assert.Equal(unprobed, probed);
+        Assert.Equal(20f * (0.3f / 40f), probed.Z, 4);
+    }
+
+    /// <summary>
+    ///     The horizontal half is untouched by the probe. Worth pinning because the flat step is what
+    ///     every range and stopping distance in the AI is measured in.
+    /// </summary>
+    [Fact]
+    public void AProbeDoesNotChangeHowFarAStepCovers()
+    {
+        Steering.GroundProbe undulating = (Vector3 at, out float z) =>
+        {
+            z = 3f;
+            return true;
+        };
+
+        Steering.TryStep(Vector3.Zero, new Vector3(100f, 100f, 0f), stopWithin: 0f, Speed, Tick, out var next, undulating);
+
+        Assert.Equal(Speed * Tick, new Vector2(next.X, next.Y).Length(), 4);
+        Assert.Equal(3f, next.Z, 4);
+    }
 }

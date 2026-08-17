@@ -33,12 +33,14 @@ the day before, so it is a place rather than a shape and stays open at low prior
 between them they say the terrain is fine and the code around it is not.** DATA-22 is 252 objects
 that convert to nothing, all of them the one shape format scenery uses, found because a Chosen shot
 the tester through a rock — a tester hypothesis about two kinds of geometry that turned out right in
-substance and wrong in mechanism. DATA-23 is the capability nobody has built: terrain has been
-loaded for a day and **no code asks it where the ground is**, which is why a creature chasing you
+substance and wrong in mechanism. DATA-23 was the capability nobody had built: terrain had been
+loaded for a day and **no code asked it where the ground is**, which is why a creature chasing you
 uphill walks into the air and why wave members spawn inside hillsides. That second symptom is the
 one worth watching, because it is an old placement bug that only became a defect when the ground
-started stopping bullets. The same raycast closes both and retires
-[DATA-15](gaps/data.md#data-15)'s walk-there-and-place discipline.
+started stopping bullets. **The query was written the same day** — one downward raycast against
+statics, feeding creature movement and the wave ring — and it is unverified in game;
+[X8 and X9](In-Game-Tests/solid-world.html) are the check. It also retires
+[DATA-15](gaps/data.md#data-15)'s walk-there-and-place discipline once it holds.
 
 **Creatures stopped being interchangeable on 2026-08-15, and the change is small because both halves
 shipped.** PIN gave every NPC in the game the same health and the same damage, because the shipped
@@ -411,7 +413,7 @@ has no entries in that category, which reflects nothing having run rather than n
   the way past: the loader reads only detail level 3 of five, which looks like the obvious culprit
   and is not — level 3 is the only level carrying collision at all. Same rebuild confirmed water and
   movement-blocker collision are parsed and consumed by nobody
-- [ ] **DATA-23** — **Terrain is loaded and nothing queries it**, found 2026-08-17. Every height in
+- [~] **DATA-23** — **Terrain is loaded and nothing queries it**, found 2026-08-17, **built the same day and unverified in game**. Every height in
   the server is still borrowed or assumed, with two symptoms from one missing capability: a creature
   chasing a player uphill **walks into the air**, because `Steering` gives a destination the
   *player's* Z and the creature's position lags behind the player's; and a thumper's wave members
@@ -421,7 +423,7 @@ has no entries in that category, which reflects nothing having run rather than n
   against the loaded statics. So does [DATA-15](gaps/data.md#data-15)'s walk-there-and-place
   discipline, which exists only because a player's own footing was the sole ground truth reaching
   this server. No admin command can ask what a ray hits either — `target` reports a world strike as
-  "Failed to find target", so DATA-22 had to be measured offline
+  "Failed to find target", so DATA-22 had to be measured offline. **The query is written**: `PhysicsEngine.TryGetGroundHeight`, statics only, called from `Steering` and from the wave ring, with the slope limit measured between two pieces of ground rather than against the creature's own height — measuring from its own Z freezes anything that starts buried or airborne, which the first cut did and a test caught. [X8 and X9](In-Game-Tests/solid-world.html) are the check and neither has run
 
 ## Networking & Protocol — NET
 

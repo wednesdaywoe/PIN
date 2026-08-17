@@ -1091,7 +1091,7 @@ geometry far from it.
 
 <a id="data-23"></a>
 
-### DATA-23 — Nothing asks the world where the ground is [ ] open, found 2026-08-17
+### DATA-23 — Nothing asks the world where the ground is [~] built 2026-08-17, unverified in game
 
 **Terrain has been loaded since 2026-08-16 and no code queries it. Every height in the server is
 still borrowed or assumed, and the first sitting on real ground produced two symptoms of the same
@@ -1127,6 +1127,23 @@ whole method — walk there, place it at your feet, never type a coordinate — 
 `MovementRelay.RecordGroundSample` was the only ground truth reaching this server. It stops being
 the only one the moment this lands, which is the larger reason to do it before anything else in
 [the terrain slice](../streams/solid-world.md).
+
+**Built the same day, and not yet seen in game.**
+`PhysicsEngine.TryGetGroundHeight` casts down from 30m above the asked-for point, 200m of reach,
+statics only — a creature standing on another creature is not standing on the ground. It starts
+above rather than at the point because the point is usually a guess, and a guess that landed inside
+a hillside would find nothing at all with the surface behind the ray. `Steering.TryStep` takes it as
+an optional probe and lands each step on the ground under where the step lands; the thumper's wave
+ring drops each of its points onto the ground under it. Checks written and unrun:
+[X8 and X9](../In-Game-Tests/solid-world.html).
+
+**One property of the implementation is worth knowing before reading a failure.** The slope limit is
+measured between two pieces of *ground*, never against the height the creature is carrying. Measuring
+from its own Z reads a creature that spawned inside a hillside — or one left in the air by a
+pre-terrain chase — as having a wall in front of it, and freezes it there permanently. That was a
+real defect in the first cut, caught by a test rather than by a session. The probe costs two
+downward rays per moving creature per tick, which buys correctness in exactly the cases this entry
+was opened for.
 
 A third consumer is worth naming now rather than discovering later: no admin command can ask what a
 ray hits. `target` casts one, but reports "Failed to find target" when the ray strikes the world,

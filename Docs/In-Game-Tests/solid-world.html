@@ -991,6 +991,74 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
     </div>
   </section>
 
+  <!-- ============================== BLOCK 8 ============================== -->
+  <section class="block" data-open="true">
+    <button class="block-head" type="button">
+      <span class="block-n">Block 8</span>
+      <span class="block-t">X8 and X9 — the ground query<small>Written 2026-08-17 with the fix, unrun. Both are the same code seen from two sides.</small></span>
+      <span class="block-meta">12 min<span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X8</span><span class="marker">[ ]</span><span class="entry-t">A creature chasing you uphill stands on the hill</span></div>
+        <p class="note">X5's failure, fixed. A step now lands on the ground measured under where it lands,
+          rather than on a share of the climb to wherever you are standing. Two things are deliberately
+          <i>not</i> fixed and should not be read as regressions: a creature has no pathing, so it still
+          walks into obstacles rather than round them, and ground rising faster than 45° across one step
+          counts as a wall it will hold position against.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x8-1"><span class="step-body"><span class="lede">Same hillside as X5, so the two can be compared.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x8-2"><span class="step-body">
+            <span class="lede">Melded Aranha at your feet — 11 m/s, closes to 5m, so it follows hard.</span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x8-3"><span class="step-body"><span class="lede">Walk up the slope at a steady pace and watch its feet against the surface.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x8-4"><span class="step-body"><span class="lede">Walk along the face of the hill, so it crosses a slope rather than climbing it.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x8-5"><span class="step-body"><span class="lede">Jump down a drop of a few metres. It should follow to the bottom rather than stop at the edge.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x8-6"><span class="step-body"><span class="lede">Last, walk to the foot of something genuinely vertical — a cliff or a wall — and check it stops rather than climbing it.</span></span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Its feet are on the surface the whole way up, across and down. Compare directly against X5, where
+          it rose alongside the slope in the air.</div>
+        <div class="callout stop"><b>The failure to watch for is a creature that stops moving</b>
+          The slope limit refuses a step it reads as a wall. If a creature freezes on ordinary walkable
+          ground, the limit is being measured against the wrong thing — say where it stopped and what the
+          ground was doing there.</div>
+        <div class="result"><label for="r-x8">Uphill / across / off the drop / at a wall</label><textarea id="r-x8" data-k="n-x8"></textarea></div>
+      </div>
+
+      <div class="entry">
+        <div class="entry-head"><span class="id">X9</span><span class="marker">[ ]</span><span class="entry-t">Sappers on a slope are on the surface, and can be shot</span></div>
+        <p class="note">The other half of the same fix. A wave ring is still drawn flat around the machine,
+          but each point is now dropped onto the ground under it. <b>Call the thumper on a slope
+          deliberately</b> — on flat ground this entry cannot fail and proves nothing.</p>
+        <div class="steps">
+          <label class="step"><input type="checkbox" data-k="x9-1"><span class="step-body"><span class="lede">Find sloping ground with a deposit under it and stand on the slope.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x9-2"><span class="step-body">
+            <span class="lede">Call it down and defend the whole cycle.</span>
+            <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x9-3"><span class="step-body"><span class="lede">As each wave stands up, look at the uphill side of the ring. Every member should be standing on the surface, and every member should be shootable.</span></span></label>
+          <label class="step"><input type="checkbox" data-k="x9-4"><span class="step-body">
+            <span class="lede">Spawn heights against your own footing. The ring members should differ from each other by roughly what the slope does over 20m, not sit at one flat height.</span>
+            <span class="cmd"><pre><code>grep -aoE "Spawned monster [0-9]+ as [0-9]+ at <[^>]+>" ~/Games/PIN/logs/GameServer.log | tail -8
+grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+          <label class="step"><input type="checkbox" data-k="x9-5"><span class="step-body">
+            <span class="lede">And that they all reached the machine and hit it.</span>
+            <span class="cmd"><pre><code>grep -acE "Thumper [0-9]+ took" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+          </span></label>
+        </div>
+        <div class="callout pass"><b>Pass</b>
+          Nothing spawns inside the hill, every attacker can be killed, and the spawn heights in the log
+          vary across the ring instead of all matching the machine's.</div>
+        <div class="result"><label for="r-x9">Ring heights, and could you kill all of them</label><textarea id="r-x9" data-k="n-x9"></textarea></div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- ============================== CLOSERS ============================== -->
   <section class="closer">
     <h2>What the run found that this sheet did not ask for</h2>

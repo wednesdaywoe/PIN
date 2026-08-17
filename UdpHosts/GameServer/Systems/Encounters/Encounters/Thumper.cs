@@ -18,9 +18,10 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     /// <summary>
     ///     Where a wave stands up, measured out from the machine. Inside perception range (25m), so an
     ///     escort notices the defender immediately, and far enough out that the approach is watchable.
-    ///     The ring is placed at the thumper's own Z because that's the only ground height the server
-    ///     can vouch for; a thumper on a steep slope will stand its waves in the hillside, which is the
-    ///     same bet every offset spawn makes on this server.
+    ///     The ring is drawn flat at the thumper's own Z and then each point is dropped onto the ground
+    ///     under it, which is possible since terrain loaded on 2026-08-16. Before that the flat ring was
+    ///     the whole story and a thumper on a slope stood its waves in the hillside — harmless while
+    ///     bullets passed through the ground too, and a defect the moment they stopped.
     ///     <para>
     ///     "Watchable" turned out to be generous. An Aranha runs at 11m/s — shipped movement data, not
     ///     ours — and stops 4m from the machine, so it crosses this ring in <b>1.5 seconds</b>. There is
@@ -332,8 +333,18 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
         {
             var angle = Rng.NextSingle() * 2f * MathF.PI;
             var offset = new System.Numerics.Vector3(MathF.Cos(angle), MathF.Sin(angle), 0f) * WaveSpawnRadius;
+            var stand = _thumper.Position + offset;
 
-            var npc = Shard.EntityMan.SpawnCharacter(WaveMonsterTypeId, _thumper.Position + offset);
+            // The ring is drawn flat at the machine's height, so on a slope an arc of it is inside the
+            // hillside. That was cosmetic until terrain loaded and the ground started stopping bullets: a
+            // buried sapper cannot be shot and goes on hitting the machine anyway, which is how a tester
+            // met it on 2026-08-17. Where there is ground under the ring point, stand on it.
+            if (Shard.Physics.TryGetGroundHeight(stand, out var groundZ))
+            {
+                stand.Z = groundZ;
+            }
+
+            var npc = Shard.EntityMan.SpawnCharacter(WaveMonsterTypeId, stand);
             npc.ObjectiveId = _thumper.EntityId;
             npc.ObjectiveFirst = i < wave.Sappers;
             npc.Encounter = new EncounterComponent

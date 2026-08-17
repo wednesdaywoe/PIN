@@ -28,6 +28,22 @@ public partial class PhysicsEngine
     public const float TargetTimestepDuration = 50; // (1/20f)
     public const float TargetDebugTickDuration = 200;
 
+    /// <summary>
+    ///     How high above the asked-for point the ground probe starts. A position handed to
+    ///     <see cref="TryGetGroundHeight"/> is usually a guess, and a guess that landed a couple of metres
+    ///     inside a hillside would find nothing at all if the ray started at it — the surface would be
+    ///     behind the ray rather than in front of it. Starting above and looking down finds the surface
+    ///     whether the guess was over it or under it, as long as it was not buried deeper than this.
+    /// </summary>
+    private const float GroundProbeHeadroom = 30f;
+
+    /// <summary>
+    ///     How far down the probe looks, measured from the headroom above. Long enough to cross the 12m
+    ///     of vertical the zone 448 valley moves inside 9m horizontal, and short enough that a point over
+    ///     a hole in the collision reports no ground instead of finding the far side of the world.
+    /// </summary>
+    private const float GroundProbeReach = 200f;
+
     private readonly ILogger _logger;
     private readonly EventBus _eventBus;
     private readonly ZoneLoader _zoneLoader;
@@ -345,6 +361,39 @@ public partial class PhysicsEngine
         return null;
     }
 
+    /// <summary>
+    ///     The height of the world under <paramref name="at"/>, or false where there is nothing under it.
+    ///
+    ///     This is the query the server did not have until terrain loaded, and its absence is the whole of
+    ///     <c>DATA-23</c>: every height in the AI is otherwise borrowed from a player, because a player
+    ///     standing on the ground was the only ground measurement that reached this server. It looks at
+    ///     statics only — a creature standing on another creature's head is not standing on the ground,
+    ///     and neither is one inside a deployable.
+    ///
+    ///     False is a real answer and callers must handle it: zone collision has holes in it
+    ///     (<c>DATA-22</c>), and anywhere outside the loaded chunks has no ground by definition. Every
+    ///     caller here falls back to what it did before terrain, which is a worse answer rather than none.
+    /// </summary>
+    public bool TryGetGroundHeight(Vector3 at, out float groundZ)
+    {
+        groundZ = at.Z;
+
+        var origin = new Vector3(at.X, at.Y, at.Z + GroundProbeHeadroom);
+        var hitHandler = default(RayHitHandler);
+        hitHandler.T = GroundProbeReach;
+        hitHandler.StaticsOnly = true;
+
+        Simulation.RayCast(origin, -Vector3.UnitZ, GroundProbeReach, BufferPool, ref hitHandler);
+
+        if (hitHandler.T >= GroundProbeReach)
+        {
+            return false;
+        }
+
+        groundZ = origin.Z - hitHandler.T;
+        return true;
+    }
+
     public (bool, Vector3, ulong) TargetRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, float maxRange = 500f)
     {
         bool outHit = false;
@@ -399,26 +448,22 @@ public partial class PhysicsEngine
         public Vector3 Normal;
         public int ChildIndex;
 
+        /// <summary>
+        ///     Ignore everything that is not world geometry. Set by <see cref="TryGetGroundHeight"/>,
+        ///     which is asking where the ground is rather than what is in the way.
+        /// </summary>
+        public bool StaticsOnly;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool AllowTest(CollidableReference collidable)
         {
-            if (AvoidSourceBody && collidable.Mobility != CollidableMobility.Static && collidable.BodyHandle.Equals(SourceBody))
-            {
-                return false;
-            }
-
-            return true;
+            return Allow(collidable);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool AllowTest(CollidableReference collidable, int childIndex)
         {
-            if (AvoidSourceBody && collidable.Mobility != CollidableMobility.Static && collidable.BodyHandle.Equals(SourceBody))
-            {
-                return false;
-            }
-
-            return true;
+            return Allow(collidable);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -429,6 +474,22 @@ public partial class PhysicsEngine
             HitCollidable = collidable;
             Normal = normal;
             ChildIndex = childIndex;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private readonly bool Allow(CollidableReference collidable)
+        {
+            if (StaticsOnly && collidable.Mobility != CollidableMobility.Static)
+            {
+                return false;
+            }
+
+            if (AvoidSourceBody && collidable.Mobility != CollidableMobility.Static && collidable.BodyHandle.Equals(SourceBody))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
