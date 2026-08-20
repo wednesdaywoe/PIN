@@ -5,7 +5,7 @@ title: PIN — Progress
 id-prefix: M
 relates:
   - ISSUE-REGISTER.md
-  - TEST-REGISTER.md
+  - In-Game-Tests/index.html
 ---
 
 # PIN — Progress
@@ -33,17 +33,17 @@ M8 session stability                                done
 ## Current frontier
 
 **M6 and M8 both closed on 2026-08-14, in one evening sitting, 13 of 13 entries.**
-[Persistence](In-Game-Tests/Persistence.md) went 7 of 7: a session's crystite and items survive a
+[Persistence](In-Game-Tests/Persistence.html) went 7 of 7: a session's crystite and items survive a
 menu logout, a double relog with nothing doubling, a killed client, and — beyond what any entry
 asked — a killed and restarted server; the login returns you to the outpost you left from; and a
 deliberately corrupted save file costs the character its progress, not its ability to log in,
 quarantined to a `.corrupt-<stamp>` file with a precise parse error in the log.
-[Reliability Under Loss](In-Game-Tests/Reliability.md) went 6 of 6: ten minutes at 5% induced loss
+[Reliability Under Loss](In-Game-Tests/Reliability.html) went 6 of 6: ten minutes at 5% induced loss
 was, in the tester's words, "indistinguishable from any other session", while the log recorded
 ~2,550 server resends (94% accepted on the first attempt, none reaching attempt 3) and ~100 client
 resends correctly split between first deliveries and re-acked duplicates. The open question NET-25
 left behind — what a lost client packet costs — stays open, but nothing in the session surfaced it.
-[L6](In-Game-Tests/Reliability.md) also closed [NET-24](ISSUE-REGISTER.md): the code read was
+[L6](In-Game-Tests/Reliability.html) also closed [NET-24](ISSUE-REGISTER.md): the code read was
 right, the haunted thumper was one scope-out sent once on a channel that never resent, and the
 first post-fix thumper left the world cleanly.
 
@@ -62,7 +62,7 @@ not in a spawn-wait-spawn script. Detail in
 [streams/m7-encounter-combat.md](streams/m7-encounter-combat.md).
 
 **M7 was built on the morning of 2026-08-15 and closed the same morning —
-[Thumper-Defence](In-Game-Tests/Thumper-Defence.md) went 6 of 6 in one sitting. The milestone plan
+[Thumper-Defence](In-Game-Tests/Thumper-Defence.html) went 6 of 6 in one sitting. The milestone plan
 is finished.** The thumper spawns four escalating Aranha waves off its own progress, split into
 sappers that march on the machine and escorts that fight the defender; the machine is damageable
 with retail's own health (4000–5000, shipped on every calldown row), destruction is a real failure
@@ -103,16 +103,16 @@ and never resent, which is NET-1's own failure inbound. Holding the ack at the g
 do when the gap never fills has no evidence behind it, and stalling a channel for a session is worse
 than losing one message. **[NET-24](ISSUE-REGISTER.md) may fall out of this**:
 its code read cleared the scope-out message itself and moved the suspicion to a channel that acked
-but never resent, and [L6](In-Game-Tests/Reliability.md) is written to say whether that reading was
+but never resent, and [L6](In-Game-Tests/Reliability.html) is written to say whether that reading was
 right.
 
 **M6's decision is made and its code is written.** M3 and M5 closed on 2026-08-13 and M4 on
 2026-08-14, so there was finally something worth saving, and as of 2026-08-14 the GameServer saves
-it. [C1–C7](In-Game-Tests/Persistence.md) are the check and none of them have run.
+it. [C1–C7](In-Game-Tests/Persistence.html) are the check and none of them have run.
 
 **The decision was whether RIN owns the data, and the answer is no, because RIN has never run.** That
 was checked rather than assumed: `start-pin.sh` starts exactly three servers and RIN is not among
-them, and [Session Setup](In-Game-Tests/Session-Setup.md) had already recorded the consequence —
+them, and [Session Setup](In-Game-Tests/Session-Setup.html) had already recorded the consequence —
 "nothing answers, and it falls back to `HardcodedCharacterData.FallbackData`, so the fallback isn't a
 fallback in practice, it's the character." Building persistence behind the gRPC contract would have
 meant building something that has never once been exercised. The GameServer writes its own JSON
@@ -141,13 +141,13 @@ There is no `clientdb.sd2` anywhere on it, so the GameServer can't boot and Mini
 ConstraintSweep, EffectSweep and SdbDocs have nothing to read. The client's own Lua UI source, which
 is what unblocked M4, ships inside the same install. So M6 can be designed, built and unit-tested
 here in full, and only its exit condition waits for a sitting, along with the whole
-[test queue](TEST-REGISTER.md). **M8 turned out to be shaped the same way and was built the same
+[test queue](In-Game-Tests/index.html). **M8 turned out to be shaped the same way and was built the same
 day**, and it went further than expected without a client: the capture answers the wire questions a
 sitting would otherwise have had to guess at, so the only thing left needing one is
-[L1](In-Game-Tests/Reliability.md) itself.
+[L1](In-Game-Tests/Reliability.html) itself.
 
 **M4: where you thump matters is done, closed 2026-08-14 by
-[S1–S6](In-Game-Tests/Thump-Placement.md) passing in full.** The exit condition was "thump a rich
+[S1–S6](In-Game-Tests/Thump-Placement.html) passing in full.** The exit condition was "thump a rich
 deposit and a poor one and come away with visibly different piles", and the sitting produced **48
 crystite near the rich vein's center, 33 from the same vein 59% of the way out, 8 from the poor
 trace, and one unit of dirt from barren ground**. Four node types resolved from position in one
@@ -174,7 +174,7 @@ and a `deposit` admin command that places one where you stand, with the same foo
 that is safe to author without terrain. All four scan-protocol messages now carry real data, the
 thumper pays the gradient where it stands scaled by its own progress bar — so G4's partial-yield
 question died on the drawing board — and the flat 200-crystite grant is gone.
-[S1–S6](In-Game-Tests/Thump-Placement.md) were the check, and the ranges predicted for them
+[S1–S6](In-Game-Tests/Thump-Placement.html) were the check, and the ranges predicted for them
 (40–100 rich, 10–25 poor, ~nothing barren) were written before any of it ran. The two invented
 values are flagged in the stream doc: `Unk4` on a scan area (radius, by guess) and the
 scan def's `Range` column (600m from a shipped comment, 100m elsewhere). Full detail in
@@ -209,7 +209,7 @@ exactly the in-game placement S6 exists to measure. The repo still wins on purpo
 the local file would mean quietly running stale data, but the outgoing copy is kept under
 `builds/authored/` and the deploy warns; S6 runs with `--no-build`.
 
-**M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.md).** A
+**M5: killing something pays is done, closed 2026-08-13 by [K1](In-Game-Tests/Kill-Rewards.html).** A
 Gaia creature died and paid 4 crystite, logged as `paid 4 of resource 10`, and the tester saw it
 arrive. It is not the milestone that was written down. It was XP first, loot second. It is now crystite and no XP (decision 2026-08-13, user-chosen).
 Levelling is inert in PIN — level is a hardcoded 45 and power comes entirely from the loadout — and
@@ -228,13 +228,13 @@ Boss)". Zone 448's monsters resolve end to end: 528 and 1196 each reach "CORE NP
 (Small) - Crystite/Powerups Subtable" at 100%, that reaches "Small Crystite Drops (2-20)" at 25%,
 and that pays 2–20 crystite across four weighted bands. **So three kills in four pay nothing**, and
 that is retail's rate rather than a bug — the single most important thing to carry into
-[K1–K5](In-Game-Tests/Kill-Rewards.md), because an entry judged on two kills reports a defect that
+[K1–K5](In-Game-Tests/Kill-Rewards.html), because an entry judged on two kills reports a defect that
 isn't there.
 
 `CharacterDiedEvent` finally has a subscriber, its first since M2 landed. What is deliberately not
 built is the item half: the same tables roll powerups and equipment on the same kill, both are items
 rather than resources, and delivering one means answering the drop protocol that
-[I1](In-Game-Tests/Inventory.md) is stuck on. They are rolled, logged and dropped. That is the cut
+[I1](In-Game-Tests/Inventory.html) is stuck on. They are rolled, logged and dropped. That is the cut
 M3 made, applied again.
 
 **The one guess is `roll_mode`.** Six values in the column, no documentation, and the client was its
@@ -243,16 +243,16 @@ pins the reading offline and cannot say whether it is right — K2, twenty kills
 measurement available.
 
 **M3: resources come out of the ground is done, closed 2026-08-13 by
-[G2](In-Game-Tests/Resource-Payout.md).** A thumper called down at a player's feet ran its full
+[G2](In-Game-Tests/Resource-Payout.html).** A thumper called down at a player's feet ran its full
 cycle and paid 200 crystite, logged as `paying 200 of resource 10 to 1 participant(s)`, and the
 crystite showed up without a relog. G1, G2 and G5 all passed first attempt, which is not this
-queue's usual ratio. **M2 closed the same day**, by [N14–N16](In-Game-Tests/NPC-Combat.md): zone 448
+queue's usual ratio. **M2 closed the same day**, by [N14–N16](In-Game-Tests/NPC-Combat.html): zone 448
 has thirteen monsters standing in it when you log in, none of them put there by a command, and on
 the closing run the Basin Mouth pack killed the tester.
 
 **M3 closed on a calldown the player couldn't have made.** The thumper came from the `thumper` admin
 command, because the retail route needs a beacon item in the inventory and that is
-[I1](In-Game-Tests/Inventory.md)'s problem rather than M3's — holding the milestone open on it would
+[I1](In-Game-Tests/Inventory.html)'s problem rather than M3's — holding the milestone open on it would
 have meant holding it open on something it can't fix. G3 stays in the queue and reopens the question
 the moment items are deliverable. This is a deliberate departure from M2, whose exit condition
 forbade admin commands outright, and it is written down here rather than in a commit message because
@@ -263,7 +263,7 @@ first**: three `createitem 10 200` calls took a crystite count from 0 to 600 wit
 open. That settled "updated in the UI without a relog" before a thumper was involved, and it
 narrowed a blocker it doesn't belong to — it is the first evidence anywhere that this client merges
 a partial `InventoryUpdate` into a UI on screen, so whatever hides an item in
-[I1](In-Game-Tests/Inventory.md) is in the item struct rather than in partial updates as a
+[I1](In-Game-Tests/Inventory.html) is in the item struct rather than in partial updates as a
 mechanism.
 
 **Something in the milestone still hasn't run, and it is the cut listed first.** The payout is read
@@ -299,7 +299,7 @@ tells them apart in the log.
 Perception and target selection, the attack pass and death notification are all built
 under [Systems/AI](../UdpHosts/GameServer/Systems/AI/) and driven from
 [AIEngine.Tick](../UdpHosts/GameServer/AIEngine.cs), which is no longer an empty tick.
-[N1–N7](In-Game-Tests/NPC-Combat.md) ran on 2026-08-12 and all pass: an NPC notices you, turns to
+[N1–N7](In-Game-Tests/NPC-Combat.html) ran on 2026-08-12 and all pass: an NPC notices you, turns to
 face you, respects cover, opens fire, damages you, disengages when you leave, and dies mid-burst
 without leaving a corpse stuck firing. Death notification waited longest for an audience:
 `CharacterEntity.Die` publishes `CharacterDiedEvent` onto the `EventBus`, M5's kill rewards became
@@ -323,7 +323,7 @@ NPC's movement at all: the movement view isn't flushed to scoped clients and no 
 behalf, so monsters teleported whenever a keyframe happened to correct the client
 ([NET-22](ISSUE-REGISTER.md), fixed the same day with
 [NpcPose](../UdpHosts/GameServer/Systems/AI/NpcPose.cs)). The second went green:
-**[NPC Combat](In-Game-Tests/NPC-Combat.md) went 13 of 13 that day**, and finished at 16 of 16 once
+**[NPC Combat](In-Game-Tests/NPC-Combat.html) went 13 of 13 that day**, and finished at 16 of 16 once
 the spawn groups had entries of their own — the first stream in the queue to close. A monster
 notices you, turns, runs the ground down, stops where its own weapon can reach, shoots, tracks you
 while it fires, and walks home when it loses you.
@@ -333,7 +333,7 @@ monsters in three groups of its own, described in
 [spawn_group.json](../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) and kept populated
 by [SpawnGroupSim](../UdpHosts/GameServer/Systems/Spawning/SpawnGroupSim.cs), which refills a place
 about two minutes after the thing standing in it dies. The dead faction-test row in
-`TempSpawnTestEntities` came out with it. [N14–N16](In-Game-Tests/NPC-Combat.md) are the entries,
+`TempSpawnTestEntities` came out with it. [N14–N16](In-Game-Tests/NPC-Combat.html) are the entries,
 N14 is the milestone's exit condition and the only one in the stream that forbids the `npc` command,
 and all three passed.
 
@@ -425,7 +425,7 @@ Two things landed alongside the milestone. **Environmental damage** went in on 2
 water and melding walls both kill now, through
 [HazardSim](../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs) — and permanent player
 invulnerability came out with it, replaced by an `invuln` command. [E1, E2 and
-E6](In-Game-Tests/Environment.md) passed the same night: drowning reproduces retail effect 789's
+E6](In-Game-Tests/Environment.html) passed the same night: drowning reproduces retail effect 789's
 compounding curve tick for tick in the log, and `invuln` suppresses the damage while the hazard
 reading keeps running. The three melding entries have not run, and E3 — which side of a perimeter is
 the lethal one — gates the rest of them. Earlier, while waiting on client access, the first two cuts
@@ -464,12 +464,12 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
   the thumper reads its grant straight out of `CustomDBInterface`, so no chain has constructed the
   command
 - [x] Pay out on thumper completion, hardcoded per beacon — 200 crystite from grant 50329, seen in
-  game by [G2](In-Game-Tests/Resource-Payout.md) on 2026-08-13
+  game by [G2](In-Game-Tests/Resource-Payout.html) on 2026-08-13
 - [ ] Fill in the grant defs that matter — needs the client's ability data, same gap as
   [DATA-5](gaps/data.md#data-5)
 
 [Full detail](streams/m4-thump-placement.md) — COMPLETE 2026-08-14,
-[S1–S6](In-Game-Tests/Thump-Placement.md) 6 of 6 passed
+[S1–S6](In-Game-Tests/Thump-Placement.html) 6 of 6 passed
 
 - [x] Load node type and yield tables — live data, 46 types and 67 gradient rows; the sampler is
   pinned offline by `DepositSamplerTests` on the real rows
@@ -509,12 +509,12 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] Load the loot tables and roll a kill's — `LootRoller` over `dbitems::LootTable`, tested
   offline and seen in game
 - [x] Pay the killer the resources that dropped — `KillRewardSim` on `CharacterDiedEvent`, crystite
-  and the melded resources, seen by [K1](In-Game-Tests/Kill-Rewards.md) on 2026-08-13
+  and the melded resources, seen by [K1](In-Game-Tests/Kill-Rewards.html) on 2026-08-13
 - [ ] Work out the client's drop protocol, then spawn the items the same tables already roll
 - [ ] Pick up a drop and put it in the bag
 
 [Full detail](streams/m6-persistence.md) — 1 of 3 done, 2 built and unverified,
-[C1–C7](In-Game-Tests/Persistence.md) 0 of 7 run
+[C1–C7](In-Game-Tests/Persistence.html) 0 of 7 run
 
 - [x] Decide RIN-owned vs local store, and what happens with no RIN — **a local JSON store**
   (decision 2026-08-14, user-chosen). RIN has never answered a request in this project, which was
@@ -536,7 +536,7 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [ ] Scale payout to defence performance and M4's yield
 
 [Full detail](streams/m8-session-stability.md) — 1 of 3 done, 1 built and unverified,
-[L1–L6](In-Game-Tests/Reliability.md) 0 of 6 run
+[L1–L6](In-Game-Tests/Reliability.html) 0 of 6 run
 
 - [~] Track sent reliable messages, retransmit on missing ack — built, unverified.
   `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it, resends
@@ -545,7 +545,7 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 - [x] Confirm the inbound resend path — the capture answers it: 24 resent packets, and the 15 whose
   original also survives are byte-identical to it once the XOR is undone. The read found a live bug
   next to it, since a recognised resend was decoded and then handled a second time anyway
-- [ ] Test under induced packet loss — [L1](In-Game-Tests/Reliability.md) is the exit condition and
+- [ ] Test under induced packet loss — [L1](In-Game-Tests/Reliability.html) is the exit condition and
   needs a client with 5% loss on `lo`
 
 ---
@@ -553,12 +553,12 @@ world-entry freeze ([CLIENT-1](gaps/client.md), open pending further confirmatio
 ## Completed milestones
 
 - **M1: Confirm the combat models** — COMPLETE 2026-08-11
-- **M2: NPCs that fight back** — COMPLETE 2026-08-13, on [N14–N16](In-Game-Tests/NPC-Combat.md)
+- **M2: NPCs that fight back** — COMPLETE 2026-08-13, on [N14–N16](In-Game-Tests/NPC-Combat.html)
 - **M3: Resources come out of the ground** — COMPLETE 2026-08-13, on
-  [G2](In-Game-Tests/Resource-Payout.md). Closed on a calldown made by an admin command, because the
+  [G2](In-Game-Tests/Resource-Payout.html). Closed on a calldown made by an admin command, because the
   retail route needs an item and item delivery is I1's problem; G3 reopens the question when it is
   fixed
-- **M5: Killing something pays** — COMPLETE 2026-08-13, on [K1](In-Game-Tests/Kill-Rewards.md).
+- **M5: Killing something pays** — COMPLETE 2026-08-13, on [K1](In-Game-Tests/Kill-Rewards.html).
   Crystite only. The item half of the same loot tables is deferred to whatever answers the drop
   protocol, and K2's rate measurement is still open
 
@@ -583,7 +583,7 @@ Out of scope because the slice closes without them:
 - **The rest of environmental damage** — the base case is built, not deferred: drowning and melding
   walls both kill now, through
   [HazardSim](../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs), and the checks are
-  [E1–E7](In-Game-Tests/Environment.md). What is still out of scope is everything around it —
+  [E1–E7](In-Game-Tests/Environment.html). What is still out of scope is everything around it —
   **NPCs are exempt from both hazards** (melded creatures live in the melding and no NPC reports a
   water level), vehicles have their own drowning effects (2148, 2149) that nothing applies, retail's
   own status effects are not used in place of the damage PIN applies directly, and the perimeter
@@ -606,10 +606,11 @@ Out of scope because the slice closes without them:
   world.~~ **Landed 2026-08-16 and verified in game 2026-08-17.** The missing extractor arrived in
   `c58a177`: zone 448 loads 93 chunks and ~1.36 million Bepu statics out of the client's own
   `system/maps` in six seconds, and a sitting confirmed shots stop at the world and **a rise breaks
-  a creature's line of sight**. What the entry predicted it would fix is only half done — cover is
-  real, but the NPC ground-clamping hack is untouched, because loading terrain and *querying* it are
-  two jobs and only the first is built. That is [DATA-23](ISSUE-REGISTER.md), and
-  [DATA-22](ISSUE-REGISTER.md) is the 252 objects that convert to nothing on the way in. See
+  a creature's line of sight**. The second half — *querying* the loaded terrain — landed as
+  `PhysicsEngine.TryGetGroundHeight` and was **verified in game 2026-08-19**: a chasing creature
+  stands on the hill, a wave ring spawns on the slope's surface, and the `probe` command reads the
+  same query back. That closes [DATA-23](ISSUE-REGISTER.md);
+  [DATA-22](ISSUE-REGISTER.md), the 252 objects that convert to nothing on the way in, stays open. See
   [streams/solid-world.md](streams/solid-world.md), which supersedes the terrain half of
   [streams/world-authoring.md](streams/world-authoring.md)
 - **Public-server hardening** (identity/auth, input validation, topology, ops, distribution) — not
@@ -621,6 +622,6 @@ Out of scope because the slice closes without them:
 ## Keeping this current
 
 A milestone is done when its exit criterion has been seen in game, not when the code compiles.
-Move the check into [Test Register](TEST-REGISTER.md) as the work lands and record the result
+Move the check into [Test Register](In-Game-Tests/index.html) as the work lands and record the result
 there. When a milestone turns out to be two milestones, split it here rather than quietly widening
 it, and when something in Deferred becomes necessary, move it up with the reason it changed.

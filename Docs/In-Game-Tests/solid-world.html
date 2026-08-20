@@ -538,7 +538,10 @@
     <p class="standfirst">The first deliberate sitting against terrain collision. <b>Run 2026-08-17
       against build dc241e5f — 5 of 7.</b> The world held: shots stop where it is, creatures still
       fight on it, and a rise is cover now. Both failures belong to PIN's own code rather than to the
-      terrain, and one of them was never on this sheet.</p>
+      terrain, and one of them was never on this sheet. <b>Follow-up run 2026-08-19 against build
+      df3fd7c747c0 — 3 of 3.</b> The ground query works from both sides and <code>probe</code> answers
+      as designed, so DATA-23 is closed and the sheet is done: 8 of 10 passed, and the two failures
+      were both fixed and re-verified.</p>
   </header>
 
   <div class="bar">
@@ -587,20 +590,18 @@
         <div class="steps">
           <label class="step"><input type="checkbox" data-k="s0-4"><span class="step-body">
             <span class="lede">Count the chunks and add up the geometry. Expect 93 and ~1,364,781.</span>
-            <span class="cmd"><pre><code>grep -ac "Loading chunk" ~/Games/PIN/logs/GameServer.log
-grep -aoE "Loaded [0-9]+ statics" ~/Games/PIN/logs/GameServer.log | awk '{s+=$2} END {print s" statics"}'</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>grep -ac "Loading chunk" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>grep -aoE "Loaded [0-9]+ statics" ~/Games/PIN/logs/GameServer.log | awk '{s+=$2} END {print s" statics"}'</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
           <label class="step"><input type="checkbox" data-k="s0-5"><span class="step-body">
             <span class="lede">No chunk came up empty, and the door opened afterwards.</span>
-            <span class="cmd"><pre><code>grep -a "no LOD3 collision layers" ~/Games/PIN/logs/GameServer.log
-grep -a "Server is ready" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>grep -a "no LOD3 collision layers" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>grep -a "Server is ready" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
           <label class="step"><input type="checkbox" data-k="s0-6"><span class="step-body">
             <span class="lede">What it costs. Expect roughly 8.6&nbsp;GB resident.</span>
             <span class="cmd"><pre><code>ps -o rss= -p $(pgrep -f "dotnet GameServer.dll") | awk '{printf "%.1f GB\n", $1/1048576}'</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
         </div>
-        <div class="result"><label for="r-s0">Chunks / statics / RAM</label><textarea id="r-s0" data-k="n-s0" placeholder="chunks= / statics= / RAM="></textarea></div>
+        <div class="result"><label for="r-thump-place-0">Chunks / statics / RAM</label><textarea id="r-thump-place-0" data-k="n-thump-place-0" placeholder="chunks= / statics= / RAM="></textarea></div>
       </div>
 
       <div class="entry">
@@ -612,9 +613,7 @@ grep -a "Server is ready" ~/Games/PIN/logs/GameServer.log</code></pre><button cl
           <label class="step"><input type="checkbox" data-k="s0-7"><span class="step-body"><span class="lede">Logged in to zone 448, standing on open flat ground.</span></span></label>
           <label class="step"><input type="checkbox" data-k="s0-8"><span class="step-body">
             <span class="lede">All three baselines.</span>
-            <span class="cmd"><pre><code>grep -ac "HitHandler Static" ~/Games/PIN/logs/GameServer.log
-grep -ac "HitHandler Kinematic" ~/Games/PIN/logs/GameServer.log
-grep -ac "NoLineOfSight" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>grep -ac "HitHandler Static" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>grep -ac "HitHandler Kinematic" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>grep -ac "NoLineOfSight" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
           <label class="step"><input type="checkbox" data-k="s0-9"><span class="step-body">
             <span class="lede">Write down where you are standing. Its first line is <code style="font-family:var(--mono)">&lt;your character&gt; at &lt;X, Y, Z&gt;</code>.</span>
@@ -631,27 +630,25 @@ grep -ac "NoLineOfSight" ~/Games/PIN/logs/GameServer.log</code></pre><button cla
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 1</span>
-      <span class="block-t">X1 — your shots stop at the world<small>The thing terrain was for. Cheapest entry on the sheet.</small></span>
+      <span class="block-t">SOLID-WORLD-1 — your shots stop at the world<small>The thing terrain was for. Cheapest entry on the sheet.</small></span>
       <span class="block-meta">5 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X1</span><span class="marker pass">[x] passed — 391 world hits at sane distances</span><span class="entry-t">A bullet fired at a rock stops in the rock</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-1</span><span class="marker pass">[x] passed — 391 world hits at sane distances</span><span class="entry-t">A bullet fired at a rock stops in the rock</span></div>
         <p class="note">Until this week every shot that missed an enemy travelled 500m through the scenery and
           vanished. The log already shows the new behaviour happening — 86 world hits in the preliminary
           session — but nobody has yet checked that a hit lands <strong>where the rock is</strong> rather than
           at some arbitrary distance.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x1-1"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x1-1"><span class="step-body">
             <span class="lede">Any weapon you can aim precisely. The Heavy Machine Gun is the sheet's usual.</span>
-            <span class="cmd"><pre><code>createitem 85968
-dbg_inventory
-equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>createitem 85968</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x1-2"><span class="step-body"><span class="lede">Find a wall, boulder or building you can judge the distance to. Note roughly how far it is.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x1-3"><span class="step-body"><span class="lede">Fire five rounds into it, standing well clear of anything else.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x1-4"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x1-2"><span class="step-body"><span class="lede">Find a wall, boulder or building you can judge the distance to. Note roughly how far it is.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x1-3"><span class="step-body"><span class="lede">Fire five rounds into it, standing well clear of anything else.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x1-4"><span class="step-body">
             <span class="lede">Read the impacts. <code style="font-family:var(--mono)">T</code> is the distance in metres from your muzzle.</span>
             <span class="cmd"><pre><code>grep -a "HitHandler Static" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -667,7 +664,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           391 shots struck world geometry across the session, spread 1&ndash;2m (5), 2&ndash;5m (152),
           5&ndash;20m (150) and beyond 20m (84). Distances track what was aimed at. The world stops a
           bullet.</div>
-        <div class="result"><label for="r-x1">Judged distance vs T</label><textarea id="r-x1" data-k="n-x1"></textarea></div>
+        <div class="result"><label for="r-solid-world-1">Judged distance vs T</label><textarea id="r-solid-world-1" data-k="n-solid-world-1"></textarea></div>
       </div>
 
     </div>
@@ -677,13 +674,13 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block lethal" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 2</span>
-      <span class="block-t">X2 — the shot that dies at the muzzle<small>Already visible in the preliminary session: 15 of 86 world hits at zero range.</small></span>
+      <span class="block-t">SOLID-WORLD-2 — the shot that dies at the muzzle<small>Already visible in the preliminary session: 15 of 86 world hits at zero range.</small></span>
       <span class="block-meta">10 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X2</span><span class="marker pass">[x] passed — zero muzzle hits, premise retired</span><span class="entry-t">How often does your own gun shoot the ground you are standing on</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-2</span><span class="marker pass">[x] passed — zero muzzle hits, premise retired</span><span class="entry-t">How often does your own gun shoot the ground you are standing on</span></div>
         <p class="note">A shot starts at the muzzle, which sits <strong>off to one side of your character</strong>
           rather than in the middle of it. The raycast excludes your own body and nothing else — not the wall
           you are pressed against, not the rise under your feet. When the muzzle starts inside solid geometry
@@ -694,19 +691,17 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           one world hit in six. That is a real reading from real play, not a prediction. What nobody knows is
           whether those were all one awkward corner or whether it happens in the open.</div>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x2-1"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x2-1"><span class="step-body">
             <span class="lede">Count before.</span>
             <span class="cmd"><pre><code>grep -ac "HitHandler Static" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x2-2"><span class="step-body"><span class="lede"><b>Open ground.</b> Standing clear of everything, fire 20 rounds at the horizon.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x2-3"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x2-2"><span class="step-body"><span class="lede"><b>Open ground.</b> Standing clear of everything, fire 20 rounds at the horizon.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x2-3"><span class="step-body">
             <span class="lede">Split the world hits by distance. Everything in the first column is a shot that died at the muzzle.</span>
-            <span class="cmd"><pre><code>grep -aoE "HitHandler Static T [0-9.E-]+" ~/Games/PIN/logs/GameServer.log \
-  | awk '{print ($4+0 &lt; 0.5) ? "muzzle" : (($4+0 &lt; 5) ? "0.5-5m" : "5m+")}' \
-  | sort | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>grep -aoE "HitHandler Static T [0-9.E-]+" ~/Games/PIN/logs/GameServer.log \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>  | awk '{print ($4+0 &lt; 0.5) ? "muzzle" : (($4+0 &lt; 5) ? "0.5-5m" : "5m+")}' \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>  | sort | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x2-4"><span class="step-body"><span class="lede"><b>Shoulder to a wall.</b> Put your back or side against a building, fire 20 rounds straight ahead into the open, and run the split again.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x2-5"><span class="step-body"><span class="lede"><b>On a slope.</b> Stand on a hillside facing downhill, fire 20 rounds, split again.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x2-4"><span class="step-body"><span class="lede"><b>Shoulder to a wall.</b> Put your back or side against a building, fire 20 rounds straight ahead into the open, and run the split again.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x2-5"><span class="step-body"><span class="lede"><b>On a slope.</b> Stand on a hillside facing downhill, fire 20 rounds, split again.</span></span></label>
         </div>
         <div class="callout pass"><b>Pass</b>
           Zero muzzle hits in the open. Whatever the wall and the slope produce is the measurement — record
@@ -720,7 +715,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           The previous day's 15-in-86 did not reappear on the same code with the same weapon class, so
           the muzzle death is something about where the tester was standing rather than about how a shot
           starts. Dropped to a curiosity. The three stances were not needed to settle it.</div>
-        <div class="result"><label for="r-x2">Muzzle hits: open / wall / slope</label><textarea id="r-x2" data-k="n-x2" placeholder="open= / wall= / slope="></textarea></div>
+        <div class="result"><label for="r-solid-world-2">Muzzle hits: open / wall / slope</label><textarea id="r-solid-world-2" data-k="n-solid-world-2" placeholder="open= / wall= / slope="></textarea></div>
       </div>
 
     </div>
@@ -730,13 +725,13 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block lethal" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 3</span>
-      <span class="block-t">X3 — creatures can still shoot you<small>The gate. If this fails, every combat entry in the whole queue is now invalid.</small></span>
+      <span class="block-t">SOLID-WORLD-3 — creatures can still shoot you<small>The gate. If this fails, every combat entry in the whole queue is now invalid.</small></span>
       <span class="block-meta">8 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X3</span><span class="marker pass">[x] passed — 675 damage lines on the player</span><span class="entry-t">A rifleman on flat ground opens fire</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-3</span><span class="marker pass">[x] passed — 675 damage lines on the player</span><span class="entry-t">A rifleman on flat ground opens fire</span></div>
         <p class="note">A creature fires only if the line to you is clear, and that line is now tested against
           1.36 million pieces of ground. Both ends of it sit at <strong>foot height</strong>. On ground with any
           texture to it, the shot can clip the dirt between two people standing in the open.</p>
@@ -745,17 +740,17 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           perfectly ordinary answer and the log records it at Debug. That is why this entry exists rather than
           being left to the next combat sitting to notice.</div>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x3-1"><span class="step-body"><span class="lede">Stand on the flattest open ground you can find. You want to be hit, so no invulnerability.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x3-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x3-1"><span class="step-body"><span class="lede">Stand on the flattest open ground you can find. You want to be hit, so no invulnerability.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x3-2"><span class="step-body">
             <span class="lede">Chosen Fiend — 180m rifle. Spawns at your feet.</span>
             <span class="cmd"><pre><code>npc 1196</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x3-3"><span class="step-body"><span class="lede">Walk about 30m away in a straight line, turn, and stand still for 20 seconds.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x3-4"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x3-3"><span class="step-body"><span class="lede">Walk about 30m away in a straight line, turn, and stand still for 20 seconds.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x3-4"><span class="step-body">
             <span class="lede">Did it fire? Your character is named on the left of a damage line, not numbered.</span>
             <span class="cmd"><pre><code>grep -aE "took [0-9]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x3-5"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x3-5"><span class="step-body">
             <span class="lede">And if it did not, this says why in one word.</span>
             <span class="cmd"><pre><code>grep -a "holding fire" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -768,7 +763,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           distance you were at. Paste the whole line into the box — the two numbers together say whether the ray
           hit the ground immediately or partway across.</div>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x3-6"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x3-6"><span class="step-body">
             <span class="lede">Clear the field before the next block.</span>
             <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -776,7 +771,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
         <div class="callout pass"><b>Ran 2026-08-17 — passed, and the gate is open</b>
           675 damage lines naming the player. Ordinary ground does not block a creature's sightline, so
           every combat entry in the register still measures the game rather than a broken ray.</div>
-        <div class="result"><label for="r-x3">Fired, or held?</label><textarea id="r-x3" data-k="n-x3"></textarea></div>
+        <div class="result"><label for="r-solid-world-3">Fired, or held?</label><textarea id="r-solid-world-3" data-k="n-solid-world-3"></textarea></div>
       </div>
 
     </div>
@@ -786,29 +781,29 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 4</span>
-      <span class="block-t">X4 — a hill is cover now<small>The payoff entry. Cover used to have to be a spawned object.</small></span>
+      <span class="block-t">SOLID-WORLD-4 — a hill is cover now<small>The payoff entry. Cover used to have to be a spawned object.</small></span>
       <span class="block-meta">8 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X4</span><span class="marker pass">[x] passed — 4 holds at 12&ndash;15m with a 180m rifle</span><span class="entry-t">Stepping behind a rise stops the shooting</span></div>
-        <p class="note">This is the behaviour the whole merge was for, and it is the exact inverse of X3 — the
-          same check passing where it should and failing where it should. Run it immediately after X3, with the
+        <div class="entry-head"><span class="id">SOLID-WORLD-4</span><span class="marker pass">[x] passed — 4 holds at 12&ndash;15m with a 180m rifle</span><span class="entry-t">Stepping behind a rise stops the shooting</span></div>
+        <p class="note">This is the behaviour the whole merge was for, and it is the exact inverse of SOLID-WORLD-3 — the
+          same check passing where it should and failing where it should. Run it immediately after SOLID-WORLD-3, with the
           same creature type, so the only thing that changed is where you are standing.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x4-1"><span class="step-body"><span class="lede">Find a rise, boulder or building big enough to hide behind, and stand beside it in the open.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x4-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x4-1"><span class="step-body"><span class="lede">Find a rise, boulder or building big enough to hide behind, and stand beside it in the open.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x4-2"><span class="step-body">
             <span class="lede">Spawn the same rifleman at your feet.</span>
             <span class="cmd"><pre><code>npc 1196</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x4-3"><span class="step-body"><span class="lede">Walk 30m out where it can see you, and let it hit you once so you know it is engaged.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x4-4"><span class="step-body"><span class="lede">Now step behind the rise, staying about the same distance away. Wait 20 seconds.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x4-5"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x4-3"><span class="step-body"><span class="lede">Walk 30m out where it can see you, and let it hit you once so you know it is engaged.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x4-4"><span class="step-body"><span class="lede">Now step behind the rise, staying about the same distance away. Wait 20 seconds.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x4-5"><span class="step-body">
             <span class="lede">The hold reason should have changed the moment you broke sight.</span>
             <span class="cmd"><pre><code>grep -a "holding fire" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x4-6"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x4-6"><span class="step-body">
             <span class="lede">And no damage should have arrived while you were behind it.</span>
             <span class="cmd"><pre><code>grep -aE "took [0-9]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -820,7 +815,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           <code style="font-family:var(--mono)">OutOfRange</code> means you simply walked too far and the entry
           proves nothing. The distance is printed on the same line, so the two are easy to tell apart.</div>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x4-7"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x4-7"><span class="step-body">
             <span class="lede">Clear the field.</span>
             <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -830,7 +825,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           and 12.0 metres, by riflemen carrying a 180m weapon — so the distance rules out
           <code style="font-family:var(--mono)">OutOfRange</code> completely — and the damage resumed on
           stepping back out. <b>Cover is a place now rather than a spawned object.</b></div>
-        <div class="result"><label for="r-x4">Hold reason and distance while hidden</label><textarea id="r-x4" data-k="n-x4"></textarea></div>
+        <div class="result"><label for="r-solid-world-4">Hold reason and distance while hidden</label><textarea id="r-solid-world-4" data-k="n-solid-world-4"></textarea></div>
       </div>
 
     </div>
@@ -840,33 +835,33 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 5</span>
-      <span class="block-t">X5 — creatures on a slope<small>Nothing was changed here. This measures how bad the old workaround still is.</small></span>
+      <span class="block-t">SOLID-WORLD-5 — creatures on a slope<small>Nothing was changed here. This measures how bad the old workaround still is.</small></span>
       <span class="block-meta">8 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X5</span><span class="marker fail">[!] failed — it climbs alongside the hill, in the air</span><span class="entry-t">A creature chasing you uphill</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-5</span><span class="marker fail">[!] failed — it climbs alongside the hill, in the air</span><span class="entry-t">A creature chasing you uphill</span></div>
         <p class="note">A creature still has no idea where the floor is. It borrows <strong>your</strong> height
           — a player standing on the ground is a ground measurement — and is capped at a 45° climb so it cannot
           levitate onto a roof. Terrain being loaded changes none of that yet, because nothing casts a ray
           downward. This entry records how wrong that is now that there is a real surface to be wrong about.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x5-1"><span class="step-body"><span class="lede">Stand at the bottom of a hillside you can walk up.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x5-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x5-1"><span class="step-body"><span class="lede">Stand at the bottom of a hillside you can walk up.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x5-2"><span class="step-body">
             <span class="lede">Melded Aranha — closes to 5m, moves at 11 m/s, so it will follow hard.</span>
             <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x5-3"><span class="step-body"><span class="lede">Walk up the slope at a steady pace. Watch it: is it on the surface, sunk into it, or floating above it?</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x5-4"><span class="step-body"><span class="lede">Now walk along the side of the hill, so it has to cross a slope rather than climb it.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x5-5"><span class="step-body"><span class="lede">Last, jump down a drop of a few metres and watch what it does at the edge.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x5-3"><span class="step-body"><span class="lede">Walk up the slope at a steady pace. Watch it: is it on the surface, sunk into it, or floating above it?</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x5-4"><span class="step-body"><span class="lede">Now walk along the side of the hill, so it has to cross a slope rather than climb it.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x5-5"><span class="step-body"><span class="lede">Last, jump down a drop of a few metres and watch what it does at the edge.</span></span></label>
         </div>
         <div class="callout"><b>There is no pass mark here</b>
           This is a measurement, not a check. Write down what you saw in plain words — "sank to the knees on
           the climb", "held the height it started at and ended up inside the hill", "fine going up, wrong going
           down". That description is the specification for the fix.</div>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x5-6"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x5-6"><span class="step-body">
             <span class="lede">Clear the field.</span>
             <span class="cmd"><pre><code>rment</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -879,7 +874,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           <a href="../ISSUE-REGISTER.md">DATA-23</a>. Nothing in the log shows this — 208 ground samples
           and 675 damage lines are all consistent with a clean session, which is why the entry was
           written for eyes rather than for a grep.</div>
-        <div class="result"><label for="r-x5">Uphill / across the slope / off the drop</label><textarea id="r-x5" data-k="n-x5"></textarea></div>
+        <div class="result"><label for="r-solid-world-5">Uphill / across the slope / off the drop</label><textarea id="r-solid-world-5" data-k="n-solid-world-5"></textarea></div>
       </div>
 
     </div>
@@ -889,40 +884,40 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 6</span>
-      <span class="block-t">X6 — the thumper defence still plays<small>The biggest built feature, re-run against a world that can now block things.</small></span>
+      <span class="block-t">SOLID-WORLD-6 — the thumper defence still plays<small>The biggest built feature, re-run against a world that can now block things.</small></span>
       <span class="block-meta">15 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X6</span><span class="marker pass">[x] passed — 4 waves, 82 hits on each machine, 3 blips</span><span class="entry-t">Four waves, a machine that survives, a payout</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-6</span><span class="marker pass">[x] passed — 4 waves, 82 hits on each machine, 3 blips</span><span class="entry-t">Four waves, a machine that survives, a payout</span></div>
         <p class="note">The defence has attackers walking at a fixed object and shooting it. Both halves are
           exactly what terrain interferes with: the walk is a straight line with no awareness of what is on it,
-          and the shot at the machine is the same foot-height ray as X3. This ran 6 of 6 on 2026-08-15 with an
+          and the shot at the machine is the same foot-height ray as SOLID-WORLD-3. This ran 6 of 6 on 2026-08-15 with an
           empty world, so any difference is the terrain.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x6-1"><span class="step-body"><span class="lede">Stand somewhere with a bit of shape to it — not a parade ground, not a ravine.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x6-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x6-1"><span class="step-body"><span class="lede">Stand somewhere with a bit of shape to it — not a parade ground, not a ravine.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x6-2"><span class="step-body">
             <span class="lede">Count the sappers' hits on the machine before you start.</span>
             <span class="cmd"><pre><code>grep -acE "Thumper [0-9]+ took" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x6-3"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x6-3"><span class="step-body">
             <span class="lede">Call one down at your feet and defend it through the whole cycle.</span>
             <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x6-4"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x6-4"><span class="step-body">
             <span class="lede">Did every wave arrive? Each line names the wave, its size and how many are standing.</span>
             <span class="cmd"><pre><code>grep -aE "wave [0-9] of 4" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x6-5"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x6-5"><span class="step-body">
             <span class="lede">Did the sappers reach the machine and hit it?</span>
             <span class="cmd"><pre><code>grep -aE "Thumper [0-9]+ took" ~/Games/PIN/logs/GameServer.log | tail -10</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x6-6"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x6-6"><span class="step-body">
             <span class="lede">Any creature that stood still and never engaged says so here.</span>
             <span class="cmd"><pre><code>grep -a "holding fire" ~/Games/PIN/logs/GameServer.log | grep -ac "NoLineOfSight"</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x6-7"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x6-7"><span class="step-body">
             <span class="lede">And the payout at the end.</span>
             <span class="cmd"><pre><code>grep -aE "completion|defence" ~/Games/PIN/logs/GameServer.log | tail -5</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -931,7 +926,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           The cycle plays as it did on 2026-08-15: four waves, sappers landing hits on the machine, and a
           <code style="font-family:var(--mono)">completion</code> line with a defence multiplier at the end.</div>
         <div class="callout stop"><b>The failure to watch for</b>
-          Sappers that walk to the machine and then do nothing. That is X3's failure wearing a different hat —
+          Sappers that walk to the machine and then do nothing. That is SOLID-WORLD-3's failure wearing a different hat —
           the ray from a creature's feet to the machine's base clipping the ground between them.</div>
         <div class="callout pass"><b>Ran 2026-08-17 — passed, with the predicted wrinkle at one-tenth the size</b>
           Two cycles. The defended one ran all four waves (1, 2, 2+1, 2+1 on a 20m ring) and sappers
@@ -943,9 +938,9 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           The machine was on a slope, and <b>sappers spawned inside the hillside</b>. The wave ring places
           them at the machine's own height, so on a slope an arc of it is underground. That was cosmetic
           until this week; now the ground stops the player's bullets, so a buried sapper cannot be killed
-          while it goes on damaging the machine. Same root cause as X5, same fix, filed together as
+          while it goes on damaging the machine. Same root cause as SOLID-WORLD-5, same fix, filed together as
           <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
-        <div class="result"><label for="r-x6">Waves / machine hits / payout</label><textarea id="r-x6" data-k="n-x6"></textarea></div>
+        <div class="result"><label for="r-solid-world-6">Waves / machine hits / payout</label><textarea id="r-solid-world-6" data-k="n-solid-world-6"></textarea></div>
       </div>
 
     </div>
@@ -955,26 +950,26 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 7</span>
-      <span class="block-t">X7 — the closing sweep<small>Two commands at the end of the sitting. Everything else was passive.</small></span>
+      <span class="block-t">SOLID-WORLD-7 — the closing sweep<small>Two commands at the end of the sitting. Everything else was passive.</small></span>
       <span class="block-meta">3 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X7</span><span class="marker pass">[x] passed — no new errors</span><span class="entry-t">An hour of a solid world, and what it cost</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-7</span><span class="marker pass">[x] passed — no new errors</span><span class="entry-t">An hour of a solid world, and what it cost</span></div>
         <p class="note">A million static shapes is new load on a server that used to hold a few dozen. This is
           not a stress test — it is the sweep that catches anything the sitting produced and nobody was looking
           at.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x7-1"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x7-1"><span class="step-body">
             <span class="lede">Anything at all above Debug, for the whole session.</span>
             <span class="cmd"><pre><code>grep -aE "\[(ERR|WRN|FTL)" ~/Games/PIN/logs/GameServer.log | sort | uniq -c | sort -rn | head -20</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x7-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x7-2"><span class="step-body">
             <span class="lede">Memory again. Compare against the Block 0 reading — it should not have climbed.</span>
             <span class="cmd"><pre><code>ps -o rss= -p $(pgrep -f "dotnet GameServer.dll") | awk '{printf "%.1f GB\n", $1/1048576}'</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x7-3"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x7-3"><span class="step-body">
             <span class="lede">The session's whole shot ledger, world against entity.</span>
             <span class="cmd"><pre><code>grep -aoE "HitHandler [A-Za-z]+" ~/Games/PIN/logs/GameServer.log | sort | uniq -c</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -985,7 +980,7 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
           <code style="font-family:var(--mono)">Failed to establish GRPC stream</code> — the character
           service that has never run in PIN, retrying every 30 seconds — and they were in the previous
           log too. Session ledger: 1,193 hits on entities against 391 on the world.</div>
-        <div class="result"><label for="r-x7">Warnings, memory, ledger</label><textarea id="r-x7" data-k="n-x7"></textarea></div>
+        <div class="result"><label for="r-solid-world-7">Warnings, memory, ledger</label><textarea id="r-solid-world-7" data-k="n-solid-world-7"></textarea></div>
       </div>
 
     </div>
@@ -995,57 +990,61 @@ equipitem 85968 Primary</code></pre><button class="copy" type="button">Copy</but
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 8</span>
-      <span class="block-t">X8 and X9 — the ground query<small>Written 2026-08-17 with the fix, unrun. Both are the same code seen from two sides.</small></span>
+      <span class="block-t">SOLID-WORLD-8 and SOLID-WORLD-9 — the ground query<small>Written 2026-08-17 with the fix. Run 2026-08-19 — both passed.</small></span>
       <span class="block-meta">12 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X8</span><span class="marker">[ ]</span><span class="entry-t">A creature chasing you uphill stands on the hill</span></div>
-        <p class="note">X5's failure, fixed. A step now lands on the ground measured under where it lands,
+        <div class="entry-head"><span class="id">SOLID-WORLD-8</span><span class="marker pass">[x] passed — feet on the surface, up, across and down</span><span class="entry-t">A creature chasing you uphill stands on the hill</span></div>
+        <p class="note">SOLID-WORLD-5's failure, fixed. A step now lands on the ground measured under where it lands,
           rather than on a share of the climb to wherever you are standing. Two things are deliberately
           <i>not</i> fixed and should not be read as regressions: a creature has no pathing, so it still
           walks into obstacles rather than round them, and ground rising faster than 45° across one step
           counts as a wall it will hold position against.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x8-1"><span class="step-body"><span class="lede">Same hillside as X5, so the two can be compared.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x8-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x8-1"><span class="step-body"><span class="lede">Same hillside as SOLID-WORLD-5, so the two can be compared.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x8-2"><span class="step-body">
             <span class="lede">Melded Aranha at your feet — 11 m/s, closes to 5m, so it follows hard.</span>
             <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x8-3"><span class="step-body"><span class="lede">Walk up the slope at a steady pace and watch its feet against the surface.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x8-4"><span class="step-body"><span class="lede">Walk along the face of the hill, so it crosses a slope rather than climbing it.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x8-5"><span class="step-body"><span class="lede">Jump down a drop of a few metres. It should follow to the bottom rather than stop at the edge.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x8-6"><span class="step-body"><span class="lede">Last, walk to the foot of something genuinely vertical — a cliff or a wall — and check it stops rather than climbing it.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x8-3"><span class="step-body"><span class="lede">Walk up the slope at a steady pace and watch its feet against the surface.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x8-4"><span class="step-body"><span class="lede">Walk along the face of the hill, so it crosses a slope rather than climbing it.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x8-5"><span class="step-body"><span class="lede">Jump down a drop of a few metres. It should follow to the bottom rather than stop at the edge.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x8-6"><span class="step-body"><span class="lede">Last, walk to the foot of something genuinely vertical — a cliff or a wall — and check it stops rather than climbing it.</span></span></label>
         </div>
         <div class="callout pass"><b>Pass</b>
-          Its feet are on the surface the whole way up, across and down. Compare directly against X5, where
+          Its feet are on the surface the whole way up, across and down. Compare directly against SOLID-WORLD-5, where
           it rose alongside the slope in the air.</div>
         <div class="callout stop"><b>The failure to watch for is a creature that stops moving</b>
           The slope limit refuses a step it reads as a wall. If a creature freezes on ordinary walkable
           ground, the limit is being measured against the wrong thing — say where it stopped and what the
           ground was doing there.</div>
-        <div class="result"><label for="r-x8">Uphill / across / off the drop / at a wall</label><textarea id="r-x8" data-k="n-x8"></textarea></div>
+        <div class="callout pass"><b>Ran 2026-08-19 — passed</b>
+          Feet on the surface the whole way — up the slope, across its face, and down the drop. The
+          floating that failed SOLID-WORLD-5 is gone. The log agrees the query was doing the work:
+          284 ground samples across the session, tracking the chase. Closes the creature half of
+          <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
+        <div class="result"><label for="r-solid-world-8">Uphill / across / off the drop / at a wall</label><textarea id="r-solid-world-8" data-k="n-solid-world-8"></textarea></div>
       </div>
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X9</span><span class="marker">[ ]</span><span class="entry-t">Sappers on a slope are on the surface, and can be shot</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-9</span><span class="marker pass">[x] passed — ring heights track the slope, all killable</span><span class="entry-t">Sappers on a slope are on the surface, and can be shot</span></div>
         <p class="note">The other half of the same fix. A wave ring is still drawn flat around the machine,
           but each point is now dropped onto the ground under it. <b>Call the thumper on a slope
           deliberately</b> — on flat ground this entry cannot fail and proves nothing.</p>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x9-1"><span class="step-body"><span class="lede">Find sloping ground with a deposit under it and stand on the slope.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x9-2"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x9-1"><span class="step-body"><span class="lede">Find sloping ground with a deposit under it and stand on the slope.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x9-2"><span class="step-body">
             <span class="lede">Call it down and defend the whole cycle.</span>
             <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x9-3"><span class="step-body"><span class="lede">As each wave stands up, look at the uphill side of the ring. Every member should be standing on the surface, and every member should be shootable.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x9-4"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x9-3"><span class="step-body"><span class="lede">As each wave stands up, look at the uphill side of the ring. Every member should be standing on the surface, and every member should be shootable.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x9-4"><span class="step-body">
             <span class="lede">Spawn heights against your own footing. The ring members should differ from each other by roughly what the slope does over 20m, not sit at one flat height.</span>
-            <span class="cmd"><pre><code>grep -aoE "Spawned monster [0-9]+ as [0-9]+ at <[^>]+>" ~/Games/PIN/logs/GameServer.log | tail -8
-grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>grep -aoE "Spawned monster [0-9]+ as [0-9]+ at <[^>]+>" ~/Games/PIN/logs/GameServer.log | tail -8</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x9-5"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x9-5"><span class="step-body">
             <span class="lede">And that they all reached the machine and hit it.</span>
             <span class="cmd"><pre><code>grep -acE "Thumper [0-9]+ took" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -1053,7 +1052,14 @@ grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><b
         <div class="callout pass"><b>Pass</b>
           Nothing spawns inside the hill, every attacker can be killed, and the spawn heights in the log
           vary across the ring instead of all matching the machine's.</div>
-        <div class="result"><label for="r-x9">Ring heights, and could you kill all of them</label><textarea id="r-x9" data-k="n-x9"></textarea></div>
+        <div class="callout pass"><b>Ran 2026-08-19 — passed</b>
+          Every wave member on the surface and killable — nobody buried this time. The spawn heights
+          say why: the ring's members landed between 401.0 and 407.3, about six metres of spread
+          across a 20m ring, where the failed run put an arc of one flat height inside the hill.
+          All four waves arrived, sappers landed 100 hits, and the defended cycle paid out at
+          defence 0.89 with 6 attackers down. Closes the wave-ring half of
+          <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
+        <div class="result"><label for="r-solid-world-9">Ring heights, and could you kill all of them</label><textarea id="r-solid-world-9" data-k="n-solid-world-9"></textarea></div>
       </div>
 
     </div>
@@ -1063,13 +1069,13 @@ grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><b
   <section class="block" data-open="true">
     <button class="block-head" type="button">
       <span class="block-n">Block 9</span>
-      <span class="block-t">X10 — asking the server what is in front of you<small>Written 2026-08-17 with the command, unrun. The instrument the last sitting needed and did not have.</small></span>
+      <span class="block-t">SOLID-WORLD-10 — asking the server what is in front of you<small>Written 2026-08-17 with the command. Run 2026-08-19 — passed.</small></span>
       <span class="block-meta">8 min<span class="chev"></span></span>
     </button>
     <div class="block-body">
 
       <div class="entry">
-        <div class="entry-head"><span class="id">X10</span><span class="marker">[ ]</span><span class="entry-t">probe names what the ray hits, and finds an object with no collision</span></div>
+        <div class="entry-head"><span class="id">SOLID-WORLD-10</span><span class="marker pass">[x] passed — all controls answer; no collision-less object found</span><span class="entry-t">probe names what the ray hits, and finds an object with no collision</span></div>
         <p class="note"><code style="font-family:var(--mono)">probe</code> casts a ray where you are aiming
           and says whether it met the world, an entity, or nothing — with the distance — then reports the
           ground height under your feet. <code style="font-family:var(--mono)">target</code> casts the same
@@ -1081,19 +1087,18 @@ grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></pre><b
           zone 448 convert to an empty shape at load. This is the first time it can be checked while
           standing in front of one instead of by rebuilding the zone offline.</div>
         <div class="steps">
-          <label class="step"><input type="checkbox" data-k="x10-1"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x10-1"><span class="step-body">
             <span class="lede">Aim at open ground a few metres ahead. The control case: it must answer.</span>
             <span class="cmd"><pre><code>probe</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x10-2"><span class="step-body"><span class="lede">Check the distance against what you can see, and the ground line against where you are standing — it should read close to 0.00m above.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x10-3"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x10-2"><span class="step-body"><span class="lede">Check the distance against what you can see, and the ground line against where you are standing — it should read close to 0.00m above.</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x10-3"><span class="step-body">
             <span class="lede">Aim at a creature. It should be named rather than reported as world.</span>
-            <span class="cmd"><pre><code>npc 528
-probe</code></pre><button class="copy" type="button">Copy</button></span>
+            <span class="cmd"><pre><code>npc 528</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>probe</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
-          <label class="step"><input type="checkbox" data-k="x10-4"><span class="step-body"><span class="lede"><b>Now go hunting.</b> Aim at rocks, boulders, fences, small formations — anything that is an object rather than the ground itself — and probe each one. Note every object that answers "nothing".</span></span></label>
+          <label class="step"><input checked type="checkbox" data-k="x10-4"><span class="step-body"><span class="lede"><b>Now go hunting.</b> Aim at rocks, boulders, fences, small formations — anything that is an object rather than the ground itself — and probe each one. Note every object that answers "nothing".</span></span></label>
           <label class="step"><input type="checkbox" data-k="x10-5"><span class="step-body"><span class="lede">If you can find the formation the Chosen shot you through on 2026-08-17, probe that one specifically. It is the case that opened DATA-22.</span></span></label>
-          <label class="step"><input type="checkbox" data-k="x10-6"><span class="step-body">
+          <label class="step"><input checked type="checkbox" data-k="x10-6"><span class="step-body">
             <span class="lede">Aim at the sky, as the negative control.</span>
             <span class="cmd"><pre><code>probe</code></pre><button class="copy" type="button">Copy</button></span>
           </span></label>
@@ -1106,7 +1111,15 @@ probe</code></pre><button class="copy" type="button">Copy</button></span>
         <div class="note"><strong>The range is optional</strong> —
           <code style="font-family:var(--mono)">probe 30</code> looks 30m instead of 500m, which is the way
           to check a near object without the ray carrying on to a hillside behind it.</div>
-        <div class="result"><label for="r-x10">Objects that answered nothing</label><textarea id="r-x10" data-k="n-x10"></textarea></div>
+        <div class="callout pass"><b>Ran 2026-08-19 — passed</b>
+          Every control answered correctly: open ground at 1.56m, a creature named rather than reported
+          as world, five different objects each answered with a static id at a plausible distance
+          (9&ndash;31m), and the sky gave the one "nothing within 500m" of the session. <b>No visible
+          object answered nothing tonight</b>, so the hunt produced no new DATA-22 sighting — the 252
+          broken hulls are still only known offline, and the formation from 2026-08-17 was not
+          relocated. The instrument works; the sweep can now happen incidentally in any future
+          sitting.</div>
+        <div class="result"><label for="r-solid-world-10">Objects that answered nothing</label><textarea id="r-solid-world-10" data-k="n-solid-world-10"></textarea></div>
       </div>
 
     </div>
@@ -1158,12 +1171,12 @@ dotnet Tools/CollisionGenerator/bin/Release/net10.0/CollisionGenerator.dll \
     </table></div>
 
     <h2>Why this order</h2>
-    <p><strong>Your own shots come before theirs.</strong> X1 and X2 need no creature, no hostility and no
+    <p><strong>Your own shots come before theirs.</strong> SOLID-WORLD-1 and SOLID-WORLD-2 need no creature, no hostility and no
       health, so they cost five minutes and they tell you whether the ray behaves before anything harder depends
       on it.</p>
-    <p><strong>X3 and X4 are the same check twice, and they belong together.</strong> One proves shooting still
+    <p><strong>SOLID-WORLD-3 and SOLID-WORLD-4 are the same check twice, and they belong together.</strong> One proves shooting still
       works in the open, the other proves it stops behind cover. Either alone is ambiguous: a creature that never
-      fires passes X4 for the wrong reason.</p>
+      fires passes SOLID-WORLD-4 for the wrong reason.</p>
     <p><strong>Clear the field between blocks, never inside one.</strong>
       <code style="font-family:var(--mono)">rment</code> removes every entity except players — including a
       thumper mid-cycle.</p>
@@ -1349,3 +1362,4 @@ dotnet Tools/CollisionGenerator/bin/Release/net10.0/CollisionGenerator.dll \
   });
 })();
 </script>
+
