@@ -27,7 +27,7 @@ every field added afterwards inherits it.
 **RIN does not own this, and the reason is that RIN has never run.** That was checked rather than
 assumed: `start-pin.sh` starts exactly three servers, `WebHostManager MatrixServer GameServer`, RIN
 is a separate repo that nothing here launches, and
-[Session Setup](../In-Game-Tests/Session-Setup.md) already recorded the consequence before this
+[Session Setup](../In-Game-Tests/Session-Setup.html) already recorded the consequence before this
 milestone started — "nothing answers, and it falls back to `HardcodedCharacterData.FallbackData`, so
 the fallback isn't a fallback in practice, it's the character." A persistence layer behind the gRPC
 contract would have been a persistence layer that has never once been exercised.
@@ -59,7 +59,7 @@ Medium size, low technical risk, one real architectural decision at the front.
 
 ## What landed, 2026-08-14
 
-Code complete and unverified in game. [C1–C7](../In-Game-Tests/Persistence.md) are the check, and
+Code complete and unverified in game. [C1–C7](../In-Game-Tests/Persistence.html) are the check, and
 C1 is the exit condition.
 
 | Piece | Where |
@@ -89,9 +89,9 @@ in the bag rather than in the slot it was in, because the loadout that reference
 scratch. Persisting loadouts is the obvious next piece and is deliberately not in this cut.
 
 There is a fourth thing that is a lead rather than a feature. The reason the seed exists at login is
-the reason [I3](../In-Game-Tests/Inventory.md) suspects the bag is full: PIN hands out every frame in
+the reason [I3](../In-Game-Tests/Inventory.html) suspects the bag is full: PIN hands out every frame in
 the game, which no retail character carried. Persistence is what makes it possible to stop doing
-that, so [I1](../In-Game-Tests/Inventory.md) may come unstuck as a side effect of a later cut here.
+that, so [I1](../In-Game-Tests/Inventory.html) may come unstuck as a side effect of a later cut here.
 
 ## What needs a client and what doesn't
 
@@ -105,6 +105,6 @@ Two things to keep in mind while working that way. The GameServer won't boot wit
 anything that resolves an item def is being written against the loader's behaviour rather than
 watched. And an inventory loaded from a store instead of from
 `CharacterInventory.LoadHardcodedInventory` changes what every login hands out, which is the one
-thing [I3](../In-Game-Tests/Inventory.md) suspects of breaking item delivery: PIN gives out all 20
+thing [I3](../In-Game-Tests/Inventory.html) suspects of breaking item delivery: PIN gives out all 20
 battleframes and their modules at login and no retail character carried that. Persistence is the
 natural place that stops being true, so I1 may move on its own when this lands.

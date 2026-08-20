@@ -1,0 +1,124 @@
+<title>PIN — Answers Available Without a Client</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Answers Available Without a Client</h1>
+    <p class="standfirst">Part of the in-game test queue .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>.</p>
+    <p>Some of what's queued elsewhere is a question about what the real server sent, not about what PIN
+    does with it. Those can be read off a recording of a live session instead of waiting for a trip to
+    the game machine. <a href="../../Tools/CaptureReplay">Tools/CaptureReplay</a> decodes a capture through PIN's
+    own framing and AeroMessages types.</p>
+    <p>Get the captures once — they are not in this repo:</p>
+    <span class="cmd"><pre><code>git clone --depth 1 https://github.com/themeldingwars/Documentation.git ~/Games/PIN/captures</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    gunzip -k "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng.gz"</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Only the one file is ever used, and it is 19 MB of the clone, so this does the same job:</p>
+    <span class="cmd"><pre><code>mkdir -p ~/Games/PIN/captures/Captures &amp;&amp; cd ~/Games/PIN/captures/Captures</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    curl -sLO "https://raw.githubusercontent.com/themeldingwars/Documentation/master/Captures/2016-11-15%20-%20Gameplay.pcapng.gz"</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    gunzip -k "2016-11-15 - Gameplay.pcapng.gz"</code></pre><button class="copy" type="button">Copy</button></span>
+    <p><strong>Use the 2016 capture.</strong> AeroMessages describes DEPLOY-VEH-66 and only that recording is from the same era:
+    99.8% of its 406,890 GSS messages resolve to a definition and all but 239 deserialize with exact
+    byte consumption. The 2014 (build 1802) and 2015 (build 1869) recordings frame perfectly but their
+    message ids have drifted, so a message <em>name</em> printed for those two is a guess against the wrong
+    version. They are good for framing, Control and Matrix questions, not for reading contents.</p>
+    <p>A session overview, then the two queries that matter below:</p>
+    <span class="cmd"><pre><code>dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng"</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>        --controller Character_CombatController --message 105 --dump 40</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>        --controller Character_BaseController --entity 0x7F3CB864AB349200 --dump 400</code></pre><button class="copy" type="button">Copy</button></span>
+    <p><code>0x7F3CB864AB349200</code> is the player character in that session. Filter to it — most
+    <code>Character_BaseController</code> keyframes in the capture belong to NPCs being spawned with their stats
+    still zeroed, and reading those as if they were the player's gives an answer of all zeros for
+    everything.</p>
+  </section>
+  <section class="doc" id="what-it-answers">
+    <h2>What it answers</h2>
+    <p><strong>Live shield values.</strong> The roadmap's M1 wants to know whether <code>Battleframe</code> shipped real shields
+    or whether <a href="../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs">HardcodedCharacterData</a> is
+    inventing them. <code>Character_BaseController</code> carries <code>CurrentShields</code> and <code>MaxShields</code> next to
+    <code>CurrentHealth</code> and <code>MaxHealth</code>, so the live server's answer is in the third query above. Across
+    the 36 messages that carry those fields for the player entity, <code>CurrentShields</code> and <code>MaxShields</code>
+    are 0 every time, while <code>MaxHealth</code> reads 19192. That is one session on one battleframe, so on its
+    own it did not separate "this build didn't use shields" from "this character had no shield-bearing
+    frame equipped".</p>
+    <p><strong>Settled, 2026-08-11: the build didn't use shields.</strong> The second capture that would have
+    disambiguated it isn't usable — 2014 and 2015 have drifted message ids, per the warning above — so
+    the answer came from the db instead, which is what M1 asked for anyway:</p>
+    <span class="cmd"><pre><code>cp Tools/MinimalSDB/config.example.json Tools/MinimalSDB/config.json   # point "input" at the retail clientdb.sd2</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    cd Tools/MinimalSDB &amp;&amp; dotnet run --project . -- dump</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Against retail <code>prod-1962</code> (built 2016-05-05), <code>dbitems::Battleframe</code> has 1676 rows and
+    <code>base_shields</code> is non-zero on <strong>5</strong> of them. Scaling can't rescue that, since it multiplies and
+    anything times zero is zero, so the capture's live 0 is the frames and not the loadout. The recharge
+    pair is the surprise: <code>shield_recharge_per_sec</code> (779 rows, typically 150, max 450) and
+    <code>shield_recharge_delay_ms</code> (778 rows, typically 10000) are broadly populated. Tuned recharge sitting
+    next to a zeroed pool is what a mechanic looks like after it was switched off and its other columns
+    were left where they lay.</p>
+    <p><code>base_health</code> in the same table reads ~1000 against the capture's live 19192, which confirms it as a
+    pre-scaling base. Worth remembering before anything tries to source health from it directly; the
+    scaling that closes that gap isn't implemented.</p>
+    <p>What <a href="../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs">HardcodedCharacterData</a> does with
+    this: the recharge pair now uses the shipped 150/10000, and the pool stays non-zero at 3000 — a
+    value that at least occurs in the table — as a deliberate divergence, so the absorb-with-overflow
+    path in <code>TakeDamage</code> stays observable. Setting it to 0 matches retail exactly and is a one-line
+    change if faithfulness beats observability later.</p>
+    <p><strong>What an item pickup looks like on the wire.</strong> Used on 2026-08-11 to diff PIN's <code>InventoryUpdate</code>
+    against a real one after <code>createitem</code> produced a pickup toast and no item — see
+    <a href="Inventory.html">Inventory Delivery</a> for the conclusions and what got ruled out.</p>
+    <span class="cmd"><pre><code>dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>        --controller 2 --message 129 --direction s2c --dump 200</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>        --controller 2 --message 132 --direction s2c --dump 500</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The session opens with one full <code>InventoryUpdate</code> (<code>ClearExistingData = 1</code>, 255+ items, 21858
+    bytes) and then sends 199 partials. The reference case is a player looting item 82337: message 132
+    <code>SimulateLootPickup</code> at seq 55934, then message 129 at seq 55936 carrying exactly one item, 37
+    bytes on the wire.</p>
+    <span class="cmd"><pre><code>000100 A1410100 FDD4035C68295846 02 630B2A58 01 0000 0000 0000 01 00 0000 00 0000000000
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Reading it back through the struct: <code>ClearExistingData = 0</code>, one item — <code>Unk1 = 0</code>,
+    <code>SdbId = 82337</code>, <code>GUID = 0x465829685C03D4FD</code> (low byte <code>0xFD</code>, the item type code),
+    <code>SubInventory = 2</code>, <code>TimestampEpoch = 1479150435</code>, <code>DynamicFlags = 1</code>, <code>Durability = 0</code>,
+    <code>Unk3 = Unk4 = 0</code>, <strong><code>Unk5 = 1</code></strong>, no <code>Unk6</code>, <code>Unk7 = 0</code>, no <code>Modules</code> — then empty resources and
+    loadouts, <strong><code>Unk = 0</code></strong>, and two empty second arrays. That is the message any single-item add in
+    PIN should be able to be laid next to.</p>
+    <p><strong>Real damage numbers.</strong> <code>TookHit</code> (controller 5, message 105) carries a <code>DamageHitStruct</code> with
+    <code>DamageValue</code> and <code>DamageType</code> per hit, 466 of them in the 2016 session. Those are live-server
+    damage numbers, which is what DMG-DECAY-4 in <a href="Damage-Decay.html">Damage Decay</a> needs to check the decay curve
+    against. They arrive without the shooter's range attached, so pairing a hit with a distance means
+    correlating against the <code>MovementView</code> and <code>ConfirmedPoseUpdate</code> traffic around it.</p>
+    <p><strong>What a reconciliation looks like.</strong> <code>Character_LocalEffectsController</code> message 1 carries a status
+    effect slot with its effect id, source entity and time — the write PIN never sent before
+    <a href="Charge-Camera.html">CHARGE-CAM-5h</a>. 17 of them in the 2016 session, and they are the reference for the
+    <a href="Prediction-Sweep.html">prediction sweep</a>.</p>
+    <p><strong>What retail's transport did, which is a different layer from all of the above.</strong> <code>--transport</code>
+    skips the messages and reads the framing: what got resent, how long the sender waited, and how the
+    far side acked.</p>
+    <span class="cmd"><pre><code>dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>        --no-deserialize --transport</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The whole of <a href="../streams/m8-session-stability.md">M8</a> was calibrated off this on 2026-08-14, and it
+    is the first time this stream has decided an implementation rather than confirmed one. 24 resends
+    across 456619 sub-packets give the retransmit timeout (322–665ms, median 452), the resend count the
+    header carries (3 on all 24, never 1 or 2), that a resend is byte-identical to its original (15 of 15
+    where both survive), and that an ack is cumulative rather than per packet (60% of the server's
+    reliable packets acked, 24 resends in the session). It also closed
+    <a href="../ISSUE-REGISTER.md">NET-3</a> outright: the XOR decode PIN had been carrying a TODO about is correct,
+    and the 15 pairs are the proof.</p>
+  </section>
+  <section class="doc" id="what-it-does-not-answer">
+    <h2>What it does not answer</h2>
+    <p><a href="Hostility.html">HOSTILITY-1</a> and <a href="Damage-Decay.html">DMG-DECAY-1</a> are not capture questions and are still client work.
+    Both ask whether <em>PIN's</em> loader reads an SDB column correctly — HOSTILITY-1 about <code>hostility_stance</code>, DMG-DECAY-1
+    about the <code>DamageDecay</code> family — and a recording of Red 5's server says nothing about how PIN
+    parses a database. Read them off the GameServer log as written.</p>
+    <p><strong>Nothing about death, checked 2026-08-15.</strong> The session holds zero <code>Killed</code> messages
+    (<code>Character_CombatView</code> 108), one <code>Respawned</code> — the login spawn — and a null <code>RespawnTimes</code> in all
+    500 of the player's <code>Character_BaseController</code> keyframes. Nobody dies in it. So
+    <a href="../ISSUE-REGISTER.md">NET-23</a> cannot be answered here, and the trip is recorded rather than
+    repeated. The client's own <code>Bleedout.lua</code> answered it instead; see
+    <a href="../Client-UI-Source.md">Client UI Source</a> for why that oracle usually wins for UI-gated questions.</p>
+    <p><strong>Array-valued fields are truncated in the dump.</strong> <code>PrintValue</code> stops after four entries per array,
+    so a message carrying 255 items shows four. Counting field values across a whole inventory needs
+    the printer changed first; single-item messages are complete and safe to count.</p>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-capture-replay-v1"></script>
+

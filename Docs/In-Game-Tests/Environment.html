@@ -1,0 +1,335 @@
+<title>PIN — Environmental Damage (ENV-1–ENV-7)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Environmental Damage (ENV-1–ENV-7)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The first check of <a href="../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs">HazardSim</a>, which is the
+    first thing in the server that can hurt you without something else pulling a trigger. Until it landed
+    every <code>TakeDamage</code> call came from a projectile or an <code>InflictDamage</code> aptitude command, so deep water
+    and melding walls — both near-instant deaths in retail — did nothing, and a character read as
+    invulnerable to anyone who tried the obvious thing.</p>
+    <p>Two halves, and they are not equally trustworthy:</p>
+    <ul>
+    <li><strong>Drowning is read, not guessed.</strong> The client sends its own submersion on every movement pose
+      (<code>WaterLevelAndDesc</code>, decoded in <code>Submersion</code>), and the thresholds and rates come out of
+      <code>dbvisualrecords::WaterDesc</code> and status effects 787 and 789. ENV-1 and ENV-2 confirm the reading reaches
+      the server intact.</li>
+    <li><strong>The melding is inferred.</strong> Where the wall is comes from the same control points the client draws,
+      but <em>which side of it is lethal</em> is read off the winding of those points, and the damage rate is
+      invented (<a href="../gaps/data.md#data-12">DATA-12</a>). ENV-3 is the entry that matters: it is the only thing
+      standing between this and a server that kills players in safe territory.</li>
+    </ul>
+    <p>Run <strong>ENV-3 before ENV-4</strong>, and run ENV-3 with <code>invuln</code> on.</p>
+    <p><code>start-pin.sh</code> builds and installs the current tree before launching, so the hazard work is
+    guaranteed present; confirm the server reports the build the banner announced:</p>
+    <span class="cmd"><pre><code>grep -a "Running build" ~/Games/PIN/logs/GameServer.log
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Every entry wants the server log open:</p>
+    <span class="cmd"><pre><code>tail -f ~/Games/PIN/logs/GameServer.log
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p><code>HazardSim</code> writes a Debug line whenever either reading changes state, and nothing while it holds:</p>
+    <span class="cmd"><pre><code>grep -aE "water hazard|the melding at|Water description nibble" ~/Games/PIN/logs/GameServer.log | tail -20
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Environmental damage reaches the existing damage log with no attacker, so it reads
+    <code>Fallback took 959 damage from null</code> — the <code>null</code> is the world, not a bug.</p>
+    <p>Two commands do most of the work here. Both are new:</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Usage</th>
+    <th>Aliases</th>
+    <th>Notes</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>hazard</code></td>
+    <td><code>env</code></td>
+    <td>prints your water level, the nearest melding wall, its distance, and which side you're on</td>
+    </tr>
+    <tr>
+    <td><code>invuln [on\|off]</code></td>
+    <td><code>god</code></td>
+    <td>no argument toggles; applies to the current target if there is one, otherwise to you</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><strong>ENV-1, ENV-2 and ENV-6 passed on the first sitting, 2026-08-12.</strong> The melding half (ENV-3, ENV-4, ENV-7) has not run
+    yet, so nothing about the side convention is confirmed. ENV-5 is half-evidenced — see the note there.</p>
+  </section>
+  <section class="block" data-open="true" id="-env-1-the-clients-water-level-reaches-the-server">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-1</span>
+      <span class="block-t">The client's water level reaches the server</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-1</span><span class="marker pass">[x]</span><span class="entry-t">The client's water level reaches the server</span></div><p>The reading everything about drowning rests on. Cheap, and worth doing first because it needs no
+      damage to land.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="env-1-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="env-1-2" type="checkbox"/><span class="step-body"><span class="lede">Walk into any water and stop when it is roughly knee deep</span></span></label>
+      <label class="step"><input checked data-k="env-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code></span></span></label>
+      <label class="step"><input checked data-k="env-1-4" type="checkbox"/><span class="step-body"><span class="lede">Wade out until you are chest deep, then <code>hazard</code> again</span></span></label>
+      <label class="step"><input checked data-k="env-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Water description nibble" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the level rises as you wade in, is 0 back on dry land, and the depth reads as a plausible
+      fraction of your height (5/15 is 0.33, which is where the client starts slowing you down, so the
+      number should cross 0.33 about when wading starts to feel heavy).</p></div>
+      <p><strong>Record the position you were standing in and the level at each step.</strong> No water coordinates are
+      given in this entry because the server has none to give: <code>LoadMapsCollision</code> is <code>false</code> and no
+      water volumes are loaded from anywhere, so the only place water exists is the client's map files.
+      This entry is where the coordinates for ENV-2 come from.</p>
+      <p><strong>Also record the description nibble.</strong> It picks which <code>dbvisualrecords::WaterDesc</code> row applies and
+      it is an index into per-zone map data the server doesn't have, so every body of water is currently
+      read as row 10001 — drown at 0.735 of your height, die at 1.0. The 2016 capture only ever shows
+      nibble 0. If a different one turns up in play, that log line is what a real mapping would be built
+      from.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-12, and it found the thing it was watching for.</strong> The level tracks wading and the
+      whole 0–15 range is live; the readings in that session ran 9, 13 and 15. More usefully, <strong>two
+      description nibbles turned up in zone 448, not one</strong>:</p></div>
+      <span class="cmd"><pre><code>[23:02:18 DBG] Water description nibble 0 seen for the first time; every nibble is read as WaterDesc 10001</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [23:04:52 DBG] Water description nibble 2 seen for the first time; every nibble is read as WaterDesc 10001</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>So the zone has at least two water bodies with different descriptions, and the assumption in
+      <a href="../gaps/data.md#data-13">DATA-13</a> is doing real work rather than covering a case that never
+      happens. If nibble 2 indexes the six rows in id order it would be row 10003, which starts drowning
+      at 0.0845 and killing at 0.328 — knee deep. That is a guess about the indexing and not a reason to
+      act, but it is the reason not to resolve the nibble on a hunch. Nobody drowned in the shallows,
+      which is the assumption behaving correctly, not evidence that the water was ordinary.</p>
+      <p>The position wasn't recorded, so ENV-2 still has no fixed coordinates.</p><div class="result"><label for="r-env-1">Result</label><textarea data-k="n-env-1" id="r-env-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-env-2-deep-water-drowns-you">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-2</span>
+      <span class="block-t">Deep water drowns you</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-2</span><span class="marker pass">[x]</span><span class="entry-t">Deep water drowns you</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="env-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code></span></span></label>
+      <label class="step"><input checked data-k="env-2-2" type="checkbox"/><span class="step-body"><span class="lede">Swim out to where you are in over your head, from the position ENV-1 found</span></span></label>
+      <label class="step"><input checked data-k="env-2-3" type="checkbox"/><span class="step-body"><span class="lede">Stay there and watch the health bar</span></span></label>
+      <label class="step"><input checked data-k="env-2-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "water hazard|damage from null" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: <code>water hazard None -&gt; Drowning</code> appears, damage starts landing at 2% of max health a second,
+      and it stops the moment you get your head out.</p></div>
+      <p>Two rates, both from retail:</p>
+      <ul>
+      <li><strong>Drowning</strong> (in over the head, 0.735 of your height) is a flat 1% of max health every 500ms —
+        effect 787. About 58 seconds through 3000 shields and 19192 health, so this is slow enough to swim
+        out of on purpose, which is the point of it.</li>
+      <li><strong>Dying</strong> (fully submerged, level 15 of 15) is 2% every 500ms and the rate is multiplied by 1.05
+        after every tick — effect 789. That accelerates to about 14 seconds.</li>
+      </ul>
+      <div class="callout pass"><p><strong>Passed 2026-08-12, and the compounding is visible in the log a tick at a time:</strong></p></div>
+      <span class="cmd"><pre><code>[23:04:57 DBG] Fallback water hazard None -&gt; Dying at depth 1.00 (level 15/15)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [23:05:00 DBG] Fallback took 514 damage from null, 389 of it on shields, 0 shields and 19067 health left</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [23:05:00 DBG] Fallback took 540 damage from null, 0 of it on shields, 0 shields and 18527 health left</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [23:05:01 DBG] Fallback took 567 damage from null, ...</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                                ... 595, 625, 656, 689, 724, 760, 798, 838, 880 ...</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [23:05:06 DBG] Fallback water hazard Dying -&gt; None at depth 0.60 (level 9/15)</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Every step is exactly ×1.05 of the last and they land 500ms apart, which is effect 789's curve
+      reproduced. Eighteen ticks took 3000 shields and 7800 health in about nine seconds; a couple more and
+      it would have been a kill. Both thresholds behaved: a later dive read <code>None -&gt; Drowning</code> at level 13
+      and <code>Drowning -&gt; Dying</code> at 15.</p>
+      <p><strong>Level 15 is reachable</strong>, which the entry used to hedge on — <code>dying_percent</code> of 1.0 is a threshold
+      the client can actually reach, so the top of the scale needs no re-reading.</p><div class="result"><label for="r-env-2">Result</label><textarea data-k="n-env-2" id="r-env-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-env-3-the-melded-side-of-a-wall-is-the-melded-side">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-3</span>
+      <span class="block-t">The melded side of a wall is the melded side</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-3</span><span class="marker pass">[x]</span><span class="entry-t">The melded side of a wall is the melded side</span></div><p><strong>The entry this whole stream exists for.</strong> Melded ground is taken to be on the left of the directed
+      perimeter curve, which is inferred from how the control points are wound and not stated anywhere in
+      the data. Backwards, it would make the safe world lethal and the melding safe.</p>
+      <p>Checked offline by running <code>MeldingField</code> itself — not a model of it — over all 16 perimeters and all
+      24 outposts that <code>CustomDBInterface</code> loads for zone 448. Twenty-three read clear. The one that
+      doesn't is <strong>outpost 30</strong> (<code>outpost_name</code> 151665, faction 9, north of Hydro Core), 522m behind
+      <code>Hydro_Core_Melding_01</code>, which is plausible for that part of the map rather than obviously wrong —
+      worth walking to if the rest of this entry passes, because it is the one place the convention and
+      the map might genuinely disagree.</p>
+      <p>That is reassuring and is not the same as being right: outposts only prove where the melding <em>isn't</em>,
+      and 15 of the 16 walls have no outpost within 300m of them at all.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="env-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code> — do not skip this</span></span></label>
+      <label class="step"><input checked data-k="env-3-2" type="checkbox"/><span class="step-body"><span class="lede"><code>pflags</code> — the coordinates below are the wall's own altitude and are above the ground in places</span></span></label>
+      <label class="step"><input checked data-k="env-3-3" type="checkbox"/><span class="step-body"><span class="lede">For each pair, teleport to the safe point, run <code>hazard</code>, teleport to the melded point, run
+         <code>hazard</code> again:</span></span></label>
+      </ol></div>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Wall</th>
+      <th>Nearest outpost</th>
+      <th>Safe side</th>
+      <th>Melded side</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>New Eden Melding 03</td>
+      <td>21, 128m away</td>
+      <td><code>tp 129 -1920 605</code></td>
+      <td><code>tp 119 -2039 605</code></td>
+      </tr>
+      <tr>
+      <td>New Eden Melding 09</td>
+      <td>40, 224m away</td>
+      <td><code>tp -1967 1094 518</code></td>
+      <td><code>tp -2064 1165 518</code></td>
+      </tr>
+      <tr>
+      <td>NewEden MeldingDefenceBase Melding</td>
+      <td>34, 154m away</td>
+      <td><code>tp 866 -1745 548</code></td>
+      <td><code>tp 922 -1851 548</code></td>
+      </tr>
+      <tr>
+      <td>Hydro_Core_Melding_03</td>
+      <td>38, 207m away</td>
+      <td><code>tp 266 1264 434</code></td>
+      <td><code>tp 330 1366 434</code></td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>Every pair straddles its wall by 60m along the perpendicular, so both points are close enough that
+      the answer should be unambiguous on screen too.</p>
+      <div class="callout pass"><p>Pass: at each safe point <code>hazard</code> names that wall at about 60m with <code>melded: False</code>, at each melded
+      point it names the same wall with <code>melded: True</code>, and <strong>the melded point is the one that looks like
+      it is inside the melding from the camera</strong>. That last clause is the actual test; the numbers only
+      confirm the server agrees with itself.</p></div>
+      <div class="callout fail"><p>Fail: if the sides come out swapped for a wall, note which wall. The convention is one comparison in
+      <code>MeldingField.Locate</code>, so a consistent swap is a one-line fix; a swap on some walls and not others
+      means the perimeters are not consistently wound and each one needs its own answer.</p></div><div class="result"><label for="r-env-3">Result</label><textarea data-k="n-env-3" id="r-env-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-env-4-walking-into-the-melding-kills-you">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-4</span>
+      <span class="block-t">Walking into the melding kills you</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-4</span><span class="marker pass">[x]</span><span class="entry-t">Walking into the melding kills you</span></div><div class="callout pass"><p><strong>Passed 2026-08-16.</strong> Twenty ticks of a flat <strong>960</strong> each, ten seconds from full health to down —
+      19,200 against a 19,192 pool, so the melding is tuned to kill outright rather than to warn. The
+      death registered as <code>went down to nothing</code>, which is the two-stage death path handling a killer that
+      is not a character.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="env-4-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code></span></span></label>
+      <label class="step"><input checked data-k="env-4-2" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 129 -1920 605</code> — the safe side of New Eden Melding 03</span></span></label>
+      <label class="step"><input checked data-k="env-4-3" type="checkbox"/><span class="step-body"><span class="lede">Walk north-east across the wall towards <code>119 -2039 605</code> and stay there</span></span></label>
+      <label class="step"><input checked data-k="env-4-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "the melding at|damage from null" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: <code>entered the melding at New Eden Melding 03</code> appears as you cross, damage starts, and you die
+      in about twelve seconds — 5% of max health every 500ms through shields and health both.</p></div>
+      <p>That 5% is invented and is the only invented number in this stream
+      (<a href="../gaps/data.md#data-12">DATA-12</a>). Retail killed you faster than this. It is tuned to be
+      unmistakably lethal while still leaving time to turn around, on the grounds that a wall which kills
+      you before the log line renders is harder to test than one that doesn't. If it feels wrong in play,
+      say how it felt — that is the only evidence available, since no melding-wall effect survives in the
+      db to read a real rate from.</p><div class="result"><label for="r-env-4">Result</label><textarea data-k="n-env-4" id="r-env-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-env-5-leaving-a-hazard-stops-it-and-the-ramp-resets">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-5</span>
+      <span class="block-t">Leaving a hazard stops it, and the ramp resets</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-5</span><span class="marker pass">[x]</span><span class="entry-t">Leaving a hazard stops it, and the ramp resets</span></div><div class="callout pass"><p><strong>Passed 2026-08-16 on the half that still exists.</strong> Three consecutive dives, surfacing between each:</p></div>
+      <span class="cmd"><pre><code>dive 1   192 (Drowning)  -&gt;  384  403  423   (Dying, climbing)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      dive 2   192 192 192     -&gt;  384  403  423   (identical restart)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      dive 3   192             -&gt;  384  403  423  444  467</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Every Dying stage restarts at <strong>384</strong> and climbs about 5% a tick. Surfacing resets it completely —
+      dive 2 repeats dive 1's sequence exactly, and dive 3 only goes further because the tester stayed
+      under longer. Damage stopped inside one tick of surfacing each time. That is the whole of what this
+      entry was asking.</p>
+      <p><strong>The shield step is void and should be ignored, not retried.</strong> Step 3 says "let shields recharge",
+      and the pool has been 0 since <a href="../ISSUE-REGISTER.md">DATA-1</a> closed — the 1962 client has no shield
+      display and PIN no longer invents one. Shields were never what this entry measured; the ramp was.
+      Read step 3 as "surface, wait a moment, go back under".</p>
+      <p>For reference, the melding does <strong>not</strong> ramp: it lands a flat 960 a tick and killed the player in
+      ten ticks. Ramping is the water hazard's own behaviour, not a shared one.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="env-5-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code></span></span></label>
+      <label class="step"><input checked data-k="env-5-2" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 129 -1920 605</code>, cross into the melding, take a few ticks of damage, walk back out</span></span></label>
+      <label class="step"><input checked data-k="env-5-3" type="checkbox"/><span class="step-body"><span class="lede">Let shields recharge, then do it again</span></span></label>
+      <label class="step"><input checked data-k="env-5-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "the melding at" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: <code>left the melding</code> appears, damage stops within half a second, shields recharge normally, and
+      the second crossing does the same damage per tick as the first rather than picking up where it left
+      off.</p></div>
+      <p>The same check applies to water, and matters more there because drowning's <code>Dying</code> stage compounds:
+      surface, breathe, go under again, and the first tick of the second dive should hurt exactly as much
+      as the first tick of the first one.</p>
+      <p><strong>Half-evidenced by the 2026-08-12 run and still open.</strong> Surfacing stopped the damage inside one
+      tick — <code>Dying -&gt; None at depth 0.60</code> with no further <code>damage from null</code> — but the second dive that
+      session happened with <code>invuln</code> on, so nothing was taken and the ramp reset was never observed. Redo
+      the second dive without it.</p><div class="result"><label for="r-env-5">Result</label><textarea data-k="n-env-5" id="r-env-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-env-6-invuln-actually-stops-everything">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-6</span>
+      <span class="block-t"><code>invuln</code> actually stops everything</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-6</span><span class="marker pass">[x]</span><span class="entry-t"><code>invuln</code> actually stops everything</span></div><p>Not just a convenience — it is what makes ENV-3 runnable, so it has to be trustworthy.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="env-6-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="env-6-2" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 119 -2039 605</code> and stand in the melding for a minute</span></span></label>
+      <label class="step"><input checked data-k="env-6-3" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, step back a few paces, and let it shoot you</span></span></label>
+      <label class="step"><input checked data-k="env-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code> and stay where you are</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: no health or shield movement at all while it is on, the <code>entered the melding</code> line still
+      appears (the reading keeps running, only the damage is suppressed), and everything resumes the
+      moment it is off.</p></div>
+      <div class="callout pass"><p><strong>Passed 2026-08-12, against water rather than the melding.</strong> <code>Fallback invulnerability ON</code> at
+      23:05:18, then a dive at 23:05:24 that logged <code>None -&gt; Drowning</code> at level 13 and <code>Drowning -&gt; Dying</code>
+      at 15 with not one <code>damage from null</code> line behind it. That is the clause that matters: the hazard
+      reading keeps running under <code>invuln</code>, only the damage stops, which is what makes ENV-3 safe to run.</p></div>
+      <p>Two clauses of this entry are still unevidenced — the melding, because none of the melding entries
+      have run, and the NPC half, because the monster in that session was shot before <code>invuln</code> went on.
+      Neither changes the conclusion but neither has been seen.</p><div class="result"><label for="r-env-6">Result</label><textarea data-k="n-env-6" id="r-env-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-env-7-npcs-are-unaffected-on-purpose">
+    <button class="block-head" type="button">
+      <span class="block-n">ENV-7</span>
+      <span class="block-t">NPCs are unaffected, on purpose</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">ENV-7</span><span class="marker pass">[x]</span><span class="entry-t">NPCs are unaffected, on purpose</span></div><div class="callout pass"><p><strong>Passed 2026-08-16.</strong> A Chosen Fiend (1196) and a Melded Aranha (528) stood in the melding for
+      several minutes and neither took a point. Every one of the session's 49 <code>damage from null</code> lines
+      names the player and nothing else. The decision holds exactly as written.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="env-7-1" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 119 -2039 605</code> with <code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="env-7-2" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, walk three paces, <code>npc 528</code> — a Chosen Fiend and a Melded Aranha, both standing in
+         the melding with you. Spawn them on yourself rather than at typed coordinates, or they land
+         outside the melding and the entry proves nothing</span></span></label>
+      <label class="step"><input checked data-k="env-7-3" type="checkbox"/><span class="step-body"><span class="lede">Wait a minute, then <code>grep -a "damage from null" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: neither monster takes any environmental damage. Nothing in the log names them.</p></div>
+      <p>This is deliberate, not an oversight: melded creatures live in the melding, and no NPC has a client
+      to report a water level, so <code>HazardSim</code> only ever looks at player-controlled characters. It is
+      recorded here so that a later session finding an Accord trooper wading unharmed through a river
+      knows it was a decision. What it costs is that an NPC can chase you into water it should drown in.</p><div class="result"><label for="r-env-7">Result</label><textarea data-k="n-env-7" id="r-env-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-environment-v1"></script>
+

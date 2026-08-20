@@ -1,0 +1,440 @@
+<title>PIN — Charge Camera Lockup (CHARGE-CAM-5, CHARGE-CAM-5a–CHARGE-CAM-5h)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Charge Camera Lockup (CHARGE-CAM-5, CHARGE-CAM-5a–CHARGE-CAM-5h)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup and admin commands: Session Setup . The client-side logging these entries lean on is set up in Client Logging .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup and admin commands:
+    <a href="Session-Setup.html">Session Setup</a>. The client-side logging these entries lean on is set up in
+    <a href="Client-Logging.html">Client Logging</a>.</p>
+    <p>Eight attempts at one bug, kept in full because the dead ends are the argument for the fix. Read
+    <a href="#x-d5h-drive-effects-through-localeffectscontroller-as-well--this-was-the-bug">CHARGE-CAM-5h</a> for the answer;
+    read the rest for why nothing else was it. Every other prediction-shaped bug in PIN is worth
+    re-testing against this result — that re-test is the <a href="Prediction-Sweep.html">Prediction Sweep</a>.</p>
+  </section>
+  <section class="block" data-open="true" id="-d5-charge-camera-lockup-fixed-in-d5h-localeffectscontroller-was-never-being-written">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5</span>
+      <span class="block-t">Charge camera lockup — FIXED in CHARGE-CAM-5h, <code>LocalEffectsController</code> was never being written</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5</span><span class="marker pass">[x]</span><span class="entry-t">Charge camera lockup — FIXED in CHARGE-CAM-5h, <code>LocalEffectsController</code> was never being written</span></div><div class="callout pass"><p>Pass: camera control returns after Charge ends, including when the ability is interrupted or the
+      target dies mid-charge. Currently it does not: vertical aim stays dead, horizontal is fine, and
+      firing Absorption Bomb restores it.</p></div>
+      <p>What is stuck is the client-side <code>CustomPlayerCamera</code> from effect <strong>15253</strong> (command 1635110), whose
+      pitch limits are 0/0 where Absorption Bomb's camera 1576750 uses -90/+90. 15253 has no remove chain
+      and a duration chain of <code>RequireCState(living)</code> only, so the client cannot end it alone; it goes away
+      only when the server clears the slot. Absorption Bomb "fixes" it by pushing its own camera (effect
+      15257) that expires on a client-runnable 5s timer.</p>
+      <p>Tried and failed, in order: implementing <code>BullrushCommand</code>'s <code>ForcedMovementCancelled</code>; raising the
+      <code>MaxTurnRate</code> base (actively wrong, reverted); strictly-increasing status-effect change times;
+      echoing <code>InitTime</code> into the netfield <code>Time</code> (tried twice, reverted twice); confirming the ability
+      after the chain instead of before it (CHARGE-CAM-5b, kept but not a fix). The server side is verified: the log
+      shows the slot-2 clear firing, <code>CombatView</code> and the owner's <code>CombatController</code> both go out on
+      <code>ReliableGss</code>, and the Aero nullable-clear encoding round-trips.</p>
+      <p>CHARGE-CAM-5d settles where the bug lives. Running Charge's own chain through the <code>ability 35366</code> admin
+      command, so the client never asked for it and never predicted it, leaves the camera working; pressing
+      <code>1</code> for the same chain in the same session locks it. The server's chain handling is therefore clean
+      end to end, apply and clear both, and everything that remains is the client failing to reconcile the
+      copy it predicted at keypress against the copy the server replicates. That copy has no client-runnable
+      way out (15253 has no remove chain and its duration chain is <code>RequireCState(living)</code>), so when the
+      match fails the camera is stranded for the rest of the session.</p>
+      <p>What the client has to match on is <code>StatusEffectData</code>, and only two of its fields carry anything
+      identifying: <code>Stack</code>, which PIN never set and always sent as 0 against the client's 1, and <code>Time</code>,
+      which PIN set to the moment the server got round to applying rather than the activation time the
+      client sent. CHARGE-CAM-5e tries both.</p><div class="result"><label for="r-d5">Result</label><textarea data-k="n-d5" id="r-d5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-d5a-is-the-stuck-camera-reachable-from-the-netfield-path">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5a</span>
+      <span class="block-t">Is the stuck camera reachable from the netfield path?</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5a</span><span class="marker pass">[x]</span><span class="entry-t">Is the stuck camera reachable from the netfield path?</span></div><p>The next thing to run, and it decides where the fix has to live. Verifies whether a server-driven
+      apply/clear of 15253 can still tear down a camera that is already stuck, which separates "the client
+      holds two copies and the clear only killed one" from "the predicted copy is unreachable from the
+      netfield path at all".</p>
+      <p>Run against the reverted build, not the one live on 2026-08-10. With the server stopped:</p>
+      <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./use-build.sh current    # expect: live build: current</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then in game, with Charge (ability 35366) in ability slot 0, default button 1:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="charge-cam-5a-1" type="checkbox"/><span class="step-body"><span class="lede">Press <code>1</code> to Charge, and confirm vertical aim is dead afterwards while horizontal still works</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5a-2" type="checkbox"/><span class="step-body"><span class="lede"><code>listeffects</code> — expect no 15253 in the printed list, confirming the server thinks it is gone</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5a-3" type="checkbox"/><span class="step-body"><span class="lede"><code>applyeffect 15253</code> — expect no visible change, the camera is already locked</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5a-4" type="checkbox"/><span class="step-body"><span class="lede"><code>removeeffect 15253</code></span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5a-5" type="checkbox"/><span class="step-body"><span class="lede">If the camera is still locked, <code>cancelfm 1635109</code>, then <code>cancelfm 1635151</code></span></span></label>
+      </ol></div>
+      <p>Then, back at the source machine:</p>
+      <span class="cmd"><pre><code>grep -aE "Character\.(Set|Clear)StatusEffect.*(15252|15253|15215|15216|15456)" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Expect the full Charge sequence: 15252 set, 15253 set, 15252 cleared, 15215 set, 15456 set, 15215
+      cleared, 15216 set, <strong>15253 cleared</strong>, 15456 cleared, 15216 cleared. The 15253 clear is the one that
+      should have taken the camera with it. Then the manual pair from steps 3 and 4 as a second set/clear.</p>
+      <ul>
+      <li>Camera unlocks: a server-driven apply/clear cycle can still reach it, so the two copies are
+        reconcilable and a data-shape fix on the apply is still viable. Next step is finding the field the
+        client binds on — <code>Stack</code> is the untried one, since the working <code>applyeffect</code> path sends 0.</li>
+      <li>Camera stays locked: the predicted camera is a separate object the netfield path cannot touch at
+        all, and no change to what the server sends will fix it. The fix then has to make the client roll
+        the prediction back, which means finding what the real server sent that PIN doesn't — the missing
+        <code>ForcedMovement</code> start events for Bullrush and OrientationLock are the leading candidate, since
+        PIN only ever sends the cancels and <code>cancelfm 1635109</code> on a stuck camera does nothing.</li>
+      </ul>
+      <p>Either way, record which one happened here.</p>
+      <p><strong>Ran 2026-08-10: camera stayed locked through every command.</strong> The second branch, so no change to
+      what the server sends on the status-effect netfield is going to fix this, and the fix has to reach
+      the client's predicted copy instead. That's what CHARGE-CAM-5b tries.</p>
+      <p>One caveat on this run, from the log below. The manual <code>applyeffect</code> at 19:28:07 carries change time
+      16544, which is <em>lower</em> than the 34365 the Charge sequence ended on 48s earlier, because the 16-bit
+      change time wraps about every 65s and <code>NextStatusEffectChangeTime</code> deliberately lets a large
+      backward jump through as a wrap rather than nudging it. If the client does treat that field as a
+      sequence number, it would have dropped the manual apply and steps 3 and 4 were a no-op. Applying
+      15253 over an already-locked camera has no visible tell either way, so this run can't separate "the
+      netfield path can't reach the stuck camera" from "the manual pair was ignored". CHARGE-CAM-5c settles that
+      with an effect whose arrival is visible; run it if CHARGE-CAM-5b doesn't fix things.</p>
+      <span class="cmd"><pre><code>[19:27:19 DBG] Character.SetStatusEffect Index 0, Time 33777, Id 15252</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.SetStatusEffect Index 2, Time 33778, Id 15253</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.ClearStatusEffect Index 0, Time 34113, Id 15252</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.SetStatusEffect Index 0, Time 34114, Id 15215</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.SetStatusEffect Index 3, Time 34115, Id 15456</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.ClearStatusEffect Index 0, Time 34344, Id 15215</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.SetStatusEffect Index 0, Time 34345, Id 15216</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.ClearStatusEffect Index 2, Time 34346, Id 15253</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.ClearStatusEffect Index 3, Time 34347, Id 15456</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:27:19 DBG] Character.ClearStatusEffect Index 0, Time 34365, Id 15216</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:28:07 DBG] Character.SetStatusEffect Index 0, Time 16544, Id 15253</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [19:28:31 DBG] Character.ClearStatusEffect Index 0, Time 41064, Id 15253</code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-d5a">Result</label><textarea data-k="n-d5a" id="r-d5a" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-d5b-confirm-the-ability-after-the-chain-instead-of-before-it">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5b</span>
+      <span class="block-t">Confirm the ability after the chain instead of before it</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5b</span><span class="marker fail">[!]</span><span class="entry-t">Confirm the ability after the chain instead of before it</span></div><p>Verifies the current fix for CHARGE-CAM-5. <code>ActivateAbility</code> used to send <code>AbilityActivated</code> the moment the
+      packet arrived, before the aptitude chain ran, so the client got its activation confirmation before
+      any of the effect netfields that chain applies. In SDB the confirmation is <code>InstantActivation</code>
+      (command 1619009), which sits <em>last</em> in Charge's chain 1619015, after the <code>ImpactApplyEffect</code> that
+      applies 15252 and 15253. A client reconciling its predicted ability against server state that hasn't
+      been sent yet is a plausible reason the predicted 15253 never binds to the netfield copy. The send
+      now happens after <code>HandleActivateAbility</code> returns, in both <code>ActivateAbility</code> and <code>ActivateConsumable</code>.</p>
+      <p>With the server stopped:</p>
+      <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./use-build.sh current    # expect: live build: current</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then in game, with Charge (ability 35366) in ability slot 0, default button 1:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="charge-cam-5b-1" type="checkbox"/><span class="step-body"><span class="lede">Press <code>1</code> to Charge, wait for the rush to end, then look up and down</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Pass: vertical aim works. Repeat it five or six times, including charging into a wall and charging
+        off a ledge, since the rush ending early is the case most likely to skip the confirmation.</li>
+      <li>Fail: still locked. Ordering wasn't it. Go to CHARGE-CAM-5c.</li>
+      </ul>
+      <p>Then check the confirmation now lands after the effects, not before:</p>
+      <span class="cmd"><pre><code>grep -aE "ActivateAbility 35366|HandleActivateAbility: Ability 35366|Character\.(Set|Clear)StatusEffect.*(15252|15253)" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Expect <code>HandleActivateAbility: Ability 35366</code> and the 15252/15253 sets <em>before</em> the
+      <code>ActivateAbility 35366 at ...</code> line. Before this change that line came first.</p>
+      <p><strong>Ran 2026-08-10 over 41 Charges: still locked.</strong> The ordering did flip, confirmed in the log, so the
+      change did what it claimed and it simply isn't the cause. The reorder is kept because it matches the
+      order SDB describes, not as a fix. Session was otherwise clean: no <code>HandlePacket Caught</code>, no
+      <code>Unrecognized MsgID</code>.</p><div class="result"><label for="r-d5b">Result</label><textarea data-k="n-d5b" id="r-d5b" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-d5d-run-charges-chain-server-side-with-nothing-predicted">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5d</span>
+      <span class="block-t">Run Charge's chain server-side, with nothing predicted</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5d</span><span class="marker pass">[x]</span><span class="entry-t">Run Charge's chain server-side, with nothing predicted</span></div><p>The decisive one, and it needs the new <code>ability</code> admin command. Every test so far has changed what
+      the server sends and re-run the same predicted keypress. This runs the identical chain with the
+      client never having asked for it, so it never predicts. That splits the two remaining explanations
+      apart: either the chain's own apply and clear of 15253 work fine and prediction is the whole story,
+      or they don't and the fault is in the chain path rather than in prediction, which would mean every
+      conclusion drawn from the <code>applyeffect</code> comparison was measuring the wrong thing.</p>
+      <p>Needs a build with <code>ActivateAbilityServerCommand</code>. With the server stopped:</p>
+      <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./use-build.sh current    # expect: live build: current</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then in game, <strong>without ever pressing <code>1</code></strong> (a predicted Charge in the same session muddies it, so
+      relog first if you've charged):</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="charge-cam-5d-1" type="checkbox"/><span class="step-body"><span class="lede"><code>ability 35366</code> — the character should rush forward exactly as if you'd charged</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5d-2" type="checkbox"/><span class="step-body"><span class="lede">Wait for the rush to end, then look up and down</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Vertical aim works: the chain applies and clears 15253 correctly when nothing is predicted, so the
+        bug is entirely in reconciling the client's predicted copy. That rules the server's own chain
+        handling clean and puts the fix on the client-facing prediction contract, which is where a capture
+        of the real server is the only way forward.</li>
+      <li>Vertical aim is dead: prediction is not the cause and never was. The chain's own clear of 15253
+        doesn't reach the client the way admin <code>removeeffect</code> does, even though both call <code>ClearEffect</code>.
+        Compare the two paths in the log; the difference is that the chain clears three slots and sets one
+        inside about 20ms while <code>removeeffect</code> clears one slot in isolation. That points back at batching
+        or ordering in <code>FlushChanges</code>, this time with a clean way to reproduce it.</li>
+      </ul>
+      <p>Then compare the two paths in the log:</p>
+      <span class="cmd"><pre><code>grep -aE "Character\.(Set|Clear)StatusEffect.*(15252|15253|15215|15216|15456)" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>The sequence should be identical to a keypress Charge: 15252 set, 15253 set, 15252 cleared, 15215
+      set, 15456 set, 15215 cleared, 15216 set, 15253 cleared, 15456 cleared, 15216 cleared. If it differs,
+      that difference is itself the finding.</p>
+      <p><strong>Ran 2026-08-10: the first branch, and it's the first clean signal in six attempts.</strong> <code>ability 35366</code>
+      rushed and ended with vertical aim intact. Pressing <code>1</code> right afterwards, same session, same chain,
+      locked it. So the server applies and clears 15253 correctly, <code>FlushChanges</code> batching is fine, and the
+      whole bug is the client keeping a predicted copy that the server's clear never binds to. Stop looking
+      at the chain and at delivery; the fix has to change what makes those two copies match.</p>
+      <p>This also retires the <code>applyeffect</code>/<code>removeeffect</code> comparison as evidence about data shape. That path
+      has nothing predicted to reconcile against, so the client just plays what it's told and any value in
+      <code>Stack</code> or <code>Time</code> looks like it works. "The working reference sends <code>Stack = 0</code>" was never an
+      argument that 0 is correct.</p><div class="result"><label for="r-d5d">Result</label><textarea data-k="n-d5d" id="r-d5d" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-d5c-does-a-netfield-apply-reach-the-camera-while-its-stuck">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5c</span>
+      <span class="block-t">Does a netfield apply reach the camera while it's stuck?</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5c</span><span class="marker none">[ ]</span><span class="entry-t">Does a netfield apply reach the camera while it's stuck?</span></div><p>Only if CHARGE-CAM-5b fails. Redoes CHARGE-CAM-5a with an effect whose arrival is visible, and without the change-time
+      wrap that muddied it. 15257 is Absorption Bomb's camera (command 1576750), pitch limits -90/+90
+      against 15253's 0/0, so if it arrives you get your vertical aim back and can see it.</p>
+      <p>Do this promptly after the Charge, within about 30 seconds, so the change time is still climbing.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="charge-cam-5c-1" type="checkbox"/><span class="step-body"><span class="lede">Press <code>1</code> to Charge, wait for the rush to end, confirm vertical aim is dead</span></span></label>
+      <label class="step"><input data-k="charge-cam-5c-2" type="checkbox"/><span class="step-body"><span class="lede"><code>applyeffect 15257</code> — watch whether vertical aim comes back</span></span></label>
+      <label class="step"><input data-k="charge-cam-5c-3" type="checkbox"/><span class="step-body"><span class="lede"><code>removeeffect 15257</code> — watch whether it locks again</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Vertical aim returns at step 2: netfield applies do reach the camera while the ghost is present, so
+        the ghost is displaceable and CHARGE-CAM-5a's result was the wrap dropping the apply. Whether it re-locks at
+        step 3 says whether the ghost is still underneath (re-locks) or got displaced for good (stays
+        free). This is also the mechanism behind Absorption Bomb appearing to fix the bug.</li>
+      <li>Nothing happens at step 2: the client isn't acting on status-effect applies at all while stuck,
+        which is a much bigger finding than the camera and worth chasing on its own.</li>
+      </ul><div class="result"><label for="r-d5c">Result</label><textarea data-k="n-d5c" id="r-d5c" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-d5e-give-the-client-something-to-match-its-predicted-effect-on">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5e</span>
+      <span class="block-t">Give the client something to match its predicted effect on</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5e</span><span class="marker fail">[!]</span><span class="entry-t">Give the client something to match its predicted effect on</span></div><p>Run this next. CHARGE-CAM-5d proved the failure is a failed match between the client's predicted effect and the
+      replicated one, so this fills in the two <code>StatusEffectData</code> fields that could carry the match and
+      that PIN was getting wrong. <code>Stack</code> now sends <code>EffectState.Stacks</code>, which is 1 on a fresh apply where
+      PIN sent 0. <code>Time</code> now sends <code>Context.InitTime</code>, the activation time the client itself sent, where
+      PIN sent the moment the server got round to applying, typically tens of milliseconds later.</p>
+      <p>Echoing <code>InitTime</code> has been tried and reverted twice before, so this needs saying: the recorded reason
+      for not trying it again was wrong. The note claimed <code>InitTime</code> is the client's clock and
+      <code>Shard.CurrentTime</code> is something else, citing an activation time of 3949877841 against a shard time
+      of "~23122". They're the same clock. <code>Shard.CurrentTime</code> is unix epoch milliseconds truncated to
+      uint32, and 3949877841 is exactly that for 11:28 UTC on 2026-08-10, so the two agree to within a
+      second. The ~23122 was a <code>CurrentShortTime</code>, which is the low 16 bits, compared against a full uint.
+      The two failed attempts still stand as evidence, but at least one deploy in that period silently
+      didn't happen, so they're worth less than a clean run.</p>
+      <p>Both fields change together on purpose. If it works, bisect after; if it fails, both are dead in one
+      run instead of two.</p>
+      <p>With the server stopped:</p>
+      <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./use-build.sh current    # expect: live build: current</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then in game, with Charge in ability slot 0, default button 1:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="charge-cam-5e-1" type="checkbox"/><span class="step-body"><span class="lede"><code>ability 35366</code> first, as the control. Vertical aim must still work afterwards. This path is
+         unaffected by the <code>Time</code> change (the admin command passes <code>shard.CurrentTime</code> as <code>InitTime</code>) but
+         not by the <code>Stack</code> change, so if this regresses, <code>Stack = 1</code> is actively wrong and stop there.</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5e-2" type="checkbox"/><span class="step-body"><span class="lede">Relog, then press <code>1</code> to Charge, wait for the rush to end, and look up and down</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5e-3" type="checkbox"/><span class="step-body"><span class="lede">If it passes, repeat five or six times including charging into a wall and off a ledge, since an
+         early end is where a match is most likely to be missed</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Pass: revert one field at a time to find which one carried it, and write down which.</li>
+      <li>Fail: nothing in <code>StatusEffectData</code> identifies the instance, and the binding must be something else
+        the real server sent. At that point stop guessing at field values. The remaining leads are the
+        <code>ForcedMovement</code> start events PIN never sends for Bullrush (1635151) and OrientationLock (1635109),
+        and a capture of the real server, which is the only thing that settles the contract.</li>
+      </ul>
+      <p>Then confirm the values actually went out:</p>
+      <span class="cmd"><pre><code>grep -aE "Character\.SetStatusEffect.*15253|HandleActivateAbility: Ability 35366" ~/Games/PIN/logs/GameServer.log | tail -10
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p><strong>Ran 2026-08-10: control passed over several activations, keypress still locked.</strong> So neither field
+      carries the match and nothing in <code>StatusEffectData</code> identifies the instance. That's the end of
+      guessing at netfield values; the next lever has to be something PIN doesn't send at all.</p>
+      <p><code>Time</code> is reverted to shard clock. <code>Stack</code> is kept, sending the real count where PIN hardcoded 0,
+      because it's a plain gap rather than a hypothesis and the control run showed it costs nothing. It is
+      not a fix and the comment in <code>AddEffect</code> says so.</p><div class="result"><label for="r-d5e">Result</label><textarea data-k="n-d5e" id="r-d5e" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-d5f-send-a-forcedmovement-start-for-the-aim-lock">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5f</span>
+      <span class="block-t">Send a ForcedMovement start for the aim lock</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5f</span><span class="marker fail">[!]</span><span class="entry-t">Send a ForcedMovement start for the aim lock</span></div><p>Run this next. PIN sends <code>ForcedMovementCancelled</code> for a forced movement it never told the client had
+      started, and this adds the start.</p>
+      <p>The log settles what's in the chain: <code>Chain 1635110 Command 1635109 - Executing OrientationLockCommand</code>,
+      so effect 15253 is an <code>OrientationLock</code> and a <code>CustomPlayerCamera</code> together, both clamping aim.
+      <code>OrientationLockCommand.Execute</code> only registered for its own removal; the <code>ForcedMovement</code> event (113)
+      went out for spawns and teleports and for nothing else, while <code>OnRemove</code> sent a cancel naming command
+      1635109. <code>ForcedMovementCancelled.CommandId</code> is an <code>apt::BaseCommandDef</code> id and <code>ForcedMovementData</code>
+      carries a uint in the same position, so a cancel is meant to name a movement the client already knows
+      about from the server. There has never been one.</p>
+      <p>That fits every result so far. The client predicts the lock at keypress (<code>AllowPrediction</code>) and the
+      server is the only thing that can end it. If a bare cancel needs a server-issued movement to match
+      against, PIN's cancel is a no-op, which is exactly what <code>cancelfm 1635109</code> does on a stuck camera. It
+      also fits CHARGE-CAM-5d: unpredicted, the client never started a lock of its own, so nothing was left running.</p>
+      <p>Only <code>OrientationLock</code> sends a start. <code>Bullrush</code> and <code>ApplyFreeze</code> have the same gap and are
+      deliberately left alone, because Bullrush is movement rather than aim and a server-authored rush on
+      top of a predicted one could double up and muddy this.</p>
+      <p>With the server stopped:</p>
+      <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./use-build.sh current    # expect: live build: current</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ./start-pin.sh</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then in game, with Charge in ability slot 0, default button 1:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="charge-cam-5f-1" type="checkbox"/><span class="step-body"><span class="lede">Press <code>1</code>, wait for the rush to end, look up and down</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5f-2" type="checkbox"/><span class="step-body"><span class="lede">If aim is dead, keep playing and watch the clock. The start carries a 60 second end time when the
+         SDB duration is 0, which Charge's is, so aim coming back on its own about a minute after the
+         Charge is a distinct third outcome and worth catching</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Pass: aim works. Repeat five or six times including into a wall and off a ledge. Then give Bullrush
+        and ApplyFreeze the same treatment and check the rush still looks right.</li>
+      <li>Frees itself after ~60s: the client took the start and ignored the cancel. Big result. The start is
+        right and the cancel is what's malformed, so compare <code>ForcedMovementCancelled</code> against a capture.</li>
+      <li>Still locked, no recovery: the client isn't binding a server forced movement to a predicted one
+        either, which exhausts what can be reasoned out from this end. Get a capture of the real server.</li>
+      </ul>
+      <p>Then confirm the start went out ahead of the cancel:</p>
+      <span class="cmd"><pre><code>grep -aE "OrientationLockCommand Sending ForcedMovement" ~/Games/PIN/logs/GameServer.log | tail -10
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Expect alternating <code>Sending ForcedMovement 1635109</code> and <code>Sending ForcedMovementCancelled 1635109</code>.
+      Before this change only the cancel appeared.</p>
+      <p><strong>Ran 2026-08-10: still locked, and no recovery after a couple of minutes.</strong> Reverted.</p>
+      <p>The 60 second tell was worthless, because dumping 15253's apply chain afterwards showed the
+      <code>OrientationLock</code> isn't what clamps aim. Chain 1635110 is four commands: <code>CustomPlayerCamera</code> 1635110
+      (env=client, pitch 0/0), <code>OrientationLock</code> 1635109 (env=both, <code>max_aim_angle=0</code>, <code>duration=0</code>),
+      <code>AbilityAnimation</code> 1635108 (env=client), and <code>CombatFlags</code> 1635107. Ending the lock changes nothing
+      visible while the camera is still clamped, so the run says nothing either way about whether the
+      client accepted the start. The test could not have distinguished its own outcomes.</p>
+      <p>Stepping on a Glider pad restored aim, same as Absorption Bomb. Both push their own
+      <code>CustomPlayerCamera</code>, which pins the stuck object as the camera rather than the lock. 15257 is a
+      clean reference for that: its apply chain is nothing but a <code>CustomPlayerCamera</code> at -90/+90 with a
+      5000ms <code>TimeDuration</code> and <code>allow_prediction=0</code>, so it arrives by netfield only and the client expires
+      it on its own.</p>
+      <p>Reverted rather than kept. Sending a cancel for a movement that never started is a real defect, but
+      every <code>OrientationLock</code> that matters has <code>duration=0</code>, so a start needs an end time nobody can derive.
+      Shipping an invented one risks a genuine aim clamp lasting that long on some ability where no camera
+      masks it, and that's a worse defect than the one it replaces. The gap and the message shape are
+      written into <code>OrientationLockCommand.OnRemove</code> so it's cheap to redo against a capture.</p><div class="result"><label for="r-d5f">Result</label><textarea data-k="n-d5f" id="r-d5f" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="doc" id="d5-status-stop-testing-fixes">
+    <h2>CHARGE-CAM-5 status: stop testing fixes</h2>
+    <p>Seven attempts, all failed. What's established is worth keeping:</p>
+    <ul>
+    <li>The server's chain handling is correct end to end, apply and clear both (CHARGE-CAM-5d)</li>
+    <li>The bug needs client prediction. The identical chain run unpredicted is clean (CHARGE-CAM-5d)</li>
+    <li>Nothing in <code>StatusEffectData</code> binds a predicted instance to a replicated one (CHARGE-CAM-5e)</li>
+    <li>The stuck object is the <code>CustomPlayerCamera</code>, and any later camera push displaces it (CHARGE-CAM-5f)</li>
+    </ul>
+    <p><strong>Superseded by <a href="Client-Logging.html">CHARGE-CAM-5g</a>.</strong> The client's Aptitude log channel answers this directly:
+    the client predicts the effect, rejects the server's replicated copy as a duplicate, and never
+    removes the predicted one because 15253 is the only effect in the chain that can't expire on its own.
+    Read <a href="Client-Logging.html">Client Logging</a> first. The two suggestions kept below are what the position
+    looked like before that, and the second of them has since been answered (the Glider displaces the
+    ghost, it doesn't remove it).</p>
+    <p>What's left is how the client reconciles a predicted effect against the replicated one, and that
+    isn't derivable from this side of the wire. Every remaining idea is a guess at a contract we can't
+    read, and the last three runs each cost a build, a deploy and a play session to learn nothing. Two
+    things would actually move it, both outside the fix-test loop:</p>
+    <ol>
+    <li>A capture of the real server running a Charge. It settles the whole contract at once, not just
+       this bug.</li>
+    <li>One free observation next time it happens anyway: after a Glider or Absorption Bomb frees the
+       aim, does it lock again about five seconds later when that camera expires? If it does, the ghost
+       is still underneath on a stack and a fix has to remove it. If it doesn't, a camera push displaces
+       it for good, and applying 15257 on Charge's end is a workaround that would make the ability
+       usable now. That's a hack and it should be labelled one, but Charge is unusable as it stands.</li>
+    </ol>
+  </section>
+  <section class="block" data-open="true" id="-d5h-drive-effects-through-localeffectscontroller-as-well-this-was-the-bug">
+    <button class="block-head" type="button">
+      <span class="block-n">CHARGE-CAM-5h</span>
+      <span class="block-t">Drive effects through <code>LocalEffectsController</code> as well — this was the bug</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CHARGE-CAM-5h</span><span class="marker pass">[x]</span><span class="entry-t">Drive effects through <code>LocalEffectsController</code> as well — this was the bug</span></div><p>The one channel in the protocol that's owner-private and about effects, and PIN has never written a
+      byte of it. Everything except the writes was already there: <code>CharacterEntity</code> builds a
+      <code>LocalEffectsController</code>, <code>EntityManager.ScopeIn</code> keyframes it to the owning player only, and
+      <code>FlushChanges</code> flushes it alongside the other controllers. All 64 slots have just always been null.</p>
+      <p>The change is in
+      <a href="../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs">CharacterEntity.SetStatusEffect</a>,
+      next to the existing <code>StatusEffects_N</code> writes: fill <code>LocalStatusEffects_{index}</code> with
+      <code>{ Entity = data.Initiator, Effect = data.Id, Time = data.Time }</code> on apply and null it on clear,
+      using the same slot index the 32-slot array uses. Nothing else moves, and the two arrays can't
+      disagree.</p>
+      <p><code>Entity</code> is ambiguous, it could be the initiator or the target, and the field name doesn't say.
+      Charge is entirely self-applied so both are the player and this test can't tell them apart. That
+      only matters if CHARGE-CAM-5h works and someone then applies it to an effect cast on someone else.</p>
+      <p>Deployed as <code>GameServer.dll</code> md5 <code>5662843a1725c212f4a8a6ea2eeab238</code>.</p>
+      <p>Steps:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="charge-cam-5h-1" type="checkbox"/><span class="step-body"><span class="lede">Start the server: <code>cd ~/Games/PIN &amp;&amp; ./start-pin.sh</code></span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5h-2" type="checkbox"/><span class="step-body"><span class="lede">Confirm the client is still set up to log its ability engine. <code>settings.con</code> should still carry
+         the binds from <a href="Client-Logging.html">CHARGE-CAM-5g</a>; if it does, nothing to do.</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5h-3" type="checkbox"/><span class="step-body"><span class="lede">Launch, get in world, press <code>f7</code> once to raise the Aptitude channel to debug.</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5h-4" type="checkbox"/><span class="step-body"><span class="lede">Charge once, on flat ground, nothing else bound in the way. Note whether vertical mouselook
+         still locks.</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5h-5" type="checkbox"/><span class="step-body"><span class="lede">Wait about ten seconds, then quit the client cleanly so the log is flushed.</span></span></label>
+      <label class="step"><input checked data-k="charge-cam-5h-6" type="checkbox"/><span class="step-body"><span class="lede">Read <code>~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log</code></span></span></label>
+      </ol></div>
+      <p>What decides it, in the log, is what happens to 15253. In CHARGE-CAM-5g it appeared exactly twice, an apply
+      and a <code>too many stacks</code> rejection, and never again:</p>
+      <ul>
+      <li>A <code>Successfully removed effect 15253</code> plus <code>Canceled</code> at the end of the chain means the client
+        took the local array as authority over what it predicted. That's the fix.</li>
+      <li>The same two lines and nothing else means the client either ignores controller 6 or wants
+        something else in it. Hypothesis dead in one run, and no more server-side guessing after that
+        without first finding what reads it.</li>
+      <li>Anything new and unexpected (a third apply, an error, effects vanishing that shouldn't) is worth
+        more than either, because it means the client is reading the controller and we've fed it wrong.</li>
+      </ul>
+      <p>Aim working again while the log shows nothing new about 15253 would mean the camera was displaced
+      rather than released, same as the Glider. Check the log before believing the camera.</p><div class="result"><label for="r-d5h">Result</label><textarea data-k="n-d5h" id="r-d5h" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="doc" id="d5h-result-fixed-and-the-log-says-why">
+    <h2>CHARGE-CAM-5h result: fixed, and the log says why</h2>
+    <p>Camera works after Charge. Three Charges in one run, all clean, and this time the client log backs it
+    up. Every one of them ends the way no Charge ever had before:</p>
+    <span class="cmd"><pre><code>00:44  Successfully applied effect 15253</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    00:44  Unable to apply status effect 15253: too many stacks (x1)   (twice now, see below)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    00:45  Successfully removed effect 15253</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    00:45  Canceled effect 15253</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The <code>Successfully removed</code> plus <code>Canceled</code> pair is the whole result. In CHARGE-CAM-5g those two lines never
+    appeared for 15253 in a 537-line log, and now they appear on all three Charges, in the same burst
+    that clears 15215, 15456 and 15216.</p>
+    <p>The single-variable comparison holds. The server cleared <code>StatusEffects_2</code> for 15253 in the CHARGE-CAM-5g run
+    too, right on schedule, and the client ignored it. The only thing that changed is that
+    <code>LocalStatusEffects_2</code> is now nulled at the same moment, and now the effect ends. So the client binds
+    what it predicted to the owner-private array and treats the 32-slot one as somebody else's business.
+    That array is the observers' view. It was never going to reach a prediction.</p>
+    <p>Rejections went from 4 in the CHARGE-CAM-5g run to 33 here, because each effect now arrives twice, once through
+    <code>CombatController</code>/<code>CombatView</code> and once through <code>LocalEffectsController</code>, and the client bounces both
+    against its own prediction. It doesn't care, and the removal lands regardless. Still, the real server
+    probably didn't send both, and sending the owner only the local array would be worth trying now that
+    there's a way to see the result. Not urgent: nothing about the current shape is broken.</p>
+    <p>Worth being clear about what this does not establish. Only self-applied effects have been tested, so
+    whether <code>Entity</code> is the initiator or the target is still open. And every other prediction-shaped bug
+    in the game just became worth re-testing, because until now the owning client was never told about
+    its own effects through the only channel it listens to. That re-test is the
+    <a href="Prediction-Sweep.html">Prediction Sweep</a>.</p>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-charge-camera-v1"></script>
+

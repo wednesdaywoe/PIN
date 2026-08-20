@@ -1,0 +1,246 @@
+<title>PIN — Thumper Defence (THUMPER-DEF-1–THUMPER-DEF-6)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Thumper Defence (THUMPER-DEF-1–THUMPER-DEF-6)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on <a href="../streams/m7-encounter-combat.md">M7</a>. The milestone is that a thumper is a fight:
+    waves spawn while it drills, the machine itself can be destroyed, and the payout depends on how the
+    defence went. Everything <a href="Thump-Placement.html">Thump Placement</a> established still holds underneath —
+    this stream only adds the part where something shoots back.</p>
+    <p><strong>Closed 2026-08-15, 6 of 6, in one sitting on the morning the code landed — and it closed
+    <a href="../streams/m7-encounter-combat.md">M7</a>, the last milestone in the plan.</strong> The sitting ran three
+    cycles where the doc planned two, because the first defended attempt was <em>lost</em>: the deliberate
+    20-second observation window THUMPER-DEF-3 asked for cost two-thirds of the pool, and wave 4's three sappers
+    crossed the ring in ~2 seconds (they run 11 m/s) and erased the remaining 1300 health in four —
+    destroyed at 91%, twenty-six seconds from the finish. The re-run was defended tightly, went
+    14 kills for 14 spawns, and paid 25 crystite at <code>completion 1.00, defence 0.63 (1060/4000 health)</code>.
+    The tester's wallet read 43, and the log's books balance it to the unit: 25 from the machine plus
+    18 across both cycles' kill drops. <strong>THUMPER-DEF-5 never had to be run deliberately</strong> — the losing path passed
+    twice on its own, once on the zone's NPC-owned debug thumper before the tester was even in position
+    (its own waves killed it, unattended, no crash), and once on the lost first cycle.</p>
+    <p>The reading that outlived the sitting: <strong>even a near-perfect solo defence pays ~63%</strong>, because
+    claws land in the seconds between a sapper spawning and dying, four waves over. Full pay is
+    effectively unreachable alone under current numbers. Options recorded, decision deferred
+    (tester, 2026-08-15): slower claws, a bigger pool, or a softer payout curve. Two more tuning
+    observations from the tester's seat: Aranha melee reach reads longer than it should, and the
+    grenade launcher's AoE is too small for how spread the Aranha stay — they don't clump. None of it
+    blocks the milestone; it's the first balance data the encounter has ever produced.</p>
+    <p>What was built, in one paragraph. During THUMPING, four waves of Melded Aranha (528) stand up on a
+    20m ring around the machine, at 15%, 40%, 65% and 90% progress — 45s, 120s, 195s and 270s into the
+    5-minute drill. Each wave splits into <strong>sappers</strong>, which march on the machine and ignore return
+    fire, and <strong>escorts</strong>, which fight whoever they perceive and only chew the machine when nobody is
+    around: 2+0, then 2+1, 3+1, 3+2, thirteen in total. The thumper now has a physics body and retail's
+    own health pool (4000–5000 per the calldown def). Destroyed means failure: DESTROYED state, death
+    ability, a completion event with the destroyed flag, no payout, wreck removed after 6 seconds. A
+    survived defence pays <code>completion x defence</code>, where defence runs linearly from 0.5 at zero health
+    to 1.0 untouched. Wave deaths route back to the encounter through the M2 death event; kill rewards
+    pay per kill exactly as in <a href="Kill-Rewards.html">Kill Rewards</a>.</p>
+    <p>Two things a tester will notice that are physics, not bugs. The machine now blocks shots — your own
+    rounds stop on it (friendly, so they do no damage), and a monster on the far side is in cover. And
+    the waves spawn at the thumper's own height, so a thumper on a slope can stand its wave in the
+    hillside; that is the standing bet every offset spawn makes and the reason deposits live on walked
+    ground.</p>
+    <p>No new creature types: every wave member is 528, one of the two models ever seen rendering, so this
+    stream triggers no <a href="../gaps/client.md#client-3">CLIENT-3</a> facing check. That is deliberate. The
+    first stream that puts a new monster id in a wave inherits the check.</p>
+    <p>The log lines this stream reads:</p>
+    <span class="cmd"><pre><code>grep -a "wave" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Thumper .* took .* damage" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "wave member" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "was destroyed by" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "released" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "fallback shape" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The last one is THUMPER-DEF-3's diagnostic: the thumper's collision shape comes from the beacon's
+    <code>PosefileId</code> asset (189562 or 250491), and if the deployment can't load it the physics engine
+    substitutes a 0.9m sphere at the base. NPCs aim at 0.7m on structures for exactly that case, so the
+    fight works either way, but the line says which body the machine actually has.</p>
+    <p>A defended run is still the full 7.5-minute cycle. Plan the sitting around two full cycles: one
+    defended (THUMPER-DEF-1–THUMPER-DEF-4, THUMPER-DEF-6 all read from it), one abandoned (THUMPER-DEF-5).</p>
+  </section>
+  <section class="block" data-open="true" id="-thumper-def-1-a-defended-thumper-pays-scaled-by-its-health">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMPER-DEF-1</span>
+      <span class="block-t">A defended thumper pays, scaled by its health</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMPER-DEF-1</span><span class="marker pass">[x]</span><span class="entry-t">A defended thumper pays, scaled by its health</span></div><p>The milestone's exit condition.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15, on the second cycle.</strong> The first was destroyed at 91% (see THUMPER-DEF-5). The re-run:
+      all four waves killed on sight, 14 for 14, collect at COMPLETED, and the payout line read
+      <code>completion 1.00, defence 0.63 (1060/4000 health, 14 attacker(s) down): 25 total</code> at distance
+      fraction 0.56 of deposit 1. The tester's on-screen 43 crystite is the session's whole ledger —
+      25 from the machine, 18 from kills — matched to the unit. The defence factor is honest and the
+      number every future tuning pass argues with.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thumper-def-1-1" type="checkbox"/><span class="step-body"><span class="lede">Log in to zone 448. Walk to deposit 1's center, <code>199.8 315.7 401.3</code> (Basin Head Crystite).</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-1-2" type="checkbox"/><span class="step-body"><span class="lede"><code>thumper</code> — the default def 766269. Confirm the calldown lands and starts its cycle.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-1-3" type="checkbox"/><span class="step-body"><span class="lede">Defend it: kill every wave as it arrives, staying near the machine. <code>invuln</code> first if dying to
+         escorts would end the sitting — THUMPER-DEF-4 wants at least one honest engagement first.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-1-4" type="checkbox"/><span class="step-body"><span class="lede">When it reaches COMPLETED, collect it (interact, hold).</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code> — the line now carries
+         <code>defence 0.XX (H/M health, K attacker(s) down)</code>. Expect defence near 1.00 if the sappers were
+         killed promptly, and the payout to match <a href="Thump-Placement.html">Thump Placement</a>'s THUMP-PLACE-3 range scaled
+         by that factor.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the thumper survives, pays, and the log states completion, defence, health and kills in one
+      line. Fail, no waves ever spawn: check <code>grep -a "wave"</code> — if the spawn lines are absent the
+      encounter never reached its progress thresholds (early collection skips remaining waves by design);
+      if the lines are there but nothing stood up, that is the spawn path and N-stream territory.</p></div><div class="result"><label for="r-thumper-def-1">Result</label><textarea data-k="n-thumper-def-1" id="r-thumper-def-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thumper-def-2-the-waves-arrive-on-schedule-and-walk-in">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMPER-DEF-2</span>
+      <span class="block-t">The waves arrive on schedule and walk in</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMPER-DEF-2</span><span class="marker pass">[x]</span><span class="entry-t">The waves arrive on schedule and walk in</span></div><p>Read from THUMPER-DEF-1's cycle, no extra setup.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15, on both cycles, to the second.</strong> First cycle: THUMPING began 09:06:00 and the
+      spawn lines read 09:06:45, 09:08:01, 09:09:17, 09:10:30 — 45/121/197/270 seconds in, against a
+      45/120/195/270 schedule. Second cycle repeated the offsets. Counts escalated 2+0, 2+1, 3+1, 3+2 as
+      authored, and the members walked their ring straight to their targets. Nothing stood in terrain,
+      but deposit 1 is flat ground and proves nothing about slopes.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thumper-def-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "wave" ~/Games/PIN/logs/GameServer.log</code> — expect four lines:
+         <code>wave 1 of 4 at 15%: 2 sapper(s) and 0 escort(s)</code> through <code>wave 4 of 4 at 90%: 3 sapper(s) and
+         2 escort(s)</code>, roughly 45s, 120s, 195s and 270s after THUMPING begins.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-2-2" type="checkbox"/><span class="step-body"><span class="lede">On screen: monsters appear ~20m out and close on the machine. The sappers should walk past you
+         to reach it.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: four waves, escalating counts, at the logged progress marks. Watch for members standing in
+      terrain on sloped ground — record it if seen, it bounds where waves can be trusted.</p></div><div class="result"><label for="r-thumper-def-2">Result</label><textarea data-k="n-thumper-def-2" id="r-thumper-def-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thumper-def-3-sappers-hurt-the-machine">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMPER-DEF-3</span>
+      <span class="block-t">Sappers hurt the machine</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMPER-DEF-3</span><span class="marker pass">[x]</span><span class="entry-t">Sappers hurt the machine</span></div><p>The entry that proves the collision body, which is the piece no offline test can touch.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15, and the observation window it asked for is what lost the first cycle.</strong> The
+      collision asset loaded — no <code>fallback shape</code> line for the thumper's body; the fallback lines in
+      the log are all <code>assetId 0</code>, an unrelated pre-existing case — and the damage stream was immediate:
+      <strong>49 per claw, roughly one hit per second per sapper</strong>, so two sappers are ~100/s and three ~150/s
+      against a 4000-point pool. The requested ~20 seconds of watching cost ~2000 health on its own.
+      Health-bar movement on screen matched the log. The DPS reading is the sitting's main product:
+      unopposed, one sapper kills the machine in 80 seconds, wave 4 alone in under 10.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thumper-def-3-1" type="checkbox"/><span class="step-body"><span class="lede">During THUMPER-DEF-1's cycle, let one wave reach the machine unopposed for ~20 seconds before killing it.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-3-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Thumper .* took .* damage" ~/Games/PIN/logs/GameServer.log</code> — expect a stream of
+         debug lines with falling health.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-3-3" type="checkbox"/><span class="step-body"><span class="lede">Check the machine's health bar on screen fell to match (the view carries health percent).</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-3-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "fallback shape" ~/Games/PIN/logs/GameServer.log</code> — record whether the pose asset
+         loaded. Not a pass/fail condition, but the answer decides whether the aim-low compromise is
+         carrying the fight.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: server log shows damage landing and the client shows the same wound. Fail, no damage lines at
+      all while sappers visibly claw the machine: their rounds are missing the body — the fallback-shape
+      grep plus the NPC hold-fire lines (<code>holding fire on ... OutOfRange / NoLineOfSight</code>) say which half
+      broke. Record the damage rate either way: nothing offline can size Aranha claws against a
+      4000-point pool, and this number is what tunes the wave schedule next.</p></div><div class="result"><label for="r-thumper-def-3">Result</label><textarea data-k="n-thumper-def-3" id="r-thumper-def-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thumper-def-4-sappers-ignore-you-escorts-dont">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMPER-DEF-4</span>
+      <span class="block-t">Sappers ignore you, escorts don't</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMPER-DEF-4</span><span class="marker pass">[x]</span><span class="entry-t">Sappers ignore you, escorts don't</span></div><div class="callout pass"><p><strong>Passed 2026-08-15, tester-reported — the one entry only eyes can close.</strong> Sappers ignored being
+      shot mid-walk, and kept ignoring the tester even when Charged clean through a group of them, which
+      is a stronger provocation than the entry asked for. Escorts hunted the tester like any NPC-Combat
+      monster. Two observations came out of the fighting itself, both deferred tuning rather than
+      defects: the grenade launcher's small AoE never caught more than one Aranha because they don't
+      group tightly enough, and Aranha melee reach reads longer than it should (DATA-10 territory — the
+      5m claw plus the 4m standoff means contact starts at range).</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thumper-def-4-1" type="checkbox"/><span class="step-body"><span class="lede">During wave 2 or later (first wave with an escort), shoot a sapper without killing it. It should
+         keep walking to the machine and never turn on you.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-4-2" type="checkbox"/><span class="step-body"><span class="lede">Stand inside ~25m of an escort. It should notice, close and attack you, exactly like an
+         <a href="NPC-Combat.html">NPC Combat</a> monster.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-4-3" type="checkbox"/><span class="step-body"><span class="lede">Kill the escort, then leave the last sapper alone with the machine and step 30m back: with
+         nobody perceived it keeps chewing.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the two roles are visibly different on screen. This is the invented half of the design — the
+      split is what makes defending a decision instead of a shooting gallery — so note anything that
+      reads wrong, not just anything broken.</p></div><div class="result"><label for="r-thumper-def-4">Result</label><textarea data-k="n-thumper-def-4" id="r-thumper-def-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thumper-def-5-losing-the-thumper-costs-the-load">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMPER-DEF-5</span>
+      <span class="block-t">Losing the thumper costs the load</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMPER-DEF-5</span><span class="marker pass">[x]</span><span class="entry-t">Losing the thumper costs the load</span></div><p>The failure path, on its own cycle.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15 twice, and never by running the entry as written.</strong> First, unattended: the
+      zone's NPC-owned debug thumper spawned its own wave at 09:02:23 — before the tester was in
+      position — and its two sappers killed it by 09:03:16. <code>destroyed ... at 32% with 0 attacker(s)
+      down</code>, survivors released, death ability ran, no crash, no payout. That is RESOURCE-PAYOUT-5's unattended-timer
+      role inherited by M7: <strong>the debug thumper now loses its cycle every session</strong>, because nobody
+      defends it — a changed zone behaviour to expect in future logs, not a defect. Second, live: the
+      tester's first cycle died at 91% with 9 attackers down (see THUMPER-DEF-3 for why), five survivors released,
+      no payout anywhere in the log. The client-side presentation of the destroyed state was not
+      separately reported — the tester's attention was on the fight — so the wreck's on-screen reading
+      rides along unconfirmed; everything server-side is exact.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thumper-def-5-1" type="checkbox"/><span class="step-body"><span class="lede"><code>thumper</code> on deposit 1 again. Do not defend it. Stay 30m+ away so escorts idle on the machine
+         too.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-5-2" type="checkbox"/><span class="step-body"><span class="lede">Wait. If the waves can kill a 4000-point machine, it dies somewhere in the back half of the
+         cycle; the health bar and the damage grep track it down.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-5-3" type="checkbox"/><span class="step-body"><span class="lede">At zero: expect the DESTROYED state on screen (the client has its own art for it), the beacon's
+         death ability firing, and the wreck disappearing about 6 seconds later. The client should treat
+         the run as failed — the completion event goes out with <code>Destroyed = 1</code> and zero quantity.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-5-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "was destroyed by" ~/Games/PIN/logs/GameServer.log</code> — expect the encounter's line with
+         progress and kills. <code>grep -a "released"</code> — surviving members despawn with the encounter.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-5-5" type="checkbox"/><span class="step-body"><span class="lede">Confirm nothing was paid: no new <code>paying ... resource</code> line for this cycle.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the machine dies, the client shows a failed run, nothing pays, the swarm disperses. Fail, the
+      cycle completes with the machine barely scratched: that is not a defect in the path, it is the DPS
+      reading from THUMPER-DEF-3 saying the waves are undersized — record the final health and file it against the
+      wave schedule rather than the code.</p></div><div class="result"><label for="r-thumper-def-5">Result</label><textarea data-k="n-thumper-def-5" id="r-thumper-def-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thumper-def-6-wave-deaths-are-the-encounters-business">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMPER-DEF-6</span>
+      <span class="block-t">Wave deaths are the encounter's business</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMPER-DEF-6</span><span class="marker pass">[x]</span><span class="entry-t">Wave deaths are the encounter's business</span></div><p>Read from THUMPER-DEF-1's cycle.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15.</strong> Every kill logged <code>wave member &lt;id&gt; died to &lt;tester&gt;, N standing, K down</code>
+      and the standing count tracked the fight in real time across 23 routed deaths (9 on the lost
+      cycle, 14 on the won one). Kill loot was untouched by the second subscriber: 528s paid their usual
+      2-crystite rolls and Melded residue, one item roll logged <code>not paid — item drops are unbuilt</code>, all
+      exactly the <a href="Kill-Rewards.html">Kill Rewards</a> behaviour.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thumper-def-6-1" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "wave member" ~/Games/PIN/logs/GameServer.log</code> — every kill should log
+         <code>wave member &lt;id&gt; died to &lt;you&gt;, N standing, K down</code>, and the standing count should track the
+         fight.</span></span></label>
+      <label class="step"><input checked data-k="thumper-def-6-2" type="checkbox"/><span class="step-body"><span class="lede">Cross-check one kill against <a href="Kill-Rewards.html">Kill Rewards</a>: the same death should also roll
+         loot (<code>grep -a "Kill of monster type 528"</code>), because the encounter routing is a second
+         subscriber, not a replacement.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the encounter counts its own dead and the kill payout is untouched. This entry is also the
+      first live proof of the death-routing plumbing (<code>EncounterComponent.Event.Death</code>), which M7 built
+      for every future encounter, not just this one.</p></div><div class="result"><label for="r-thumper-def-6">Result</label><textarea data-k="n-thumper-def-6" id="r-thumper-def-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-thumper-defence-v1"></script>
+

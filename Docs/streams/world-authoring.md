@@ -26,7 +26,7 @@ the tool isn't the missing piece. The missing piece is terrain.
 
 `LoadMapsCollision` is off and `MapsPath` is empty, so the physics world holds entity colliders and
 nothing else. Every server-side raycast in PIN sees an empty world with a few objects floating in it,
-which [N3](../In-Game-Tests/NPC-Combat.md) found the hard way. There is no ground to query, no cover
+which [N3](../In-Game-Tests/NPC-Combat.html) found the hard way. There is no ground to query, no cover
 to break line of sight, and nothing for a spawn to stand on.
 
 Three consequences already have entries: NPC ground clamping borrows the target's footing because
@@ -85,7 +85,7 @@ Every edit saves and respawns immediately, so the loop is walk, place, look, adj
   walking here, which is not proof of ground."*
 
 The second one was learned the hard way on the first session that used this tool. **The client
-reports grounded inside terrain exactly as it does on top of it** — [N16](../In-Game-Tests/NPC-Combat.md)
+reports grounded inside terrain exactly as it does on top of it** — [N16](../In-Game-Tests/NPC-Combat.html)
 teleported to a coordinate nobody had stood on, landed about 8m under the basin floor, fought a
 whole engagement from in there, and the destination went into the footing record looking like every
 other measurement. Everything here rests on a player's footing being real, so the one thing that can

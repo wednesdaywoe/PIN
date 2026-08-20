@@ -325,7 +325,7 @@ public class CombatController : Base
     // that's where the confirmation belongs. We used to send it the moment the packet arrived, ahead
     // of every effect netfield the chain applies.
     //
-    // This did NOT fix Charge's stuck camera (D5b in Docs/In-Game-Tests/Charge-Camera.md), so don't
+    // This did NOT fix Charge's stuck camera (D5b in Docs/In-Game-Tests/Charge-Camera.html), so don't
     // read it as a cure for anything. It's kept only because it matches the order SDB describes.
     //
     // Belongs in InstantActivationCommand once the cooldown groups are worked out; that command has

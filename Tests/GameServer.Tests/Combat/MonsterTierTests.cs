@@ -10,7 +10,7 @@ namespace GameServer.Tests.Combat;
 ///     Holds <see cref="MonsterTier"/> to the mapping it claims to implement: a creature's shipped
 ///     difficulty grade picks a row of the shipped power curve, and health and damage both come off that
 ///     row. Whether the resulting fights feel right is an in-game question (D7 in
-///     Docs/In-Game-Tests/Damage-Loop.md) — these pin the arithmetic and, more importantly, the two
+///     Docs/In-Game-Tests/Damage-Loop.html) — these pin the arithmetic and, more importantly, the two
 ///     promises that keep a bad grade from breaking a spawn: ungraded creatures behave exactly as they
 ///     did before tiering existed, and a missing curve costs tiering rather than throwing.
 /// </summary>

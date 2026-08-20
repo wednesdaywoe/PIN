@@ -1,0 +1,452 @@
+<title>PIN — Damage Loop (DMG-LOOP-1–DMG-LOOP-4, DMG-LOOP-6–DMG-LOOP-7)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Damage Loop (DMG-LOOP-1–DMG-LOOP-4, DMG-LOOP-6–DMG-LOOP-7)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>These landed in commits <code>9768cf4</code>, <code>31f0ff3</code>, <code>4a8075e</code> but predate the pause, so their in-game
+    state is unknown. Prune whatever you've already seen working.</p>
+    <p>CHARGE-CAM-5 was the fourth entry in this batch; it grew into an investigation of its own and lives in
+    <a href="Charge-Camera.html">Charge Camera</a>.</p>
+  </section>
+  <section class="block" data-open="true" id="-dmg-loop-1-weapon-damage-loop-end-to-end">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-LOOP-1</span>
+      <span class="block-t">Weapon damage loop end to end</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-LOOP-1</span><span class="marker none">[ ]</span><span class="entry-t">Weapon damage loop end to end</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="dmg-loop-1-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, kill it</span></span></label>
+      <label class="step"><input data-k="dmg-loop-1-2" type="checkbox"/><span class="step-body"><span class="lede">Let a hostile source kill you, or shoot yourself off a height with <code>float</code> off</span></span></label>
+      <label class="step"><input data-k="dmg-loop-1-3" type="checkbox"/><span class="step-body"><span class="lede">Move after respawning</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: projectile hits damage characters, death fires, respawn puts the player at the nearest
+      uncaptured outpost and movement input is accepted again afterwards.</p></div><div class="result"><label for="r-dmg-loop-1">Result</label><textarea data-k="n-dmg-loop-1" id="r-dmg-loop-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-loop-2-headshot-and-crit">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-LOOP-2</span>
+      <span class="block-t">Headshot and crit</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-LOOP-2</span><span class="marker pass">[x]</span><span class="entry-t">Headshot and crit</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-loop-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code></span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-2-2" type="checkbox"/><span class="step-body"><span class="lede">Land one body shot and one headshot on it</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: <code>hit.DamageMod</code> and <code>weapon.HeadshotMult</code> visibly change the number; the <code>Critical</code> damage
+      flag reaches the client on headshots and crit materials. With the 46-damage assault rifle the
+      expected pair is 39 body and 58 head.</p></div><div class="result"><label for="r-dmg-loop-2">Result</label><textarea data-k="n-dmg-loop-2" id="r-dmg-loop-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-loop-3-splash-falloff">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-LOOP-3</span>
+      <span class="block-t">Splash falloff</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-LOOP-3</span><span class="marker warn">[~]</span><span class="entry-t">Splash falloff</span></div><p><strong>Half of this ran 2026-08-16 and passed.</strong> A Grenade Launcher fired at two Melded Aranha put
+      <code>350</code> into the one it struck and <code>38</code> into the other, twice in a row for the same pair of numbers.
+      That settles the part of the entry that could have been silently broken: the blast <strong>falls off</strong>
+      rather than paying everything inside the radius in full, and the direct target was billed once, not
+      once for the round and again for the explosion. 38 is 11% of a round on a 4m blast, so that second
+      creature was standing out near the edge, which is where it was.</p>
+      <p>What is still open is the <em>shape</em>, which is the harder half and the reason the steps below want
+      three targets rather than two. One reading cannot tell a straight line from a curve, and the line
+      is a guess about how the client interpolates (<a href="../ISSUE-REGISTER.md">DATA-4</a>). Run it as written.</p>
+      <p><strong>Renamed 2026-08-16.</strong> This used to say <code>InflictDamage</code> splash falloff, because that command was
+      the only splash in the game. Weapons have their own now, off the ammunition's shipped blast radius
+      (<a href="../ISSUE-REGISTER.md">DATA-21</a>), and both use the same linear falloff, so the entry covers either.
+      The weapon path is the unverified one and is the better run.</p>
+      <p><strong>Check the weapon explodes first.</strong> <code>dbg_weapon</code> prints a <code>Splash:</code> line: <code>none (ammo impact_radius
+      0), direct hits only</code> for most weapons, or a radius and what the blast is worth at four distances.
+      Nothing below works on a weapon that reads <code>none</code>, and most rifles do.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="dmg-loop-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, walk three paces, <code>npc 1196</code>, walk three more, <code>npc 1196</code> — three targets at
+         increasing distance from one blast centre. Spawn them by walking rather than typing coordinates;
+         the numbers on this command are absolute world positions (<a href="README.md">method notes</a>). Keep the
+         total spread inside the radius <code>dbg_weapon</code> printed, or the far one is simply out of reach and
+         reads as a failure</span></span></label>
+      <label class="step"><input data-k="dmg-loop-3-2" type="checkbox"/><span class="step-body"><span class="lede">Fire at the <strong>ground under the first one</strong>, not at it. That keeps the direct hit out of the
+         numbers, so what each target took is the blast alone and comparable across the three. (For the
+         ability path instead: fire the splash ability centred on the first.)</span></span></label>
+      <label class="step"><input data-k="dmg-loop-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "damage from|Splash from" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: damage scales down linearly from the point blank range to the edge of the radius, and the
+      target caught by both a direct hit and the blast is damaged once by each and no more — two numbers,
+      not one doubled and not three.</p></div>
+      <p>The four figures <code>dbg_weapon</code> prints are the prediction. Compare the log against them rather than
+      judging the shape by eye; the falloff curve itself is a guess about how the client interpolates
+      (<a href="../ISSUE-REGISTER.md">DATA-4</a>) and this entry is the only thing that can say whether it is right.</p><div class="result"><label for="r-dmg-loop-3">Result</label><textarea data-k="n-dmg-loop-3" id="r-dmg-loop-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-loop-4-setweapondamage-restores-on-effect-end">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-LOOP-4</span>
+      <span class="block-t"><code>SetWeaponDamage</code> restores on effect end</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-LOOP-4</span><span class="marker none">[ ]</span><span class="entry-t"><code>SetWeaponDamage</code> restores on effect end</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="dmg-loop-4-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, shoot it once, note the damage</span></span></label>
+      <label class="step"><input data-k="dmg-loop-4-2" type="checkbox"/><span class="step-body"><span class="lede">Apply the ability that overrides weapon damage, shoot again</span></span></label>
+      <label class="step"><input data-k="dmg-loop-4-3" type="checkbox"/><span class="step-body"><span class="lede"><code>listeffects</code> to confirm it's active, then wait for it to expire</span></span></label>
+      <label class="step"><input data-k="dmg-loop-4-4" type="checkbox"/><span class="step-body"><span class="lede">Shoot a third time</span></span></label>
+      <label class="step"><input data-k="dmg-loop-4-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the third number matches the first, so the <code>OnRemove</code> restore path in the active-command
+      pattern actually ran.</p></div><div class="result"><label for="r-dmg-loop-4">Result</label><textarea data-k="n-dmg-loop-4" id="r-dmg-loop-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-loop-6-a-basic-creature-dies-in-about-two-seconds">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-LOOP-6</span>
+      <span class="block-t">A basic creature dies in about two seconds</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-LOOP-6</span><span class="marker pass">[x]</span><span class="entry-t">A basic creature dies in about two seconds</span></div><p>Written 2026-08-15, and it exists to falsify a number rather than to confirm a feature works.</p>
+      <div class="callout pass"><p><strong>Passed the same day on the health question, which is what it was for. Three kills, 31 hits each,
+      no variance at all.</strong> The counts came back 144 → 175 → 206 → 237, and the last kill's tail reads:</p></div>
+      <span class="cmd"><pre><code>13:53:20 DBG CharacterEntity (2235630902493516800) took 39 damage ... 264 health left</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      13:53:20 DBG ... 225 health left      13:53:20 DBG ... 108 health left</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      13:53:20 DBG ... 186 health left      13:53:20 DBG ...  69 health left</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      13:53:20 DBG ... 147 health left      13:53:20 DBG ...  30 health left</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                                            13:53:20 DBG ...   0 health left</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Clean steps of 39 landing exactly on 0 from 1200. The pool is the value the code says it is, the
+      creature dies, and 31 × 39 = 1209 against 1200 is the expected one-round overkill.</p>
+      <p><strong>Time to kill was about 3.1 seconds</strong>, not the 2.0 predicted — and that is the video's "a few
+      seconds" more squarely than the prediction was. The number stands.</p>
+      <p><strong>But it ran with the wrong weapon, and the entry as first written could not have told.</strong> The
+      observed rate of fire was a flat <strong>10 rounds a second</strong> — 10 in each of two complete seconds, across
+      all three kills — which is 100 ms a round. That is the assault rifle's 105 ms, not the Heavy MG's
+      65 ms. Confirming it: <code>equipitem</code> logs at Information on success and <strong>there is no such line in the
+      log</strong>, only <code>13:50:59 INF createitem 85968 as item, item type Weapon, x1</code>. The equip bailed out at
+      its not-carrying guard, which is <a href="../gaps/network.md#net-18">NET-18</a> — a created item is not in the
+      server's inventory list until it is resent.</p>
+      <p>Two authoring mistakes, both worth keeping:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-loop-6-1" type="checkbox"/><span class="step-body"><span class="lede"><strong>The damage figure cannot distinguish the two weapons.</strong> 39 is the Heavy MG's full resolved
+         damage <em>and</em> the assault rifle's body-shot damage (46 × the ×0.85 step from
+         <a href="#-dmg-loop-2-headshot-and-crit">DMG-LOOP-2</a>). The rate of fire is the only discriminator and it was written in
+         as a secondary check. An entry that picks between two hypotheses must key on a figure the two
+         do not share.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-2" type="checkbox"/><span class="step-body"><span class="lede"><strong><code>dbg_inventory</code> was written as conditional advice rather than as a step.</strong> The project already
+         knew created items need a resend before they can be equipped. Advice inside a fail-branch does not
+         get read before the run.</span></span></label>
+      </ol></div>
+      <h3 id="the-re-run-same-day-chaingun-confirmed-085-question-closed">The re-run, same day — chaingun confirmed, ×0.85 question closed</h3>
+      <p>The corrected steps were run and the equip took this time:</p>
+      <span class="cmd"><pre><code>14:12:56 INF equipitem 85968 guid 1F069FCE00040BFD into Primary of loadout 20030
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Three more kills after it, at <strong>31 hits each again</strong>, counts 237 → 268 → 299 → 330. Six kills
+      across two weapons and not one of them varied.</p>
+      <p><strong>Every hit landed 39 — all 93 of them, with no other value in the set.</strong> The Heavy MG's full
+      resolved damage, with no reduction. So the ×0.85 step
+      <a href="#-dmg-loop-2-headshot-and-crit">DMG-LOOP-2</a> recorded on the rifle is <strong>not a blanket rule and not a weapon
+      property</strong>, and reading the code says why:
+      <a href="../../UdpHosts/GameServer/Systems/ProjectileSim/ProjectileSim.cs#RELIABILITY-49">ProjectileSim.cs</a> resolves
+      <code>damage = decayed * hit.DamageMod</code>, and <code>hit.DamageMod</code> arrives <strong>on the client's hit message</strong>. It
+      is a per-hit value the client supplies, most likely hit location. The rifle's 39-from-46 was one
+      client-sent modifier on those particular shots, not a discount applied to a weapon. Question closed.</p>
+      <h3 id="left-open-by-this-entry-hits-per-second-cap-at-10-on-both-weapons">Left open by this entry: hits per second cap at 10 on both weapons</h3>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Weapon</th>
+      <th>ms/burst</th>
+      <th>Shots/sec it should manage</th>
+      <th>Best second observed</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>Assault rifle</td>
+      <td>105</td>
+      <td>9.5</td>
+      <td><strong>10</strong></td>
+      </tr>
+      <tr>
+      <td>Heavy MG</td>
+      <td>65</td>
+      <td>15.4</td>
+      <td><strong>10</strong></td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>The rifle matches its data. The Heavy MG lands a third fewer hits than its rate of fire allows, and
+      the two kills ran to the same ~3 seconds despite the chaingun firing 58% more rounds on paper.</p>
+      <p><strong>This cannot be settled from the current logging, and the innocent explanation is the likely one.</strong>
+      Only <em>hits</em> are logged — a round that misses writes nothing — and the target is a melee creature
+      closing on the player, so 10 hits from 15.4 shots is about 65% accuracy against a moving target,
+      which is unremarkable. The other reading is that the server is dropping fire messages, and that
+      would be a 35% damage shortfall on every automatic weapon in the game.</p>
+      <p>Distinguishing them needs a shots-fired counter next to the hits, which does not exist. Worth adding
+      before anyone tunes automatic weapons; not worth blocking on now.</p>
+      <p><code>MonsterMaxHealth</code> moved from 500 to 1200 that day (<a href="../gaps/data.md#data-6">DATA-6</a>). The 500 came
+      from a tester's beta-video reading that a small Aranha died to "a few seconds of sustained chaingun
+      fire", and that reading had never been divided by a rate of fire. The Heavy Machine Gun lands <strong>39 a
+      round every 65 ms</strong> — <code>Rounds/burst</code> is 1 — which is <strong>600 damage a second</strong>, so 500 health was
+      0.83 seconds and not a few. 1200 is two seconds, the low end of a 1200–1800 band.</p>
+      <p><strong>Count hits in the log rather than timing it.</strong> A stopwatch measures the tester's reflexes; the hit
+      count measures the server.</p>
+      <p>The prediction is a <strong>range, not a number, and which end it lands on is itself a result.</strong>
+      <a href="#-dmg-loop-2-headshot-and-crit">DMG-LOOP-2</a> above records that a rifle resolving to 46 in
+      <a href="../Wiki/Reference/Weapons.md">Weapons.md</a> lands <strong>39</strong> on a body shot — an unexplained ×0.85 step
+      applied at hit time, after item resolution. Whether the Heavy MG takes the same step is unknown:</p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>If a body shot lands</th>
+      <th>Per hit</th>
+      <th>Hits to kill 1200</th>
+      <th>Held fire at 65 ms apart</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>the full resolved 39</td>
+      <td>39</td>
+      <td><strong>31</strong></td>
+      <td>2.0 s</td>
+      </tr>
+      <tr>
+      <td>39 with DMG-LOOP-2's ×0.85</td>
+      <td>33</td>
+      <td><strong>36</strong></td>
+      <td>2.4 s</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>Either is a pass for the health number. <strong>Read the per-hit figure in the log first</strong>, then judge the
+      count against the matching row — do not compare a count against the wrong row and call it a failure.
+      If the log says 33, that pins the ×0.85 step onto a second weapon and is worth writing up
+      separately; if it says 39, the step is specific to the rifle and DMG-LOOP-2's note needs revisiting.</p>
+      <p>Monster <strong>528</strong> (Melded Aranha) is the subject because it is the creature the video anchor is about,
+      and it carries <code>difficulty_cost</code> 20 — near the bottom of the shipped threat ladder, so it is exactly
+      the kind of thing that should die fast. It is a melee attacker with 5m reach, hence <code>invuln</code>.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-loop-6-3" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code> — this entry is about your damage, not theirs, and 528 closes to melee.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 85968</code> — the Heavy Machine Gun, 39 a round, 250-round clip, 80m range.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-5" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> — <strong>required, not optional.</strong> A created item is absent from the server's
+         inventory list until it is resent, and <code>equipitem</code> will silently refuse it
+         (<a href="../gaps/network.md#net-18">NET-18</a>). Skipping this is what made the first run of this entry
+         measure the wrong gun.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-6" type="checkbox"/><span class="step-body"><span class="lede"><code>equipitem 85968 Primary</code>, then <strong>confirm it took</strong>:
+         <code>grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1</code> must show
+         <code>equipitem 85968 guid ... into Primary</code>. No line means it did not equip and the run is void.
+         Run <code>equipitem</code> with no arguments to list slot names if <code>Primary</code> is rejected.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-7" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 528</code> to put one at your feet, then back off a few metres so every round connects.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-8" type="checkbox"/><span class="step-body"><span class="lede">Hold fire until it dies. Do not stop and restart — a gap in fire makes the count unreadable.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-9" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -ac "took .* damage from" ~/Games/PIN/logs/GameServer.log</code> before and after, and subtract.
+         The damage line is at <strong>Debug</strong> level, so confirm Debug logging is on first by checking any
+         <code>DBG</code> line appears in the log at all.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-6-10" type="checkbox"/><span class="step-body"><span class="lede"><strong>Read the rate of fire, which is the step that identifies the weapon:</strong>
+      <code>grep -a "took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -31 | awk '{print $1}' | uniq -c</code>
+         — about <strong>15 a second</strong> is the Heavy MG (65 ms). About <strong>10 a second</strong> is the assault rifle
+         (105 ms) and means the equip did not take.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the per-hit figure reads <strong>39 or 33</strong>, the count matches that row of the table above, and the
+      creature dies. Record both numbers, not just the count.</p></div>
+      <div class="callout fail"><p>Fail, hits log a per-hit figure that is neither 39 nor 33: the health number is not the problem and
+      this entry is not the one to read. A wrong per-hit figure is weapon resolution, so go to
+      <a href="../gaps/data.md#data-11">DATA-11</a> — that bug stripped a rifle's damage once already and the melee
+      weapon in <a href="../gaps/data.md#data-20">DATA-20</a> is the only live confirmation it stays fixed.</p></div>
+      <div class="callout fail"><p>Fail, the count matches but it reads as far too long in the hand: the arithmetic is right and the
+      target is wrong. Record how it felt — this is the one place a tester's judgement outranks the
+      number, and it is why 1200 was taken from the bottom of the band rather than the middle. Note that
+      <a href="NPC-Combat.html">NPC-COMBAT-16</a> called 2500 a bullet sponge, so there is a known ceiling somewhere below that.</p></div>
+      <div class="callout fail"><p>Fail, far more hits than either row predicts: something is adding health after spawn, or the
+      creature is not 528. Check the spawn line named the type you asked for.</p></div>
+      <p><strong>Whatever this returns, it does not close <a href="../gaps/data.md#data-6">DATA-6</a>.</strong> One flat pool for
+      every creature in the game is the entry, and 1200 is still one flat pool. What a pass buys is
+      confidence in the <em>band</em>, which is what the <code>difficulty_cost</code> → level work will be anchored against.</p><div class="result"><label for="r-dmg-loop-6">Result</label><textarea data-k="n-dmg-loop-6" id="r-dmg-loop-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-loop-7-creatures-are-no-longer-all-the-same-size">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-LOOP-7</span>
+      <span class="block-t">Creatures are no longer all the same size</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-LOOP-7</span><span class="marker pass">[x]</span><span class="entry-t">Creatures are no longer all the same size</span></div><div class="callout pass"><p><strong>Passed 2026-08-15, 22:31–22:44, all three parts.</strong> Part A: both grade lines exact. Part B: <strong>32</strong>
+      hits for 528 and <strong>72</strong> for 1189, and the pair repeated a second time on fresh spawns — four kills,
+      four counts, no drift, every round 39. Part C: <strong>49</strong> a hit from 528 against <strong>112</strong> from 1189
+      (predicted 49 and 113; a point of rounding on the subject, none on the anchor). 528 held its ×1.00
+      anchor on all six spawns, so the difference is the grade and nothing else.</p></div>
+      <p>The Part C grep did not match at first. That was the pattern, not the run — see step 4 below.</p>
+      <p>One thing the numbers say that the entry did not anticipate: at 112 a hit against the player's
+      19192 health, <strong>1189 needs about 170 uninterrupted hits to kill you</strong> — nearly four minutes of
+      standing still. It is not dangerous, it is slow. Any entry that needs a death by monster should
+      expect to wait, or be killed by something else. See <a href="Death-And-Respawn.html">DEATH-RESPAWN-4</a>.</p>
+      <p>Written 2026-08-15, after the <code>difficulty_cost</code> → level work landed. This is the entry that checks
+      the thing DMG-LOOP-6 explicitly could not close: <strong>one flat pool for every creature in the game</strong>.</p>
+      <p>Every NPC in PIN used to have identical health and identical damage, because the shipped power curve
+      <code>dbcharacter::MonsterScaling</code> is keyed by a creature's <em>level</em> and levels were server content that
+      never shipped. <code>Monster.difficulty_cost</code> — a threat grade 906 of the 3109 creature types carry — now
+      supplies that missing key. A grade picks the nearest row of the curve, and the row gives health and
+      damage together.</p>
+      <h3 id="why-this-pair-of-creatures-and-no-other">Why this pair of creatures and no other</h3>
+      <p><strong>528 and 1189 carry the same weapon, <code>20046</code>.</strong> They also share an empty behaviour script, the same
+      health regen, and hostile factions. The <em>only</em> thing that differs between them and matters here is
+      the grade: 20 against 45. So any difference this test sees is the tier and nothing else — which is
+      exactly the control DMG-LOOP-6 lacked when it could not tell a Heavy MG from an assault rifle.</p>
+      <p>528 is the anchor, and that is deliberate. Its multiplier is <strong>exactly</strong> ×1.00 by construction, so it
+      should behave the way it did in DMG-LOOP-6. <strong>If 528 moves, the cause is not tiering.</strong></p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Creature</th>
+      <th>Grade</th>
+      <th>Level</th>
+      <th>Health</th>
+      <th>Damage scalar</th>
+      <th>HMG hits to kill, at 39 a round</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td><strong>528</strong> (anchor/control)</td>
+      <td>20</td>
+      <td>13</td>
+      <td>1224</td>
+      <td>×1.00</td>
+      <td><strong>32</strong></td>
+      </tr>
+      <tr>
+      <td><strong>1189</strong> (subject)</td>
+      <td>45</td>
+      <td>18</td>
+      <td>2801</td>
+      <td>×2.29</td>
+      <td><strong>72</strong></td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>528 reads 32 rather than DMG-LOOP-6's 31 because 1200 was the anchor <em>target</em> and level 13 ships at 1224 —
+      the curve is quantised and 1224 is the nearest real row. A one-hit drift is the expected cost of
+      landing on shipped rows instead of invented ones, and it is the whole reason 528 is still readable
+      as a control.</p>
+      <h3 id="part-a-the-grades-resolve-no-combat-do-this-first">Part A — the grades resolve (no combat, do this first)</h3>
+      <p>Costs nothing and tells you whether the rest of the test is worth running.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-loop-7-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 528</code></span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-2" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1189</code></span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "graded" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: two lines reading</p></div>
+      <span class="cmd"><pre><code>Monster 528 graded 20 -&gt; level 13, 1224 health, damage x1.00</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      Monster 1189 graded 45 -&gt; level 18, 2801 health, damage x2.29</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout fail"><p>Fail, both lines say <code>(ungraded, fell back to the anchor)</code>: the curve did not load. The server reads
+      the <strong>full</strong> <code>clientdb.sd2</code>, not the pruned one, so check the <code>Opening SDB from</code> line points at the
+      Firefall install and not at <code>clientdb_minimal.sd2</code>.</p></div>
+      <div class="callout fail"><p>Fail, no <code>graded</code> lines at all: the damage line is at <strong>Debug</strong> level and so is this one. Confirm any
+      <code>DBG</code> line appears in the log before concluding anything.</p></div>
+      <p><strong>If Part A fails, stop.</strong> Parts B and C cannot mean anything if the grade never resolved.</p>
+      <h3 id="part-b-health-differs-by-hit-count">Part B — health differs, by hit count</h3>
+      <p>Same method as <a href="#-dmg-loop-6-a-basic-creature-dies-in-about-two-seconds">DMG-LOOP-6</a>, because counting hits in the
+      log measures the server while a stopwatch measures the tester's reflexes.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-loop-7-4" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code> — this part is about your damage, not theirs.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-5" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 85968</code> — the Heavy Machine Gun, 39 a round, 250-round clip, 80m range.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-6" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> — <strong>required, not optional.</strong> A created item is absent from the server's inventory
+         list until it is resent (<a href="../gaps/network.md#net-18">NET-18</a>).</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-7" type="checkbox"/><span class="step-body"><span class="lede"><code>equipitem 85968 Primary</code>, then confirm it took:
+         <code>grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1</code> must show
+         <code>equipitem 85968 guid ... into Primary</code>. No line means the run is void.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-8" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -ac "took .* damage from" ~/Games/PIN/logs/GameServer.log</code> — the before count.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-9" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 528</code>, back off a few metres, hold fire until it dies. Take the count again and subtract.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-10" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1189</code>, same. Take the count again and subtract.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: <strong>32 for 528 and 72 for 1189.</strong> The 250-round clip covers both without a reload.</p></div>
+      <p>Confirm the per-hit figure is 39 while you are here:
+      <code>grep -a "took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -5</code></p>
+      <div class="callout fail"><p>Fail, both counts come back the same: the grade is resolving (Part A said so) but the health is not
+      reaching the entity. That is the <code>SetMaxHealth</code> call in <code>CharacterEntity</code>, not <code>MonsterTier</code>.</p></div>
+      <div class="callout fail"><p>Fail, 1189 takes about 72 hits but 528 takes 31 rather than 32: harmless, and worth writing down
+      rather than treating as a failure. It means a round landed slightly above 39 somewhere, and
+      <a href="#-dmg-loop-6-a-basic-creature-dies-in-about-two-seconds">DMG-LOOP-6</a> already found that per-hit damage carries a
+      client-sent modifier.</p></div>
+      <h3 id="part-c-damage-differs-with-the-weapon-held-constant">Part C — damage differs, with the weapon held constant</h3>
+      <p>This is the half <a href="../gaps/data.md#data-20">DATA-20</a> is about, and the shared weapon is what makes it
+      readable.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-loop-7-11" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code> — <strong>required for this part</strong>, and it is the step that makes 1189 dangerous.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-12" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 528</code>, let it hit you several times, then kill it.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-13" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1189</code>, let it hit you several times, then kill it.</span></span></label>
+      <label class="step"><input checked data-k="dmg-loop-7-14" type="checkbox"/><span class="step-body"><span class="lede">Count the two figures rather than reading them off a tail — the hits interleave with your own,
+         and a monster shooting once every 1280ms fills 20 lines fast:</span></span></label>
+      </ol></div>
+      <p><code>grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | sed 's/.*took \([0-9]*\) damage.*/\1/' | sort -n | uniq -c</code></p>
+      <p><code>Fallback</code> is the player's placeholder name (<code>HardcodedCharacterData.MaleFallbackData.Name</code>),
+         not an error. These are the hits <em>you</em> took. <strong>Match the name exactly — the line is
+         <code>Fallback took</code>, with nothing between.</strong> A pattern of <code>Fallback .* took</code> matches nothing at all,
+         which is how the 2026-08-15 run briefly read as "no damage logged" while the log held 63 hits.</p>
+      <p>To see the raw lines instead:
+         <code>grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></p>
+      <p>Weapon 20046 is the melee weapon <a href="../gaps/data.md#data-20">DATA-20</a> already measured: template
+      <code>damage_per_round</code> 225 × modifier 0.22 = 49.5, observed as <strong>49</strong>. So the predicted pair is concrete
+      rather than a ratio:</p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Creature</th>
+      <th>Damage scalar</th>
+      <th>49.5 × scalar</th>
+      <th>Rounds to</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td><strong>528</strong></td>
+      <td>×1.00</td>
+      <td>49.5</td>
+      <td><strong>49</strong> or 50</td>
+      </tr>
+      <tr>
+      <td><strong>1189</strong></td>
+      <td>×2.29</td>
+      <td>113.4</td>
+      <td><strong>113</strong></td>
+      </tr>
+      </tbody>
+      </table></div>
+      <div class="callout pass"><p>Pass: 528 lands about 49 and 1189 lands about 113. Both carry weapon 20046, so there is no second
+      explanation for a difference.</p></div>
+      <p>Damage is applied as <code>(int)MathF.Round(Amount)</code>, which is why 49.5 can read as either 49 or 50 — DMG-LOOP-6
+      saw 49. A one-point wobble at the anchor is rounding, not a finding.</p>
+      <p>Take several hits from each rather than one. Range decay applies to what monsters shoot too, so a
+      single pair of numbers taken at different distances proves less than a handful taken at contact.</p>
+      <div class="callout fail"><p>Fail, the two numbers are equal: <code>ScalingDamageMultiplier</code> is not reaching
+      <code>GetEffectiveWeaponDamage</code>. Note that an ability using <code>SetWeaponDamage</code> deliberately does <em>not</em>
+      clobber it — the two multipliers are separate fields for that reason — so an active effect is not the
+      explanation.</p></div>
+      <div class="callout fail"><p>Fail, 1189 kills you outright: record it and say so. ×2.29 on a grade-45 creature is the <em>low</em> end of
+      the ladder; grade 300 minibosses resolve to ×14.16, and if the low end already reads as lethal then
+      the anchor is wrong rather than the mapping. This is the failure mode most worth catching early, and
+      a tester's judgement outranks the arithmetic here.</p></div>
+      <h3 id="what-this-closes-and-what-it-does-not">What this closes and what it does not</h3>
+      <p>A pass closes the health half of <a href="../gaps/data.md#data-6">DATA-6</a> for the <strong>906 graded creature
+      types</strong> and the damage half of <a href="../gaps/data.md#data-20">DATA-20</a>.</p>
+      <p>It does not close either entry outright. <strong>2203 of 3109 creature types carry no grade at all</strong> and
+      still share one flat pool, and <code>EliteWanderer</code> is among them — so an ungraded creature is unrated,
+      not harmless, and the fallback is a known gap rather than an answer. Grade 0 is also why the log
+      line says <code>(ungraded, fell back to the anchor)</code> out loud instead of quietly.</p><div class="result"><label for="r-dmg-loop-7">Result</label><textarea data-k="n-dmg-loop-7" id="r-dmg-loop-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-damage-loop-v1"></script>
+

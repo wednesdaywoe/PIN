@@ -1,0 +1,67 @@
+<title>PIN — Constraints Transport (CONSTRAINTS-1)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Constraints Transport (CONSTRAINTS-1)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup and launch: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup and launch:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on route 2 of <a href="../streams/battleframe-constraints.md">Battleframe Constraints</a>: sending
+    capacity numbers to the garage by extending the <code>garage_slots</code> web payload. That route only exists
+    if the client's native JSON parser passes keys it has never heard of through to Lua instead of
+    parsing against a known schema and dropping the rest. The parser is engine code, so no source read
+    settles it; one logged response does.</p>
+    <p>How it was instrumented, for the next probe like it: the server sent three made-up keys on the
+    Firecat garage slot, one per JSON shape (<code>pin_probe: 1337</code>, <code>pin_probe_block: {mass, power, cpu}</code>,
+    <code>pin_probe_list: [951, 952, 953]</code>), and the client's <code>WebCache.lua</code> — the one component every web
+    response passes through — dumped any <code>garage_slots</code> response to <code>console.log</code>. Both ends were
+    removed after the run; the client file went back to its original from a <code>.pinbak</code> copy, and the
+    probe properties were deleted from
+    <a href="../../WebHosts/WebHost.ClientApi/Characters/Models/GarageSlots.cs">GarageSlots.cs</a> and
+    <a href="../../WebHosts/WebHost.ClientApi/Accounts/AccountsController.cs">AccountsController.cs</a>.</p>
+    <p>No garage visit is needed for a probe like this: the durability HUD subscribes to <code>garage_slots</code>
+    with auto-request at <code>OnPlayerReady</code>, so world entry fires the fetch.</p>
+    <hr/>
+  </section>
+  <section class="block" data-open="true" id="-constraints-1-do-unknown-json-keys-in-garage_slots-survive-into-lua">
+    <button class="block-head" type="button">
+      <span class="block-n">CONSTRAINTS-1</span>
+      <span class="block-t">Do unknown JSON keys in garage_slots survive into Lua?</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CONSTRAINTS-1</span><span class="marker pass">[x]</span><span class="entry-t">Do unknown JSON keys in garage_slots survive into Lua?</span></div><div class="callout pass"><p>Passed 2026-08-14, on the second launch. <strong>They survive, in all three shapes.</strong> The logged table
+      carried <code>pin_probe=1337</code>, <code>pin_probe_block={power=222, mass=111, cpu=333}</code> and
+      <code>pin_probe_list={1=951, 2=952, 3=953}</code> alongside the slot's known fields, over plain HTTP with
+      status 200. <strong>Route 2 is open</strong>: capacities can ride the existing payload, flat or nested, no
+      schema on the client side to satisfy.</p></div>
+      <p>Two incidental answers off the same line:</p>
+      <ul>
+      <li>A JSON <code>null</code> doesn't become a Lua <code>nil</code> value under its key — the key is dropped entirely. The
+        crafting-station slot sent <code>pin_probe_block: null</code> and the logged table has no such key. So an
+        absent capacity and a null capacity are indistinguishable in Lua; send a value or send nothing.</li>
+      <li>Numbers arrive as numbers, strings as strings, booleans as booleans. No stringly-typed layer to
+        guard against.</li>
+      </ul>
+      <p>The first launch produced no line and a lesson instead: in this client, the base Lua libraries are
+      opt-in per component. <code>WebCache.lua</code> requires <code>table</code> explicitly, and the probe's <code>unicode.find</code>
+      call crashed with <code>attempt to index a nil value (global 'unicode')</code> until the patch also said
+      <code>require "unicode"</code>. Any future instrumentation of a component should check its <code>require</code> lines
+      before borrowing a library that other files seem to use freely. The crash also took out every web
+      response for that session — <code>OnUrlResponse</code> died before notifying subscribers — which is the
+      blast radius to expect when a patch in that file goes wrong.</p><div class="result"><label for="r-constraints-1">Result</label><textarea data-k="n-constraints-1" id="r-constraints-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-constraints-transport-v1"></script>

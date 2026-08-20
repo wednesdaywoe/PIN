@@ -15,7 +15,7 @@ namespace GameServer.Tests.Loot;
 ///     tables themselves: 80/10/5/5 summing to exactly 100 is a distribution over one result, while
 ///     100/100/8 on the same table can only be three independent chances. If that reading is wrong these
 ///     tests still pass and the drop rates in game are wrong, which is what
-///     Docs/In-Game-Tests/Kill-Rewards.md is for.
+///     Docs/In-Game-Tests/Kill-Rewards.html is for.
 /// </summary>
 public class LootRollerTests
 {

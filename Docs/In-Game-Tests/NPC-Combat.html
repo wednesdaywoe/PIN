@@ -1,0 +1,714 @@
+<title>PIN — NPC Combat (NPC-COMBAT-1–NPC-COMBAT-16)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>NPC Combat (NPC-COMBAT-1–NPC-COMBAT-16)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on everything <a href="../streams/m2-npc-combat.md">M2</a> has built. NPC-COMBAT-1–NPC-COMBAT-7 cover a monster that
+    stands still and fights — it notices, turns, and shoots — NPC-COMBAT-8–NPC-COMBAT-12 cover the locomotion pass that
+    landed after them, which is the half that decides where it stands in the first place, and NPC-COMBAT-13 checks
+    that any of it is drawn on the client at all. NPC-COMBAT-14–NPC-COMBAT-16 cover the spawn groups, and they are the ones
+    the milestone closes on: NPC-COMBAT-1 to NPC-COMBAT-13 all ran against a monster the tester put there by hand, which is
+    not the same claim as the zone having monsters in it.</p>
+    <p><strong>NPC-COMBAT-1–NPC-COMBAT-7 pass as of 2026-08-12</strong>, across two sittings. Both model guesses that half of the stream
+    existed to check came out right — local forward is +X (NPC-COMBAT-1), and the burst timing read off the
+    template reads as a weapon rather than a strobe (NPC-COMBAT-5) — and neither is asserted any more.
+    <strong>NPC-COMBAT-8–NPC-COMBAT-13 pass as of 2026-08-13, on the second sitting of that day.</strong> The first was called on one
+    defect: monsters teleported. They neither walked nor slid — an NPC sat at its spawn and then appeared
+    somewhere else. The steering was innocent; nothing replicated it. <code>Character_MovementView</code> is
+    deliberately not flushed to scoped clients, and an NPC had nothing sending a pose on its behalf
+    either, so a client held its scope-in position until a checksum mismatch corrected it in one jump
+    (<a href="../gaps/network.md#net-22">NET-22</a>). Nothing about that run was markable: NPC-COMBAT-8 asks you to watch a
+    monster the whole way in and NPC-COMBAT-9 asks whether the run animates, and neither question was answerable.</p>
+    <p>The same defect explained something that had been shrugged off as roughness since combat testing
+    began — a Chosen taking seconds to react to a moving player, firing where you were and then snapping
+    round. Aim replicates through the same unflushed view as position. <strong>NPC-COMBAT-13 was written for it</strong>, because
+    after watching a monster walk correctly nobody would think to check whether it aims correctly, and
+    NPC-COMBAT-1–NPC-COMBAT-7 all passed while it was broken.</p>
+    <p><strong>NPC-COMBAT-14–NPC-COMBAT-16 pass as of 2026-08-13, and the stream is complete at 16 of 16.</strong> NPC-COMBAT-14 took four attempts
+    and failed on content every time, never on the spawn code: the first zone fought itself out in
+    twenty seconds, the second put its monsters under the terrain, the third put them inside walls, and
+    the fourth stood thirteen of them on ground a player had walked. Each failure became a server-side
+    guard rather than a note, which is why the entry now greps for a hostile-neighbour audit line and
+    why placements are made by walking rather than by typing coordinates.</p>
+    <p>The closing run produced two findings and neither is an M2 defect. Death is a one-way door —
+    <a href="../gaps/network.md#net-23">NET-23</a>, the first time the game rather than a command killed a player,
+    and the client never asks to respawn. And the first balance reading taken against real content says
+    monsters are bullet sponges, which is <a href="../gaps/data.md#data-6">DATA-6</a>'s flat 2500 health pool
+    rather than anything about the pack. Both are written up under the entries that found them.</p>
+    <p>With the pose replicated, the whole set went green. Two things the sitting turned up are recorded as
+    gaps rather than as failures, both under NPC-COMBAT-10: a Melded Aranha renders about 90° off the player it is
+    attacking, which a side-by-side against a Chosen pinned on the creature model rather than on
+    <code>Facing.Towards</code> (<a href="../gaps/client.md#client-3">CLIENT-3</a>); and its first movement decision used the
+    ranged standoff before its own weapon had been resolved, since fixed.</p>
+    <p>Four of the seven failed the first time and only one of those was the AI's fault. Two failures
+    (NPC-COMBAT-2, NPC-COMBAT-6) turned out to be the same weapon-resolution bug wearing different disguises, one stripping
+    a rifle's range and the other a rifle's damage, live in every weapon the server had ever resolved:
+    <a href="../gaps/data.md#data-11">DATA-11</a>. One (NPC-COMBAT-4) was a real AI defect. One (NPC-COMBAT-3) was the entry itself
+    being wrong about what the server can see. That ratio is the argument for writing entries that say
+    what to grep — none of it was visible from the screen.</p>
+    <p>A stale <code>GameServer.dll</code> fails every entry here identically and silently — an empty <code>AIEngine.Tick</code>
+    writes nothing, so the log looks exactly like an NPC that decided to do nothing. <code>start-pin.sh</code>
+    builds and installs before it launches, so this is no longer a step to forget, but read the build
+    banner it prints and confirm the server reports the same number back:</p>
+    <span class="cmd"><pre><code>grep -a "Running build" ~/Games/PIN/logs/GameServer.log
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p><a href="Session-Setup.html">Session Setup</a> explains what the banner means and what a mismatch looks like.</p>
+    <p>Every entry wants the server log open:</p>
+    <span class="cmd"><pre><code>tail -f ~/Games/PIN/logs/GameServer.log
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The AI writes these Debug lines, and if none of them ever appears, suspect the deploy before
+    suspecting the code:</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Line</th>
+    <th>Written when</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>NPC {id} target {previous} -&gt; {current}</code></td>
+    <td>selection changes its mind</td>
+    </tr>
+    <tr>
+    <td><code>NPC {id} opens fire on ...</code></td>
+    <td>a burst starts</td>
+    </tr>
+    <tr>
+    <td><code>NPC {id} holding fire on ...: {reason}</code></td>
+    <td>it has a target and isn't shooting, once per change of reason</td>
+    </tr>
+    <tr>
+    <td><code>NPC {id} sets off {where} at {speed}m/s, {distance}m away, stopping at {stopWithin}m</code></td>
+    <td>it starts walking</td>
+    </tr>
+    <tr>
+    <td><code>NPC {id} has chased {target} {distance}m from home and is going back</code></td>
+    <td>it hits its leash</td>
+    </tr>
+    <tr>
+    <td><code>NPC {id} is home</code></td>
+    <td>it arrives back</td>
+    </tr>
+    <tr>
+    <td><code>{Target} took {Amount} damage from {Attacker}</code></td>
+    <td>a round lands (not new, and not AI-specific)</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><strong><code>npc &lt;id&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</code> takes a world position, not an offset from where you're standing</strong> —
+    <a href="../../UdpHosts/GameServer/Systems/Admin/Commands/SpawnCharacterServerCommand.cs">SpawnCharacterServerCommand</a>
+    passes the three numbers straight through. With no coordinates at all it spawns at your feet, which
+    is the form to reach for when you don't care where. To put one a measured distance away, read your
+    own position off <code>hazard</code> first and do the arithmetic — the locomotion entries below all start that
+    way, because where an NPC begins is half of what they're measuring.</p>
+    <p>Two things make the spawn point hard to judge by eye, and both were hit on 2026-08-13. <code>npc &lt;id&gt;</code>
+    with no coordinates puts the monster on top of you, and your camera sits behind your character, so
+    it renders <em>behind</em> you every time — that is the command working, not a placement bug. And once it
+    has a target an NPC starts closing immediately, so where it is by the time you have turned around is
+    the standoff ring, not the spawn. Don't reason about this from the screen; the server says where it
+    put things:</p>
+    <span class="cmd"><pre><code>grep -a "Spawned monster" ~/Games/PIN/logs/GameServer.log | tail -5
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Compare that against the position <code>hazard</code> gave you. If the numbers are the ones you typed, the
+    spawn is correct and anything surprising afterwards is locomotion.</p>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-1-an-npc-notices-you-and-turns-to-face-you">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-1</span>
+      <span class="block-t">An NPC notices you and turns to face you</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-1</span><span class="marker pass">[x]</span><span class="entry-t">An NPC notices you and turns to face you</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-1-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, then walk about five paces away — a Chosen Fiend five metres off. Coordinates on
+         this command are absolute world positions, not offsets; see the <a href="README.md">method notes</a></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-1-2" type="checkbox"/><span class="step-body"><span class="lede">Stand still and watch it for a few seconds</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: within about a second the log shows the NPC's target going from empty to your entity id, and
+      the monster on screen is facing you rather than whatever direction it spawned in.</p></div>
+      <div class="callout pass"><p>Passed first run, 2026-08-12. Both halves: perception and target selection work against a real
+      client, and <strong><code>Facing.Towards</code> has the forward axis right</strong> — local forward is +X. That was the
+      guess most likely to bite, and it's now the one part of the orientation convention that's been seen
+      rather than reasoned about, so anything later that needs to point a character at something can lean
+      on it.</p></div>
+      <p>The first attempt looked like a failure and wasn't. The deployed <code>GameServer.dll</code> predated the AI
+      entirely, so nothing logged and nothing turned — which is exactly what a broken perception pass
+      would look like. That's why the build check is in the preamble now.</p><div class="result"><label for="r-npc-combat-1">Result</label><textarea data-k="n-npc-combat-1" id="r-npc-combat-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-2-an-npc-shoots-you-and-the-damage-lands">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-2</span>
+      <span class="block-t">An NPC shoots you and the damage lands</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-2</span><span class="marker pass">[x]</span><span class="entry-t">An NPC shoots you and the damage lands</span></div><p>The headline check for the attack pass, and what <a href="Hostility.html">HOSTILITY-5</a> has been blocked on since it was
+      written.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, then step back a few paces</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-2-2" type="checkbox"/><span class="step-body"><span class="lede">Stand in front of it and do nothing</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "opens fire" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-2-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the NPC opens fire, the damage lines name the monster as the attacker, and hits show
+      client-side. Shields absorb first, exactly as they do from any other source.</p></div>
+      <p><strong>Read this off the log, not the health bar.</strong> The Chosen's rifle does 1 damage a round, and the
+      template asks for two rounds every 175ms. <code>AttackWindow</code>'s 250ms floor slows that to <strong>8 rounds a
+      second, so 8 dps</strong> — counted straight off a 2026-08-12 log, which runs exactly 8 <code>damage from</code> lines
+      per second for 190 lines. (The template rate would be 11.4; the floor is why it isn't. Both numbers
+      are real, 8 is the one that lands.) Against the 3000-shield stand-in from
+      <a href="../gaps/data.md#data-1">DATA-1</a> that's six minutes before health moves at all, and continuous fire
+      keeps resetting the recharge delay so the bar just sits there. A working attack pass and a broken one
+      look identical on screen; the <code>damage from</code> lines are the difference. See
+      <a href="Session-Setup.html">Session Setup</a> for what to spawn instead when the point is to watch something die.</p>
+      <p>If it opens fire and nothing lands, the shot is going out but missing — check whether the rounds are
+      leaving from a sensible place by re-reading NPC-COMBAT-1's facing result first, since the muzzle position is
+      derived from orientation.</p>
+      <p>Re-run <a href="Hostility.html">HOSTILITY-5</a> at the same time; this is the same scenario and it's the only check that
+      exercises <code>CanDamage</code> with a monster as the attacker rather than the target.</p>
+      <p><strong>First run, 2026-08-12: failed, and the AI wasn't at fault.</strong> The Chosen turned to aim and never
+      fired. It logged <code>holding fire ... WeaponUnusable (weapon NPC Assault Rifle, reach 0m)</code> 20 times a
+      second: its rifle resolved to a range of zero, so there was no distance at which shooting made
+      sense. Root cause was <a href="../gaps/data.md#data-11">DATA-11</a>, a zero multiplier in the weapon's
+      <code>WeaponTemplateModifiers</code> row being read as a literal zero — the rifle's real reach is 180m. Fixed
+      and deployed; re-run.</p>
+      <p>The failure was only diagnosable because the hold-fire reason gets logged. The run before that one
+      produced no output at all and could have been anything.</p><div class="result"><label for="r-npc-combat-2">Result</label><textarea data-k="n-npc-combat-2" id="r-npc-combat-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-3-cover-stops-the-shot">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-3</span>
+      <span class="block-t">Cover stops the shot</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-3</span><span class="marker pass">[x]</span><span class="entry-t">Cover stops the shot</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, then step back a few paces</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-3-2" type="checkbox"/><span class="step-body"><span class="lede">Let it open fire, then step fully behind something solid</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "opens fire" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: damage stops while you're behind cover and resumes when you step out. The NPC keeps you as its
+      target throughout — target selection holds a target through broken line of sight on purpose, so a
+      <code>target ... -&gt;</code> line going empty the moment you break sight is wrong.</p></div>
+      <p><strong>Cover has to be an entity, not scenery.</strong> <code>LoadMapsCollision</code> is <code>false</code> in <code>GameServer.dll.config</code>,
+      so the server holds no terrain and no buildings — only entity colliders. Hiding behind a rock is
+      hiding behind nothing as far as the raycast is concerned, and the shots go straight through. This is
+      also why an NPC can shoot you through a wall.</p>
+      <p>Use a deployable that actually has a collision id. <code>deployable 395</code> (Battleframe Station) does, is
+      large, and one already stands in the Coral Forest. Many others don't and log
+      <code>Deployable N info has no collision id, what do?</code> at startup — 28 of them in zone 448 alone — so
+      check for that line before trusting a given id as cover.</p>
+      <p>First run, 2026-08-12: <strong>inconclusive, and the entry was at fault.</strong> Damage kept landing behind
+      scenery, which looked like broken line of sight but only meant there was no scenery on the server to
+      break it — the shots weren't passing through cover, there was no cover. Passed on the re-run against
+      an entity collider the same day.</p>
+      <p>Worth carrying well past this entry: with <code>LoadMapsCollision</code> off, every server-side raycast in PIN
+      sees an empty world with a few entities floating in it. That covers every shot a player fires too,
+      not just an NPC's.</p><div class="result"><label for="r-npc-combat-3">Result</label><textarea data-k="n-npc-combat-3" id="r-npc-combat-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-4-walking-out-of-range-disengages">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-4</span>
+      <span class="block-t">Walking out of range disengages</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-4</span><span class="marker pass">[x]</span><span class="entry-t">Walking out of range disengages</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-4-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, then step back a few paces</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-4-2" type="checkbox"/><span class="step-body"><span class="lede">Walk away in a straight line until it stops shooting, counting the distance</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-4-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: firing stops and the log shows the target dropping back to empty, somewhere around 60m out —
+      the leash, deliberately wider than the 40m it takes to notice you in the first place so that
+      shuffling across the boundary doesn't make it drop and re-acquire you every tick.</p></div>
+      <p>40m and 60m are invented, from <a href="../gaps/data.md#data-10">DATA-10</a>, not numbers from <code>dbmonster</code>. This
+      entry confirms disengagement behaves like a radius, not that it's the right radius.</p>
+      <p><strong>First run, 2026-08-12: failed, and found a real one.</strong> The NPC only stopped firing when it left
+      draw distance, and resumed the instant it came back — no measurable radius at all. Two causes, both
+      now fixed:</p>
+      <ul>
+      <li>Engagement was bounded by the <strong>weapon's</strong> reach rather than perception. The Chosen's rifle carries
+        180m against a 40m perception radius, so an NPC that noticed you at 40m kept shooting until you
+        scoped out. <code>TargetSelection</code> now forgets anything past the leash outright.</li>
+      <li>Threat was <strong>uncapped</strong>. A target that stood in front of an NPC for a minute banked several hundred
+        points, which at 8/sec took minutes to decay under the engage threshold — so it never really let
+        go. Capped at 60, which crosses back under the threshold in 6.25 seconds.</li>
+      </ul>
+      <p>Both are covered offline now in <code>ThreatTableTests</code>; what those can't tell you is where the boundary
+      actually falls in metres, which is this entry's job. Passed on the re-run the same day — the NPC now
+      disengages at a measurable distance well inside draw distance, instead of holding on until scope-out.</p>
+      <p><strong>Locomotion changed how this one behaves, without changing what it proves.</strong> An NPC now follows
+      you, so walking away no longer opens the gap on its own: it keeps pace at its own speed until it
+      hits the 50m chase leash from where it spawned, turns round, and only then does the separation grow
+      fast enough to cross 60m and drop you. The result is the same and the middle of it looks completely
+      different, so re-run it expecting a chase. NPC-COMBAT-11 is the entry that measures the leash itself. Of the
+      first seven entries this is the only one locomotion touches — the rest spawn their monster inside the
+      12m it wants to stand at, so it has no reason to move.</p><div class="result"><label for="r-npc-combat-4">Result</label><textarea data-k="n-npc-combat-4" id="r-npc-combat-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-5-the-firing-rhythm-reads-as-a-weapon">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-5</span>
+      <span class="block-t">The firing rhythm reads as a weapon</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-5</span><span class="marker pass">[x]</span><span class="entry-t">The firing rhythm reads as a weapon</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-5-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, step back a few paces, and let it shoot for ten seconds or so</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-5-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "opens fire" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the gap between consecutive <code>opens fire</code> timestamps matches the <code>next burst in Nms</code> the line
+      itself reports, the muzzle flash fires once per burst, and it reads as a weapon being fired rather
+      than a strobe or one shot every few seconds.</p></div>
+      <p>What this can't tell you is whether the rhythm matches Firefall's — <code>AttackWindow.Resolve</code> is a
+      reading of <code>MsPerBurst</code>, <code>MsBurstDuration</code> and <code>RoundsPerBurst</code> that nothing has ever confirmed. A
+      capture is the only thing that answers that; see <a href="Capture-Replay.html">Capture Replay</a>.</p><div class="result"><label for="r-npc-combat-5">Result</label><textarea data-k="n-npc-combat-5" id="r-npc-combat-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-6-two-hostile-npcs-fight-each-other">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-6</span>
+      <span class="block-t">Two hostile NPCs fight each other</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-6</span><span class="marker pass">[x]</span><span class="entry-t">Two hostile NPCs fight each other</span></div><p>Cheap, and the only entry here that doesn't need the player in the line of fire.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-6-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 290</code> — Accord Assault, faction 1</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-6-2" type="checkbox"/><span class="step-body"><span class="lede">Walk about six paces, then <code>npc 1196</code> — Chosen Fiend, faction 2</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-6-3" type="checkbox"/><span class="step-body"><span class="lede">Stand well clear and watch</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: they turn on each other, trade fire, one dies, and the corpse despawns about 30s later. The
+      survivor stops firing the moment the other dies rather than emptying rounds into the body.</p></div>
+      <p><strong>First run, 2026-08-12: half of it worked, and the other half found the bug.</strong> The Accord trooper
+      turned, opened fire and rendered full muzzle VFX — 280 bursts in the log — and the Chosen it was
+      shooting never lost a point of health. Not one <code>damage from</code> line the whole session. The Accord's
+      Famas resolved to <strong>0 damage per round</strong>, and <code>TakeDamage</code> drops anything that rounds to zero before
+      it logs, so the shots were real, reached the target, and were worth nothing.</p>
+      <p>Same root cause as NPC-COMBAT-2's failure, from the opposite column: <a href="../gaps/data.md#data-11">DATA-11</a> zeroed
+      this weapon's <code>damage_per_round</code> where it zeroed the Chosen's <code>range</code>. Its real damage is 65. Passed
+      whole on the re-run, including the half that never got to run the first time: one of them dies, the
+      corpse despawns, and the survivor stops firing rather than emptying rounds into the body.</p>
+      <p>That the two monsters failed <em>differently</em> is what made this findable. One weapon losing its range
+      and another losing its damage looks like two unrelated bugs right up until you read both rows.</p><div class="result"><label for="r-npc-combat-6">Result</label><textarea data-k="n-npc-combat-6" id="r-npc-combat-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-7-a-burst-that-loses-its-target-ends-cleanly">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-7</span>
+      <span class="block-t">A burst that loses its target ends cleanly</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-7</span><span class="marker pass">[x]</span><span class="entry-t">A burst that loses its target ends cleanly</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-7-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, then step back a few paces</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-7-2" type="checkbox"/><span class="step-body"><span class="lede">Let it open fire, then kill it mid-burst</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-7-3" type="checkbox"/><span class="step-body"><span class="lede">Repeat, this time killing it with <code>rment</code> while it's firing</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: no stuck firing animation on the corpse, and nothing in the log after the kill mentions that
+      entity opening fire or dealing damage. <code>rment</code> while an NPC is mid-burst is the case where state
+      outlives the entity, which is what the prune pass in <code>AIEngine</code> is for.</p></div><div class="result"><label for="r-npc-combat-7">Result</label><textarea data-k="n-npc-combat-7" id="r-npc-combat-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-8-an-npc-closes-the-distance">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-8</span>
+      <span class="block-t">An NPC closes the distance</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-8</span><span class="marker pass">[x]</span><span class="entry-t">An NPC closes the distance</span></div><p>The milestone's exit condition, and the one entry here that has to pass for locomotion to count as
+      landed at all. Everything after it is about how well.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-8-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-8-2" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code> — its first line is <code>&lt;your character&gt; at &lt;X, Y, Z&gt;</code>; those are the numbers the next
+         command needs</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-8-3" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196 &lt;X+35&gt; &lt;Y&gt; &lt;Z&gt;</code> — a Chosen Fiend 35m away, inside the 40m it can notice you from and
+         well outside the 12m it wants to stand at</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-8-4" type="checkbox"/><span class="step-body"><span class="lede">Stand still and watch it the whole way in</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-8-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ (target|sets off|opens fire)" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: it acquires you, turns, and runs in — <code>sets off after &lt;your entity id&gt; at 6m/s, 35m away,
+      stopping at 12m</code> — covers the ground in about four seconds, stops without walking into you, and
+      opens fire from where it stopped. On screen the important part is that it <em>arrives</em> and <em>stops</em>:
+      an NPC that keeps going until it's standing inside you is a stopping-distance bug, and one that
+      never sets off at all is either a stale deploy or a target it never acquired, which step 5's first
+      line tells you apart.</p></div>
+      <p>6 m/s is not invented — it is monster 1196's chassis <code>FastSpeed</code>, read through
+      <code>MoveSpeed.Resolve</code>. What is invented is the 12m it stops at
+      (<a href="../gaps/data.md#data-10">DATA-10</a>); nothing in <code>dbmonster</code> says how close a monster likes to be.</p>
+      <p>If it sets off and never arrives, check the log for it repeatedly setting off and stopping — that
+      is the stopping distance oscillating, and it means the hysteresis in <code>NpcMovement</code> isn't holding.</p>
+      <p>If it jumps instead of walking, that is <a href="../gaps/network.md#net-22">NET-22</a> coming back: the
+      approach is happening on the server and not being sent. It is the one failure in this entry the log
+      cannot help with, because every line the AI writes describes the server's own copy — which was
+      correct throughout the 2026-08-13 sitting, while the client was drawing a teleport. Watching the
+      screen is the only instrument for this one.</p><div class="result"><label for="r-npc-combat-8">Result</label><textarea data-k="n-npc-combat-8" id="r-npc-combat-8" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-9-the-run-reads-as-a-run">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-9</span>
+      <span class="block-t">The run reads as a run</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-9</span><span class="marker pass">[x]</span><span class="entry-t">The run reads as a run</span></div><p>Separate from NPC-COMBAT-8 because they fail separately: an NPC can arrive at exactly the right place while
+      looking wrong the whole way, and that is the more likely of the two.</p>
+      <p>Not answerable on 2026-08-13 — a teleporting monster has no gait to judge
+      (<a href="../gaps/network.md#net-22">NET-22</a>). This is still the entry most likely to come back with
+      something, because <code>0x2004</code> has never been seen on the wire and now finally gets to be.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-9-1" type="checkbox"/><span class="step-body"><span class="lede">Run NPC-COMBAT-8 and watch the monster's legs, not its position</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: it plays a run animation while it closes and settles into an idle when it stops.</p></div>
+      <div class="callout fail"><p>Fail, it slides along in an idle pose the whole way: <code>RunningState</code> in <code>NpcMovement</code> is wrong. It's
+      <code>0x2004</code> — <code>Movestate.Running</code> in the high nibble, <code>MovementFlags.Movement</code> in the low byte —
+      derived from those two enums and never seen on the wire, on top of a packing that
+      <a href="../gaps/network.md#net-12">NET-12</a> already has down as unconfirmed. Nothing else in the server
+      sets a movement state for a character it owns, so this is the first time the value has been asserted
+      rather than echoed back from a client. Write down what it did do, because the failure is the
+      evidence: a sliding idle says the high nibble is being read somewhere else, and a monster that
+      crouches or falls over says it's being read as a different <code>Movestate</code>.</p></div>
+      <p>The resting value is unchanged from what every NPC has always had (<code>0x1000</code>, standing), so a wrong
+      value here can only break the moving case.</p><div class="result"><label for="r-npc-combat-9">Result</label><textarea data-k="n-npc-combat-9" id="r-npc-combat-9" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-10-a-short-ranged-monster-comes-all-the-way-in">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-10</span>
+      <span class="block-t">A short-ranged monster comes all the way in</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-10</span><span class="marker pass">[x]</span><span class="entry-t">A short-ranged monster comes all the way in</span></div><p>The stopping distance is bounded by what the monster can actually hit you from, so two monsters with
+      very different weapons should stop in very different places.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-10-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-10-2" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code>, then <code>npc 1196 &lt;X+35&gt; &lt;Y&gt; &lt;Z&gt;</code> — Chosen Fiend, 180m rifle</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-10-3" type="checkbox"/><span class="step-body"><span class="lede">Watch where it stops, then <code>rment</code> to clear it</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-10-4" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code>, then <code>npc 528 &lt;X+35&gt; &lt;Y&gt; &lt;Z&gt;</code> — Melded Aranha, 5m reach and 11 m/s</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-10-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "sets off" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the Fiend stops about 12m out and shoots from there; the Aranha runs past that and keeps
+      coming until it's about 4m away — <code>stopping at 4m</code> in the log — because 80% of a 5m reach is as far
+      back as it can stand and still land anything. Both then fire.</p></div>
+      <p>The Aranha is also the fastest thing in the test set at 11 m/s against the Fiend's 6, so the
+      difference in how they cross the ground should be obvious without measuring it.</p>
+      <div class="callout fail"><p>Fail, the Aranha stops at 12m with the Fiend and never fires: the stopping distance isn't reading
+      the weapon's reach, and <code>holding fire ... OutOfRange</code> in the log is what that looks like from the
+      other side.</p></div>
+      <div class="callout pass"><p><strong>Passed 2026-08-13, and it took two goes to see what the log was saying.</strong> The Aranha ends up at
+      4.000004m and lands 49 a swing every 1280ms. But its <em>first</em> decision was wrong:</p></div>
+      <span class="cmd"><pre><code>12:07:00  sets off ... at 11m/s, 33.5m away, stopping at 12m</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      12:07:04  sets off ... at 11m/s,  7.3m away, stopping at 4m</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>It ran to rifle distance, stopped, and only then closed. <code>NpcMovement</code> reads the attack window that
+      <code>NpcCombat</code> resolves, and movement runs first — so on the tick an NPC acquires a target the window
+      is empty and <code>StandoffFor</code> falls back to the ranged default. <code>AIEngine</code> now resolves the weapon once
+      before either pass. <strong>On the next run, check both lines say 4m</strong>; a stall at 12m before it closes is
+      this coming back, and it is not visible from the screen because the Aranha does eventually arrive.</p>
+      <p>Two things watched during this entry are not failures of it and are recorded elsewhere. The Aranha
+      stands about 90° off the player while attacking — the model's forward axis, confirmed against a
+      Chosen in the same place (<a href="../gaps/client.md#client-3">CLIENT-3</a>), and cosmetic, since the shot is
+      aimed from live positions rather than from what is drawn. And 4m looks far for a claw, but chasing
+      that turned up <code>combatDist=4</code> in the shipped behaviour strings for full-body melee
+      (<a href="../gaps/data.md#data-10">DATA-10</a>) — the invented 80%-of-reach lands on the number retail used, so
+      there is nothing to change until that table can be read properly.</p><div class="result"><label for="r-npc-combat-10">Result</label><textarea data-k="n-npc-combat-10" id="r-npc-combat-10" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-11-it-gives-up-and-goes-home">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-11</span>
+      <span class="block-t">It gives up and goes home</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-11</span><span class="marker pass">[x]</span><span class="entry-t">It gives up and goes home</span></div><p>The leash. Without it a monster follows one player across the zone and never comes back, which is a
+      worse failure than not moving at all because it empties the place out over a session.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-11-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-11-2" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code> and note the position — this is where the NPC's home will be</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-11-3" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code> — spawns at your feet, so home is exactly where you're standing</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-11-4" type="checkbox"/><span class="step-body"><span class="lede">Walk away in a straight line, slowly enough that it keeps following, past 50m from that spot</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-11-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ (has chased|is home)" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: it follows, then turns round somewhere past 50m — <code>has chased &lt;you&gt; 50.xm from home and is
+      going back</code> — walks back to where it spawned, logs <code>is home</code>, and stops. Then walk back towards it
+      and it should engage again, because arriving home is what lets it chase a second time.</p></div>
+      <p>Watch for it turning round and immediately coming back out, which would show up as <code>has chased</code> and
+      <code>is home</code> alternating every few seconds. That oscillation is what the <code>Returning</code> flag exists to
+      prevent, and it's the most likely thing to be wrong here.</p>
+      <p>50m is invented (<a href="../gaps/data.md#data-10">DATA-10</a>). This entry confirms an NPC leashes, not that
+      it leashes at the right distance.</p>
+      <p>It keeps shooting while it walks home, which looks odd and is deliberate — only movement is leashed.
+      It stops on its own when you pass the 60m NPC-COMBAT-4 measured, since past that it forgets you entirely.</p><div class="result"><label for="r-npc-combat-11">Result</label><textarea data-k="n-npc-combat-11" id="r-npc-combat-11" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-12-it-doesnt-follow-you-into-the-air">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-12</span>
+      <span class="block-t">It doesn't follow you into the air</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-12</span><span class="marker pass">[x]</span><span class="entry-t">It doesn't follow you into the air</span></div><p>The one that needs no client fix and no data to be a real bug. The server has no terrain at all
+      (<code>LoadMapsCollision</code> is off, <code>MapsPath</code> is empty), so an NPC has no idea where the ground is; it
+      takes the height of whatever it's chasing and treats that as ground, on the grounds that a player
+      standing on the ground is a ground measurement. A jetpack breaks that assumption, and
+      <code>NpcMovement</code> is meant to notice.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-12-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-12-2" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code>, then <code>npc 1196 &lt;X+35&gt; &lt;Y&gt; &lt;Z&gt;</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-12-3" type="checkbox"/><span class="step-body"><span class="lede">Let it start closing, then jetpack straight up and hold</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-12-4" type="checkbox"/><span class="step-body"><span class="lede">Watch it, then land somewhere else and watch it again</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-12-5" type="checkbox"/><span class="step-body"><span class="lede">Find something to stand on — a rock, a container, the roof of the Battleframe Station — and
+         watch from up there</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: it keeps chasing across the ground underneath you and does not rise. When you land it walks
+      to where you are. Standing on something a few metres up, it comes to the bottom and stops there
+      rather than climbing an invisible ramp to your feet.</p></div>
+      <p>Two separate rules are being checked and they can fail independently. The first is that a target's
+      height is only believed while the target is on the ground — <code>IsAirborne</code>, which the client reports
+      on every pose message. The second is <code>Steering.MaxSlope</code>: no destination is walked to up a slope
+      steeper than 45° measured over the whole remaining approach, so a target on a roof 10m up and 3m
+      away is refused outright. The unit tests in <code>SteeringTests</code> cover both as arithmetic; this is
+      whether they read as an animal on screen.</p>
+      <div class="callout fail"><p>Fail, it levitates: whichever rule is wrong, say which of the two shapes it took — rising while you
+      hover is the airborne check, and climbing a smooth invisible ramp toward a rooftop is the slope
+      limit.</p></div><div class="result"><label for="r-npc-combat-12">Result</label><textarea data-k="n-npc-combat-12" id="r-npc-combat-12" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-13-it-tracks-you-while-it-shoots">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-13</span>
+      <span class="block-t">It tracks you while it shoots</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-13</span><span class="marker pass">[x]</span><span class="entry-t">It tracks you while it shoots</span></div><p>Written off a symptom that had been misread as roughness since combat testing started, and only
+      recognised as a defect on 2026-08-13: a Chosen would take several seconds to react to a player
+      moving, holding its aim and firing where you had been before snapping round. It was
+      <a href="../gaps/network.md#net-22">NET-22</a> — the same unreplicated pose as the teleporting — and this entry
+      exists to make sure it stays fixed, because it is the half nobody would look for after watching a
+      monster walk correctly.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-13-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-13-2" type="checkbox"/><span class="step-body"><span class="lede"><code>hazard</code>, then <code>npc 1196 &lt;X+20&gt; &lt;Y&gt; &lt;Z&gt;</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-13-3" type="checkbox"/><span class="step-body"><span class="lede">Let it acquire you and open fire, then strafe left and right across its front, then circle it</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-13-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ (opens fire|holding fire)" ~/Games/PIN/logs/GameServer.log | tail -10</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the body turns with you continuously while it fires, no worse than a fifth of a second behind.
+      There should be no version of it firing at empty ground and then snapping.</p></div>
+      <p>The server tracks at 20Hz — <code>NpcCombat.Face</code> runs on the 50ms AI tick with a deadband of about a
+      degree — and the pose goes out on the same tick, so a lag longer than a tick or two is the wire, not
+      the AI. Half a second of delay on <em>first</em> acquisition is correct and not a failure: threat gains
+      20/s against a threshold of 10, so an NPC takes 0.5s to decide it has a target at all
+      (<a href="../gaps/data.md#data-10">DATA-10</a> — the rates are invented).</p>
+      <div class="callout fail"><p>Fail, it lags by seconds and snaps: <code>NpcPose</code> is not sending, or not being flushed. Fail, it turns
+      smoothly but late by a fixed amount: that is client interpolation working off <code>ShortTime</code>, and worth
+      writing down as a number rather than an impression.</p></div>
+      <div class="callout fail"><p>Fail, it turns in steps rather than smoothly: 20Hz is too coarse for the client to interpolate
+      between, and the AI tick rate is the thing to change, not the pose rate — they are deliberately the
+      same so an NPC never sends a pose it hasn't decided on.</p></div>
+      <p><strong>The damage is not what this entry measures, and doesn't move with it.</strong> <code>NpcCombat.Fire</code> passes a
+      direction recomputed each tick from live positions, so shots have always been resolved against where
+      you actually are. A monster that looks like it is firing wide can still be hitting you, which is
+      exactly how this survived NPC-COMBAT-2, NPC-COMBAT-5 and NPC-COMBAT-6.</p><div class="result"><label for="r-npc-combat-13">Result</label><textarea data-k="n-npc-combat-13" id="r-npc-combat-13" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-14-the-zone-has-monsters-in-it-before-you-type-anything">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-14</span>
+      <span class="block-t">The zone has monsters in it before you type anything</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-14</span><span class="marker pass">[x]</span><span class="entry-t">The zone has monsters in it before you type anything</span></div><div class="callout pass"><p><strong>Passed 2026-08-13, on the fourth attempt and the first one that failed at nothing.</strong> Twelve
+      monsters were standing on the basin floor at login, the audit line read
+      <code>13 standing NPC(s), no hostile pairs within perception of each other</code>, and the tester walked into
+      them and fought without spawning anything. That closes M2.</p></div>
+      <p>The milestone's exit condition, and the only entry here that forbids the <code>npc</code> command. Everything
+      NPC-COMBAT-1 to NPC-COMBAT-13 checked was checked against a monster put in front of the tester by hand. This asks
+      whether <a href="../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json">spawn_group.json</a> puts
+      them there on its own.</p>
+      <p>Zone 448 ships three groups and thirteen monsters, twelve of them on the basin floor at Z 401
+      south-west of the station and one placed in game on the shelf above at Z 413, and every one of them
+      stands on a position a player has already stood on. There is deliberately nothing within 120m of
+      where you log in; see <a href="../gaps/data.md#data-15">DATA-15</a> for why, because it is a constraint rather
+      than a design.</p>
+      <p>The thirteenth is worth knowing about before you go looking for it. It was added mid-session with
+      <code>spawngroup add 1196 1</code> and belongs to Basin Mouth for its respawn delay only — it stands about 70m
+      from the rest of that group, up on the shelf rather than down on the floor.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-14-1" type="checkbox"/><span class="step-body"><span class="lede">Start the server and log in to zone 448 as usual (<a href="Session-Setup.html">Session Setup</a>). Type no
+         admin command until step 5.</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-14-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "spawn group" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-14-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -acE "Spawn group .+: monster [0-9]+ as" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-14-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "hostile and" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-14-5" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-14-6" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 160 175 401</code>, then walk north-west along the basin toward (117, 201).</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: step 2 prints <code>Loaded 3 spawn group(s) for zone 448, 13 monster(s)</code> and an audit line reading
+      <code>14 standing NPC(s), no hostile pairs within perception of each other</code> — one more than the monsters,
+      because Aero is standing too — step 3 prints <code>13</code>, step 4 prints nothing, and six monsters are strung
+      out along the basin with their feet on the ground. They notice you, close, and attack without
+      anything being spawned.</p></div>
+      <p><strong>Three failures have already happened here, none of them in the spawn code.</strong> They are worth
+      checking for by name because each has a different signature.</p>
+      <p>Step 4 covers the first. Zone 448's original content put Aranha, Chosen and Melded within 25m of
+      each other, all three hostile to the player and, unnoticed, to each other. The zone fought itself
+      out in twenty seconds and killed Aero on the way through. Any output from step 4 means it is
+      happening again and nothing below is worth reading.</p>
+      <p>The second was <strong>being shot by something never on screen</strong>: a group anchored under the terrain, with
+      the log showing three Chosen closing to 9m and holding fire for <code>NoLineOfSight</code>. The third was
+      <strong>monsters inside walls</strong>, from scattering a group over a radius across ground that moves 12m
+      vertically inside 9m horizontally.</p>
+      <p>Both height failures have the same fix now, and it does not involve editing a file offline. Walk to
+      where the monster should be and place it there:</p>
+      <span class="cmd"><pre><code>spawngroup list</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      spawngroup add 1196 1</code></pre><button class="copy" type="button">Copy</button></span>
+      <p><code>add</code> puts the monster at your feet, saves, and respawns the group, so you see the result
+      immediately. It refuses while you are airborne. Everything the command does is in
+      <a href="../streams/world-authoring.md">Authoring World Content</a>, including how to copy the edited file back
+      into the repo, which is the step that is easy to forget and loses the session's work.</p>
+      <div class="callout fail"><p>Fail, nothing spawns and step 2 prints nothing: the loader never ran. <code>SpawnGroupSim.Load</code> is called
+      from <code>EntityManager.SpawnZoneEntities</code>, so check the zone is 448 and that
+      <code>StaticDB/CustomData/spawn_group.json</code> reached the deploy directory.</p></div>
+      <div class="callout fail"><p>Fail, step 3 prints fewer than 13: a member named a monster id the SDB doesn't have, which logs its
+      own line. <code>grep -a "isn't in the SDB" ~/Games/PIN/logs/GameServer.log</code></p></div>
+      <div class="callout fail"><p>Fail, they stand there and ignore you: not a spawn group defect. Faction and perception are NPC-COMBAT-1 and
+      NPC-COMBAT-4, both passing, so suspect the monsters loaded without a weapon before suspecting the AI.</p></div><div class="result"><label for="r-npc-combat-14">Result</label><textarea data-k="n-npc-combat-14" id="r-npc-combat-14" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-15-a-killed-spawn-comes-back-where-it-was">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-15</span>
+      <span class="block-t">A killed spawn comes back where it was</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-15</span><span class="marker pass">[x]</span><span class="entry-t">A killed spawn comes back where it was</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on all three of North Flats' slots at once</strong>, which is a better result than the
+      entry asks for because the positions can be compared across three independent cycles:</p></div>
+      <span class="cmd"><pre><code>17:34:25 Spawn group North Flats: 2305008157765798656 is gone, respawning in 90000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      17:35:55 Spawn group North Flats: monster 1196 as 2305013543654853632 at &lt;31.57, 268.86, 401.03&gt;</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      17:36:09 Spawn group North Flats: monster 1196 as 2305013775583087872 at &lt;41.18, 270.48, 401.03&gt;</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      17:36:39 Spawn group North Flats: monster 528 as 2305014282389229056 at &lt;21.95, 268.54, 401.03&gt;</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Ninety seconds to the digit, a new entity id each time, and the position identical to the original
+      spawn line rather than drifted — which is the thing to watch, and the reason the entry says to read
+      it off the log instead of off the screen.</p>
+      <p>A group that empties permanently is a debug row with extra steps. This is what makes the zone a
+      place rather than a one-time delivery.</p>
+      <p>Basin West refills 90s after a place falls empty, and a corpse holds its place for the 30s
+      <code>CharacterEntity.Die</code> gives it, so the whole cycle is about two minutes from the kill. It is the
+      group to use because three monsters are easier to keep track of than the six at Basin Mouth.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-15-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-15-2" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 90 224 401</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-15-3" type="checkbox"/><span class="step-body"><span class="lede">Kill exactly one of the three. Note the wall-clock time.</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-15-4" type="checkbox"/><span class="step-body"><span class="lede">Stay where you are and watch the spot it died on.</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-15-5" type="checkbox"/><span class="step-body"><span class="lede">After three minutes:
+         <code>grep -a "Spawn group Basin West" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the log shows a <code>... is gone, respawning in 90000ms</code> line about 30s after the kill, then a
+      <code>... monster &lt;id&gt; as &lt;new id&gt; at &lt;X, Y, Z&gt;</code> line about 90s after that, carrying the same position as
+      the original spawn line for that slot. A new monster is standing there, and the other two were never
+      disturbed.</p></div>
+      <p>Watch the position in the two spawn lines rather than trusting the one on screen. A slot that
+      respawns at a drifted position means the placement is being recomputed from something that moved
+      instead of read off the slot, and that only becomes obvious after several cycles.</p>
+      <div class="callout fail"><p>Fail, it never comes back: the slot is still holding an entity id that was never removed. Corpse
+      despawn is <code>EntityManager</code>'s lifetime tracker, so check the corpse actually disappeared before
+      blaming the spawn group.</p></div>
+      <div class="callout fail"><p>Fail, it comes back instantly: the delay is being measured from the wrong time, or <code>RespawnDelayMs</code>
+      deserialised to 0, which <code>SpawnGroupContentTests</code> asserts against offline.</p></div>
+      <div class="callout fail"><p>Fail, two come back for one kill: a slot is being filled twice, which would mean <code>EntityId</code> is not
+      being recorded after the spawn.</p></div><div class="result"><label for="r-npc-combat-15">Result</label><textarea data-k="n-npc-combat-15" id="r-npc-combat-15" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-npc-combat-16-the-basin-pack-can-kill-you">
+    <button class="block-head" type="button">
+      <span class="block-n">NPC-COMBAT-16</span>
+      <span class="block-t">The basin pack can kill you</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-16</span><span class="marker pass">[x]</span><span class="entry-t">The basin pack can kill you</span></div><div class="callout pass"><p><strong>Passed 2026-08-13, and it is the entry that killed a player for the first time.</strong> The pack engaged,
+      held the tester through a ten-minute fight, and took them from 19192 to zero without anything else
+      being spawned. Three things came out of the run and none of them are spawn group defects; all three
+      are recorded below the steps.</p></div>
+      <p>"Worth fighting" was the word in the milestone. Basin Mouth is six monsters strung along the basin
+      between (153.7, 168.9) and (117.1, 201.2), four Chosen Fiend (1196) at range and two Melded Aranha
+      (528) in close, spread over about 45m so they arrive in ones and twos rather than as a wall.</p>
+      <p>Chosen and Melded are the pairing this content is built on because they are friendly to each other
+      and hostile to the player. That is not a general property of monsters and it is the thing NPC-COMBAT-14 step 4
+      exists to keep true.</p>
+      <p>Run this with invulnerability off. The entry is partly about whether the fight resolves at all and
+      partly about whether it is survivable, and neither reads correctly if nothing can hurt you.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="npc-combat-16-1" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-16-2" type="checkbox"/><span class="step-body"><span class="lede"><code>tp 118.9 283.5 401</code>, which is a measured footing 82m north of the nearest monster</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-16-3" type="checkbox"/><span class="step-body"><span class="lede">Walk a few steps and check you are on the surface rather than under it:
+         <code>grep -a "Ground sample" ~/Games/PIN/logs/GameServer.log | tail -3</code></span></span></label>
+      <label class="step"><input checked data-k="npc-combat-16-4" type="checkbox"/><span class="step-body"><span class="lede">Walk south down the basin toward (117, 201) until they notice you. Fight, or die to it.</span></span></label>
+      <label class="step"><input checked data-k="npc-combat-16-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: they engage you and only you, the Chosen open fire from range while the Aranha close to
+      contact, and the fight goes one way or the other without anything standing still. Every target line
+      in step 5 should name your character; a monster targeting another monster is the NPC-COMBAT-14 step 4 failure
+      arriving late.</p></div>
+      <p>Step 3 exists because <strong>the first run of this entry was fought from inside a hillside.</strong> The original
+      instruction was <code>tp 160 175 401</code>, a coordinate nobody had stood on, and it put the tester about 8m
+      under the basin floor. The fight still worked — the monsters could see them and shoot them, which is
+      how it went unnoticed — but every reading of distance and cover it produced was worthless.</p>
+      <p>Worse, the teleport destination was written into the footing record as if it were ground, because
+      the client reports grounded inside terrain exactly as it does on top of it. That is the one input the
+      placement tool trusts, so it has been closed: <code>CharacterEntity.PlacedPosition</code> marks wherever a
+      character was <em>put</em> rather than walked to, <code>MovementRelay</code> records no footing until you leave that
+      spot, and <code>spawngroup add</code> refuses outright with <em>"You were put here rather than walking here, which
+      is not proof of ground."</em> Walk before you place, every time.</p>
+      <p>If step 3 reads about 401 you are on the basin floor. Roughly 392 means you are inside it, and the
+      answer is to walk out and back rather than to trust anything the run tells you.</p>
+      <p>The 45m spread is deliberate and worth judging. It is what a walked placement gives you, and the
+      question is whether a running fight along a basin reads better or worse than a camp you pull all at
+      once. If it reads worse, the fix is <code>spawngroup drop</code> and re-placing them closer together, which is
+      a two-minute job now.</p>
+      <div class="callout fail"><p>Fail, they trickle in one at a time in a way that feels wrong rather than staged: perception is 40m
+      against a 45m spread, so arriving separately is arithmetic, not a defect. Judge the feel, and record
+      it as a placement note rather than a bug.</p></div>
+      <div class="callout fail"><p>Fail, the fight is trivially easy or instantly lethal: not a spawn group defect, and worth reading
+      against <a href="../gaps/data.md#data-6">DATA-6</a> (monster health is a hardcoded placeholder) and
+      <a href="../gaps/data.md#data-14">DATA-14</a> before touching the pack size.</p></div>
+      <p><strong>Death is a dead end, and that is <a href="../ISSUE-REGISTER.md">NET-23</a>, not this entry.</strong> When the tester
+      hit zero the server did everything right — all six attackers dropped target and walked home in the
+      same second — and then nothing happened. <code>RequestRespawn</code> is implemented and the client never sends
+      it, so the session ends with a reconnect. Budget for that when you run this with <code>invuln off</code>.</p>
+      <p><strong>The balance reading, recorded because it is the first one taken against real content.</strong> The
+      tester's judgement was that low-level enemies do barely any damage while also being bullet sponges,
+      and that their memory of retail's time-to-kill is too hazy to check it against. The log splits that
+      in two and only one half is a gap. Incoming is roughly right: 19192 player health is
+      <a href="../gaps/data.md#data-3">DATA-3</a>'s live-observed figure, and the Chosen's 1 damage a shot works out
+      near the 8 dps <a href="../gaps/data.md#data-14">DATA-14</a> measured for monster 1196, so several minutes to
+      chew through a full health bar is close to what retail did. Outgoing is the gap: every monster in the
+      game has <a href="../gaps/data.md#data-6">DATA-6</a>'s flat 2500 pool, about 64 rifle shots, whatever it is and
+      whatever level it is. Don't tune the pack for this — it is one number in one file, and re-judging
+      after DATA-6 closes is cheaper than re-placing monsters twice.</p><div class="result"><label for="r-npc-combat-16">Result</label><textarea data-k="n-npc-combat-16" id="r-npc-combat-16" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-npc-combat-v1"></script>
+

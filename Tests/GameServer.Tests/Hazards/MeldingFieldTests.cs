@@ -9,7 +9,7 @@ namespace GameServer.Tests.Hazards;
 ///     degenerate one, which side is which. The zone 448 cases pin the two readings that aren't in the
 ///     data: that the offsets are Hermite tangents, and that melded ground is to the left of the directed
 ///     curve. Those are only as good as the shipped positions they're checked against, and the in-game
-///     confirmation is E3 in Docs/In-Game-Tests/Environment.md.
+///     confirmation is E3 in Docs/In-Game-Tests/Environment.html.
 /// </summary>
 public class MeldingFieldTests
 {

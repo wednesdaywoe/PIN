@@ -1,0 +1,203 @@
+<title>PIN — Hostility Rules (HOSTILITY-1–HOSTILITY-7)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Hostility Rules (HOSTILITY-1–HOSTILITY-7)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>Added in the current working tree:
+    <a href="../../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs">HostilityRules</a>,
+    <code>SDBUtils.GetFactionStance</code>, <code>hostility</code>. See
+    <a href="../Architecture/06-combat-and-damage.md">layer 6</a>.</p>
+  </section>
+  <section class="block" data-open="true" id="-hostility-1-confirm-the-faction-stance-encoding-blocks-h2-h6">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-1</span>
+      <span class="block-t">Confirm the faction stance encoding (blocks HOSTILITY-2-HOSTILITY-6)</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-1</span><span class="marker pass">[x]</span><span class="entry-t">Confirm the faction stance encoding (blocks HOSTILITY-2-HOSTILITY-6)</span></div><p>The highest-value check here; everything else in this section depends on it. Verifies that the
+      server's loader reads <code>hostility_stance</code> as the signed scale <code>SDBUtils.ToStance</code> assumes.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="hostility-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the GameServer against a real <code>clientdb.sd2</code>.</span></span></label>
+      <label class="step"><input checked data-k="hostility-1-2" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code> — spawns a Chosen Fiend, faction 2, at your feet</span></span></label>
+      <label class="step"><input checked data-k="hostility-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>target</code>, then <code>hostility</code></span></span></label>
+      </ol></div>
+      <p><strong>It has to be a cross-faction pair, and "fire one shot at anything" is not enough.</strong> The table
+         is a <code>Lazy&lt;&gt;</code> built on the first call to <code>SDBUtils.GetFactionStance</code>, and
+         <a href="../../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs#RELIABILITY-26-RELIABILITY-38">HostilityRules.GetStance</a>
+         returns early — before reaching it — whenever the two entities share a team or a faction. Every
+         player character is faction 1, so shooting scenery, another player, or nothing at all never
+         builds the table and the grep below comes back empty with the server working correctly. Any
+         cross-faction call does it; <code>hostility</code> is the cheapest because it needs no shot, and it's the
+         same two commands as HOSTILITY-2.</p>
+      <div class="steps"><ol start="4">
+      <label class="step"><input checked data-k="hostility-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -a -A3 "faction stance pairs" ~/Games/PIN/logs/GameServer.log
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Record the <code>Stance values in use</code> and <code>Faction default stances in use</code> lists.</p>
+      <p>An empty grep means step 3 didn't reach a cross-faction pair — check that the <code>npc</code> actually spawned
+      and that <code>target</code> picked it up, then run <code>hostility</code> again. It does not mean the load failed; a
+      genuine load failure logs <code>No faction relations loaded</code> at startup instead.</p>
+      <ul>
+      <li>Pass: the stance list contains negative values → <code>SDBUtils.ToStance</code> reads the column correctly
+        as a signed scale, nothing to change.</li>
+      <li>Fail: the follow-up warning <code>Faction stances hold no negative values</code> appears → the column is an
+        ordinal enum. Cross-faction hostility is disabled until <code>ToStance</code> is rewritten for the values
+        logged. Bring the two lists back and the mapping can be fixed in one method.</li>
+      </ul>
+      <p>Expect a pass: reading <code>dbcharacter::FactionRelations</code> straight out of the retail <code>clientdb.sd2</code>
+      gives <code>hostility_stance</code> values across all 89 rows of -2, -1, 0, 1 and 2, and <code>dbcharacter::Faction</code>
+      carries <code>default_stance</code> of -1, 0 and 1. Both are signed scales, which is what <code>ToStance</code> assumes.
+      What the run still has to confirm is that the server's loader reads the same column the same way.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-11, off HOSTILITY-2 rather than the grep above.</strong> <code>GetFactionStance</code> returns <code>Neutral</code>
+      unconditionally when the column isn't signed, so HOSTILITY-2 printing <code>Stance Hostile</code> for a faction 1 versus
+      faction 2 pair can only happen when the loader read a negative value — which is the whole question.
+      The stance lists were never captured, because the session that answered it predates the corrected
+      step 3 and the log has since been truncated. Grep them off the next session if the exact values are
+      ever wanted; nothing depends on them now.</p></div>
+      <p>The consequence: <code>ToStance</code> needed no change, and the <code>!Signed</code> fallback in
+      <a href="../../UdpHosts/GameServer/StaticDB/SDBUtils.cs">SDBUtils.GetFactionStance</a> — which forced every
+      cross-faction pair to Neutral while the encoding was in doubt — has been removed. The warning that
+      fires when the values aren't signed stays, as the tripwire for a db that doesn't look like retail.</p><div class="result"><label for="r-hostility-1">Result</label><textarea data-k="n-hostility-1" id="r-hostility-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-hostility-2-hostility-against-a-hostile-npc">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-2</span>
+      <span class="block-t"><code>hostility</code> against a hostile NPC</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-2</span><span class="marker pass">[x]</span><span class="entry-t"><code>hostility</code> against a hostile NPC</span></div><p>Verifies that a cross-faction pair resolves to Hostile and is damageable.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="hostility-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code> — spawns a Chosen Fiend, faction 2, at your feet</span></span></label>
+      <label class="step"><input checked data-k="hostility-2-2" type="checkbox"/><span class="step-body"><span class="lede">Aim at it, or <code>target</code> with no argument to ray-cast onto it</span></span></label>
+      <label class="step"><input checked data-k="hostility-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>hostility</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: both faction ids print and differ, stance is <code>Hostile</code> (or <code>Neutral</code> if HOSTILITY-1 failed) and
+      <code>can damage: True</code>.</p></div><div class="result"><label for="r-hostility-2">Result</label><textarea data-k="n-hostility-2" id="r-hostility-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-hostility-3-hostility-against-yourself">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-3</span>
+      <span class="block-t"><code>hostility</code> against yourself</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-3</span><span class="marker pass">[x]</span><span class="entry-t"><code>hostility</code> against yourself</span></div><p>Verifies that the same-faction short circuit reports Friendly and blocks damage both ways.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="hostility-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>target me</code></span></span></label>
+      <label class="step"><input checked data-k="hostility-3-2" type="checkbox"/><span class="step-body"><span class="lede"><code>hostility</code></span></span></label>
+      <label class="step"><input checked data-k="hostility-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>clear</code> when done, so later checks don't inherit the target</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: same faction both sides, stance <code>Friendly</code>, <code>can damage: False</code> in both directions.</p></div><div class="result"><label for="r-hostility-3">Result</label><textarea data-k="n-hostility-3" id="r-hostility-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-hostility-4-player-damage-to-npcs-still-lands">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-4</span>
+      <span class="block-t">Player damage to NPCs still lands</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-4</span><span class="marker pass">[x]</span><span class="entry-t">Player damage to NPCs still lands</span></div><p>The regression HOSTILITY-1 guards against.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="hostility-4-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code></span></span></label>
+      <label class="step"><input checked data-k="hostility-4-2" type="checkbox"/><span class="step-body"><span class="lede">Shoot it to death, landing at least one headshot</span></span></label>
+      <label class="step"><input checked data-k="hostility-4-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: health drops, headshots read higher than body shots, the kill registers, and the corpse
+      despawns about 30s later. If shots register but health never moves, HOSTILITY-1 failed and the stance mapping
+      is inverted.</p></div><div class="result"><label for="r-hostility-4">Result</label><textarea data-k="n-hostility-4" id="r-hostility-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-hostility-5-npc-damage-to-the-player-still-lands">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-5</span>
+      <span class="block-t">NPC damage to the player still lands</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-5</span><span class="marker pass">[x]</span><span class="entry-t">NPC damage to the player still lands</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="hostility-5-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code></span></span></label>
+      <label class="step"><input checked data-k="hostility-5-2" type="checkbox"/><span class="step-body"><span class="lede">Stand in front of it and wait</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: player health drops and the hit shows client-side.</p></div>
+      <p>Unblocked as of the M2 attack pass, having sat <code>[-]</code> since 2026-08-10 on an empty <code>AIEngine.Tick</code>
+      that meant a spawned monster stood still and soaked fire. An NPC now picks a target and fires a
+      weapon at it. Run alongside <a href="NPC-Combat.html">NPC-COMBAT-2</a>, which is the same scenario looked at from the other
+      side: NPC-COMBAT-2 asks whether the attack pass works, this asks whether <code>CanDamage</code> holds up with a monster as
+      the attacker rather than the target, which nothing else checks.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-12.</strong> <code>CanDamage</code> holds with the monster as attacker, and the log shows the hits
+      landing one at a time — <code>Fallback took 1 damage from CharacterEntity (...), 1 of it on shields, 2642
+      shields and 19192 health left</code>, then 2641, then 2640.</p></div>
+      <p><strong>The character looked invulnerable and isn't.</strong> Standing in front of a Chosen Fiend, nothing
+      visible happens, and the arithmetic is why: its rifle does 1 damage a round at 8 rounds a second —
+      8 dps, measured off the log — against 3000 shields (<a href="../gaps/data.md#data-1">DATA-1</a>'s stand-in) and
+      19192 health. That is six minutes to strip the shields and three quarters of an hour to finish the
+      job. See <a href="Session-Setup.html">Session Setup</a> for what to spawn when the point is to watch something
+      die.</p>
+      <p>Walking into a melding wall or deep water doing nothing was a different thing entirely, and not a
+      damage-routing failure: at the time <strong>there was no environmental damage in the server at all</strong> —
+      every <code>TakeDamage</code> call came from a projectile or an <code>InflictDamage</code> aptitude command.
+      <a href="../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs">HazardSim</a> has since closed that, and its
+      own checks are <a href="Environment.html">ENV-1–ENV-7</a>. What is left of it is in
+      <a href="../PROGRESS.md#deferred">Deferred</a>: NPCs are still exempt from both hazards, and nothing models
+      fall damage.</p><div class="result"><label for="r-hostility-5">Result</label><textarea data-k="n-hostility-5" id="r-hostility-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-hostility-6-same-faction-npcs-no-longer-hurt-each-other">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-6</span>
+      <span class="block-t">Same-faction NPCs no longer hurt each other</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-6</span><span class="marker pass">[x]</span><span class="entry-t">Same-faction NPCs no longer hurt each other</span></div><p>Verifies that splash respects faction, which is what changed.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="hostility-6-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, walk two paces, <code>npc 1196</code>, walk two more, <code>npc 290</code> — two chosen and one accord,
+         roughly two metres apart in a line. Spawning as you walk keeps every one of them on ground you
+         have stood on; typed coordinates are absolute and can land inside terrain.</span></span></label>
+      <label class="step"><input checked data-k="hostility-6-2" type="checkbox"/><span class="step-body"><span class="lede">Fire a splash ability into the middle of the group</span></span></label>
+      <label class="step"><input checked data-k="hostility-6-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the two faction-2 NPCs take splash and the faction-1 one doesn't. Previously every character in
+      radius took damage.</p></div><div class="result"><label for="r-hostility-6">Result</label><textarea data-k="n-hostility-6" id="r-hostility-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-hostility-7-player-versus-player-is-still-blocked">
+    <button class="block-head" type="button">
+      <span class="block-n">HOSTILITY-7</span>
+      <span class="block-t">Player versus player is still blocked</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">HOSTILITY-7</span><span class="marker none">[ ]</span><span class="entry-t">Player versus player is still blocked</span></div><p>Needs two clients.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="hostility-7-1" type="checkbox"/><span class="step-body"><span class="lede">Both players log in</span></span></label>
+      <label class="step"><input data-k="hostility-7-2" type="checkbox"/><span class="step-body"><span class="lede"><code>target &lt;the other player's entity id&gt;</code> then <code>hostility</code>, to see the pair before shooting</span></span></label>
+      <label class="step"><input data-k="hostility-7-3" type="checkbox"/><span class="step-body"><span class="lede">Shoot the other player</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: no damage, and <code>hostility</code> prints faction 1 on both sides with <code>can damage: False</code>. This used
+      to come from an <code>IsPlayerControlled</code> check and now comes from both characters being faction 1, so
+      it's worth confirming the replacement actually holds.</p></div><div class="result"><label for="r-hostility-7">Result</label><textarea data-k="n-hostility-7" id="r-hostility-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-hostility-v1"></script>

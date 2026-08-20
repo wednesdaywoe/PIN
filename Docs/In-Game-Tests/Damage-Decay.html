@@ -1,0 +1,335 @@
+<title>PIN — Range Based Damage Decay (DMG-DECAY-1–DMG-DECAY-5)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Range Based Damage Decay (DMG-DECAY-1–DMG-DECAY-5)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>Added in the current working tree:
+    <a href="../../UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs">DamageFalloff</a>,
+    wired into <code>ProjectileSim.FireProjectile</code>, printed by <code>dbg_weapon</code>. See
+    <a href="../Architecture/06-combat-and-damage.md">layer 6</a>.</p>
+    <p>The curve maths is already covered offline by <code>DamageFalloffTests</code> in
+    <a href="../../Tests/GameServer.Tests">Tests/GameServer.Tests</a>, so these checks are only about whether the
+    model matches the client and whether the SDB values make it fire at all.</p>
+    <p>Reading <code>dbitems::Ammo</code> and <code>dbitems::WeaponTemplates</code> out of the retail <code>clientdb.sd2</code> answers the
+    "does it fire at all" half without a client. <code>Resolve</code> enables decay for 120 of the 318 weapon
+    templates. The 198 it disables break down as 156 whose ammo has <code>DamageDecay = 0</code>, 20 with no ammo
+    row, 19 where the minimum works out to a full round or more, and 3 with non-positive damage per
+    round, so more than half of any weapon you pick at random is expected to print
+    <code>Range decay: disabled</code> and that on its own means nothing. <strong>Pick a weapon that decays before
+    concluding anything</strong>, and note that no template is disabled by <code>DamageDecayRangefrac</code> alone.</p>
+    <p>Weapons to test with:</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>How to get it</th>
+    <th>Weapon</th>
+    <th>Range</th>
+    <th>Damage</th>
+    <th>Full damage to</th>
+    <th>Floor</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><strong>switch to the Biotech frame</strong></td>
+    <td>BioTech Needler Shotgun, item 87056, template 12135</td>
+    <td>70m</td>
+    <td>35</td>
+    <td><strong>7m</strong></td>
+    <td>17.5 at 70m</td>
+    </tr>
+    <tr>
+    <td><code>createitem 20003</code></td>
+    <td>PvE Shotgun, template 1, level 1</td>
+    <td>50m</td>
+    <td>40</td>
+    <td><strong>5m</strong></td>
+    <td>2 at 50m</td>
+    </tr>
+    <tr>
+    <td><code>createitem 20005</code></td>
+    <td>Bolt-action Sniper, template 3, level 1</td>
+    <td>215m</td>
+    <td>375</td>
+    <td>193.5m</td>
+    <td>123.8 at 215m</td>
+    </tr>
+    <tr>
+    <td>whatever you spawn with</td>
+    <td>Assault rifle, template 4 family</td>
+    <td>150m</td>
+    <td>46</td>
+    <td>105m</td>
+    <td>15.2 at 150m</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><strong>Use the Biotech frame.</strong> Its default weapon is a shotgun-type that decays, so nothing in this file
+    needs an item conjured at all — switch frame in the garage and shoot. That matters, because
+    <code>createitem</code> was found broken on 2026-08-11: it flashes a pickup toast and delivers nothing, which
+    is <a href="Inventory.html">INVENTORY-1</a>. The two <code>createitem</code> rows above are unusable until INVENTORY-1 passes and are kept
+    only because they are the sniper end of the range spread, which the Needler can't reach.</p>
+    <p><code>createitem</code> puts the weapon in your inventory; equipping it is still a client-side loadout action.</p>
+  </section>
+  <section class="block" data-open="true" id="-dmg-decay-1-read-the-resolved-curve-for-a-few-weapons-blocks-r2-r4">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-DECAY-1</span>
+      <span class="block-t">Read the resolved curve for a few weapons (blocks DMG-DECAY-2-DMG-DECAY-4)</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-DECAY-1</span><span class="marker pass">[x]</span><span class="entry-t">Read the resolved curve for a few weapons (blocks DMG-DECAY-2-DMG-DECAY-4)</span></div><p>Verifies that the server resolves a sane curve from the SDB columns and prints it.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-decay-1-1" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 20003</code> and <code>createitem 20005</code>, then equip each in turn</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-1-2" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_weapon</code> with each of the shotgun, the sniper and your default rifle equipped</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-1-3" type="checkbox"/><span class="step-body"><span class="lede">Record <code>DamageDecay</code>, <code>DamageDecayRangefrac</code>, <code>MinDamageFrac</code>, <code>MinDamage</code>, <code>Range</code> and the
+         sampled curve for each — <code>dbg_weapon</code> prints samples at 0, 25, 50, 75, 100 and 125% of max range</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Pass: <code>DamageDecay</code> is non-zero on at least some weapons and the samples describe a falloff that
+        looks like the weapon (a shotgun dropping off hard and early, a sniper barely at all).</li>
+      <li>Fail: every weapon prints <code>Range decay: disabled</code>. The gating on <code>DamageDecay</code> or the sanity
+        checks in <code>DamageFalloff.Resolve</code> are reading the columns wrong. Bring the printed inputs back and
+        the model can be re-derived from them.</li>
+      </ul>
+      <p>The anchoring worry this entry was written for is already settled offline. Across the whole <code>Ammo</code>
+      table <code>DamageDecayRangefrac</code> looks like it clusters at 1.0, but 908 of those 1.0 rows are ammo that
+      doesn't decay at all and never had the column touched. Restricted to the 308 rows with
+      <code>DamageDecay</code> non-zero it spreads properly — 34 at 0.1, 137 at 0.7, 45 at 0.9 — and the value tracks
+      the weapon class: shotgun ammo at 0.1, rifle at 0.7, sniper at 0.9. That is the "decay starts here"
+      reading. The other reading has a shotgun holding full damage for 90% of its range and a sniper for
+      10%, which is backwards, so <code>Resolve</code> does not need inverting. What DMG-DECAY-1 is still for is confirming
+      the server's loader reads the same columns and that the printed curve matches.</p>
+      <p><code>MinDamageFrac</code> has 24 rows above 1.0 (values of 2, 2.2, 8 and 10). Those clamp to a full round and
+      disable decay, which is where the 19 disabled-by-minimum templates come from. It's the one column
+      whose units look wrong, so if a weapon that ought to decay prints <code>disabled</code>, check this first.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-11</strong>, off the BioTech Needler Shotgun and the server log rather than <code>dbg_weapon</code> —
+      80 <code>Damage falloff</code> lines carry the resolved curve on every shot, which is what the printed samples
+      were a substitute for. Inputs and result:</p></div>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th></th>
+      <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>Weapon</td>
+      <td>item 87056, template 12135, "BioTech Needler Shotgun"</td>
+      </tr>
+      <tr>
+      <td><code>Range</code></td>
+      <td>70</td>
+      </tr>
+      <tr>
+      <td><code>DamagePerRound</code></td>
+      <td>35, <code>MinDamage</code> 0, <code>HeadshotMult</code> 1.5</td>
+      </tr>
+      <tr>
+      <td>Ammo 1417</td>
+      <td><code>DamageDecay</code> 1, <code>DamageDecayRangefrac</code> <strong>0.1</strong>, <code>MinDamageFrac</code> <strong>0.5</strong></td>
+      </tr>
+      <tr>
+      <td>Resolved</td>
+      <td>full damage to <strong>7m</strong>, down to <strong>17.5</strong> at <strong>70m</strong></td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>7 is 70 × 0.1 and 17.5 is 35 × 0.5, so <code>Resolve</code> reads both columns as fractions of range and of a
+      round, in the units the offline reading above predicted. The falloff between the two is exact linear
+      interpolation — every logged value matches <code>35 - (d-7)/63 × 17.5</code> to five decimal places.</p>
+      <p>This is also the live confirmation of the anchoring worry this entry was written for: 0.1 is where
+      decay <em>starts</em>, not where full damage ends. A shotgun holding full damage for the first tenth of its
+      range is the right shape, and the inverted reading would have had it hold to 63m.</p>
+      <p>The two <code>createitem</code> weapons were not read, because <code>createitem</code> is broken (<a href="Inventory.html">INVENTORY-1</a>).
+      Nothing depends on them — the sniper end of the spread would only re-confirm a curve that is now
+      confirmed.</p><div class="result"><label for="r-dmg-decay-1">Result</label><textarea data-k="n-dmg-decay-1" id="r-dmg-decay-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-decay-2-damage-actually-drops-with-distance">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-DECAY-2</span>
+      <span class="block-t">Damage actually drops with distance</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-DECAY-2</span><span class="marker pass">[x]</span><span class="entry-t">Damage actually drops with distance</span></div><p>Verifies that the resolved curve is applied to a real shot, at the distances the curve claims.</p>
+      <p>Use the shotgun. Decay starts at 5m there, so all three distances fit in a space you can pace out;
+      an assault rifle needs a target more than 105m away before a single number moves.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-decay-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 20003</code>, equip it, then <code>dbg_weapon</code> and note <code>Range decay: full to Xm</code></span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-2-2" type="checkbox"/><span class="step-body"><span class="lede">Stand on a flat spot you can back away from in a straight line, then <code>npc 1196</code></span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>float</code> to toggle <code>cheat_float</code> on if you need height or distance the terrain won't give you</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-2-4" type="checkbox"/><span class="step-body"><span class="lede">Shoot it from contact range, from just past X, and from as far as it stays hittable</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-2-5" type="checkbox"/><span class="step-body"><span class="lede"><code>float</code> again to turn it off</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-2-6" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine, pair each shot's distance with its damage:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "HitHandler|damage from" ~/Games/PIN/logs/GameServer.log | tail -40
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>The <code>T</code> value in each <code>HitHandler</code> line is that shot's distance in metres, and the <code>took N damage</code>
+      line right after it is what landed. That pairing is the measurement — no pacing needed.</p>
+      <p><strong>The client gives you no distance readout, so don't try to hit a distance.</strong> Stand at contact
+      range, then shoot-step-back-shoot-step-back in a straight line until the target dies or stops being
+      hittable, and let the log say afterwards where each shot was taken from. Walking the whole curve
+      this way costs one magazine and produces more points than aiming at three specific distances would.
+      The one thing to do deliberately is pause and fire several shots wherever the floating number
+      changes, so the step is pinned on both sides.</p>
+      <p>If you do need a number in the moment, aim at the target and type <code>target</code> — it prints the distance
+      along with the entity id, which makes it a rangefinder.</p>
+      <div class="callout pass"><p>Pass: the numbers fall off past X and match the <code>dbg_weapon</code> samples at those distances. The
+      <code>Damage falloff for {Weapon} at {Distance}m</code> lines need <code>--loglevel debug</code> and only appear once a
+      shot lands past the full damage range, so their absence is only meaningful if <code>T</code> exceeded X.</p></div>
+      <p>Attempted 2026-08-10, inconclusive rather than failed. The session landed 122 hits, the longest at
+      83m, all with a 46-damage assault rifle whose decay doesn't begin until 105m. Damage came out at a
+      flat 39 body / 58 head throughout and the log has no <code>Damage falloff</code> line, which is what a correct
+      implementation does inside the full damage range. Nothing about the model was exercised.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-11</strong> on the second attempt, with the Biotech frame's Needler Shotgun — decay starts
+      at 7m there, so the whole curve fits in a space you can walk. Pairing each <code>HitHandler</code> distance
+      with the <code>took N damage</code> line after it:</p></div>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Distance</th>
+      <th>Curve says</th>
+      <th>Applied</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>2.1m</td>
+      <td>— (inside the full damage band, no falloff line at all)</td>
+      <td>35</td>
+      </tr>
+      <tr>
+      <td>8.25m</td>
+      <td>34.65</td>
+      <td>35</td>
+      </tr>
+      <tr>
+      <td>9.79m</td>
+      <td>34.23</td>
+      <td>34</td>
+      </tr>
+      <tr>
+      <td>16.91m</td>
+      <td>32.25</td>
+      <td>32</td>
+      </tr>
+      <tr>
+      <td>26.31m</td>
+      <td>29.64</td>
+      <td>30</td>
+      </tr>
+      <tr>
+      <td>35.33m</td>
+      <td>27.13</td>
+      <td>—</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>Applied damage is the curve rounded to nearest. The 2.1m shots produce no <code>Damage falloff</code> line,
+      which is the correct behaviour inside the full damage range and the same absence that made the
+      2026-08-10 attempt unreadable — it only means something once a shot lands past X.</p><div class="result"><label for="r-dmg-decay-2">Result</label><textarea data-k="n-dmg-decay-2" id="r-dmg-decay-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-decay-3-point-blank-damage-is-unchanged">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-DECAY-3</span>
+      <span class="block-t">Point blank damage is unchanged</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-DECAY-3</span><span class="marker pass">[x]</span><span class="entry-t">Point blank damage is unchanged</span></div><p>Verifies that decay doesn't touch anything inside the full damage range.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-decay-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code></span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-3-2" type="checkbox"/><span class="step-body"><span class="lede">Shoot it at contact range with each weapon you have</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: identical damage to before this change. If close-range numbers moved, <code>FullDamageRange</code>
+      resolved to roughly 0 and the anchoring in DMG-DECAY-1 is wrong.</p></div>
+      <div class="callout pass"><p>Passed 2026-08-10: an assault rifle held 46 base, 39 on a body hit and 58 on a headshot, unchanged
+      from 0m out to 83m, which is the whole of its full damage band up to where the shots stopped.</p></div><div class="result"><label for="r-dmg-decay-3">Result</label><textarea data-k="n-dmg-decay-3" id="r-dmg-decay-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-decay-4-the-client-draws-the-servers-number-and-doesnt-argue-with-it">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-DECAY-4</span>
+      <span class="block-t">The client draws the server's number, and doesn't argue with it</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-DECAY-4</span><span class="marker pass">[x]</span><span class="entry-t">The client draws the server's number, and doesn't argue with it</span></div><p>This entry was written as "the real test of the model, since the client computes its own expectation
+      from the same SDB columns". <strong>That premise is wrong for PIN</strong>, and finding that out is most of what
+      running it was worth. <code>CharacterEntity.TakeDamage</code> hands the applied amount to
+      <a href="../../UdpHosts/GameServer/Systems/Combat/DamageEvents.cs">DamageEvents.Describe</a>, which puts it in
+      <code>DealtHit.DamageData.DamageValue</code> and sends it to the attacker. The floating number over the target
+      <em>is</em> the server's number. It cannot disagree, so no run of this entry can confirm or kill the curve.</p>
+      <p>What it does establish, and what the 2026-08-11 run did establish: <code>DealtHit</code> reaches the client and
+      renders correctly, and the client isn't quietly substituting a local prediction that disagrees. That
+      is worth having — it just isn't a check on the model.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="dmg-decay-4-1" type="checkbox"/><span class="step-body"><span class="lede">Do DMG-DECAY-2 again with the client's floating damage numbers visible</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-4-2" type="checkbox"/><span class="step-body"><span class="lede">Note the client's number and the distance for one shot past the full damage range</span></span></label>
+      <label class="step"><input checked data-k="dmg-decay-4-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "damage from" ~/Games/PIN/logs/GameServer.log | tail -5</code> for the same shot</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the floating number matches the server's <code>took N damage</code> for the same shot.</p></div>
+      <div class="callout pass"><p><strong>Passed 2026-08-11.</strong> Backing away one shot at a time until the floating number read 30, then
+      holding there: the server logged 23.5m and 30 damage for those shots, which is the curve
+      (<code>35 - 16.5/63 × 17.5 = 30.4</code>) rounded. Then out to 41.8m and 25, still matching.</p></div>
+      <p>That run also settled the order of operations for free, which no entry had asked for. Headshots in
+      the same session read 46 at 23.6m, 44 at 27.0m, 40 at 37.1m and 38 at 41.8m — each one the <em>undecayed
+      precision</em> curve value times 1.5, rounded once at the end. Rounding the body number first and then
+      multiplying predicts 45, 43.5, 40.5 and 37.5, and gets three of the four wrong. So decay applies to
+      the full-precision damage per round, <code>HeadshotMult</code> scales what's left, and the single rounding
+      happens last, exactly as
+      <a href="../Architecture/06-combat-and-damage.md">layer 6</a> describes it.</p>
+      <h3 id="what-remains-genuinely-unverified">What remains genuinely unverified</h3>
+      <p>Not the two anchors — DMG-DECAY-1 confirmed those come straight out of <code>Range × DamageDecayRangefrac</code> and
+      <code>DamagePerRound × MinDamageFrac</code>. What no test here can reach is the <strong>shape between them</strong>.
+      <code>Resolve</code> interpolates linearly; Red 5's server may not have. The only ground truth for that is the
+      466 <code>TookHit</code> damage values in the 2016 recording, and pairing one with a distance means
+      reconstructing both entities' positions from the <code>MovementView</code> and <code>ConfirmedPoseUpdate</code> traffic
+      around it — see <a href="Capture-Replay.html">Capture Replay</a>.</p>
+      <p>Deliberately not queued. The <a href="../Restoration.md">restoration charter</a> doesn't treat fidelity as a
+      constraint, the curve is anchored correctly at both ends, and a different interpolation would move
+      mid-range damage by a couple of points. Worth doing if the shape ever starts mattering to how
+      something feels; not worth the archaeology now.</p><div class="result"><label for="r-dmg-decay-4">Result</label><textarea data-k="n-dmg-decay-4" id="r-dmg-decay-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-dmg-decay-5-buffed-weapon-damage-still-decays-proportionally">
+    <button class="block-head" type="button">
+      <span class="block-n">DMG-DECAY-5</span>
+      <span class="block-t">Buffed weapon damage still decays proportionally</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DMG-DECAY-5</span><span class="marker none">[ ]</span><span class="entry-t">Buffed weapon damage still decays proportionally</span></div><p>Verifies that both minimums are read as fractions of a round rather than absolute points.</p>
+      <p>DMG-DECAY-1 confirmed the reading offline for one weapon — 17.5 is 35 × <code>MinDamageFrac</code>, not 0.5 damage — so
+      what's left here is whether it still holds when the base moves under it.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="dmg-decay-5-1" type="checkbox"/><span class="step-body"><span class="lede">Do DMG-DECAY-2 once unbuffed and write down the long-range number</span></span></label>
+      <label class="step"><input data-k="dmg-decay-5-2" type="checkbox"/><span class="step-body"><span class="lede">Apply an ability that raises weapon damage, then fire at the same distance before it expires</span></span></label>
+      <label class="step"><input data-k="dmg-decay-5-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Damage falloff" ~/Games/PIN/logs/GameServer.log | tail -5</code> to see both <code>Base</code> and
+         <code>MinDamage</code> move together</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: long-range damage rises with the buff rather than decaying back to the unbuffed floor.
+      <code>Resolve</code> reads both minimums as fractions of a full round specifically so this holds.</p></div><div class="result"><label for="r-dmg-decay-5">Result</label><textarea data-k="n-dmg-decay-5" id="r-dmg-decay-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-damage-decay-v1"></script>

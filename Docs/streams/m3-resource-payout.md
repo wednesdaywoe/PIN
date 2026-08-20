@@ -31,7 +31,7 @@ actually holds is M4, and deliberately not this milestone.
 
 Nothing puts resources in the ledger today. A character logs in on zero of everything — the fixed
 `FallbackInventoryResources` list every character used to get is gone from the code, and
-[G1](../In-Game-Tests/Resource-Payout.md) confirmed the zero on screen. Moving one resource because
+[G1](../In-Game-Tests/Resource-Payout.html) confirmed the zero on screen. Moving one resource because
 of something the player did is the whole milestone.
 
 | Work | Where |
@@ -62,15 +62,15 @@ mid-thump moves it to `LEAVING`, and `OnUpdate` calls `OnSuccess` when that stat
 elapse, whichever way it was entered. So a thumper cut short after ten seconds pays the same 200 as
 one that ran the full seven and a half minutes. Retail scaled yield to how long the thing ran;
 `SetProgress` already keeps the figure that would allow it and nothing reads it. That is M4's yield
-work, not a defect here — [G4](../In-Game-Tests/Resource-Payout.md) is written to confirm the
+work, not a defect here — [G4](../In-Game-Tests/Resource-Payout.html) is written to confirm the
 behaviour rather than to fail it.
 
-**COMPLETE 2026-08-13. [G1, G2 and G5](../In-Game-Tests/Resource-Payout.md) all passed, all first
+**COMPLETE 2026-08-13. [G1, G2 and G5](../In-Game-Tests/Resource-Payout.html) all passed, all first
 attempt.**
 
 The milestone closed on a thumper called down by the `thumper` admin command rather than by the
 player, and that was a decision rather than an oversight. The retail route needs a beacon item in
-the inventory, which is [I1](../In-Game-Tests/Inventory.md)'s open problem; keeping M3 open on it
+the inventory, which is [I1](../In-Game-Tests/Inventory.html)'s open problem; keeping M3 open on it
 would have meant keeping it open on something M3 cannot fix. G3 stays in the queue and reopens the
 question the moment items are deliverable. A thumper called down at a player's feet ran its full cycle and
 paid, logged as `paying 200 of resource 10 to 1 participant(s)`, and the crystite arrived on screen.
@@ -80,7 +80,7 @@ sequence is reproduced in G2.
 G1 went first and settled the delivery half on its own: three `createitem 10 200` calls took a
 crystite count from 0 to 600 with the inventory open. It also paid a debt elsewhere, being the first
 evidence anywhere that this client merges a partial `InventoryUpdate` into a UI on screen, which
-removes a suspect from [I1](../In-Game-Tests/Inventory.md). G5 passed unattended in the same session:
+removes a suspect from [I1](../In-Game-Tests/Inventory.html). G5 passed unattended in the same session:
 the zone's NPC-owned debug thumper completed and paid nobody without taking the shard down.
 
 **What has still never run is the first cut.** `Thumper.OnSuccess` reads grant 50329 out of
@@ -103,7 +103,7 @@ tell thumping from stalled.
 
 **Getting a thumper down at all is the part with no answer yet.** The retail route is the client's
 own calldown UI, which needs a beacon item in the inventory, and item delivery is
-[I1](../In-Game-Tests/Inventory.md)'s open problem. So a `thumper` admin command was added — it
+[I1](../In-Game-Tests/Inventory.html)'s open problem. So a `thumper` admin command was added — it
 calls one down at your feet, owned by you, through the same `CreateThumper` the real path ends in —
 and the retail route became its own entry (G3) rather than a precondition for testing the payout.
 

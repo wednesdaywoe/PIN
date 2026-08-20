@@ -172,7 +172,7 @@ capacity" attribute is known. Three routes:
 3. Author them client-side as Lua constants.
 
 Route 2 is underrated, and as of 2026-08-14 it is proven open:
-[W1](../In-Game-Tests/Constraints-Transport.md) showed unknown JSON keys survive the engine's
+[W1](../In-Game-Tests/Constraints-Transport.html) showed unknown JSON keys survive the engine's
 JSON→Lua conversion in all three shapes, scalar, object and array. The fields are already there,
 the endpoint is already answered, the allocate-surplus system would need `AllocatedPower` anyway,
 and there is no client-side schema to satisfy. One caveat from the same run: a JSON `null` drops
@@ -231,7 +231,7 @@ reachable:
 
 A fourth check was here and is answered: unknown JSON keys in the `garage_slots` response survive
 into Lua, in every shape a capacity could take —
-[W1](../In-Game-Tests/Constraints-Transport.md), run 2026-08-14. Route 2 is open. The same run
+[W1](../In-Game-Tests/Constraints-Transport.html), run 2026-08-14. Route 2 is open. The same run
 showed the client is installed on this machine after all, so none of these checks wait on other
 hardware.
 

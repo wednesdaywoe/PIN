@@ -189,7 +189,7 @@ unpacks it; [DATA-13](../gaps/data.md#data-13) covers the half of that byte that
 The melding reads the same control points the client draws the wall from, tessellated as a Hermite
 curve by [MeldingField](../../UdpHosts/GameServer/Systems/Hazards/MeldingField.cs), so the two agree
 even while a `MeldingRepulsor` is pushing a control point around. Melded ground is taken to be to the
-left of the directed curve, which is inferred rather than read — [E3](../In-Game-Tests/Environment.md)
+left of the directed curve, which is inferred rather than read — [E3](../In-Game-Tests/Environment.html)
 is what confirms it.
 
 Applying retail's status effects instead of the damage directly would be the faithful version. It
@@ -283,7 +283,7 @@ These are known-missing rather than accidental, and are the natural next pieces 
 - `target`, `cleartarget`, `npc`, `applyeffect`, `listeffects`, `removeeffect`, `cflags`,
   `dbg_weapon`, `hostility`, all in
   [Systems/Admin/Commands](../../UdpHosts/GameServer/Systems/Admin/Commands), and typed into the
-  Admin chat channel without a leading slash. [In-Game Tests](../In-Game-Tests/Session-Setup.md)
+  Admin chat channel without a leading slash. [In-Game Tests](../In-Game-Tests/Session-Setup.html)
   lists the monster type ids worth spawning and the faction each one carries.
 - `DebugProjectileHitCallbacks` streams projectile spawn/impact/timeout to the debug pipe
 - Every ability log line carries an `ExecutionId`; filter on it to see one activation end to end

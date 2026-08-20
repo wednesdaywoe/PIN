@@ -27,7 +27,7 @@ connection.
 **Built 2026-08-14.** [RetransmitQueue](../../UdpHosts/GameServer/RetransmitQueue.cs) holds every
 Matrix and ReliableGss packet until the client acks it, and `Channel.SendOverdue` sends again what
 hasn't been answered in 450ms. **Verified the same day by
-[L1–L6](../In-Game-Tests/Reliability.md), 6 of 6**: ten minutes under a 5% `netem` loss rule
+[L1–L6](../In-Game-Tests/Reliability.html), 6 of 6**: ten minutes under a 5% `netem` loss rule
 played, in the tester's words, "indistinguishable from any other session", while the log recorded
 2,399 resends accepted on attempt 1, 153 on attempt 2, none on attempt 3, nothing abandoned, and a
 queue that peaked at 82 unacked. The client's own resends (~100, against exactly one in the whole
@@ -85,7 +85,7 @@ shard thread, with no isolation around it — the same shape as [NET-21](#net-21
 assignment now.
 
 Neither has been seen in game. The capture holds exactly one client-to-server resend across the
-whole session, so this is rare enough that only [L4](../In-Game-Tests/Reliability.md) under induced
+whole session, so this is rare enough that only [L4](../In-Game-Tests/Reliability.html) under induced
 loss is likely to exercise it.
 
 <a id="net-4"></a>
@@ -181,7 +181,7 @@ which works but costs more than it needs to.
 
 ### NET-14 — `SpawnDeployable` computes a faction it then discards [ ] open
 
-[Deployables-And-Vehicles.md V6](../In-Game-Tests/Deployables-And-Vehicles.md): `SpawnDeployable`
+[Deployables-And-Vehicles.md V6](../In-Game-Tests/Deployables-And-Vehicles.html): `SpawnDeployable`
 resolves `factionId` from owner/override/SDB-default, then assigns `deployableInfo.DefaultFaction`
 directly instead — `useOwnerFaction` and `overrideFactionId` are dead code. Not yet caught live
 because deployable 348 happens to default to faction 1 anyway, but any deployable whose
@@ -195,7 +195,7 @@ because deployable 348 happens to default to faction 1 anyway, but any deployabl
 
 [OrientationLockCommand.cs:29-36](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Movement/OrientationLockCommand.cs#L29-L36)
 sends `ForcedMovementCancelled` on removal for a movement-start the server never announced. This is
-D5f from [Charge-Camera](../In-Game-Tests/Charge-Camera.md) — a real protocol inconsistency, and an
+D5f from [Charge-Camera](../In-Game-Tests/Charge-Camera.html) — a real protocol inconsistency, and an
 attempted fix for it failed and was reverted, because no safe cancel-time can be derived without a
 real capture to check against. The user-visible symptom this was chasing (stuck vertical mouselook)
 is fixed regardless, via a different mechanism — see D5h. Left open because the inconsistency
@@ -205,7 +205,7 @@ itself is still there, just not currently causing visible harm.
 
 ### NET-16 — Predicted effects reach the owning client twice [ ] open, low priority
 
-[Charge-Camera.md D5h](../In-Game-Tests/Charge-Camera.md): every predicted effect now arrives via
+[Charge-Camera.md D5h](../In-Game-Tests/Charge-Camera.html): every predicted effect now arrives via
 both `CombatController`/`CombatView` and the newly-written `LocalEffectsController`, tripling
 rejection noise on the client. Functionally harmless, but likely diverges from retail, which almost
 certainly sent owner-private effects once, not twice.
@@ -214,16 +214,16 @@ certainly sent owner-private effects once, not twice.
 
 ### NET-17 — `LocalEffectsData.Entity` semantics unconfirmed [~] needs confirmation
 
-[Charge-Camera.md](../In-Game-Tests/Charge-Camera.md): whether `Entity` names the initiator or the
+[Charge-Camera.md](../In-Game-Tests/Charge-Camera.html): whether `Entity` names the initiator or the
 carrier/target of a predicted effect is unconfirmed — only self-applied effects have been tested.
 Blocks correctness for any effect predicted onto a target rather than the caster.
-[Prediction-Sweep P5](../In-Game-Tests/Prediction-Sweep.md) exists to answer this.
+[Prediction-Sweep P5](../In-Game-Tests/Prediction-Sweep.html) exists to answer this.
 
 <a id="net-18"></a>
 
 ### NET-18 — partial item `InventoryUpdate` is not merged by the client [ ] re-scoped 2026-08-14
 
-[Inventory.md](../In-Game-Tests/Inventory.md): I1 landed on its own middle branch, twice in one
+[Inventory.md](../In-Game-Tests/Inventory.html): I1 landed on its own middle branch, twice in one
 sitting (20003, then 86074): a created item appears only after `dbg_inventory resend` pushes the
 full inventory the client already accepted once at spawn. The item itself is right — the full send
 lists it, the garage equips it, flags round-trip (`IsBound, IsEquipped, slotted in a loadout`) —
@@ -266,7 +266,7 @@ client; the flag is a suspect, not a finding.
 
 ### NET-19 — Two 2026-08-11 prediction fixes await confirmation [x] confirmed 2026-08-14
 
-**Both confirmed by [Prediction-Sweep P0](../In-Game-Tests/Prediction-Sweep.md) on 2026-08-14**:
+**Both confirmed by [Prediction-Sweep P0](../In-Game-Tests/Prediction-Sweep.html) on 2026-08-14**:
 module 86074, refused outright on 2026-08-10, slotted on the Dreadnaught, and every garage frame
 reads level 45. The original entry, for the record — two fixes deployed the same day, both
 unverified pending P0: PIN previously never sent
@@ -279,7 +279,7 @@ the next suspect.
 
 ### NET-20 — The Prediction Sweep is almost entirely unverified [~] needs confirmation, large scope
 
-[Prediction-Sweep.md](../In-Game-Tests/Prediction-Sweep.md) covers 47 effects shaped like the one
+[Prediction-Sweep.md](../In-Game-Tests/Prediction-Sweep.html) covers 47 effects shaped like the one
 D5h fixed (27 player-reachable); all of it blocks on P0. One rollup entry rather than 47, since
 none of them are independently actionable until P0 confirms the cert-gate fix holds.
 
@@ -292,7 +292,7 @@ half minutes after the zone loaded, `Thumper.OnSuccess` reached `BaseEncounter.R
 threw a `NullReferenceException`, and took `Shard.RunThread` with it: no tick, no physics, no AI, no
 movement for anyone still connected, and nothing in the log but a stack trace at the very end. It
 was found while chasing something else entirely, in the tail of a
-[NPC combat](../In-Game-Tests/NPC-Combat.md) session log.
+[NPC combat](../In-Game-Tests/NPC-Combat.html) session log.
 
 Three separate defects, stacked so that fixing only the visible one would have swapped a crash for a
 different crash:
@@ -384,23 +384,23 @@ Two things this cost, worth remembering next time something looks like an AI bug
   copy, which was correct throughout. A defect that lives entirely in what was *not* sent is
   invisible to a log of what was decided. `SteeringTests` passing and the log reading correctly were
   both true and both irrelevant.
-- **It masked the entry it broke.** [N8](../In-Game-Tests/NPC-Combat.md) asks you to watch a monster
-  the whole way in, and [N9](../In-Game-Tests/NPC-Combat.md) asks whether the run animates. Neither
+- **It masked the entry it broke.** [N8](../In-Game-Tests/NPC-Combat.html) asks you to watch a monster
+  the whole way in, and [N9](../In-Game-Tests/NPC-Combat.html) asks whether the run animates. Neither
   is answerable when the approach is not drawn, so a single replication gap took out both the
   milestone's exit condition and the entry watching the one value in this work that had never been
   seen on the wire.
 
-Confirmed the same day: with the pose replicated, [N8–N13](../In-Game-Tests/NPC-Combat.md) all pass.
+Confirmed the same day: with the pose replicated, [N8–N13](../In-Game-Tests/NPC-Combat.html) all pass.
 That also settles `0x2004` as the running movement state — an NPC now plays a run animation while it
 closes, so the value derived from `Movestate` and `MovementFlags` in
-[N9](../In-Game-Tests/NPC-Combat.md) is right, and the packing [NET-12](#net-12) flags as unconfirmed
+[N9](../In-Game-Tests/NPC-Combat.html) is right, and the packing [NET-12](#net-12) flags as unconfirmed
 has at least one asserted value that the client agrees with.
 
 <a id="net-23"></a>
 
 ### NET-23 — A dead player has no way back [ ] open, found 2026-08-13
 
-Death is a one-way door. Found by [N16](../In-Game-Tests/NPC-Combat.md) on 2026-08-13, which is the
+Death is a one-way door. Found by [N16](../In-Game-Tests/NPC-Combat.html) on 2026-08-13, which is the
 first time in PIN's history that a player has been killed by the game rather than by a command: the
 tester stood in front of Basin Mouth with invulnerability off and let it run.
 
@@ -432,7 +432,7 @@ the death screen's countdown and spawn-point list from that field, so a client w
 plausibly has no UI to offer.
 
 **Answered 2026-08-15 out of the client's own UI source, and `RespawnTimesData` is the second half
-of it rather than the whole thing.** The [2016 capture](../In-Game-Tests/Capture-Replay.md) was the
+of it rather than the whole thing.** The [2016 capture](../In-Game-Tests/Capture-Replay.html) was the
 cheap place named here and it cannot help: **nobody dies in that session.** Zero `Killed` messages
 (`Character_CombatView` 108), one `Respawned`, which is the login spawn, and `RespawnTimes` null in
 all 500 of the player's `Character_BaseController` keyframes. Recorded so the trip isn't repeated.
@@ -475,13 +475,13 @@ tester who dies has to reconnect.
 
 ### NET-24 — A finished thumper never leaves the client [x] fixed 2026-08-14, verified by L6
 
-**Closed 2026-08-14 by [L6](../In-Game-Tests/Reliability.md), the first full-cycle thumper after
+**Closed 2026-08-14 by [L6](../In-Game-Tests/Reliability.html), the first full-cycle thumper after
 M8's fixes went in.** Both halves of the symptom are gone: the log held exactly 2 stale keyframe
 requests, static on a re-read minutes later (baseline: 648 and climbing forever), and the ground
 was empty when the tester returned — no model left standing. Which of the two changes did it —
 the retransmit queue carrying the scope-out through, or a failed keyframe request now answering
 with a scope-out — is deliberately left undetermined here;
-[G6](../In-Game-Tests/Resource-Payout.md)'s Debug-line dating is the optional measurement if the
+[G6](../In-Game-Tests/Resource-Payout.html)'s Debug-line dating is the optional measurement if the
 UnreliableGss delta-loss question (below) ever needs a real answer. The history that led here is
 kept as written:
 
@@ -506,7 +506,7 @@ The load is trivial; the leak is not, because every completed thumper in a sessi
 permanent loop, and nothing ever retires one.
 
 **Two things narrow it.** First, no earlier log in the project contains a single one of these,
-because no thumper had ever finished while a player was watching — [S3–S5](../In-Game-Tests/Thump-Placement.md)
+because no thumper had ever finished while a player was watching — [S3–S5](../In-Game-Tests/Thump-Placement.html)
 on 2026-08-14 were the first runs to take one all the way through. Second, and more useful: **the
 thumpers a player cut short left no stale requests at all.** Two early collections that day (both at
 deposit 5, completions 0.04 and 0.03) produced none, while all four full-cycle runs produced them.
@@ -551,7 +551,7 @@ view deltas flush on `UnreliableGss`, and a full cycle sends about 106 of them �
 4%. Fifteen times the exposure to a silent drop, on a view whose `StateInfo` only changes at
 transitions and is never re-sent. `Character_CombatView` is already pinned to `ReliableGss` with a
 comment about the client latching the last value it saw; thumper state is the same kind of field.
-**That change is deliberately not made yet** — [G6](../In-Game-Tests/Resource-Payout.md) is written
+**That change is deliberately not made yet** — [G6](../In-Game-Tests/Resource-Payout.html) is written
 to measure whether deltas are being lost before anything is tuned on the guess that they are.
 
 **What landed on 2026-08-14**, none of it verified in game:
@@ -608,7 +608,7 @@ ever run has been on loopback.
 
 ### NET-26 — A predicted toggle cancels itself while the server holds the effect [ ] open, found 2026-08-14
 
-[Prediction-Sweep P2](../In-Game-Tests/Prediction-Sweep.md), the first prediction entry run after
+[Prediction-Sweep P2](../In-Game-Tests/Prediction-Sweep.html), the first prediction entry run after
 P0 opened the certificate gate. Turret Mode (ability 39434, effect 10810) engages on keypress and
 shuts itself off within seconds, nobody pressing toggle-off. The two logs disagree about who ended
 it, which is the finding:
@@ -672,7 +672,7 @@ One incidental sighting in the same window: the shard short-time wrapped mid-log
 (`Time 64809` → `Time 1679` twelve seconds apart), [NET-2](#net-2) visible in the wild.
 
 **The critical experiment ran the same sitting and confirmed the split.**
-[P3](../In-Game-Tests/Prediction-Sweep.md), Hover Mode — whose required state (airborne) the
+[P3](../In-Game-Tests/Prediction-Sweep.html), Hover Mode — whose required state (airborne) the
 client tracks locally — held for the whole flight, FX running, no self-cancel (tester-observed;
 the log half of P3's pass is still pending). So the failing CSTATEs are specifically
 **server-owned states**: the client's predicted copy checks a stance or mode flag only the server

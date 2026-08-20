@@ -9,7 +9,7 @@ namespace GameServer.Tests.AI;
 ///     <see cref="AttackWindow"/> is the server's only model of how fast a weapon fires — a player's
 ///     client owns that decision and the server just reacts, so nothing else here had to know. These
 ///     pin the reading of the template fields, not whether the reading is right; that's an in-game
-///     question (N5 in Docs/In-Game-Tests/NPC-Combat.md).
+///     question (N5 in Docs/In-Game-Tests/NPC-Combat.html).
 /// </summary>
 public class AttackWindowTests
 {

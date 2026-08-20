@@ -19,7 +19,7 @@ than written up after the fact:
 
 - [Progress ledger](PROGRESS.md) — what's missing and the order it's being fixed in
 - [Issue Register](ISSUE-REGISTER.md) — known defects and invented/hardcoded data, audited state
-- [Test Register](TEST-REGISTER.md) — what's been verified against a real client; the queue itself
+- [Test Register](In-Game-Tests/index.html) — what's been verified against a real client; the queue itself
   is in [In-Game Tests](In-Game-Tests/README.md), what can be checked without one lives in
   [Tests/GameServer.Tests](../Tests/GameServer.Tests)
 

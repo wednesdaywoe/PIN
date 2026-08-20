@@ -10,7 +10,7 @@ public static class ItemRules
     /// </summary>
     /// <remarks>
     ///     The flag on the item's own <c>RootItem</c> row, which is what <c>createitem</c> has always used
-    ///     and what [G1](Docs/In-Game-Tests/Resource-Payout.md) confirmed against the client.
+    ///     and what [G1](Docs/In-Game-Tests/Resource-Payout.html) confirmed against the client.
     ///
     ///     The first cut of this asked <c>dbitems::ResourceItem</c> instead, which was wrong in a way that
     ///     looked right: that table exists, has 111 rows, and is the gatherable-materials list — Brimstone,

@@ -1,0 +1,198 @@
+<title>PIN — Reliability Under Loss (RELIABILITY-1–RELIABILITY-6)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Reliability Under Loss (RELIABILITY-1–RELIABILITY-6)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on <a href="../streams/m8-session-stability.md">M8</a>. Until 2026-08-14 "reliable" only meant the
+    server acked what the client sent; nothing tracked what the server itself sent, so a dropped packet
+    was gone (<a href="../gaps/network.md#net-1">NET-1</a>). Now every packet on Matrix and ReliableGss is held
+    until the client acks it and resent if it isn't.</p>
+    <p><strong>This stream is the only one in the queue that has to break the network on purpose.</strong> Everything
+    else here runs over loopback, where a packet is lost only when a socket buffer overflows, and that
+    is exactly why the bug survived this long: it costs nothing until it costs a session.</p>
+  </section>
+  <section class="doc" id="inducing-loss">
+    <h2>Inducing loss</h2>
+    <p>Client and server are on the same machine, so all of it goes over <code>lo</code>. Drop 5% of the GameServer's
+    UDP traffic in both directions and leave the web APIs and the handshake on 25000 alone:</p>
+    <span class="cmd"><pre><code>sudo tc qdisc add dev lo root handle 1: prio</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    sudo tc qdisc add dev lo parent 1:3 handle 30: netem loss 5%</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    sudo tc filter add dev lo protocol ip parent 1:0 prio 3 u32 match ip dport 25001 0xffff flowid 1:3</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    sudo tc filter add dev lo protocol ip parent 1:0 prio 3 u32 match ip sport 25001 0xffff flowid 1:3</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Check it took, and take it back off afterwards. <strong>The rule survives until it is deleted or the
+    machine reboots</strong>, so an entry run the next day against a forgotten qdisc measures the wrong thing:</p>
+    <span class="cmd"><pre><code>tc qdisc show dev lo                      # expect the prio root and the netem child</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    sudo tc qdisc del dev lo root             # back to normal</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>5% is the figure the milestone was written against. Retail's own session lost far less: the 2016
+    capture holds 24 resends across 456619 packets, so anything above about 1% is already a worse link
+    than the recording this was built from.</p>
+    <p>The log lines this stream reads:</p>
+    <span class="cmd"><pre><code>grep -a "resending SeqNum"      ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "has been dropped"      ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Resent packet"         ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "re-acked without"      ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Debug level has to be on for the first, third and fourth. The dropped-packet warning is at Warning
+    because it is the only record anywhere that a client's copy of something is now permanently wrong.</p>
+    <hr/>
+  </section>
+  <section class="block" data-open="true" id="-reliability-1-a-session-under-5-loss-holds-together">
+    <button class="block-head" type="button">
+      <span class="block-n">RELIABILITY-1</span>
+      <span class="block-t">A session under 5% loss holds together</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RELIABILITY-1</span><span class="marker pass">[x]</span><span class="entry-t">A session under 5% loss holds together</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, tester's verdict verbatim: "I didn't notice a single thing different.
+      Shooting, calling a thumper, gliding, moving around — it was indistinguishable from any other
+      session."</strong> That, over ~10 minutes at 5% induced loss while the log recorded ~2,550 server
+      resends and ~100 client resends doing the repair work invisibly. Nothing invisible, immortal, or
+      misplaced.</p></div>
+      <p><strong>M6's sibling closed the same night.</strong> Everything else in this file is diagnosis for when this fails.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="reliability-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers and get into the world <strong>before</strong> adding the qdisc, so a login failure can't be
+         confused with a reliability one.</span></span></label>
+      <label class="step"><input checked data-k="reliability-1-2" type="checkbox"/><span class="step-body"><span class="lede">Add the qdisc as above. Confirm with <code>tc qdisc show dev lo</code>.</span></span></label>
+      <label class="step"><input checked data-k="reliability-1-3" type="checkbox"/><span class="step-body"><span class="lede">Play for ten minutes and cover the things that scope entities in and out: walk to the basin and
+         back so NPCs scope in, fight something (<a href="NPC-Combat.html">NPC-COMBAT-14</a> has the pack), call a <code>thumper</code> and
+         collect it, and open the inventory.</span></span></label>
+      <label class="step"><input checked data-k="reliability-1-4" type="checkbox"/><span class="step-body"><span class="lede"><code>sudo tc qdisc del dev lo root</code>.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: nothing in the world is invisible, immortal, or standing somewhere it isn't. Specifically,
+      every NPC you shot took damage and died, the thumper appeared and disappeared, and the crystite
+      count moved.</p></div>
+      <div class="callout fail"><p>Fail: any of those. The value of this entry is entirely in <em>which</em> one, because each names a
+      different view that lost a message. Note the entity and roughly when, then read
+      <code>grep -a "has been dropped"</code> for the same window.</p></div><div class="result"><label for="r-reliability-1">Result</label><textarea data-k="n-reliability-1" id="r-reliability-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-reliability-2-a-resend-is-accepted-rather-than-resent-again">
+    <button class="block-head" type="button">
+      <span class="block-n">RELIABILITY-2</span>
+      <span class="block-t">A resend is accepted rather than resent again</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RELIABILITY-2</span><span class="marker pass">[x]</span><span class="entry-t">A resend is accepted rather than resent again</span></div><div class="callout pass"><p><strong>Passed 2026-08-14</strong>: 2399 at attempt 1, 153 at attempt 2, zero at attempt 3. The attempt-2
+      fraction (~6%) is what 5%-each-way loss predicts for a resend itself getting lost — the client is
+      accepting PIN's resend encoding without complaint. This was the one question in M8 no offline test
+      could settle.</p></div>
+      <p>Cheap, log-only, and the single most informative line in the stream. Run it off RELIABILITY-1's session.</p>
+      <span class="cmd"><pre><code>grep -a "resending SeqNum" ~/Games/PIN/logs/GameServer.log | grep -oE "attempt [0-9]" | sort | uniq -c
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: almost every line reads <code>attempt 1</code>. A resend that arrives gets acked, and the ack retires it,
+      so it is never seen again.</p></div>
+      <div class="callout fail"><p>Fail with the counts roughly equal across attempts 1, 2 and 3: <strong>the client is rejecting resends</strong>,
+      which means the resend encoding is wrong rather than the network being bad. That would be the one
+      thing in M8 that offline tests can't settle — they prove PIN's encoder and PIN's decoder agree, and
+      the client is a third party. The suspect is the resend count PIN stamps: retail stamped 3 on all 24
+      resends in the capture, in both directions, and PIN copies that, but nothing proves the client
+      requires it.</p></div><div class="result"><label for="r-reliability-2">Result</label><textarea data-k="n-reliability-2" id="r-reliability-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-reliability-3-nothing-is-abandoned">
+    <button class="block-head" type="button">
+      <span class="block-n">RELIABILITY-3</span>
+      <span class="block-t">Nothing is abandoned</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RELIABILITY-3</span><span class="marker pass">[x]</span><span class="entry-t">Nothing is abandoned</span></div><div class="callout pass"><p><strong>Passed 2026-08-14</strong> — the grep printed nothing after a ~10-minute session under 5% loss.</p></div>
+      <span class="cmd"><pre><code>grep -a "has been dropped" ~/Games/PIN/logs/GameServer.log
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: no output. At 5% loss, four independent copies of a packet all failing is about six in a
+      million, so a hit here means the loss isn't independent (a buffer overflowing drops a burst, not a
+      packet) or the client stopped acking altogether.</p></div>
+      <div class="callout fail"><p>Fail: record the channel and sequence number. This is a real message the client never received and
+      never will, and pairing it against what went visibly wrong in RELIABILITY-1 is the only way to learn what a
+      given lost message costs.</p></div><div class="result"><label for="r-reliability-3">Result</label><textarea data-k="n-reliability-3" id="r-reliability-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-reliability-4-a-resend-the-client-sends-is-handled-once-not-twice">
+    <button class="block-head" type="button">
+      <span class="block-n">RELIABILITY-4</span>
+      <span class="block-t">A resend the client sends is handled once, not twice</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RELIABILITY-4</span><span class="marker pass">[x]</span><span class="entry-t">A resend the client sends is handled once, not twice</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, exercised hard.</strong> ~100 client resends arrived (the 2016 retail capture holds
+      exactly one), split correctly: resends of genuinely lost originals were handled as first
+      deliveries, resends caused by lost acks drew <code>Already had ... re-acked without handling it again</code>
+      (~42 of them, both Matrix and ReliableGss). Sequence 2201 arrived as a resend twice and was
+      deduplicated once — the exact pattern the mechanism promises.</p></div>
+      <p>The other half of the same mechanism, and the one with the worse failure: a duplicate inbound
+      message means whatever it asks for happens twice.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="reliability-4-1" type="checkbox"/><span class="step-body"><span class="lede">From RELIABILITY-1's session, <code>grep -a "Resent packet" ~/Games/PIN/logs/GameServer.log</code> — these are the
+         client's resends arriving.</span></span></label>
+      <label class="step"><input checked data-k="reliability-4-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "re-acked without" ~/Games/PIN/logs/GameServer.log</code> — these are the ones PIN recognised
+         as duplicates and declined to handle again.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: every <code>Resent packet</code> line on ReliableGss or Matrix whose sequence number is behind the
+      channel's high-water mark has a <code>re-acked without</code> line beside it. Zero of either is also a pass
+      here, and means the client never had to resend anything; say so rather than marking it run.</p></div>
+      <div class="callout fail"><p>Fail: a <code>Resent packet</code> with no matching line, followed by something happening twice in the world.
+      Two fired shots from one trigger pull is the shape to look for.</p></div><div class="result"><label for="r-reliability-4">Result</label><textarea data-k="n-reliability-4" id="r-reliability-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-reliability-5-the-queue-drains-rather-than-growing">
+    <button class="block-head" type="button">
+      <span class="block-n">RELIABILITY-5</span>
+      <span class="block-t">The queue drains rather than growing</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RELIABILITY-5</span><span class="marker pass">[x]</span><span class="entry-t">The queue drains rather than growing</span></div><div class="callout pass"><p><strong>Passed 2026-08-14</strong> — the session's maximum was 82 unacked. Tens, not thousands.</p></div>
+      <span class="cmd"><pre><code>grep -a "resending SeqNum" ~/Games/PIN/logs/GameServer.log | grep -oE "[0-9]+ unacked" | sort -n | tail -5
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: the largest figure is small, tens rather than thousands, and doesn't climb through the
+      session. Every packet leaves the queue within about 1.4 seconds whatever happens to it, so the
+      standing size is a measure of the send rate and nothing else.</p></div>
+      <div class="callout fail"><p>Fail with a number that grows monotonically: acks aren't retiring anything, and the cumulative
+      reading is wrong. Compare against the ack coverage the capture recorded (the client acked 60% of the
+      server's reliable packets and the session still needed 24 resends, which only works if one ack
+      covers the run behind it).</p></div><div class="result"><label for="r-reliability-5">Result</label><textarea data-k="n-reliability-5" id="r-reliability-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-reliability-6-does-the-stale-thumper-still-haunt-the-client">
+    <button class="block-head" type="button">
+      <span class="block-n">RELIABILITY-6</span>
+      <span class="block-t">Does the stale thumper still haunt the client?</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RELIABILITY-6</span><span class="marker pass">[x]</span><span class="entry-t">Does the stale thumper still haunt the client?</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, no qdisc.</strong> A full-cycle thumper (paid 37 crystite) left behind exactly <strong>2</strong>
+      <code>no longer exists</code> lines, and the count was static on a re-read minutes later — against a baseline
+      of 648 across four thumpers, each climbing at one per ~5.5s forever. The loop is dead. What this
+      entry cannot say is <em>which</em> fix killed it — the retransmit queue getting the scope-out through, or
+      the failed-keyframe-answers-with-scope-out change ending the loop at request two —
+      <a href="Resource-Payout.html">RESOURCE-PAYOUT-6</a> is written to date the loop from Debug lines and settle that.</p></div>
+      <p><a href="../gaps/network.md#net-24">NET-24</a> is a finished thumper the client leaves standing in the world
+      forever, asking for keyframes of it every 5.5 seconds. A code read pinned the suspicion on the
+      scope-out being sent once on a channel that never resent anything, which is what M8 just fixed. So
+      this entry asks whether M8 closed a live defect or only a theoretical one.</p>
+      <p>Run this <strong>without</strong> the qdisc, because the question is whether the ordinary case is fixed.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="reliability-6-1" type="checkbox"/><span class="step-body"><span class="lede">Call a <code>thumper</code>, let it run its full 7½-minute cycle rather than collecting it early. The split
+         matters: only full-cycle thumpers ever left a loop behind.</span></span></label>
+      <label class="step"><input checked data-k="reliability-6-2" type="checkbox"/><span class="step-body"><span class="lede">After it finishes, watch for five minutes.</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -a "no longer exists" ~/Games/PIN/logs/GameServer.log | wc -l
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: zero, or a small handful that stop. <a href="Resource-Payout.html">RESOURCE-PAYOUT-6</a> is the same measurement written
+      before the retransmit queue existed, so its recorded counts are the baseline: 648 across four
+      thumpers in one 32-minute sitting.</p></div>
+      <p>A count that keeps climbing means the scope-out isn't being lost in transit and NET-24 is something
+      else. That is a useful answer and should be written into the entry, because it retires the leading
+      theory rather than leaving it standing.</p><div class="result"><label for="r-reliability-6">Result</label><textarea data-k="n-reliability-6" id="r-reliability-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-reliability-v1"></script>
+

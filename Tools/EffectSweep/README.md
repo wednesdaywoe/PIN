@@ -4,13 +4,13 @@ Answers one question about a `clientdb.sd2`: which status effects can the client
 never get rid of on its own?
 
 The question exists because of effect 15253 (Charge's camera lock,
-`Docs/In-Game-Tests/Charge-Camera.md` D5).
+`Docs/In-Game-Tests/Charge-Camera.html` D5).
 The client predicts effects at keypress when the apply command has `allow_prediction=1`, and a
 predicted copy ends one of two ways: its duration chain expires client-side, or an external
 removal reconciles it through `LocalEffectsController`. PIN didn't write that controller until
 2026-08-10, so every predicted effect without a self-terminating duration was a permanent
 client-side ghost. This tool finds the whole class so each member can be re-tested against the
-fix — the test entries live in `Docs/In-Game-Tests/Prediction-Sweep.md`.
+fix — the test entries live in `Docs/In-Game-Tests/Prediction-Sweep.html`.
 
 ## How it decides
 

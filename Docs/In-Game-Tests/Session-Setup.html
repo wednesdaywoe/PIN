@@ -1,0 +1,516 @@
+<title>PIN — Session Setup</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Session Setup</h1>
+    <p class="standfirst">What every entry in the test queue assumes is already done: a build deployed, the
+servers up, the log being watched, and the type ids to hand.</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>What every entry in the <a href="README.md">test queue</a> assumes is already done: a build deployed, the
+    servers up, the log being watched, and the type ids to hand.</p>
+  </section>
+  <section class="doc" id="starting-a-session">
+    <h2>Starting a session</h2>
+    <span class="cmd"><pre><code>dotnet test PIN.sln                       # all green before leaving the desk</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    cd ~/Games/PIN &amp;&amp; ./start-pin.sh          # builds, installs, announces, launches</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>That is the whole procedure. <code>start-pin.sh</code> builds all three servers from the repo, installs them
+    over the deployment, prints the build it is about to run, and starts them —
+    WebHostManager on 4400-4411 / 44300-44311, MatrixServer on UDP 25000, GameServer on UDP 25001. An
+    incremental build of the three takes about six seconds, which is why it is unconditional: there is
+    no version of skipping it that saves enough to be worth what it costs. A build failure aborts
+    before anything is installed or launched, so a broken tree can never leave the previous binary
+    running under a test entry written for the new one.</p>
+    <p>There is no separate deploy step any more. <code>./deploy.sh</code> exists and does the build-and-install half
+    on its own, but the only reason to call it directly is to install without starting.</p>
+    <h3 id="knowing-which-build-you-are-on">Knowing which build you are on</h3>
+    <p>Testing a stale build has cost several sessions: the result gets written down against code that was
+    never running, and nothing on screen contradicts it. Three independent readings of one number now
+    have to agree before that can happen again — what <code>deploy.sh</code> recorded when it installed, what is
+    hashed off the DLL at launch, and what the server hashes itself as and logs on its first line
+    (<code>UdpHosts/GameServer/BuildInfo.cs</code>). The number is the first 12 hex of the assembly's SHA-256, so
+    <code>sha256sum</code> is a fourth reading available at any time.</p>
+    <p>The banner prints before launch and is repeated as the last line before you go to the client:</p>
+    <span class="cmd"><pre><code>────────────────────────────────────────────────────────────────</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      build      29040939701d  (GameServer.dll, written 2026-08-13 09:05:20)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      source     3d72051 on proton-config  "Doc update"  +14 uncommitted</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      installed  2026-08-13T09:05:53-04:00</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    ────────────────────────────────────────────────────────────────</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The same three lines are written into the head of every log before the server appends to it, so a
+    transcript read back weeks later still names the binary that produced it — by which time the DLL
+    itself has been overwritten many times. Confirm the match against the server's own line:</p>
+    <span class="cmd"><pre><code>grep -a "Running build" ~/Games/PIN/logs/GameServer.log
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Anything wrong appears as <code>!!</code> lines inside the banner and in the logs: a DLL that does not match
+    what was installed, or <code>--no-build</code> left on while the repo has moved ahead. A <code>source</code> line reading
+    <code>unknown</code> means the installed DLL is not the one <code>deploy.sh</code> put there, so no commit can honestly
+    be attributed to it.</p>
+    <p>Builds are deterministic — the same source rebuilt gives the same hash — so the number identifies
+    the source, not just the file.</p>
+    <h3 id="restarting-mid-sitting">Restarting mid-sitting</h3>
+    <p>Every start truncates <code>logs/</code>, so a restart used to destroy the transcript of everything tested
+    before it — which cost a whole M4 run on 2026-08-14. <strong>The outgoing logs are now moved aside first</strong>,
+    into <code>~/Games/PIN/logs/previous/&lt;server&gt;-&lt;YYYYMMDD-HHMMSS&gt;.log</code>, ten kept per server. Grep them the
+    same way, and note that the plain <code>logs/*.log</code> greps quoted throughout these streams read the
+    current run only:</p>
+    <span class="cmd"><pre><code>grep -a "Geo report" ~/Games/PIN/logs/previous/GameServer-*.log
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>A restart also <strong>re-deploys by default</strong>, and the install is a plain copy out of the build output.
+    Anything authored from inside the game — a <code>deposit add</code>, a <code>spawngroup add</code>, both of which write
+    their JSON in the deployment because the server knows nothing about a repo — is therefore
+    overwritten by the repo's copy. The repo still wins on purpose, since keeping the local file would
+    silently run stale data, but the outgoing one is now kept in
+    <code>~/Games/PIN/builds/authored/</code> and the deploy says so loudly. <strong>To restart without re-deploying,
+    <code>./start-pin.sh --no-build</code></strong> — that is the only way an in-game placement survives one.</p>
+    <h3 id="running-an-older-build">Running an older build</h3>
+    <p><code>./start-pin.sh --no-build</code> runs what is installed without touching it. This is the only mode in
+    which the build under test is not the current tree, and it says so loudly every time, because the
+    reason it exists is also the reason it gets left on by accident.</p>
+    <span class="cmd"><pre><code>cd ~/Games/PIN &amp;&amp; ./use-build.sh          # lists what is installed and what can be swapped in</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    ./use-build.sh &lt;hash&gt;                     # any archived build, by the hash the banner shows</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    ./use-build.sh latest                     # back to the current tree</code></pre><button class="copy" type="button">Copy</button></span>
+    <p><code>deploy.sh</code> archives the outgoing <code>GameServer.dll</code> into <code>builds/</code> before overwriting it, keeping the
+    last ten. That matters because once a session has produced results against a binary, that binary is
+    evidence, and it was previously destroyed by the next <code>cp</code>.</p>
+    <p>Two named tags predate the archive and are kept only because test entries written at the time name
+    them: <code>good</code> is the <code>c659335</code> build from before the Damage/Effect work, and <strong><code>current</code> is a
+    misnomer</strong> — it is the 2026-08-11 build, not the newest, and selecting it silently rolls back
+    environmental damage, <code>invuln</code>, the <a href="../ISSUE-REGISTER.md">DATA-11</a> weapon-modifier fix and NPC
+    locomotion. The listing prints real dates beside every entry so no tag has to be trusted.</p>
+    <h3 id="where-the-scripts-live">Where the scripts live</h3>
+    <p>In the repo, at <a href="../../Tools/Session/">Tools/Session/</a> — <code>start-pin.sh</code>, <code>deploy.sh</code>,
+    <code>use-build.sh</code> and <code>openssl-legacy.cnf</code>. <code>~/Games/PIN</code> holds symlinks to them, so every path in
+    this doc and in the older entries still works and the pipeline is version-controlled with the code
+    it builds. It used to exist only in the deployment directory, one <code>rm -rf</code> from gone.</p>
+    <p>The split has one consequence worth knowing when editing them: a script has two homes, and which
+    one it wants depends on the line. Resolving <code>$0</code> through the symlink finds the repo copy — the
+    source tree, the openssl profile. Not resolving it finds the deployment — where the servers run.
+    Run a script directly out of <code>Tools/Session/</code> and it will refuse rather than guess, because
+    guessing would install a build on top of the source tree.</p>
+    <h3 id="what-the-pipeline-will-not-touch">What the pipeline will not touch</h3>
+    <p>The deployed configs are not copies of the repo's. <code>GameServer/GameServer.dll.config</code> carries this
+    machine's paths to <code>clientdb.sd2</code> and the asset DB where the repo's copy points at a Windows Steam
+    install, and <code>WebHostManager/config/appsettings.json</code> has <code>DevMode</code> on locally and off in the repo.
+    Both are excluded from the install, so a deploy can never break the server in a way that looks like
+    a code bug. Their upstream templates are hash-tracked instead: when one changes in the repo,
+    <code>deploy.sh</code> prints the <code>diff</code> to run and leaves the local file alone.</p>
+  </section>
+  <section class="doc" id="who-you-log-in-as">
+    <h2>Who you log in as</h2>
+    <p>Every login is the same character. <code>NetworkPlayer.Init</code> asks the RIN for character data over gRPC,
+    nothing answers, and it falls back to <code>HardcodedCharacterData.FallbackData</code> — so the fallback isn't a
+    fallback in practice, it's the character.</p>
+    <p>It is female as of 2026-08-12. Gender alone does most of that: <code>ApplyLoadout</code> picks the frame's
+    visual record out of <code>dbitems::BattleframeVisuals</code> by matching the row's gender char, so the body
+    model follows the field. Everything hanging off the body doesn't, and was changed with it — head
+    10002 is <code>sex = M</code> in <code>dbcharacter::Head</code>, voice set 1000 is <code>sex = 0</code>, and head accessories 10089
+    and 10106 appear on 112 monster rows, all male. The replacements (head 10026, accessory 10115, voice
+    1040) are the set Accord female NPCs use, so it's a combination the game shipped rather than one
+    assembled here. Ornament groups are unchanged: <code>dbvisualrecords::OrnamentsMap</code> filters a group's
+    contents by <code>sex_flags</code> client-side, so a group id is already gender-neutral.</p>
+    <p><code>HardcodedCharacterData.FallbackData</code> points at <code>FemaleFallbackData</code>; point it at
+    <code>MaleFallbackData</code> to switch back. Both presets are in the same file.</p>
+    <p>Remember to watch the GameServer log throughout. Two things are silent failures worth grepping for
+    after any session:</p>
+    <span class="cmd"><pre><code>grep -a "HandlePacket Caught" ~/Games/PIN/logs/GameServer.log    # a handler threw and was swallowed</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Unrecognized MsgID"  ~/Games/PIN/logs/GameServer.log    # the client sent something we don't handle</code></pre><button class="copy" type="button">Copy</button></span>
+  </section>
+  <section class="doc" id="admin-commands">
+    <h2>Admin commands</h2>
+    <p>Admin commands are typed into the in-game Admin chat channel as a bare word with no leading slash:
+    the client keeps <code>/</code>-prefixed input for itself, so anything starting with <code>/</code> never reaches
+    <code>AdminService</code>. <code>help</code> prints the full list with each command's aliases and usage.</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Usage</th>
+    <th>Aliases</th>
+    <th>Notes</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>help</code></td>
+    <td><code>listcmd</code>, <code>listcmds</code>, <code>cmdlist</code>, <code>cmds</code></td>
+    <td>prints every command with its aliases</td>
+    </tr>
+    <tr>
+    <td><code>npc &lt;characterTypeId&gt; [&lt;x&gt; &lt;y&gt; &lt;z&gt;]</code></td>
+    <td><code>character</code>, <code>monster</code>, <code>spawn_npc</code>, <code>spawn_character</code>, <code>spawn_monster</code></td>
+    <td>no coords = at your feet</td>
+    </tr>
+    <tr>
+    <td><code>deployable &lt;deployableTypeId&gt; [&lt;x&gt; &lt;y&gt; &lt;z&gt;]</code></td>
+    <td><code>spawn_deployable</code></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td><code>vehicle &lt;vehicleTypeId&gt; [&lt;x&gt; &lt;y&gt; &lt;z&gt;]</code></td>
+    <td><code>spawn_vehicle</code></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td><code>carryable &lt;carryableTypeId&gt; [&lt;x&gt; &lt;y&gt; &lt;z&gt;]</code></td>
+    <td><code>spawn_carryable</code></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td><code>thumper [&lt;beaconCalldownDefId&gt;]</code></td>
+    <td><code>spawn_thumper</code></td>
+    <td>at your feet, owned by you, so it pays you when it finishes; defaults to def 766269. Since M4 the feedback names the deposit (or barren ground) it landed on, and the payout comes from that — see <a href="Thump-Placement.html">Thump Placement</a>. A full cycle is 7½ minutes — see <a href="Resource-Payout.html">Resource Payout</a>. <strong>Since M7 a thumper is a fight</strong>: four Aranha waves spawn while it drills and the machine can be destroyed — see <a href="Thumper-Defence.html">Thumper Defence</a></td>
+    </tr>
+    <tr>
+    <td><code>deposit list \| add &lt;nodeTypeId&gt; [radius] \| remove &lt;id&gt; \| radius &lt;id&gt; &lt;metres&gt; \| reload</code></td>
+    <td>—</td>
+    <td>places a resource deposit centered where you stand and saves it immediately, same footing guards as <code>spawngroup</code>; see <a href="Thump-Placement.html">Thump Placement</a></td>
+    </tr>
+    <tr>
+    <td><code>target [entityId/name]</code></td>
+    <td>—</td>
+    <td>no argument ray-casts from your aim; <code>target me</code> or <code>target self</code> targets you; prints the distance, so it doubles as a rangefinder</td>
+    </tr>
+    <tr>
+    <td><code>clear</code></td>
+    <td><code>cleartarget</code>, <code>targetclear</code>, <code>untarget</code>, <code>removetarget</code>, <code>remtarget</code>, <code>deletetarget</code>, <code>deltarget</code></td>
+    <td>clears the command target</td>
+    </tr>
+    <tr>
+    <td><code>hostility</code></td>
+    <td><code>stance</code></td>
+    <td>stance both ways against the current target</td>
+    </tr>
+    <tr>
+    <td><code>hazard</code></td>
+    <td><code>env</code></td>
+    <td>water level and nearest melding wall, with which side of it you're on</td>
+    </tr>
+    <tr>
+    <td><code>invuln [on\|off]</code></td>
+    <td><code>god</code></td>
+    <td>no argument toggles; hits the current target if there is one</td>
+    </tr>
+    <tr>
+    <td><code>dbg_weapon</code></td>
+    <td>—</td>
+    <td>weapon template, ammo and the resolved decay curve</td>
+    </tr>
+    <tr>
+    <td><code>ability &lt;abilityId&gt;</code></td>
+    <td><code>useability</code>, <code>activateability</code>, <code>apt_ability</code></td>
+    <td>runs the chain server-side, so the client never predicts it</td>
+    </tr>
+    <tr>
+    <td><code>applyeffect &lt;effectId&gt;</code></td>
+    <td><code>apply_effect</code>, <code>apt_apply</code></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td><code>removeeffect &lt;effectId&gt;</code></td>
+    <td><code>remove_effect</code>, <code>apt_remove</code>, <code>apt_clear</code>, <code>apt_cancel</code></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td><code>listeffects</code></td>
+    <td><code>list_effects</code>, <code>apt_status</code>, <code>apt_list</code></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td><code>cancelfm &lt;commandId&gt;</code></td>
+    <td>—</td>
+    <td>cancel a ForcedMovement by command id</td>
+    </tr>
+    <tr>
+    <td><code>createitem &lt;typeId&gt;</code></td>
+    <td><code>create_item</code>, <code>giveitem</code>, <code>give_item</code></td>
+    <td>second argument is quantity, resources only</td>
+    </tr>
+    <tr>
+    <td><code>removeitem &lt;typeId\|guid\|loose&gt;</code></td>
+    <td><code>remove_item</code>, <code>delitem</code></td>
+    <td><code>loose</code> drops everything no loadout is using — the clutter a test session makes; add <code>force</code> to take slotted items too</td>
+    </tr>
+    <tr>
+    <td><code>equipitem &lt;typeId&gt; [slot]</code></td>
+    <td><code>equip_item</code>, <code>equip</code></td>
+    <td>slots an item you already own into the loadout you are wearing; default slot is <code>Secondary</code>, run it bare to list the slot names</td>
+    </tr>
+    <tr>
+    <td><code>dbg_inventory [typeId\|resend]</code></td>
+    <td><code>dbg_inv</code></td>
+    <td>bare prints everything to the client console; a type id logs just that item's guid, sub-inventory and flags to the server log; <code>resend</code> pushes the full inventory again, which is the update the client is known to accept</td>
+    </tr>
+    <tr>
+    <td><code>tp &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+    <td><code>teleport</code></td>
+    <td>z is up</td>
+    </tr>
+    <tr>
+    <td><code>pflags [flag]</code></td>
+    <td><code>pflag</code>, <code>float</code></td>
+    <td>toggles a named permission flag, <code>pflags list</code> to see them; bare <code>pflags</code> still toggles <code>cheat_float</code>, which is how you get to a measured distance</td>
+    </tr>
+    <tr>
+    <td><code>cflags [value]</code></td>
+    <td><code>cflag</code></td>
+    <td>sets CombatFlags</td>
+    </tr>
+    <tr>
+    <td><code>rment</code></td>
+    <td><code>killall</code></td>
+    <td>removes every entity except player characters — use between tests</td>
+    </tr>
+    <tr>
+    <td><code>emote &lt;id&gt;</code></td>
+    <td>—</td>
+    <td>remote views only</td>
+    </tr>
+    <tr>
+    <td><code>say &lt;message&gt;</code></td>
+    <td>—</td>
+    <td>server-wide chat</td>
+    </tr>
+    <tr>
+    <td><code>rarmy</code></td>
+    <td><code>reloadarmy</code></td>
+    <td>reload Army UI</td>
+    </tr>
+    <tr>
+    <td><code>dbgattach &lt;unk2&gt; &lt;unk3&gt;</code></td>
+    <td>—</td>
+    <td>AttachedTo debugging</td>
+    </tr>
+    </tbody>
+    </table></div>
+  </section>
+  <section class="doc" id="monster-type-ids">
+    <h2>Monster type ids</h2>
+    <p>The debug row in <code>EntityManager.TempSpawnTestEntities</code>, with the faction each id carries in
+    <code>dbcharacter::Monster</code> and how a player sees it. Players are faction 1, and the stance comes from
+    <code>dbcharacter::FactionRelations</code>; ids whose faction has no relation row with 1 fall back to faction
+    1's own default stance, which is 0, so they read Neutral. Neutral is still damageable in both
+    directions — <code>HostilityRules.CanDamage</code> only protects Friendly — so a Neutral monster is a poor
+    choice for a hostility check and a fine one for a damage check.</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Type id</th>
+    <th>Monster</th>
+    <th>Faction</th>
+    <th>Seen by a player</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>1196</td>
+    <td>Chosen Fiend</td>
+    <td>2, chosen</td>
+    <td>Hostile</td>
+    </tr>
+    <tr>
+    <td>528</td>
+    <td>Melded Aranha</td>
+    <td>6, melding</td>
+    <td>Hostile</td>
+    </tr>
+    <tr>
+    <td>2342</td>
+    <td>Aranha</td>
+    <td>7, gaea</td>
+    <td>Hostile</td>
+    </tr>
+    <tr>
+    <td>1304</td>
+    <td>Black Hills Bandit</td>
+    <td>22, Black Hills Bandits</td>
+    <td>Hostile</td>
+    </tr>
+    <tr>
+    <td>290</td>
+    <td>Accord Assault</td>
+    <td>1, accord</td>
+    <td>Friendly, same faction as the player</td>
+    </tr>
+    <tr>
+    <td>356</td>
+    <td>Aero</td>
+    <td>1, accord</td>
+    <td>Friendly, same faction as the player</td>
+    </tr>
+    <tr>
+    <td>2407</td>
+    <td>Tanken Saboteur</td>
+    <td>17, Tanken</td>
+    <td>Neutral, no relation row</td>
+    </tr>
+    <tr>
+    <td>2312</td>
+    <td>unnamed, owns the debug vehicles</td>
+    <td>17, Tanken</td>
+    <td>Neutral, no relation row</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <h3 id="how-hard-they-actually-hit">How hard they actually hit</h3>
+    <p>Resolved through <code>SDBUtils.GetDetailedWeaponInfo</code> and <code>AttackWindow</code> on each monster's <code>Weapon1Id</code>,
+    so this is what PIN will really fire, not what the template asks for. A player has 3000 shields and
+    19192 health — 22192 to chew through — which is why the default picks feel like nothing.</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Type id</th>
+    <th>Monster</th>
+    <th>Damage / round</th>
+    <th>Rounds / burst</th>
+    <th>Burst</th>
+    <th>Reach</th>
+    <th>dps</th>
+    <th>Time to kill a player</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>1196</td>
+    <td>Chosen Fiend</td>
+    <td>1</td>
+    <td>2</td>
+    <td>250ms</td>
+    <td>180m</td>
+    <td>8</td>
+    <td>46 min</td>
+    </tr>
+    <tr>
+    <td>1304</td>
+    <td>Black Hills Bandit</td>
+    <td>1</td>
+    <td>2</td>
+    <td>250ms</td>
+    <td>180m</td>
+    <td>8</td>
+    <td>46 min</td>
+    </tr>
+    <tr>
+    <td>2342</td>
+    <td>Aranha</td>
+    <td>125</td>
+    <td>1</td>
+    <td>3350ms</td>
+    <td>50m</td>
+    <td>37</td>
+    <td>10 min</td>
+    </tr>
+    <tr>
+    <td>528</td>
+    <td>Melded Aranha</td>
+    <td>49</td>
+    <td>1</td>
+    <td>1280ms</td>
+    <td>5m</td>
+    <td>38</td>
+    <td>10 min</td>
+    </tr>
+    <tr>
+    <td>1375</td>
+    <td>Chosen Gatling Gunner</td>
+    <td>20</td>
+    <td>1</td>
+    <td>250ms</td>
+    <td>230m</td>
+    <td>80</td>
+    <td>4.6 min</td>
+    </tr>
+    <tr>
+    <td>2407</td>
+    <td>Tanken Saboteur</td>
+    <td>232</td>
+    <td>1</td>
+    <td>2500ms</td>
+    <td>150m</td>
+    <td>93</td>
+    <td>4 min — but Neutral, so it won't start</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><strong>1196's 8 dps is the real shipped number</strong>, measured off a 2026-08-12 log at exactly 8
+    <code>damage from</code> lines a second. Firefall's monsters weren't meant to kill a level 45 frame alone;
+    spawn several, or use <code>1375</code>, which is the hardest-hitting id here that is both hostile and ranged.</p>
+    <p><strong>Don't reach past that for something faster without checking its clip.</strong> PIN doesn't model ammo or
+    reloading, so a weapon that shipped with a one-round clip fires continuously instead of once per
+    reload, and its damage comes out wildly inflated — <a href="../gaps/data.md#data-14">DATA-14</a>. Monster 281
+    (Chosen Sniper) is the clean example: 500 damage a round, <code>clip = 1</code>, <code>reload = 1000ms</code>, so retail
+    gave it about 450 dps and PIN gives it 2000. It will kill you in eleven seconds, and none of that is
+    a real number. Prefer ids with a large clip — 1375 carries 500 rounds, 2342 carries 9600.</p>
+    <p>Any of the four Hostile ids work for a check that needs a hostile target. For a wider pick, the
+    factions hostile to players are 2 chosen, 5 monster, 6 melding, 7 gaea, 8 bandit, 22 Black Hills
+    Bandits, 42 Aranha, 45 Rebels, 46 Reapers and 47 Ophanim. <code>dbcharacter::Monster</code> has 3109 rows and
+    1731 of them are accord, so the hostile ones concentrate in gaea (431), chosen (270) and bandit
+    (249).</p>
+  </section>
+  <section class="doc" id="deployable-and-vehicle-type-ids">
+    <h2>Deployable and vehicle type ids</h2>
+    <p>Read out of <code>dbcharacter::Deployable</code>, chosen for having health, a visual, a death ability and a
+    faction that makes them damageable or not. Faction 2 is chosen, so a player can shoot it; faction 1
+    is accord, so a player cannot.</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Command</th>
+    <th>What it is</th>
+    <th>Health</th>
+    <th>Turret</th>
+    <th>Faction</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>deployable 517</code></td>
+    <td>small, hostile, dies fast — the destruction check</td>
+    <td>100</td>
+    <td>17</td>
+    <td>2</td>
+    </tr>
+    <tr>
+    <td><code>deployable 356</code></td>
+    <td>hostile, survives a magazine — the health bar check</td>
+    <td>10000</td>
+    <td>9</td>
+    <td>2</td>
+    </tr>
+    <tr>
+    <td><code>deployable 211</code></td>
+    <td>hostile, no turret</td>
+    <td>6000</td>
+    <td>none</td>
+    <td>2</td>
+    </tr>
+    <tr>
+    <td><code>deployable 348</code></td>
+    <td>accord, must NOT be damageable</td>
+    <td>1400</td>
+    <td>7</td>
+    <td>1</td>
+    </tr>
+    <tr>
+    <td><code>deployable 395</code></td>
+    <td>Battleframe Station, the one already spawned in zone 448</td>
+    <td><strong>0</strong></td>
+    <td>none</td>
+    <td>1</td>
+    </tr>
+    <tr>
+    <td><code>vehicle 116</code> / <code>vehicle 201</code></td>
+    <td>the two debug vehicles from <code>TempSpawnTestEntities</code></td>
+    <td>—</td>
+    <td>—</td>
+    <td>owner 2312</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><code>deployable 395</code> has <code>StartHitpoints = 0</code> in the retail SDB, so it is genuinely undamageable and
+    will legitimately print the <code>has no StartHitpoints</code> line. Don't test with it — it's the deployable
+    you'll trip over first, because it spawns itself in the Coral Forest. 3036 of the 3902 deployable
+    rows do have health.</p>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-session-setup-v1"></script>
+

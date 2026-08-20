@@ -9,7 +9,7 @@ namespace GameServer.Systems.Admin.Commands;
 ///     The retail route to a thumper is the client's own calldown UI, which sends
 ///     <c>ResourceNodeBeaconCalldownRequest</c> and needs a beacon item in the inventory to offer the
 ///     option at all — and item delivery is what
-///     <see href="../../../../Docs/In-Game-Tests/Inventory.md">I1</see> says is broken. This is the way
+///     <see href="../../../../Docs/In-Game-Tests/Inventory.html">I1</see> says is broken. This is the way
 ///     in that doesn't depend on that, so the completion payout can be tested on its own.
 ///
 ///     Ownership is the whole point of the command. Zone 448 already spawns a debug thumper in

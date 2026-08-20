@@ -12,7 +12,7 @@ namespace GameServer.Tests.Combat;
 /// </summary>
 /// <remarks>
 ///     Whether the client ever draws the give-up prompt is an in-game question (B1-B5 in
-///     Docs/In-Game-Tests/Death-And-Respawn.md). These only hold the fallback to what it means to do,
+///     Docs/In-Game-Tests/Death-And-Respawn.html). These only hold the fallback to what it means to do,
 ///     because a fallback that never fires looks exactly like NET-23 unfixed: the player is stuck on
 ///     the floor and the session ends in a reconnect either way.
 /// </remarks>

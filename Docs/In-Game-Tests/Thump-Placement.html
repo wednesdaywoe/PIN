@@ -1,0 +1,470 @@
+<title>PIN — Thump Placement (THUMP-PLACE-1–THUMP-PLACE-6)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Thump Placement (THUMP-PLACE-1–THUMP-PLACE-6)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on <a href="../streams/m4-thump-placement.md">M4</a>. The milestone is that where you thump matters:
+    zone 448 now carries four resource deposits, a scan shows them, a ground report reads one, and a
+    thumper's payout comes from the spot it stands on rather than from a constant. <strong>The flat 200-crystite
+    grant is gone</strong> — <a href="Resource-Payout.html">Resource Payout</a>'s RESOURCE-PAYOUT-2 record describes the old behaviour.</p>
+    <p>The four deposits, from
+    <a href="../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json">resource_deposit.json</a>. All
+    four centers are coordinates a tester has stood on, and <strong>deposit 1's is the only one the client has
+    also confirmed you may thump</strong> — it was moved there on 2026-08-13 after the original center turned
+    out to be inside the station's no-thumping zone (<a href="../ISSUE-REGISTER.md">DATA-17</a>). The other three
+    are walked spawn-group footings whose discs extend over unwalked ground, and none of them has been
+    scanned yet:</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Id</th>
+    <th>Name</th>
+    <th>Node type</th>
+    <th>Center</th>
+    <th>Radius</th>
+    <th>Pays at center</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>1</td>
+    <td>Basin Head Crystite</td>
+    <td>242</td>
+    <td>199.8, 315.7, 401.3</td>
+    <td>30m</td>
+    <td>40–100 crystite</td>
+    </tr>
+    <tr>
+    <td>2</td>
+    <td>Basin Mouth Iron</td>
+    <td>233</td>
+    <td>138.8, 181.3, 401.0</td>
+    <td>45m</td>
+    <td>25–35 raw iron (86668)</td>
+    </tr>
+    <tr>
+    <td>3</td>
+    <td>Basin West Crystite Trace</td>
+    <td>241</td>
+    <td>85.5, 226.8, 400.9</td>
+    <td>35m</td>
+    <td>10–25 crystite</td>
+    </tr>
+    <tr>
+    <td>4</td>
+    <td>North Flats Crystite and Iron</td>
+    <td>239</td>
+    <td>31.6, 268.9, 401.0</td>
+    <td>35m</td>
+    <td>8–15 crystite + 16–32 raw iron</td>
+    </tr>
+    <tr>
+    <td>5</td>
+    <td>Tier 1 - Common - Raw Iron - Normal</td>
+    <td>233</td>
+    <td>-289.4, 141.1, 401.7</td>
+    <td>35m</td>
+    <td>25–35 raw iron (86668)</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><strong>Deposit 5 was placed from inside the game</strong>, by walking to the west of the basin and typing
+    <code>deposit add 233</code> — that is <a href="#x-s6-a-deposit-placed-by-walking-survives-a-restart">THUMP-PLACE-6</a>'s pass, and it
+    keeps the name the command gives a new deposit, which is its node type's. The other four were written
+    into the file by hand.</p>
+    <p>Quantities fall linearly from those center ranges to the rim ranges (mostly 0–5), so <strong>standing at
+    the middle of a disc pays several times what its edge does</strong>, and a rim roll can legitimately come
+    up empty. Deposit membership and the gradient are measured flat, in X and Y — height never decides
+    anything, so the shelf deposit reaches over the cliff it sits on.</p>
+    <p>A thumper on ground no deposit covers mines node type 20, "Thumper Sifted Earth", whose shipped
+    yield is one unit of item 30404, which <a href="#x-s4-thumping-barren-ground-pays-approximately-nothing">THUMP-PLACE-4</a> confirmed
+    does carry the <code>Resource</code> flag: the log reads <code>paying 1 of resource 30404</code>, not <code>not paid</code>. Either
+    way a barren thump pays approximately nothing, which is the point.</p>
+    <p>The log lines this stream reads:</p>
+    <span class="cmd"><pre><code>grep -a "Resource scan" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Resource locations" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Geo report" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>A thumper still takes up to seven and a half minutes; the state-transition budget is in
+    <a href="Resource-Payout.html">Resource Payout</a>.</p>
+    <p><strong>Restarting mid-sitting used to destroy the transcript</strong>, which is how the 2026-08-14 run lost its
+    own evidence. Outgoing logs are now moved to <code>~/Games/PIN/logs/previous/&lt;server&gt;-&lt;stamp&gt;.log</code>; the
+    greps above read the current run only, so add <code>previous/GameServer-*.log</code> when reading back across a
+    restart. And a restart re-deploys unless told not to — see
+    <a href="Session-Setup.html#restarting-mid-sitting">Session Setup</a>, which THUMP-PLACE-6 turns on.</p>
+  </section>
+  <section class="block" data-open="true" id="-thump-place-1-the-map-shows-where-the-resources-are">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMP-PLACE-1</span>
+      <span class="block-t">The map shows where the resources are</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMP-PLACE-1</span><span class="marker pass">[x]</span><span class="entry-t">The map shows where the resources are</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on the third sitting</strong>: the station outpost's radar reads
+      <code>Crystite, Iron Ore</code> — the zone's deposits, named on the map, from the layer the client actually
+      draws. (86668 is "Iron Ore" on screen; the shipped tables call it raw iron, and the deposit table
+      above uses the data's name.) The heat-blob overlay was not reported on either way; it is a bonus
+      layer and the entry does not turn on it.</p></div>
+      <p><strong>Two half-passes came first, and reading the client's own interface source ended the guessing.</strong>
+      The full account is in <a href="../Client-UI-Source.md">Client UI Source</a>; the short version is that the map
+      never had one resource layer, it had three, and PIN was feeding the only one that is switched off.</p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>What draws it</th>
+      <th>Fed by</th>
+      <th>State</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>A radar disc per outpost, with a resource readout</td>
+      <td>that outpost entity's own <code>NearbyResourceItems</code></td>
+      <td>alive — <strong>this is the layer a player sees</strong></td>
+      </tr>
+      <tr>
+      <td>Heat blobs, one per deposit</td>
+      <td><code>ResourceLocationInfosResponse</code> (2:140)</td>
+      <td>its draw event is commented out in the shipped UI; PIN's install re-enables it</td>
+      </tr>
+      <tr>
+      <td>A scan report card in the world</td>
+      <td><code>GeographicalReportResponse</code> (2:139)</td>
+      <td>alive, and THUMP-PLACE-2's business</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>The first sitting proved the server chain and drew nothing, because <code>FoundResourceAreas</code> is a
+      beta-era message this client ignores. The second answered <code>ResourceLocationInfosRequest</code> with the
+      real deposit table and still drew nothing, because <code>Heatmap.xml</code> never binds the event that would
+      consume it. The radars the tester saw were the outpost layer, empty because PIN left all sixteen
+      <code>NearbyResourceItems</code> slots unset on every outpost. Zone 448's station outpost (id 17, radius 485m)
+      reaches all four deposits, so it is the one that should now read out.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thump-place-1-1" type="checkbox"/><span class="step-body"><span class="lede">Log in to zone 448. Stay near the Battleframe Station.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-1-2" type="checkbox"/><span class="step-body"><span class="lede">Open the full map and turn on the resource view (Tab).</span></span></label>
+      <label class="step"><input checked data-k="thump-place-1-3" type="checkbox"/><span class="step-body"><span class="lede">Look at the radar disc over the station: expect a readout naming <strong>Crystite</strong> and <strong>Raw Iron</strong>
+         instead of an empty one. Every other outpost in the zone has no deposit in reach and correctly
+         stays empty.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-1-4" type="checkbox"/><span class="step-body"><span class="lede">Look for heat blobs near the four centers in the table above — the client-side patch feeds these
+         from <code>ResourceLocationInfosResponse</code>. <code>grep -a "Resource locations" ~/Games/PIN/logs/GameServer.log</code>
+         should show <code>4 deposit(s) in zone 448</code>; the client asks once, at player-ready, not on opening the
+         map.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>ability 34126</code>, then <code>grep -a "Resource scan" ~/Games/PIN/logs/GameServer.log</code> — expect
+         <code>Resource scan 181662 by &lt;your entity id&gt;: 4 deposit(s) within 600m</code> and <strong>no change on screen</strong>.
+         The scan message is dead in this client generation; the grep only proves the server half.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the station's radar names crystite and raw iron. That alone is the milestone's "you can see
+      where the resources are", because it is retail's own live mechanism.</p></div>
+      <p><strong>The blobs are a bonus, and their absence is diagnostic</strong>: readout working but no blob means either
+      the client-side heatmap patch did not take (the two files are listed in
+      <a href="../Client-UI-Source.md">Client UI Source</a>) or <code>ResourceLocationInfo</code>'s field order is wrong after
+      all. The order is taken from the heatmap's own Lua, which reads <code>plot.x/y/z</code>, <code>plot.radius</code> and
+      <code>plot.composition[i].{itemTypeId, percent}</code>, so wrong-but-plausible is unlikely.</p>
+      <div class="callout fail"><p><strong>Fail, the radar is still empty:</strong> the outpost view is built once when the outpost spawns, so a
+      stale deploy still shows unset slots — check the build stamp at the head of the log first. If the
+      build is current, the slots are being written but not reaching the client, which is a view-scoping
+      problem rather than a resource one.</p></div>
+      <p>Sitting record, 2026-08-13, second sitting: <code>ResourceLocationInfosRequest</code> confirmed arriving once
+      at 21:44 and answered with 4 deposits; nothing drawn; tester reports "empty radars" on the map's
+      resource view, which is what identified the outpost layer as the real one.</p>
+      <details><summary>First sitting, 2026-08-13 — the scan-message dead end</summary>
+      <p><code>ability 34126</code> ran five times, the log counted <code>4 deposit(s) within 600m</code> every time, and the
+      client drew nothing anywhere. The 2016 retail capture (<a href="Capture-Replay.html">Capture-Replay</a>) then
+      showed that <strong>the scan-era messages never appear in a live session</strong> — not <code>FoundResourceAreas</code>,
+      not <code>GeographicalReportRequest</code>, not one of that family, in 400,000 messages. They are beta-era
+      scanning, and the entry moved to <code>ResourceLocationInfosRequest</code>/<code>Response</code>, which retail answered
+      with an empty list because resources had been flattened everywhere by then. PIN answered it with
+      the real deposit table — correct, and still invisible, which is what the second sitting found out.</p>
+      </details><div class="result"><label for="r-thump-place-1">Result</label><textarea data-k="n-thump-place-1" id="r-thump-place-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thump-place-2-the-ground-says-what-is-under-it">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMP-PLACE-2</span>
+      <span class="block-t">The ground says what is under it</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMP-PLACE-2</span><span class="marker pass">[x]</span><span class="entry-t">The ground says what is under it</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, tester-reported, and the confirming log did not survive the sitting.</strong> The
+      run was restarted with a plain <code>./start-pin.sh</code> to begin THUMP-PLACE-6, which truncated <code>GameServer.log</code> and
+      took the transcript of everything before it with it. That is fixed for future sittings — outgoing
+      logs are kept in <code>logs/previous/</code> — but this entry's own record is a report rather than a grep, and
+      it is marked passed on the tester's word.</p></div>
+      <p>What the surviving post-restart fragment does show, and it is not nothing: <strong>the Scan Hammer fires
+      reliably</strong> — seven presses in twenty seconds, each one <code>ActivateAbility Slot 5</code> followed by
+      <code>Ability 34503 starting Chain 884633</code>, so the trigger found on 2026-08-13 is not a one-off. And the
+      barren diagnostic added the same day works in game:</p>
+      <span class="cmd"><pre><code>[08:24:01 INF] Geo report ... at &lt;-312.34647, 488.43283, 401.17035&gt;: feedback OK, barren;</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                     nearest is [4] North Flats Crystite and Iron at 408m, radius 35m</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>That is a correct barren reading 408m out, and it names where to walk instead of only saying no.</p>
+      <details><summary>How the trigger was found, 2026-08-13</summary>
+      <p><strong>The trigger is found and the whole loop runs, 2026-08-13.</strong> With ability module 56811 in
+      <code>GearAuxWeapon</code>, pressing <strong>G</strong> plays the Scan Hammer animation, fires ability 34503, and the client
+      sends <code>GeographicalReportRequest</code> — the message the 2016 capture contains none of. The scan overlay
+      draws, showing density and naming what is in the scanned area.</p>
+      <p><strong>Those labels are not coming from this entry's message.</strong> All three reports the server answered
+      were invalid, so the composition the tester read can only have come from
+      <code>ResourceLocationInfosResponse</code> — which is the heat-blob layer, fed by the client-side patch, and
+      <strong>that confirms the <code>ResourceLocationInfo</code> field mapping outright</strong>: position, radius, and an
+      (item, percent) list, guessed from the heatmap's Lua and now seen rendering real deposit data. THUMP-PLACE-1's
+      bonus layer is working.</p>
+      <p><strong>What is still unproven is a valid reading, and the reason was placement.</strong> Ten scans were taken
+      across the evening. Seven came back <code>NOTHUMPINGZONE</code> — the client refusing the spot before the
+      server sees a position — and <strong>three came back <code>OK</code></strong>, which is the proof that the refusals are
+      about where the tester stood rather than anything broken. But all three accepted spots were 78m,
+      94m and 182m from the nearest deposit, so <code>barren</code> was the right answer every time. No scan has yet
+      been taken standing on a deposit with the client's blessing.</p>
+      <p>Two fixes came out of that. Deposit 1's old center sat 14.7m from the station outpost, entirely
+      inside its no-thumping zone, so <strong>it was moved to 199.8, 315.7 — one of the three coordinates the
+      client itself said <code>OK</code> to</strong>, 67m from the station and reachable on foot
+      (<a href="../ISSUE-REGISTER.md">DATA-17</a>, now closed). And a barren reading now names the nearest deposit
+      and its distance, so a miss says which way to walk instead of only that you missed.</p>
+      </details>
+      <h3 id="how-to-run-it-again">How to run it again</h3>
+      <p><code>GeographicalReportRequest</code> finally has a handler. The client sends it carrying only its own verdict
+      on the spot (<code>OK</code>, <code>NOTHUMPINGZONE</code>, <code>INVALIDSURFACE</code>); the server reads the ground under your feet
+      and answers with a composition, or with an invalid (empty) report off a deposit. <strong>The trigger is an
+      equipped Scan Hammer</strong>, per the client's own tutorial text; no interface code sends the request, so
+      the client's native code does, and this entry now supplies the hammer rather than hunting for a
+      button.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thump-place-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 56811</code> then <strong><code>equipitem 56811 GearAuxWeapon</code></strong>. 56811 is the Scan Hammer's
+         <strong>ability module</strong>, granting ability 34503 "Scan Hammer"; <code>GearAuxWeapon</code> is the loadout slot the
+         client calls ability slot 5, which is bound to <strong>G</strong> by default. The weapon 56826 is the model you
+         hold and grants no ability — equipping that instead is what the 2026-08-13 sitting did, and G
+         stayed a plain melee swing.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-2" type="checkbox"/><span class="step-body"><span class="lede"><strong>Walk down to deposit 1, Basin Head Crystite, centered at 199.8, 315.7</strong> — 67m from the station,
+         on the one coordinate in the zone the client has already accepted for thumping. Do not scan on the
+         station shelf; it is a no-thumping zone and every scan there is refused before the server sees a
+         position.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-3" type="checkbox"/><span class="step-body"><span class="lede"><strong>Press G.</strong> <code>grep -a "ActivateAbility Slot 5" ~/Games/PIN/logs/GameServer.log</code> proves the press
+         arrived; the server now also logs <code>nothing slotted in GearAuxWeapon</code> when the slot is empty and
+         <code>is slotted but is not an ability module</code> when the wrong item is in it, so a dead key names its
+         own cause.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "HandleActivateAbility: Ability 34503" ~/Games/PIN/logs/GameServer.log</code> — the scan
+         ability ran. If the press arrives and this does not, the module is not resolving.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-5" type="checkbox"/><span class="step-body"><span class="lede">If no report follows, <code>pflags detect_resources</code> and retry — that permission gates the client's
+         resource-scanning HUD, and turning it on also makes the client re-ask for the deposit list.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-6" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Geo report" ~/Games/PIN/logs/GameServer.log</code> — expect
+         <code>feedback OK, scan 1, node type 242, 1 resource(s)</code>. The two failure modes now read differently:
+         <strong><code>feedback NOTHUMPINGZONE</code> means the spot was refused</strong> by the client, so move away from any
+         base and press G again; <strong><code>feedback OK, barren</code></strong> means the spot was fine and holds nothing, and
+         the same line names the nearest deposit and its distance so you know which way to walk.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-7" type="checkbox"/><span class="step-body"><span class="lede">Walk somewhere no deposit covers (100m+ from every center in the table) and scan again. Expect
+         the grep to end in <code>barren</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-2-8" type="checkbox"/><span class="step-body"><span class="lede">Open the map. <code>MapOpened</code> now re-sends your latest report instead of a hardcoded empty one —
+         note whether the map shows the reading taken in step 6/7.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the two greps say deposit then barren, and the client renders the deposit reading as a
+      non-empty report (composition percentages, however it draws them).</p></div>
+      <p><strong>Not runnable is a valid outcome</strong> if no UI action sends the request — mark <code>[-]</code>, note it, and the
+      server half stays covered by the grep in THUMP-PLACE-3's setup. The handler also fires on whatever the client
+      does send, so the grep after any session says whether the message ever arrived at all.</p>
+      <p><strong>What the client's interface source says, 2026-08-13</strong> (<a href="../Client-UI-Source.md">Client UI Source</a>):
+      the receiving half of this entry is alive and well. <code>HUD/ResourceScans/ResourceScans.lua</code> is fully
+      bound and draws a world-space report card — an icon per resource with its percentage — plus a map
+      marker, straight off <code>GeographicalReportResponse</code>. It also handles the invalid answer, which it
+      shows as one of "thumping prohibited", "invalid surface", "thumper nearby" or an empty report.</p>
+      <p>So the entry is not blocked on rendering, it is blocked on the trigger. <strong>No Lua anywhere sends the
+      request</strong>, which means the client's own code sends it — and the tester's recollection is that it
+      took an equipped Scan Hammer and an ability press. The shipped data agrees: it carries a "Scan
+      Hammer" item, a "Scan Hammer ability", and tutorial text reading "Equip your scan hammer" and "Use
+      the Scan Hammer to find a valid thumping spot". Getting one into a character's hands is the next
+      piece of work, and until then a <code>[-]</code> here is about equipment, not about a dead message.</p><div class="result"><label for="r-thump-place-2">Result</label><textarea data-k="n-thump-place-2" id="r-thump-place-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thump-place-3-thumping-the-rich-center-pays-center-values">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMP-PLACE-3</span>
+      <span class="block-t">Thumping the rich center pays center values</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMP-PLACE-3</span><span class="marker pass">[x]</span><span class="entry-t">Thumping the rich center pays center values</span></div><div class="callout pass"><p><strong>Passed 2026-08-14 on the second attempt of the sitting</strong>, and the first attempt is the better
+      evidence of the two because it missed:</p></div>
+      <span class="cmd"><pre><code>08:54:33  mined node type 242 at distance fraction 0.59 of deposit [1] Basin Head Crystite,</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                completion 1.00: 1 resource kind(s), 33 total     -&gt; paying 33 of resource 10</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      09:29:07  mined node type 242 at distance fraction 0.19 of deposit [1] Basin Head Crystite,</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                completion 1.00: 1 resource kind(s), 48 total     -&gt; paying 48 of resource 10</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>The second run is the pass: 48 crystite, inside the 40–100 band, from a thumper set down near the
+      center. The tester saw the same 48 in the on-screen toast.</p>
+      <p><strong>The first run is what makes it convincing.</strong> It was set down 17.6m out on a 30m deposit — 59% of
+      the way to the rim — and paid 33, which the tester noticed at the time ("I was off-center"). The
+      gradient interpolates the center's 40–100 toward the rim's 0–5, so 0.59 predicts roughly 16–44.
+      Two runs on the same deposit, minutes apart, differing only in where they stood, and the payout
+      tracked the distance. <strong>That is the milestone stated as one sentence.</strong></p>
+      <p>The milestone's exit condition, first half. Same shape as RESOURCE-PAYOUT-2, on the one deposit whose center is
+      walked ground.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thump-place-3-1" type="checkbox"/><span class="step-body"><span class="lede">Run <a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a> first if this is a fresh character, for the baseline.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-3-2" type="checkbox"/><span class="step-body"><span class="lede">Walk — do not <code>tp</code> — to within a few metres of 199.8, 315.7, deposit 1's center at the head of
+         the basin, 67m from the Battleframe Station. Note the crystite count.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>thumper</code> — the feedback line now names the ground: expect
+         <code>in deposit [1] Basin Head Crystite (node type 242)</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-3-4" type="checkbox"/><span class="step-body"><span class="lede">Let it run its full cycle untouched — interacting early is RESOURCE-PAYOUT-4's entry.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-3-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code> — expect
+         <code>mined node type 242 at distance fraction 0.0x of deposit [1] Basin Head Crystite,
+         completion 1.00: 1 resource kind(s)</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-3-6" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log</code> — expect
+         <code>paying &lt;40–100&gt; of resource 10 to 1 participant(s)</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-3-7" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> and the on-screen count: up by the same 40–100.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the payout is inside 40–100, matches on screen, and the completion summary (the client's
+      thump-results screen, if <code>ResourceNodeCompletedEvent</code> renders) shows crystite at 100%.</p></div>
+      <div class="callout fail"><p><strong>Fail, it pays some other number:</strong> if it's exactly 200, the old flat grant is still on the path —
+      wrong build deployed. If it's 0–5, the distance fraction read the rim at the center; step 5's
+      <code>distance fraction</code> says which happened.</p></div><div class="result"><label for="r-thump-place-3">Result</label><textarea data-k="n-thump-place-3" id="r-thump-place-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thump-place-4-thumping-barren-ground-pays-approximately-nothing">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMP-PLACE-4</span>
+      <span class="block-t">Thumping barren ground pays approximately nothing</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMP-PLACE-4</span><span class="marker pass">[x]</span><span class="entry-t">Thumping barren ground pays approximately nothing</span></div><div class="callout pass"><p><strong>Passed 2026-08-14</strong>, and it settled the open question in step 5 on the way past:</p></div>
+      <span class="cmd"><pre><code>09:36:52  mined node type 20 at distance fraction 1.00 of no deposit, completion 1.00:</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                1 resource kind(s), 1 total   -&gt;  paying 1 of resource 30404 to 1 participant(s)</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Seven and a half minutes of drilling for <strong>one unit of sifted earth</strong>, and no crystite at all. The
+      line reads <code>paying</code>, not <code>not paid</code>, which answers what the entry could not assume: <strong>item 30404
+      does carry the <code>Resource</code> flag</strong>, so barren ground pays a real item rather than dropping one on the
+      floor. It is simply worth nothing, which is the point.</p>
+      <p>Three earlier barren thumps the same morning (08:28, 08:50, 09:25) produced the identical line at
+      <code>0 participant(s)</code> — those are the Aero's unattended debug thumper, and their agreement is
+      <a href="Resource-Payout.html">RESOURCE-PAYOUT-5</a> still holding.</p>
+      <p>The other half of "where you thump matters". Anywhere 100m+ from all four centers works; the
+      walked-ground candidates are along the basin road between deposits.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thump-place-4-1" type="checkbox"/><span class="step-body"><span class="lede">Walk to open ground no deposit covers. The RESOURCE-PAYOUT-2 site at -123.9, 438.7, 401.3 is 220m from the
+         nearest center and was walked to once already.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-4-2" type="checkbox"/><span class="step-body"><span class="lede">Note the crystite count. <code>thumper</code> — expect the feedback line to say
+         <code>on barren ground (node type 20)</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-4-3" type="checkbox"/><span class="step-body"><span class="lede">Full cycle untouched.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-4-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code> — expect
+         <code>mined node type 20 ... 1 resource kind(s), 1 total</code> or <code>0 resource kind(s)</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-4-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "not paid" ~/Games/PIN/logs/GameServer.log</code> — if item 30404 lacks the <code>Resource</code> flag,
+         this prints <code>extracted item 30404 x1, not paid</code>; if it has it, step 6 pays 1 of it instead.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-4-6" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> — crystite unchanged.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: crystite unchanged, and the log accounts for the sifted earth one way or the other. Seven and
+      a half minutes for a single unit of dirt is retail's own answer to thumping nowhere.</p></div><div class="result"><label for="r-thump-place-4">Result</label><textarea data-k="n-thump-place-4" id="r-thump-place-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thump-place-5-a-poor-deposit-visibly-underpays-a-rich-one">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMP-PLACE-5</span>
+      <span class="block-t">A poor deposit visibly underpays a rich one</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMP-PLACE-5</span><span class="marker pass">[x]</span><span class="entry-t">A poor deposit visibly underpays a rich one</span></div><div class="callout pass"><p><strong>Passed 2026-08-14. Four crystite payouts, one poor deposit and one rich, and nothing overlaps:</strong></p></div>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Time</th>
+      <th>Deposit</th>
+      <th>Distance out</th>
+      <th>Paid</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>09:29</td>
+      <td>[1] Basin Head Crystite (rich)</td>
+      <td>0.19</td>
+      <td><strong>48</strong></td>
+      </tr>
+      <tr>
+      <td>08:54</td>
+      <td>[1] Basin Head Crystite (rich)</td>
+      <td>0.59</td>
+      <td>33</td>
+      </tr>
+      <tr>
+      <td>09:45</td>
+      <td>[3] Basin West Crystite Trace (poor)</td>
+      <td>0.72</td>
+      <td><strong>8</strong></td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>48 against 8 is not a margin anyone has to squint at. Both deposits were read at their own distance
+      fractions rather than dead center, so this is the gradient and the deposit's own richness compounding
+      — which is the honest version of the milestone anyway. Nobody thumps exactly on a center.</p>
+      <p>Exit condition, second half: "thump a rich one and a poor one, and come away with visibly different
+      piles". Basin West Crystite Trace pays 10–25 at center against the shelf's 40–100 — the ranges
+      cannot overlap, so two single runs are conclusive.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thump-place-5-1" type="checkbox"/><span class="step-body"><span class="lede">With THUMP-PLACE-3's payout in the log, walk down to Basin West — center 85.5, 226.8, on the basin floor.
+         The walked footing is the Basin West spawn-group line; the pack there will notice you inside
+         25m, so clear it or accept the fight.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-5-2" type="checkbox"/><span class="step-body"><span class="lede"><code>thumper</code> — expect <code>in deposit [3] Basin West Crystite Trace (node type 241)</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-5-3" type="checkbox"/><span class="step-body"><span class="lede">Full cycle untouched.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-5-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "paying .* resource" ~/Games/PIN/logs/GameServer.log | tail -1</code> — expect 10–25 of
+         resource 10.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: this payout is 10–25, THUMP-PLACE-3's was 40–100, and the two numbers are not adjacent — the poor pile
+      is visibly poorer.</p></div>
+      <p>If the Aero's debug thumper has finished by now it adds its own line — it stands inside deposit 1
+      and resolves like everything else since M4, so expect a <code>paying &lt;40–100&gt; of resource 10 to 0
+      participant(s)</code> from it. <strong>The participant count still tells the thumpers apart</strong>; that is RESOURCE-PAYOUT-5's
+      check surviving the payout model change.</p><div class="result"><label for="r-thump-place-5">Result</label><textarea data-k="n-thump-place-5" id="r-thump-place-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-thump-place-6-a-deposit-placed-by-walking-survives-a-restart">
+    <button class="block-head" type="button">
+      <span class="block-n">THUMP-PLACE-6</span>
+      <span class="block-t">A deposit placed by walking survives a restart</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">THUMP-PLACE-6</span><span class="marker pass">[x]</span><span class="entry-t">A deposit placed by walking survives a restart</span></div><div class="callout pass"><p><strong>Passed 2026-08-14 on the second attempt.</strong> Deposit <strong>5</strong>, "Tier 1 - Common - Raw Iron - Normal",
+      node type 233, was placed by walking to -289.4, 141.1 and typing <code>deposit add 233</code>. It was thumped
+      immediately (<code>in deposit [5]</code>, paying raw iron), the server was restarted with <code>--no-build</code>, and it
+      came back whole:</p></div>
+      <span class="cmd"><pre><code>09:51:24  Resource locations for &lt;player&gt;: 5 deposit(s) in zone 448</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      09:53:07  Thumper 766269 called down at &lt;-299.7, 128.0, 401.8&gt;,</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>                in deposit [5] Tier 1 - Common - Raw Iron - Normal (node type 233)</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Same id, same position, same 35m radius, and thumpable again on the far side of the disc. <strong>New
+      zone content does not need this repo</strong> — which is the entry's real claim, and the same one
+      <code>spawngroup</code> makes for monsters.</p>
+      <p>The first attempt failed for a reason outside the entry: it was restarted with a plain
+      <code>./start-pin.sh</code>, which reinstalled the repo's four-deposit file over the five-deposit one the game
+      had written. See the note at the end of this entry.</p>
+      <p>The <code>deposit</code> command is the authoring loop, same doctrine as <code>spawngroup</code>: the running game is the
+      editor. This is the entry that proves new zone content doesn't need this repo.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="thump-place-6-1" type="checkbox"/><span class="step-body"><span class="lede">Walk somewhere flat that no deposit covers. Walk a few steps on arrival — the command refuses a
+         teleported footing, same as <code>spawngroup add</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-6-2" type="checkbox"/><span class="step-body"><span class="lede"><code>deposit add 233</code> — expect a feedback line naming the new id, node type 233's name, and a 35m
+         default radius.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-6-3" type="checkbox"/><span class="step-body"><span class="lede"><code>deposit list</code> — the new deposit is there, <code>0m away</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>thumper</code>, and confirm the feedback says <code>in deposit [&lt;new id&gt;]</code>.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-6-5" type="checkbox"/><span class="step-body"><span class="lede">Collect it early (this is allowed here — the point is the deposit, not the payout size), or
+         <code>deposit remove &lt;id&gt;</code> and skip to 6 if seven minutes is too long.</span></span></label>
+      <label class="step"><input checked data-k="thump-place-6-6" type="checkbox"/><span class="step-body"><span class="lede">Restart with <strong><code>./start-pin.sh --no-build</code></strong>. Then <code>deposit list</code> again.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the deposit exists after the restart with the same id, position and radius — it was written to
+      <code>StaticDB/CustomData/resource_deposit.json</code> in the deploy directory at <code>add</code> time, not at shutdown.
+      Copy it back to the repo if it should stay:
+      <code>cp ~/Games/PIN/GameServer/StaticDB/CustomData/resource_deposit.json ~/Github/PIN/UdpHosts/GameServer/StaticDB/CustomData/</code></p></div>
+      <p><strong><code>--no-build</code> is not optional, and skipping it is what happened on 2026-08-14.</strong> A plain
+      <code>./start-pin.sh</code> re-deploys, and the install is an rsync out of the build output — so the repo's
+      four-deposit file lands on top of whatever the game just wrote, and the placement is gone for a
+      reason that has nothing to do with what this entry measures. The deploy now keeps the outgoing file
+      in <code>~/Games/PIN/builds/authored/</code> and warns on the way past, so a rebuild-restart is recoverable
+      rather than silent, but it still fails the entry. The copy-back above is the durable move and is
+      best done right after the <code>add</code>, not at the end of the sitting.</p>
+      <div class="callout fail"><p><strong>Fail, gone after a <code>--no-build</code> restart:</strong> the save wrote somewhere else or threw — <code>grep -ai
+      "exception" ~/Games/PIN/logs/previous/GameServer-*.log</code> around the <code>add</code> timestamp.</p></div><div class="result"><label for="r-thump-place-6">Result</label><textarea data-k="n-thump-place-6" id="r-thump-place-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-thump-placement-v1"></script>
+

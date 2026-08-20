@@ -1,0 +1,560 @@
+<title>PIN — Transport and Lifecycle (TRANSPORT-1–TRANSPORT-9)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Transport and Lifecycle (TRANSPORT-1–TRANSPORT-9)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup and admin commands: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup and admin commands: <a href="Session-Setup.html">Session Setup</a>.</p>
+  </section>
+  <section class="doc" id="http-only-transport-blocks-everything-needing-world-entry">
+    <h2>HTTP-only transport (blocks everything needing world entry)</h2>
+    <p>Every advertised URL is plain HTTP, which needs a 1-byte patch to <code>FirefallClient.exe</code> removing its
+    HTTPS-only check on the oracle URL. Background and undo steps:
+    <a href="../Http-Only-Setup.md">Http-Only-Setup.md</a>. Keep it: it is what made login work. It was also
+    believed to be the world-entry freeze fix, and TRANSPORT-4 disproved that — the freeze was a server bug, and
+    the Wine WinHTTP warnings that pointed at TLS turn out to appear just as often on healthy runs.</p>
+    <p>Run TRANSPORT-1 and TRANSPORT-2 before anything else in the queue — a client that can't reach the world can't run
+    any other entry.</p>
+    <p><strong>"The client froze" is not one bug.</strong> TRANSPORT-4 fixed one trigger (a server-side scope leak). The
+    <em>remaining</em> freeze — the one that survived TRANSPORT-4, TRANSPORT-5 and TRANSPORT-6 — was caught live twice and localised, and
+    each live read moved it. TRANSPORT-7 (a DXVK run) put it on the <strong>render thread, holding a game lock, wedged in
+    the D3D present path</strong>. TRANSPORT-8 (a wined3d run) then swapped DXVK out entirely and it <strong>froze identically</strong>,
+    which exonerates the GPU driver and pushes the wedge one layer down: the render thread is parked in
+    <strong><code>RtlEnterCriticalSection</code> on the CRT/NT heap lock</strong>, reached from a D3D texture upload
+    (<code>wined3d_device_context_update_sub_resource</code> → <code>msvcr120</code> heap → <code>RtlAllocateHeap</code>), while it holds
+    the game lock (<code>0459FA8C</code> in TRANSPORT-7, <code>044BFA8C</code> in TRANSPORT-8 — a heap-allocated lock, address shifts per run). An
+    Awesomium <strong>web-UI worker</strong> piles up on that game lock when a social/squad panel opens, and 60 s later
+    Wine prints the <code>RtlpWaitForCriticalSection</code> timeout. The heap lock in that alloc chain reads <strong>free</strong>,
+    so the shape is a <strong>lost wakeup in Wine's fsync</strong>, not a held-lock deadlock — which is exactly why it
+    survives DXVK→wined3d. The WinHTTP/TLS and thread-affinity theories are both dead; everything
+    downstream (the timeouts, the crash-handler fault storm in old captures) follows from the parked render
+    thread. Read <code>console.log</code> first, every time — see <a href="Client-Logging.html">Client Logging</a> — but the live
+    <code>/proc</code> reads in TRANSPORT-7/TRANSPORT-8 are what actually moved this. <strong>TRANSPORT-9 closed it:</strong> forcing that fsync path off
+    (<code>PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1</code>, DXVK) gave four consecutive freeze-free sessions — the
+    predicted result of a lost wakeup, and now the required client launch config.</p>
+  </section>
+  <section class="block" data-open="true" id="-transport-1-the-servers-hand-out-http-and-nothing-else">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-1</span>
+      <span class="block-t">The servers hand out HTTP and nothing else</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-1</span><span class="marker pass">[x]</span><span class="entry-t">The servers hand out HTTP and nothing else</span></div><p>No client needed. Catches the half-applied case where only one of the two URL sources was changed,
+      which leaves the client on HTTPS with no visible error until world entry.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="transport-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers (<code>~/Desktop/Firefall servers</code>, or <code>cd ~/Games/PIN &amp;&amp; ./start-pin.sh</code>).</span></span></label>
+      <label class="step"><input checked data-k="transport-1-2" type="checkbox"/><span class="step-body"><span class="lede">Wait for <code>All three servers up.</code></span></span></label>
+      <label class="step"><input checked data-k="transport-1-3" type="checkbox"/><span class="step-body"><span class="lede">From any terminal:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>curl -s -X POST http://localhost:4402/api/v1/oracle/ticket | grep -oE '"(ingame_host|clientapi_host)":"[^"]*"'</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      curl -s "http://localhost:4400/check?environment=production&amp;build=1973" | grep -oE 'https?://localhost:[0-9]+' | sort -u</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: the first prints <code>http://localhost:4403</code> and <code>http://localhost:4402</code>; the second prints only
+      <code>http://</code> URLs (4402, 4403, 4407, 4499). Zero occurrences of <code>https://</code> in either.</p></div>
+      <div class="callout fail"><p>Fail with <code>https://</code> still present: the running server is on the old assemblies. Rebuild and
+      redeploy both — <code>WebHost.ClientApi.dll</code> <strong>and</strong> <code>WebHost.OperatorApi.dll</code> — then restart. The
+      oracle ticket's <code>operator_override</code> supersedes the capability response, so changing one file and
+      not the other silently leaves the client on HTTPS.</p></div>
+      <div class="callout pass"><p><strong>Passed 2026-08-11.</strong> Oracle ticket returns <code>http://localhost:4403</code> and <code>http://localhost:4402</code>;
+      the capability response returns 4402, 4403, 4407 and 4499, all <code>http://</code>. Zero <code>https://</code> in either.</p></div><div class="result"><label for="r-transport-1">Result</label><textarea data-k="n-transport-1" id="r-transport-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-2-world-entry-without-the-freeze">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-2</span>
+      <span class="block-t">World entry without the freeze</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-2</span><span class="marker pass">[x]</span><span class="entry-t">World entry without the freeze</span></div><p>The point of the whole exercise. Needs the patched client.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="transport-2-1" type="checkbox"/><span class="step-body"><span class="lede">Confirm the patch is in place, in the game directory:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>cd ~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Firefall/system/bin</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      python3 -c "print('%02x' % open('FirefallClient.exe','rb').read()[0x4950af])"</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Expect <code>eb</code>. If it prints <code>74</code> the patch is gone — Steam's "verify integrity of game files"
+         reverts it. Re-apply per <a href="../Http-Only-Setup.md">Http-Only-Setup.md</a>.</p>
+      <div class="steps"><ol start="2">
+      <label class="step"><input checked data-k="transport-2-2" type="checkbox"/><span class="step-body"><span class="lede">Launch Firefall from Steam, log in, pick a character, enter the world.</span></span></label>
+      <label class="step"><input checked data-k="transport-2-3" type="checkbox"/><span class="step-body"><span class="lede">While it loads, from another terminal:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>ss -tnp 2&gt;/dev/null | grep -E ':(443|443[0-9][0-9])\b' || echo "no TLS connections -- correct"
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: you reach the world and can move. No hang at <code>InitializeWebframe</code>, and the ss check prints
+      <code>no TLS connections</code>.</p></div>
+      <div class="callout fail"><p>Fail, client bounces to the login box or logs <code>Oracle URL [...] not configured for HTTPS</code>: the exe
+      patch didn't take. Re-check step 1.</p></div>
+      <div class="callout fail"><p>Fail, still freezes at world entry with no TLS connections: the freeze is not the WinHTTP TLS
+      deadlock after all. Capture <code>~/.var/app/com.valvesoftware.Steam/steam-227700.log</code> and the client's
+      <code>console.log</code> before relaunching — the Proton log is overwritten every launch.</p></div>
+      <div class="callout pass"><p><strong>Passed 2026-08-11 18:24, on the fourth consecutive session — see TRANSPORT-4, which is the real test.</strong>
+      This entry failed in between, and the failure is worth keeping: HTTP-only alone did <em>not</em> fix the
+      freeze, and the run that looked like a pass was one lucky session. The actual cause was the server-side
+      scope leak in TRANSPORT-4. Do not treat a single clean world entry as a pass here; it needs several consecutive
+      runs against one server process.</p></div>
+      <details><summary>The intermediate failure, 2026-08-11 17:32</summary>
+      <p>The 17:31:44 session froze 49 s in, and the Proton log has the original deadlock signature with no
+      TLS anywhere:</p>
+      <ul>
+      <li><code>RtlpWaitForCriticalSection section 0459FA8C ... wait timed out in thread 0278, blocked by 016c,
+        retrying (60 sec)</code>, twice, 60 s apart. Same critical-section address as the pre-patch capture.</li>
+      <li><strong>Thread <code>016c</code> is the WinHTTP worker</strong> — it issued 34 of the 35
+        <code>winhttp:request_query_option unimplemented option 38</code> fixmes. It then faulted
+        <code>c0000005 addr=(nil) ip=00000000</code> in a tight loop (383,594 fault lines in 3.6 s) and the process
+        was torn down.</li>
+      <li><strong>Option 38 (<code>WINHTTP_OPTION_SERVER_CERT_CONTEXT</code>) is still queried 35 times over plain HTTP.</strong>
+        The client asks for the server certificate on every request regardless of scheme, so dropping TLS
+        never took Wine's unimplemented option-38 path out of play. That is the flaw in the original
+        reasoning.</li>
+      <li>Client side is clean and proves TLS is not involved: 0 <code>https://</code>, 0 <code>not configured for HTTPS</code>,
+        34 requests all status 200, no non-200 at all.</li>
+      <li>It got <strong>further</strong> than the pre-patch failure — past <code>InitializeWebframe</code> (00:40, FPS 141) to
+        <code>AUDIO: Zone loading complete event sent</code> (00:49) — and <code>GameServer.log</code> confirms a real world
+        entry (<code>Zone 448 Outpost 17</code> 17:32:20, <code>SetStatusEffect</code> / <code>ClearStatusEffect</code> 17:32:24-26).
+        <code>console.log</code> then stops mid-line with <code>console.log.alive</code> left behind.</li>
+      </ul>
+      <p>This ran on <strong>GE-Proton11-5</strong>, so that lever is now tested and does not fix it either — its winhttp
+      still logs option 38 unimplemented.</p>
+      <p><strong>Resolved by TRANSPORT-4.</strong> Option 38 turned out to be a red herring: the passing 18:18 session logs it 36
+      times — more than the failing one's 35 — with zero <code>RtlpWaitForCriticalSection</code> and zero
+      <code>handle_syscall_fault</code>. Wine's unimplemented option 38 is harmless noise. The WinHTTP deadlock was
+      downstream of the server writing to a dead connection, not a Wine bug that needed a Wine fix. The
+      planned <code>WINEDEBUG=+winhttp,+seh,+tid</code> capture is no longer needed.</p>
+      </details>
+      <details><summary>Superseded: the 16:52 run that passed</summary>
+      <div class="callout pass"><p><strong>Passed 2026-08-11 — the freeze is gone.</strong> Reached the world, played, and logged out on purpose.
+      From that session's <code>console.log</code>:</p></div>
+      <ul>
+      <li>Zero <code>https://</code>, zero <code>not configured for HTTPS</code>, and no TLS connection to any <code>443xx</code> port.
+        Every request is <code>http://localhost:4402</code> / <code>:4499</code>, each completing in 24-28 ms with status 200.</li>
+      <li>The FPS dip is still there but it now <strong>recovers</strong>: 143 -&gt; 13 -&gt; 2 across elapsed 00:10-00:11
+        during the world-entry HTTP burst, then 134-143 for the remaining four minutes. That dip is a
+        load hitch. The old failure was the same drop with no recovery, the main thread parked forever on
+        a critical section held by the faulted WinHTTP worker.</li>
+      <li><code>InitializeWebframe</code> — where it used to hang — logs at FPS 143 and passes straight through.</li>
+      <li>The log ends with the full D3D teardown (<code>d3dDevice-&gt;Release()</code> ... <code>ShaderBuilder.Shutdown()</code>)
+        and there is no <code>console.log.alive</code> marker, so the client exited cleanly rather than crashing.</li>
+      </ul>
+      <p>One cosmetic leftover, harmless: <code>WARN NETHTTP Unable to get proxy options even though they were
+      requested 87</code> repeats through the burst (87 = <code>ERROR_INVALID_PARAMETER</code>), and
+      <code>WINHTTP_ENABLE_SSL_REVERT_IMPERSONATION</code> fails to set twice at startup. Both are Wine WinHTTP
+      gaps that the client ignores; neither blocked a request.</p>
+      <p>(Read in hindsight: those "cosmetic" warnings are the client's own report of the failed option-38
+      query — 87 is <code>ERROR_INVALID_PARAMETER</code> — so they were the visible edge of the live bug, not noise.
+      39 of them in the passing run, 35 in the failing one.)</p>
+      </details><div class="result"><label for="r-transport-2">Result</label><textarea data-k="n-transport-2" id="r-transport-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-4-second-client-session-against-one-server-run">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-4</span>
+      <span class="block-t">Second client session against one server run</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-4</span><span class="marker pass">[x]</span><span class="entry-t">Second client session against one server run</span></div><p>The freeze is not random — it is the <em>second</em> client session against a single server process. Found by
+      hand 2026-08-11 and matched by every log pair on record: server up 16:51:08, client at 16:52:33 fine,
+      client at 17:32:20 froze; server up 17:41:51, client at 17:42:53 fine, client at 17:51:16 froze.</p>
+      <p>Cause: <code>Shard.MigrateOut</code> removed the player's character entity and its <code>Clients</code> entry, but the player
+      also sits in <code>EntityManager._scopedPlayersByEntity[…]</code> for every <em>other</em> entity it had scoped in, and
+      nothing ever took it back out. <code>FlushViewChangesToScoped</code> then kept sending view updates to it, because
+      it gated on <code>client.Status</code> — which is never moved off <code>Playing</code> on disconnect — instead of
+      <code>CanReceiveGSS</code>, which also checks <code>NetClientStatus</code>. Fixed in <code>Shard.cs</code> and <code>EntityManager.cs</code>.</p>
+      <p>Deploy the fix first:</p>
+      <span class="cmd"><pre><code>cd ~/Github/PIN</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      OPENSSL_ENABLE_SHA1_SIGNATURES=1 OPENSSL_CONF=~/Games/PIN/openssl-legacy.cnf \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>          dotnet build UdpHosts/GameServer/GameServer.csproj -c Release</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      cp UdpHosts/GameServer/bin/Release/net10.0/GameServer.dll ~/Games/PIN/GameServer/</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      cp UdpHosts/GameServer/bin/Release/net10.0/GameServer.pdb ~/Games/PIN/GameServer/</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then:</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="transport-4-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code>~/Games/PIN/start-pin.sh</code></span></span></label>
+      <label class="step"><input checked data-k="transport-4-2" type="checkbox"/><span class="step-body"><span class="lede">Launch Firefall from Steam, enter the world, move around, quit to desktop.</span></span></label>
+      <label class="step"><input checked data-k="transport-4-3" type="checkbox"/><span class="step-body"><span class="lede"><strong>Leave the servers running.</strong> Launch Firefall again and enter the world.</span></span></label>
+      <label class="step"><input checked data-k="transport-4-4" type="checkbox"/><span class="step-body"><span class="lede">Stay in for at least 60 s — the failures hit at 12 s and 49 s.</span></span></label>
+      <label class="step"><input checked data-k="transport-4-5" type="checkbox"/><span class="step-body"><span class="lede">Repeat steps 2-3 twice more without restarting the servers, so sessions 3 and 4 are covered too.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: every session reaches the world and stays up, and after each quit the server logs
+      <code>RECEIVED CloseConnection</code> with no exception following it.</p></div>
+      <div class="callout fail"><p>Fail, session 2 freezes as before: the scope leak was not the whole story. Copy both logs before
+      relaunching —</p></div>
+      <span class="cmd"><pre><code>cp ~/.var/app/com.valvesoftware.Steam/steam-227700.log /tmp/proton-freeze.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      cp "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log" /tmp/client-freeze.log</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>— then check whether the stale player is really gone, by confirming the server sends nothing to the
+      old socket after <code>RECEIVED CloseConnection</code>.</p>
+      <div class="callout fail"><p>Fail, session 1 now breaks too: the <code>GetScopedPlayers</code> snapshot changed scope-in behaviour. Check for
+      <code>KeyNotFoundException</code> disappearing into a silent path.</p></div>
+      <div class="callout pass"><p><strong>Passed 2026-08-11 18:24. Four consecutive sessions on one server run (started 18:06:00, on the
+      18:02:15 build), all clean:</strong></p></div>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>session</th>
+      <th>connected</th>
+      <th>closed</th>
+      <th>in-world</th>
+      <th>client log ends</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>1</td>
+      <td>18:06:58</td>
+      <td>18:09:09</td>
+      <td>02:19</td>
+      <td>D3D teardown</td>
+      </tr>
+      <tr>
+      <td>2</td>
+      <td>18:09:48</td>
+      <td>18:14:27</td>
+      <td>04:46</td>
+      <td>D3D teardown</td>
+      </tr>
+      <tr>
+      <td>3</td>
+      <td>18:14:49</td>
+      <td>18:17:53</td>
+      <td>03:11</td>
+      <td>D3D teardown</td>
+      </tr>
+      <tr>
+      <td>4</td>
+      <td>18:18:25</td>
+      <td>18:24:36</td>
+      <td>06:19</td>
+      <td>D3D teardown</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>Sessions 2-4 are precisely the ones that used to die, and they used to die at 00:12 and 00:49. All
+      four ended with the full D3D teardown, no <code>console.log.alive</code> marker was left behind, every
+      disconnect logged <code>RECEIVED CloseConnection</code>, and <code>GameServer.log</code> has no exceptions beyond the
+      known <code>.pose file did not contain a File section</code> ones.</p>
+      <p>The Proton log for session 4 is the decisive part: <strong>0 <code>RtlpWaitForCriticalSection</code>, 0
+      <code>handle_syscall_fault</code></strong> — and 36 <code>unimplemented option 38</code>, one more than the session that froze.
+      That kills option 38 as the cause and confirms the WinHTTP deadlock was a symptom of the server
+      pumping view updates at a closed connection. The log is 2.2 MB instead of 270 MB, because 270 MB of
+      it was the fault storm.</p>
+      <p>That verdict stands, and it is narrower than it first read. It says the <em>second-session</em> freeze is
+      gone. It does not say the client no longer freezes — see TRANSPORT-5.</p><div class="result"><label for="r-transport-4">Result</label><textarea data-k="n-transport-4" id="r-transport-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-5-the-battleframe-station-is-not-the-trigger">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-5</span>
+      <span class="block-t">The battleframe station is not the trigger</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-5</span><span class="marker pass">[x]</span><span class="entry-t">The battleframe station is not the trigger</span></div><p>Ran 2026-08-11 22:04, <strong>did not reproduce</strong>, and the negative result is worth more than the test was.</p>
+      <p>The 21:31 freeze was a <strong>first</strong> session on a <strong>fresh</strong> server, 86 s in-world — the shape TRANSPORT-4 rules
+      out. The Proton log was the usual useless one (266 MB, <code>RtlpWaitForCriticalSection</code> on the main
+      thread, a <code>handle_syscall_fault</code> storm). <code>console.log</code> stopped here, mid-word, three lines after
+      opening the battleframe station:</p>
+      <span class="cmd"><pre><code>01:24 INFO  GUI   Issuing UI HTTP request to URL http://localhost:4402/api/v3/garage_slots/battleframes_for_sale</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      01:26 ERROR GUI   Could not figure out size and format for texture '' (does it exist?).</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      01:26 ERROR IOS</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>That reads like a smoking gun and is not one. Repeating it — deploy the station, open it, same
+      chassis 75774, same visual record 11668 — produced the same three lines and then two more, and the
+      client carried on for another two minutes and exited cleanly:</p>
+      <span class="cmd"><pre><code>00:26 ERROR   GUI   Could not figure out size and format for texture '' (does it exist?).</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      00:26 ERROR  IOSYS  Could not open file .r5tex for read: File not found.</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      00:26 ERROR RENDER  LoadTexture(!) failed. File not found.</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>So the empty texture is <strong>normal</strong>. <code>BattleFrameTerminal.lua</code>'s <code>PaperdollInit()</code> calls
+      <code>gPaperdollInst.GetTexture()</code> before the paperdoll has one, gets <code>""</code>, and the engine dutifully tries
+      to open <code>"" + ".r5tex"</code>. It happens every time the station is opened, on healthy runs too. The crash
+      run died in the middle of writing the second of those lines, which is why the log ends there and why
+      the log lock went down with it — but the error burst is a coincidence of <em>where</em>, not <em>why</em>.</p>
+      <p><strong>What the two runs do establish.</strong></p>
+      <p>The signature is real, not background noise: the clean run's Proton log is 1.9 MB with <strong>0</strong>
+      <code>RtlpWaitForCriticalSection</code> and <strong>0</strong> <code>handle_syscall_fault</code>, against 266 MB and 2.6 million faults
+      for the freeze.</p>
+      <p>And the freeze starts earlier than it looks. Anchoring the Proton clock to the client's on
+      <code>ThreadIdealProcessor</code> / <code>Thread priority/affinity optimization turned ON</code> (both at client 00:18,
+      Proton 630024.588), the first lock timeout at 630109.939 prints 60 s into a wait that began at
+      <strong>00:43</strong> — 43 s before the main thread stopped at 01:26, while the client was still running at
+      143 FPS and logging normally. Whatever goes wrong, it is not what the last log line is doing. The
+      client logs nothing at all between 00:27 and 01:00.</p>
+      <p><strong>Lead worth taking next, cheap.</strong> At 00:18 the client logs <code>Thread priority/affinity optimization
+      turned ON (main thread core 0, priority 1)</code> — a scheduling asymmetry that could produce exactly this
+      kind of long one-sided lock wait under Proton. Run to ground in the exe as TRANSPORT-6: the knobs turned out
+      to be <code>firefall.ini</code> keys (not cvars, so the <code>settings.con</code> survival test suggested here first is
+      moot), and "pinning the main thread" was a misreading of the log line — the real default behavior is
+      in TRANSPORT-6's table.</p>
+      <p>This is a lead, not a diagnosis. Two theories have already died on this bug.</p><div class="result"><label for="r-transport-5">Result</label><textarea data-k="n-transport-5" id="r-transport-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-6-soak-with-the-thread-scheduling-optimization-turned-off">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-6</span>
+      <span class="block-t">Soak with the thread scheduling "optimization" turned off</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-6</span><span class="marker pass">[x]</span><span class="entry-t">Soak with the thread scheduling "optimization" turned off</span></div><p><strong>Ran 2026-08-11, four consecutive sessions. The theory is dead — the third to die.</strong> The override
+      loaded (all four runs, and the freeze run itself, logged <code>Thread priority/affinity optimization
+      turned OFF</code> — confirmed in each <code>console.log</code> at ~00:01–00:16). The fourth session froze anyway,
+      same Proton signature (<code>RtlpWaitForCriticalSection</code> on <code>0459FA8C</code>). Turning the eviction and the
+      priority boost off changes nothing, so the scheduling asymmetry was never the cause. Keep the
+      override in <code>firefall.ini</code> regardless — it's harmless and removes one variable — but stop pursuing
+      it. The freeze that run was <strong>caught live</strong> and dissected; the real localization is in TRANSPORT-7 below. The
+      setup below is still the correct way to run and confirm the override.</p>
+      <p>TRANSPORT-5's closing lead, chased into the binary instead of guessed at. The 00:18 line comes from one
+      function in <code>FirefallClient.exe</code> (va <code>0x709900</code>), and its knobs are <strong><code>firefall.ini</code> keys under
+      <code>[Engine]</code></strong> — read through the same config object as <code>[Config] OperatorHost</code> (both call sites load
+      <code>lea ecx,[ebx+0xa6c]</code>), and OperatorHost provably works from <code>firefall.ini</code>, so these keys are
+      confirmed real, not string-adjacency guesses.</p>
+      <p>What the disassembly says, and where TRANSPORT-5's reading was wrong:</p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>key</th>
+      <th>default</th>
+      <th>effect</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td><code>setMainThreadAffinity</code></td>
+      <td>false</td>
+      <td>when true, pin the main thread to <code>mainThreadCore</code></td>
+      </tr>
+      <tr>
+      <td><code>setBgThreadAffinity</code></td>
+      <td>true</td>
+      <td>ban every background thread from <code>mainThreadCore</code> (mask <code>~(1&lt;&lt;n)</code>)</td>
+      </tr>
+      <tr>
+      <td><code>mainThreadCore</code></td>
+      <td>0</td>
+      <td>the core in question; <code>-1</code> picks one at runtime</td>
+      </tr>
+      <tr>
+      <td><code>mainThreadPriority</code></td>
+      <td>1</td>
+      <td><code>SetThreadPriority</code> on the main thread, clamped to [-15, 15]</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>So by default the client does <strong>not</strong> pin its main thread. <code>ON (main thread core 0, priority 1)</code>
+      means: every worker thread evicted from core 0, main thread raised to above-normal priority, main
+      thread free to roam. The asymmetry is the eviction plus the priority boost. <code>OFF</code> prints only when
+      both booleans are false.</p>
+      <p>The override is live in
+      <code>~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Firefall/firefall.ini</code>
+      (2026-08-11; unknown keys are ignored, so it cannot break a run even if wrong):</p>
+      <span class="cmd"><pre><code>[Engine]</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      setMainThreadAffinity = false</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      setBgThreadAffinity = false</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      mainThreadPriority = 0</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="transport-6-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers (<code>~/Desktop/Firefall servers</code>, or <code>cd ~/Games/PIN &amp;&amp; ./start-pin.sh</code>).</span></span></label>
+      <label class="step"><input checked data-k="transport-6-2" type="checkbox"/><span class="step-body"><span class="lede">Launch Firefall from Steam and log in.</span></span></label>
+      <label class="step"><input checked data-k="transport-6-3" type="checkbox"/><span class="step-body"><span class="lede">At the login screen, confirm the override engaged — this half of the test is deterministic and
+         takes one run:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code class="language-bash">grep "Thread priority/affinity" "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log"
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Expected: <code>Thread priority/affinity optimization turned OFF</code>. If it still says <code>ON (...)</code>, the
+      section or key casing is wrong — stop and fix that before spending any soak sessions, or the soak
+      measures nothing.</p>
+      <div class="steps"><ol start="4">
+      <label class="step"><input checked data-k="transport-6-4" type="checkbox"/><span class="step-body"><span class="lede">Then soak. The freeze is intermittent with no identified trigger, so this half is statistical:
+         play normal sessions — world entry, the battleframe station, the TRANSPORT-4 second-session shape. One
+         freeze with <code>OFF</code> confirmed in that run's log kills the theory. Clean sessions only build
+         confidence; TRANSPORT-4 needed four in a row before its fix was believed, use the same bar before drawing
+         any conclusion here. (This is exactly what happened: four sessions, <code>OFF</code> every time, froze on the
+         fourth — see the TRANSPORT-6 header and TRANSPORT-7.)</span></span></label>
+      <label class="step"><input checked data-k="transport-6-5" type="checkbox"/><span class="step-body"><span class="lede">If a freeze does happen, save the evidence before relaunching (the next start overwrites
+         <code>console.log</code>), following the existing naming in <code>~/Games/PIN/logs/freezes/</code>:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>STAMP=$(date +%y%m%d-%H%M)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      CLIENTDIR="$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall"</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      cp "$CLIENTDIR/console.log" ~/Games/PIN/logs/freezes/$STAMP-console.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      cp ~/Games/PIN/logs/GameServer.log ~/Games/PIN/logs/freezes/$STAMP-GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      tail -c 20000000 ~/.var/app/com.valvesoftware.Steam/steam-227700.log &gt; ~/Games/PIN/logs/freezes/$STAMP-proton-tail.log</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="steps"><ol start="6">
+      <label class="step"><input checked data-k="transport-6-6" type="checkbox"/><span class="step-body"><span class="lede"><strong>Do not relaunch yet if the frozen window is still up.</strong> A hung client is the best evidence
+         this bug produces — every past capture was a post-mortem log. See TRANSPORT-7 for what to pull off the
+         live process (<code>/proc/&lt;pid&gt;/task</code>, the critical-section dump, the thread walk). The <code>260811-2237</code>
+         freeze was dissected this way.</span></span></label>
+      </ol></div><div class="result"><label for="r-transport-6">Result</label><textarea data-k="n-transport-6" id="r-transport-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-7-the-freeze-is-a-render-thread-stall-holding-the-game-lock-not-winhttp-dxvk-capture">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-7</span>
+      <span class="block-t">The freeze is a render-thread stall holding the game lock, not WinHTTP (DXVK capture)</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-7</span><span class="marker pass">[x]</span><span class="entry-t">The freeze is a render-thread stall holding the game lock, not WinHTTP (DXVK capture)</span></div><blockquote>
+      <p><strong>Superseded in part by TRANSPORT-8.</strong> This capture localised the freeze to the render thread holding the
+      game lock while parked in the D3D9 path, and killed the WinHTTP theory — both still stand. Its
+      <em>conclusion</em> that DXVK is the culprit did <strong>not</strong>: TRANSPORT-8 reproduced the identical freeze on wined3d.
+      Read this for the method and the "not WinHTTP" proof; read TRANSPORT-8 for where the wedge actually is.</p>
+      </blockquote>
+      <p>The TRANSPORT-6 fourth-session freeze was caught <strong>live</strong> — the client left hung on screen instead of killed
+      — and read out of <code>/proc</code> before relaunch. It relocates the bug entirely. Saved:
+      <code>~/Games/PIN/logs/freezes/260811-2237-*</code> (<code>console.log</code>, <code>GameServer.log</code>, <code>proton-full.log</code>,
+      <code>thread-analysis.txt</code>).</p>
+      <p><strong>What the live process showed.</strong> The critical section the Proton log always names, <code>0459FA8C</code>, is a
+      real Win32 <code>RTL_CRITICAL_SECTION</code>. Its owner field settles the question the logs never could:</p>
+      <span class="cmd"><pre><code>0x459fa8c:  DebugInfo=0xffffffff  LockCount=1  RecursionCount=1  OwningThread=0x164  Sem=0  Spin=0
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p><code>OwningThread = 0x164</code> is the <strong>main thread</strong>. It holds the lock, one waiter queued. And the main
+      thread is itself parked — syscall 449 (<code>futex_waitv</code>, Wine's fsync path) — with an innermost call
+      chain of <code>d3d9.dll+0x92c5f</code> ← <code>d3d9.dll+0x205a6e</code> ← … ← the game's main-frame function (returns to
+      <code>FirefallClient.exe</code> va <code>0x703641</code>, right after its <code>call 0x70aba0</code>). That <code>d3d9.dll</code> is <strong>DXVK
+      v3.0.2</strong> (the file exports <code>DxvkInst</code>; the process has live <code>dxvk-submit</code>/<code>dxvk-cs</code>/<code>dxvk-queue</code>
+      threads). The single waiter, wine tid <code>0x278</code>, is a game worker blocked in <code>RtlpWaitForCriticalSection</code>
+      trying to enter that same lock (<code>FirefallClient.exe</code> <code>0xbbe9f6</code> ← <code>0xbbd4db</code> ← <code>0x12c09e1</code>).</p>
+      <p>So the shape is: <strong>the main/render thread wedges inside a DXVK D3D9 call while holding a game lock; a
+      worker piles up behind that lock; 60 s later Wine prints the timeout.</strong> The critical-section message
+      is a <em>downstream</em> symptom of a graphics-path stall, not a lock bug in the game.</p>
+      <p><strong>This kills the WinHTTP theory outright.</strong> This capture has <strong>zero</strong> <code>handle_syscall_fault</code> and
+      <strong>zero</strong> <code>https</code> — the 266 MB / 2.6-million-fault storm from earlier captures was the post-freeze
+      crash handler, not the cause. WinHTTP option-38 still logs 35 times, faulting on nothing. The freeze
+      happens with the network path completely quiet. (See the superseded
+      <a href="../../MEMORY.md">client-crash memory note</a> for that trail.)</p>
+      <p><strong>It correlates with heavy streaming.</strong> In every TRANSPORT-6 run <code>console.log</code> shows RAM climbing 320 MB →
+      ~1050 MB and FPS collapsing 143 → ~24 across the New Eden zone load, and the hang lands in that
+      window. DXVK is doing resource work (VT tiles, zone assets) when the main thread stops.</p>
+      <p><strong>The decisive next test — cheap, one variable</strong> (executed; result in <strong>TRANSPORT-8</strong>). Force Wine's own D3D9
+      path instead of DXVK and soak again: Steam → Firefall → Properties → Launch Options,
+      <code>PROTON_USE_WINED3D=1 %command%</code>. It <strong>still froze</strong> (first run), which is the "independent of DXVK"
+      branch — the lever is not the driver. See TRANSPORT-8.</p>
+      <p>Reproducing the live read, for next time a client hangs (don't kill it first):</p>
+      <span class="cmd"><pre><code>PID=$(pgrep -f 'S:\\steamapps\\common\\Firefall.*FirefallClient.exe' | head -1)   # the wine-side pid</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      # critical-section owner (address from the Proton log's RtlpWaitForCriticalSection line):</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      gdb -q -p "$PID" -batch -ex 'x/6wx 0x0459FA8C'    # word[3] = OwningThread (wine tid)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      # thread states — a wedged main thread sits in futex syscall 449/240:</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      for t in /proc/$PID/task/*; do echo "$(basename $t) $(cat $t/comm) $(cut -d' ' -f1 $t/syscall 2&gt;/dev/null)"; done</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Mapping a wine tid (like <code>0x164</code>) to a host thread and walking its PE stack is scripted in
+      <code>thread-analysis.txt</code>'s companion work; the short version is: scan <code>/proc/$PID/mem</code> for the TEB
+      whose self-pointer matches, take its <code>StackBase</code>/<code>StackLimit</code>, and resolve return addresses on that
+      range against the PEB module list (module bases are per-run ASLR — read them from
+      <code>/proc/$PID/maps</code>, which shows each <code>.dll</code>/<code>.exe</code> at its load address; <code>FirefallClient.exe</code> was
+      <code>0x79890000</code> in TRANSPORT-7 and <code>0x79770000</code> in TRANSPORT-8. For the on-disk VA, subtract the base and add <code>0x400000</code>).
+      The TRANSPORT-8 walker (TEB scan → ebp chain → raw call-return scan → symbol resolution via <code>winedump -j
+      export</code>) is saved next to that run's logs as <code>walk.py</code>.</p><div class="result"><label for="r-transport-7">Result</label><textarea data-k="n-transport-7" id="r-transport-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-8-the-freeze-reproduces-on-wined3d-it-is-a-heap-lock-stall-not-dxvk">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-8</span>
+      <span class="block-t">The freeze reproduces on wined3d — it is a heap-lock stall, not DXVK</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-8</span><span class="marker pass">[x]</span><span class="entry-t">The freeze reproduces on wined3d — it is a heap-lock stall, not DXVK</span></div><p><code>PROTON_USE_WINED3D=1</code> from TRANSPORT-7, first run: <strong>froze</strong>. The loaded <code>d3d9.dll</code> this run was Wine's own
+      (<code>GE-Proton11-5/.../wine/i386-windows/d3d9.dll</code> + <code>wined3d.dll</code>, a live <code>wined3d_cs</code> thread, zero
+      DXVK threads — confirmed in <code>/proc/$PID/maps</code> and the env <code>PROTON_USE_WINED3D=1</code>). Swapping the
+      entire GPU driver out changed nothing, so <strong>DXVK is exonerated</strong> and the TRANSPORT-7 "DXVK stall" conclusion is
+      dead. Saved: <code>~/Games/PIN/logs/freezes/260812-wined3d/</code> (<code>console.log</code>, <code>critsec-timeouts.txt</code>,
+      <code>stackwalk.txt</code>, <code>walk.py</code>).</p>
+      <p><strong>Same signature, one layer deeper.</strong> The Proton log timed out on <code>044BFA8C</code> (heap-allocated lock,
+      different address than TRANSPORT-7's <code>0459FA8C</code> — same <em>shape</em>):</p>
+      <span class="cmd"><pre><code>044bfa8c:  DebugInfo=0xffffffff  LockCount=1  RecursionCount=1  OwningThread=0x178   ← the render thread</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      Proton log:  RtlpWaitForCriticalSection section 044BFA8C … timed out in thread 024c, blocked by 0178</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Walking owner <code>0x178</code>'s live stack (<code>/proc/$PID/mem</code>, innermost → outermost) resolves to:</p>
+      <span class="cmd"><pre><code>RtlEnterCriticalSection+0x19         ← parked here, on the CRT/NT heap lock</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>       ← msvcr120 heap (RtlAllocateHeap+0x20 / RtlFreeHeap+0x19)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>       ← wined3d_device_context_update_sub_resource+0x3ac      ← a texture / VT-tile upload</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>       ← d3d9  (IDirect3DDevice9 present/update, internal)</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>So the render thread, uploading a texture subresource during streaming, called the CRT allocator and
+      never came back out of <code>RtlEnterCriticalSection</code> — while holding game lock <code>044BFA8C</code>. The one waiter,
+      wine tid <code>0x24c</code>, is an <strong>Awesomium</strong> (web-UI) worker blocked entering that same game lock;
+      <code>console.log</code> cuts off mid-line at <code>00:19 RAM:1445MB FPS:5</code> in a burst of UI HTTP calls
+      (<code>squad_builder/lfp</code>, <code>garage_slots</code>, <code>armies/members</code>) — i.e. a <strong>social/squad panel opening</strong> is
+      what made the UI contend with the render thread for <code>044BFA8C</code>.</p>
+      <p><strong>Lost wakeup, not deadlock.</strong> The heap <code>CRITICAL_SECTION</code> in that alloc chain (<code>0x00150078</code>,
+      <code>DebugInfo</code> → ntdll data) reads <strong>free</strong> (<code>LockCount=0xffffffff</code>, <code>Owner=0</code>), yet <code>0x178</code> sleeps in
+      <code>RtlEnterCriticalSection</code> on it. A waiter parked on a free lock is the fingerprint of a <strong>lost futex
+      wakeup in Wine's fsync</strong> critical-section path — which also explains why it is driver-independent
+      (fsync sits below both DXVK and wined3d) and intermittent (it is a race).</p>
+      <p><strong>The decisive next test — cheap, one variable.</strong> Take fsync/esync out of the picture (revert to DXVK
+      first; it is exonerated and faster). Steam → Firefall → Properties → Launch Options:</p>
+      <span class="cmd"><pre><code>PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>If the freeze <strong>vanishes</strong>: confirmed fsync lost-wakeup — ship with fsync/esync off, or move to a
+        Proton whose fsync has the fix. Done.</li>
+      <li>If it <strong>still freezes</strong>: it is a real lock-ordering problem in the game on <code>044BFA8C</code> (render thread
+        holds it across a present-time allocation; the UI worker needs it) — then the lever is reducing that
+        hold, e.g. cutting UI-triggered churn while streaming, not the driver or the sync layer.</li>
+      </ul>
+      <p>Run it the same way as TRANSPORT-6 (four-session bar; save any freeze, don't kill a live hang — walk it first).</p>
+      <p><strong>How the freeze ends, and a better artifact.</strong> The TRANSPORT-8 client sat frozen ~5 min, then a single thread
+      took a <code>SIGSEGV</code> and the OS crash handler (ABRT) auto-saved a full core to
+      <code>/var/spool/abrt/ccpp-*-&lt;pid&gt;/</code>. That core says the death is a <strong>double fault inside Wine's ntdll</strong>:
+      the guest hit an access violation (<code>0xC0000005</code>, a near-null <strong>read of <code>0x1fba</code></strong> at win32
+      <code>ntdll.dll+0x4773b</code>, an internal fn), and Wine faulted <em>delivering</em> it — near-null <strong>read of <code>0x14c0</code></strong>
+      in unix <code>ntdll.so setup_raise_exception+0xb1</code>. One thread crashed; the other 207 were parked (130 in
+      <code>futex</code>, 77 in a restarting syscall) — i.e. the whole process was wedged, confirming the hang
+      independently. This is the process's <em>death</em>, downstream of the <em>freeze</em>, and it's not proven to share
+      a root cause — but every terminal event is inside ntdll (sync + exception delivery), the exact layer
+      <code>PROTON_NO_FSYNC/ESYNC</code> swaps out. Practical upshot: <strong>ABRT captures a full core for every
+      freeze-crash</strong> — a better artifact than a live <code>/proc</code> read. Read just the notes cheaply without
+      inflating 500 MB: <code>zstd -dc coredump.zst | head -c 120M &gt; core.head; eu-readelf -n core.head</code> (ELF
+      notes are at the start; the first <code>PRSTATUS</code> is the crashing thread, <code>SIGINFO</code> has the fault address).
+      Full detail: <code>~/Games/PIN/logs/freezes/260812-wined3d/CRASH-SUMMARY.md</code>.</p><div class="result"><label for="r-transport-8">Result</label><textarea data-k="n-transport-8" id="r-transport-8" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-transport-9-disabling-wine-fsyncesync-fixes-the-freeze-confirmed-lost-wakeup">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-9</span>
+      <span class="block-t">Disabling Wine fsync/esync fixes the freeze — confirmed lost-wakeup</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-9</span><span class="marker pass">[x]</span><span class="entry-t">Disabling Wine fsync/esync fixes the freeze — confirmed lost-wakeup</span></div><p>The decisive test from TRANSPORT-8, run. Config: reverted to DXVK (exonerated in TRANSPORT-8, and faster), fsync and
+      esync forced off. Steam → Firefall → Properties → Launch Options — the <em>only</em> change from the config
+      that reliably froze:</p>
+      <span class="cmd"><pre><code>PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Then soak, exercising the correlated trigger (open the social/squad panel during streaming, which is
+      what made the UI worker contend for the render thread's lock in TRANSPORT-8).</p>
+      <p><strong>Result — passed 2026-08-12: four consecutive sessions, zero freezes.</strong> The freeze had been hitting
+      within 1–4 runs (TRANSPORT-6 froze on the 4th, TRANSPORT-7 and TRANSPORT-8 on the 1st), so four clean in a row clears the
+      four-session bar against that rate.</p>
+      <p>Why this one counts where WinHTTP (TRANSPORT-5), thread affinity (TRANSPORT-6), and DXVK (TRANSPORT-7) did not: it is not
+      "changed something, got lucky." TRANSPORT-8 localised the render thread parked in <code>RtlEnterCriticalSection</code> on
+      a <strong>free</strong> heap lock — the fingerprint of a lost futex wakeup — and predicted that taking Wine's fsync
+      path out would fix it. It did, on the first config tried. Prediction plus the bar is much stronger
+      evidence than either alone.</p>
+      <p>This is an intermittent race, so "four clean" is strong evidence, not a mathematical proof — but the
+      mechanism is identified and the fix is mechanistically correct: fsync sits below both DXVK and
+      wined3d, which is exactly why the freeze was driver-independent (TRANSPORT-7/TRANSPORT-8) and intermittent.</p>
+      <p><strong>Shipping config:</strong> <code>PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%</code> on DXVK is now the required
+      client launch line — see <a href="../Http-Only-Setup.md#client-launch-options">Http-Only-Setup.md</a>. The
+      alternative fix, if the small fsync speed cost ever matters, is a Proton whose fsync carries the
+      wakeup fix; that is not worth chasing while this holds.</p><div class="result"><label for="r-transport-9">Result</label><textarea data-k="n-transport-9" id="r-transport-9" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="doc" id="shutdown">
+    <h2>Shutdown</h2>
+    
+  </section>
+  <section class="block" data-open="true" id="-transport-3-shutdown-leaves-nothing-behind">
+    <button class="block-head" type="button">
+      <span class="block-n">TRANSPORT-3</span>
+      <span class="block-t">Shutdown leaves nothing behind</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">TRANSPORT-3</span><span class="marker pass">[x]</span><span class="entry-t">Shutdown leaves nothing behind</span></div><p><code>start-pin.sh</code> used to send SIGTERM once and then <code>wait</code> forever, so a server that didn't act on it
+      kept the window open; closing the window by hand orphaned the servers still holding UDP 25000/25001
+      and TCP 4400-4411. The next run then died on bind, after truncating the log — which is how
+      <code>MatrixServer.log</code> ended up starting with
+      <code>Unhandled exception. System.Net.Sockets.So[13:07:52 INF] Assigning SocketID</code>.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="transport-3-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers and wait for <code>All three servers up.</code></span></span></label>
+      <label class="step"><input checked data-k="transport-3-2" type="checkbox"/><span class="step-body"><span class="lede">Press Ctrl+C in that window.</span></span></label>
+      <label class="step"><input checked data-k="transport-3-3" type="checkbox"/><span class="step-body"><span class="lede">Then:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>pgrep -af "dotnet (WebHostManager|MatrixServer|GameServer)\.dll" || echo "  no servers"</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ss -tln | grep -cE ":(440[0-9]|441[01])\b"</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      ss -uln | grep -cE ":(25000|25001)\b"</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: the script prints <code>==&gt; All servers stopped.</code>, <code>pgrep</code> prints <code>no servers</code>, and both <code>ss</code>
+      counts are <code>0</code>.</p></div>
+      <div class="callout fail"><p>Fail: note which pids survived and whether the script printed
+      <code>pid NNNN ignored SIGTERM after 5s -- SIGKILL</code>. That line means the escalation did its job and the
+      server genuinely ignores SIGTERM; no line plus survivors means the trap never ran.</p></div>
+      <p>Also verify the guard: with the servers running, start the script a second time. It must refuse
+      with <code>PIN servers are already running</code> and exit 1 rather than starting a set that dies on bind.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-11</strong>, though not by a literal Ctrl+C — SIGINT and SIGHUP were sent to the script's
+      pid from another terminal, which is the same delivery Ctrl+C and closing the window produce. Both
+      paths stopped all three servers plus the <code>tail</code>, released every TCP and UDP port, and printed
+      <code>==&gt; All servers stopped.</code>; the duplicate-run guard refused with exit 1. Nothing needed the SIGKILL
+      escalation — the servers act on plain SIGTERM in under 3s, which is why a survivor means the trap
+      never ran rather than that a server ignored the signal.</p></div><div class="result"><label for="r-transport-3">Result</label><textarea data-k="n-transport-3" id="r-transport-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-transport-and-lifecycle-v1"></script>
+

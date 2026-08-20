@@ -18,7 +18,7 @@ sessions.
 ### CLIENT-1 — World-entry freeze: lost wakeup in Wine's fsync path [~] mitigated, needs confirmation
 
 An intermittent freeze on world entry survived four rounds of live debugging
-([Transport-And-Lifecycle T4–T8](../In-Game-Tests/Transport-And-Lifecycle.md)) before being caught
+([Transport-And-Lifecycle T4–T8](../In-Game-Tests/Transport-And-Lifecycle.html)) before being caught
 live twice and localized. T7 found the render thread wedged in the D3D present path while holding
 a game lock; T8 swapped DXVK out for wined3d and reproduced the identical freeze, which exonerates
 the GPU driver and pushed the wedge one layer down: the render thread parks in
@@ -43,11 +43,11 @@ Wine's WinHTTP validates the login TLS handshake against the wrong certificate s
 login never completes. The permanent fix: every client-facing URL is served plain HTTP instead
 (a 1-byte patch to `FirefallClient.exe` removing its HTTPS-only check on the oracle URL). Setup and
 undo steps: [Http-Only-Setup.md](../Http-Only-Setup.md). Confirmed by
-[Transport-And-Lifecycle T1–T3](../In-Game-Tests/Transport-And-Lifecycle.md), all passing.
+[Transport-And-Lifecycle T1–T3](../In-Game-Tests/Transport-And-Lifecycle.html), all passing.
 
 The guard doesn't survive a Steam file-verification pass — it reverts the patched exe — so this
 has to be reapplied after any Steam-initiated verify or update. Worth a line in
-[Session Setup](../In-Game-Tests/Session-Setup.md) if it isn't there already.
+[Session Setup](../In-Game-Tests/Session-Setup.html) if it isn't there already.
 
 <a id="client-3"></a>
 
@@ -62,7 +62,7 @@ bearing each was told to stand at, so "the server sent different values" is rule
 assumed.
 
 What that leaves is the models' own forward axes. `Facing.Towards` builds a yaw around +X because
-that is what [N1](../In-Game-Tests/NPC-Combat.md) confirmed — on a Chosen, a humanoid rig. Nothing
+that is what [N1](../In-Game-Tests/NPC-Combat.html) confirmed — on a Chosen, a humanoid rig. Nothing
 said that generalises to a creature rig, and it doesn't.
 
 **The server has no way to know.** Nothing PIN can read carries a per-model facing offset:

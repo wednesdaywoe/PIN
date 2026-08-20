@@ -1,0 +1,217 @@
+<title>PIN — Persistence (PERSIST-1–PERSIST-7)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Persistence (PERSIST-1–PERSIST-7)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on <a href="../streams/m6-persistence.md">M6</a>. The milestone is that a session leaves a mark: what
+    you thumped, what you killed for and where you logged out are all there when you come back. Nothing
+    about this involves RIN, which has never answered a request in this project. The GameServer writes
+    one JSON file per character.</p>
+    <span class="cmd"><pre><code>~/Games/PIN/GameServer/save/character-99aabbccddee0100.json
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>That id is zone 448's character with its controller byte masked off, and it will be the same file
+    every session, because every login is the same character. <strong>A deploy does not touch it</strong>, unlike the
+    authored CustomData that <a href="Thump-Placement.html">THUMP-PLACE-6</a> was bitten by: the save directory is not in the
+    build output, so there is nothing for the install rsync to overwrite. <code>./start-pin.sh</code> without
+    <code>--no-build</code> is safe here.</p>
+    <p>What is saved is resources, items the login seed didn't hand out, the outpost you were nearest, and
+    playtime. What is deliberately not saved is loadouts and what was equipped, because every login
+    regenerates all 20 battleframes from <code>HardcodedCharacterData</code> and an item restored into a slot no
+    loadout knows about would be equipped according to nothing. A saved item comes back in the bag.</p>
+    <p>The log lines this stream reads:</p>
+    <span class="cmd"><pre><code>grep -a "Saved character" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Restored character" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Could not read" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>A save happens on logout, on disconnect, and otherwise once a minute when something has changed.
+    Nothing is written when nothing changed, so a <code>Saved character</code> line means something actually moved.</p>
+    <hr/>
+  </section>
+  <section class="block" data-open="true" id="-persist-1-crystite-survives-a-logout">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-1</span>
+      <span class="block-t">Crystite survives a logout</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-1</span><span class="marker pass">[x]</span><span class="entry-t">Crystite survives a logout</span></div><div class="callout pass"><p><strong>Passed 2026-08-14.</strong> 37 crystite earned from RELIABILITY-6's full-cycle thumper, a menu logout, and the
+      count was intact on screen after logging back in.</p></div>
+      <p><strong>M6's exit condition.</strong> Everything else in this file is diagnosis for when this fails.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="persist-1-1" type="checkbox"/><span class="step-body"><span class="lede">Log in. <code>grep -a "Restored character"</code> — on a first ever run there'll be nothing, which is the
+         correct answer for a character with no save.</span></span></label>
+      <label class="step"><input checked data-k="persist-1-2" type="checkbox"/><span class="step-body"><span class="lede">Note the crystite count in the inventory. <code>dbg_inventory 10</code> prints the server's own figure.</span></span></label>
+      <label class="step"><input checked data-k="persist-1-3" type="checkbox"/><span class="step-body"><span class="lede">Earn some, by whichever route is quickest that day: <code>thumper</code> on a deposit and collect it, or
+         kill something with a loot roll. <a href="Thump-Placement.html">THUMP-PLACE-3</a> and <a href="Kill-Rewards.html">KILL-REWARDS-1</a> have the
+         steps. It needs to be a number you can remember.</span></span></label>
+      <label class="step"><input checked data-k="persist-1-4" type="checkbox"/><span class="step-body"><span class="lede">Log out through the client's own menu rather than closing the window, so this exercises the
+         logout path rather than PERSIST-5's.</span></span></label>
+      <label class="step"><input checked data-k="persist-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Saved character" ~/Games/PIN/logs/GameServer.log</code> — expect a line ending <code>(logout)</code>
+         naming at least 1 resource kind.</span></span></label>
+      <label class="step"><input checked data-k="persist-1-6" type="checkbox"/><span class="step-body"><span class="lede">Log back in. <code>grep -a "Restored character"</code>.</span></span></label>
+      <label class="step"><input checked data-k="persist-1-7" type="checkbox"/><span class="step-body"><span class="lede">Open the inventory.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the crystite count is what it was at step 3, on screen and not only in the log. Fail with the
+      count back at zero means the save wrote and the load didn't, or the load ran before the seed; the
+      <code>Restored character</code> line separates those two immediately.</p></div><div class="result"><label for="r-persist-1">Result</label><textarea data-k="n-persist-1" id="r-persist-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-persist-2-the-save-file-says-what-it-should">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-2</span>
+      <span class="block-t">The save file says what it should</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-2</span><span class="marker pass">[x]</span><span class="entry-t">The save file says what it should</span></div><div class="callout pass"><p><strong>Passed 2026-08-14</strong>, read on the sitting's first save.</p></div>
+      <p>Cheap, and worth doing once the first time PERSIST-1 passes, because every later entry trusts this file.</p>
+      <span class="cmd"><pre><code>cat ~/Games/PIN/GameServer/save/character-99aabbccddee0100.json
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: <code>Version</code> is 1, <code>CharacterId</code> matches the filename, <code>LastZoneId</code> is 448, <code>Resources</code> lists the
+      crystite from PERSIST-1 with the right quantity, and <code>TimePlayedSecs</code> is roughly the session length in
+      seconds rather than 0 or something enormous.</p></div>
+      <p>Worth reading <code>Items</code> too: on a session where nothing was created it should be <code>[]</code> and <strong>not</strong> a
+      list of 246 battleframe modules. If the seed is in there, <code>MarkSeeded</code> ran at the wrong moment and
+      every login is now saving a copy of a constant.</p><div class="result"><label for="r-persist-2">Result</label><textarea data-k="n-persist-2" id="r-persist-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-persist-3-nothing-doubles-when-you-relog-twice">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-3</span>
+      <span class="block-t">Nothing doubles when you relog twice</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-3</span><span class="marker pass">[x]</span><span class="entry-t">Nothing doubles when you relog twice</span></div><div class="callout pass"><p><strong>Passed 2026-08-14</strong> — same count across both extra relogs.</p></div>
+      <p>The failure this is written for is specific and quiet: resources are restored by adding them to the
+      inventory, so a restore that ran twice, or a save that included what the restore had just put back
+      on top of itself, would multiply. One relog can't show it. Two can.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="persist-3-1" type="checkbox"/><span class="step-body"><span class="lede">Get to a known crystite count. Note it.</span></span></label>
+      <label class="step"><input checked data-k="persist-3-2" type="checkbox"/><span class="step-body"><span class="lede">Log out, log in. Note it.</span></span></label>
+      <label class="step"><input checked data-k="persist-3-3" type="checkbox"/><span class="step-body"><span class="lede">Log out, log in again. Note it.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the same number three times. Fail: it doubles, or grows by the starting amount each time.</p></div><div class="result"><label for="r-persist-3">Result</label><textarea data-k="n-persist-3" id="r-persist-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-persist-4-you-come-back-where-you-left">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-4</span>
+      <span class="block-t">You come back where you left</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-4</span><span class="marker pass">[x]</span><span class="entry-t">You come back where you left</span></div><div class="callout pass"><p><strong>Passed 2026-08-14.</strong> Traveled from the starting outpost to Copacabana, logged out by the market
+      terminals, and logged back in standing at Copacabana's spawn area — repositioned to the outpost's
+      spawn point rather than the exact logout spot, which is the design: the save carries the nearest
+      outpost, not a position.</p></div>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="persist-4-1" type="checkbox"/><span class="step-body"><span class="lede">Log in, and note which outpost you spawn at.</span></span></label>
+      <label class="step"><input checked data-k="persist-4-2" type="checkbox"/><span class="step-body"><span class="lede">Travel to a different outpost. Zone 448's are in <a href="Session-Setup.html">Session Setup</a>; <code>tp</code> to one
+         if walking is slow, but land somewhere you have stood before (<a href="NPC-Combat.html">NPC-COMBAT-16</a> is the entry
+         that explains why that matters).</span></span></label>
+      <label class="step"><input checked data-k="persist-4-3" type="checkbox"/><span class="step-body"><span class="lede">Log out, and read the <code>Saved character</code> line's <code>outpost</code> figure.</span></span></label>
+      <label class="step"><input checked data-k="persist-4-4" type="checkbox"/><span class="step-body"><span class="lede">Log back in.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: you spawn at the outpost from step 2, and the login logs <code>Zone 448 Outpost &lt;that id&gt;</code>.</p></div>
+      <p>Note it takes the nearest outpost to where you are standing, not the last one you touched, so
+      logging out in open ground gives you whichever is closest. A logout further from every outpost than
+      the zone's spawn point is gives the default, by design.</p><div class="result"><label for="r-persist-4">Result</label><textarea data-k="n-persist-4" id="r-persist-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-persist-5-a-session-that-never-logs-out-still-keeps-its-crystite">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-5</span>
+      <span class="block-t">A session that never logs out still keeps its crystite</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-5</span><span class="marker pass">[x]</span><span class="entry-t">A session that never logs out still keeps its crystite</span></div><div class="callout pass"><p><strong>Passed 2026-08-14.</strong> 50 crystite earned, client killed outright with no logout, relaunched:
+      same outpost, count intact with the extra 50. The <code>(disconnect)</code>-versus-<code>(autosave)</code> grep wasn't
+      read — the data survived either way, and that split only starts mattering if a last-minute change
+      ever goes missing. <strong>Stronger than the entry asked:</strong> the same sitting also killed and restarted
+      the <em>server</em>, and the character came back intact — the save file is the durable copy, not shard
+      memory.</p></div>
+      <p>This is the one that matters most in practice and it is the one PERSIST-1 doesn't cover. Most PIN sessions
+      end without <code>RequestLogout</code>: the client gets closed, the connection times out, or the player dies and
+      has to reconnect because nothing sends <code>RequestRespawn</code> (<a href="../ISSUE-REGISTER.md">NET-23</a>).</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="persist-5-1" type="checkbox"/><span class="step-body"><span class="lede">Earn crystite as in PERSIST-1.</span></span></label>
+      <label class="step"><input checked data-k="persist-5-2" type="checkbox"/><span class="step-body"><span class="lede">Wait for a <code>Saved character</code> line ending <code>(autosave)</code>. It comes within a minute of the change.</span></span></label>
+      <label class="step"><input checked data-k="persist-5-3" type="checkbox"/><span class="step-body"><span class="lede">Kill the client outright — close the window, don't log out.</span></span></label>
+      <label class="step"><input checked data-k="persist-5-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Saved character"</code> for a line ending <code>(disconnect)</code>.</span></span></label>
+      <label class="step"><input checked data-k="persist-5-5" type="checkbox"/><span class="step-body"><span class="lede">Log back in.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the crystite is there. If step 4 produced nothing but step 2 did, the autosave carried it and
+      the disconnect path didn't fire, which is worth recording either way: the data survived, but on a
+      session where the last minute mattered it wouldn't have.</p></div><div class="result"><label for="r-persist-5">Result</label><textarea data-k="n-persist-5" id="r-persist-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-persist-6-an-item-survives">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-6</span>
+      <span class="block-t">An item survives</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-6</span><span class="marker pass">[x]</span><span class="entry-t">An item survives</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, riding along PERSIST-1-PERSIST-3 rather than run as written.</strong> The Scan Hammer (56826)
+      survived the sitting's three relogs, visible in the inventory afterwards, and the save file read
+      in PERSIST-2 carries the session's created items. The step-2 <code>dbg_inventory 56826</code> count comparison was
+      not separately recorded; the visible-and-saved evidence covers what this entry exists to prove.</p></div>
+      <p>Items are the half of the inventory that <a href="Inventory.html">INVENTORY-1</a> is still stuck on, so run this knowing
+      that a failure might belong to that entry rather than to this one.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="persist-6-1" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 56826</code> — a Scan Hammer, the same item <a href="Thump-Placement.html">THUMP-PLACE-2</a> uses.</span></span></label>
+      <label class="step"><input checked data-k="persist-6-2" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory 56826</code> to confirm the server has it. <strong>This is the check, not the client's bag</strong>,
+         because whether the client draws a new item is INVENTORY-1's open question and not M6's.</span></span></label>
+      <label class="step"><input checked data-k="persist-6-3" type="checkbox"/><span class="step-body"><span class="lede">Log out and back in.</span></span></label>
+      <label class="step"><input checked data-k="persist-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory 56826</code>.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the count is the same both times, and the save file's <code>Items</code> array holds one entry for 56826.
+      Fail with the item gone after a relog, while PERSIST-1 passes, means resources persist and items don't,
+      which is a real M6 defect. Fail with <code>dbg_inventory</code> finding it at step 2 but the client never
+      showing it at any point is INVENTORY-1 and not this.</p></div><div class="result"><label for="r-persist-6">Result</label><textarea data-k="n-persist-6" id="r-persist-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-persist-7-a-broken-save-doesnt-stop-you-logging-in">
+    <button class="block-head" type="button">
+      <span class="block-n">PERSIST-7</span>
+      <span class="block-t">A broken save doesn't stop you logging in</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PERSIST-7</span><span class="marker pass">[x]</span><span class="entry-t">A broken save doesn't stop you logging in</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, run last as instructed.</strong> Login survived into the world at the default
+      watchtower spawn with a genuinely reset character (no crystite, no Scan Hammer). The log carried
+      the full story in one line: <code>Could not read save/character-99aabbccddee0100.json (Expected depth
+      to be zero at the end of the JSON payload ... Path: $.Resources[0]). Moved it to
+      save/character-99aabbccddee0100.json.corrupt-20260815-021037 and carried on with a fresh
+      character</code> — and both files sit in <code>save/</code> side by side, quarantine and fresh copy.</p></div>
+      <p>A save file is the only thing in PIN that a session writes and the next session must read, so the
+      failure where it can't be read has to be harmless. Offline tests cover the parsing; this checks that
+      the login survives it.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="persist-7-1" type="checkbox"/><span class="step-body"><span class="lede">Log out.</span></span></label>
+      <label class="step"><input checked data-k="persist-7-2" type="checkbox"/><span class="step-body"><span class="lede">Corrupt the file deliberately:
+         <code>printf '{ "Resources": [' &gt; ~/Games/PIN/GameServer/save/character-99aabbccddee0100.json</code></span></span></label>
+      <label class="step"><input checked data-k="persist-7-3" type="checkbox"/><span class="step-body"><span class="lede">Log in.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: you get into the world with an empty resource count, the log carries a <code>Could not read</code> line,
+      and a <code>character-...json.corrupt-&lt;stamp&gt;</code> file is sitting next to where the original was. Fail: the
+      login hangs or the shard throws, which would mean one bad file locks the character out permanently.</p></div>
+      <p>Afterwards the character is genuinely reset, so run this last or expect to re-earn PERSIST-1's crystite.</p><div class="result"><label for="r-persist-7">Result</label><textarea data-k="n-persist-7" id="r-persist-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-persistence-v1"></script>
+

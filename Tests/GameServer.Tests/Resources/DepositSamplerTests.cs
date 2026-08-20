@@ -18,7 +18,7 @@ namespace GameServer.Tests.Resources;
 ///     The gradient reading itself — center values blending linearly to edge values over the radius —
 ///     is PIN's interpretation of the schema; nothing shipped documents the falloff curve, so if the
 ///     shape is wrong these tests still pass and the in-game piles are mis-sized, which is what
-///     Docs/In-Game-Tests/Thump-Placement.md measures.
+///     Docs/In-Game-Tests/Thump-Placement.html measures.
 /// </summary>
 public class DepositSamplerTests
 {

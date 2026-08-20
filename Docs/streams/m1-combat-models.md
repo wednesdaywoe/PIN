@@ -27,7 +27,7 @@ shields are invented.
   [DamageFalloff.cs](../../UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs).
 - **`dbitems::Battleframe` shields.** 5 of 1676 rows carry a non-zero `base_shields`, so build 1962
   had no shields; the recharge pair is real at 150/sec and 10000ms. Done 2026-08-11, numbers read
-  in [Capture Replay](../In-Game-Tests/Capture-Replay.md).
+  in [Capture Replay](../In-Game-Tests/Capture-Replay.html).
 - The placeholders were replaced: recharge pair now the shipped values, pool kept non-zero on
   purpose as a divergence — see [HardcodedCharacterData.cs](../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs)
   and issue [DATA-1](../gaps/data.md).

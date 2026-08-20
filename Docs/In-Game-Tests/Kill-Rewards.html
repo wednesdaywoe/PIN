@@ -1,0 +1,380 @@
+<title>PIN — Kill Rewards (KILL-REWARDS-1–KILL-REWARDS-5)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Kill Rewards (KILL-REWARDS-1–KILL-REWARDS-5)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on <a href="../streams/m5-kill-rewards.md">M5</a>. One sentence: kill something and come away holding
+    crystite you didn't have.</p>
+    <p><strong>KILL-REWARDS-1 passed on 2026-08-13 and closed <a href="../streams/m5-kill-rewards.md">M5</a></strong> — a Gaia creature paid 4
+    crystite and the tester saw it arrive. It took two attempts. The first found that crystite was being
+    rolled correctly and then filed as an unpayable item, because the resource-or-item check asked
+    <code>dbitems::ResourceItem</code> — the gatherable-materials list (ids 75537 and up), which does not contain
+    crystite at id 10. The check is now the <code>Resource</code> flag on the item's own <code>RootItem</code> row, which
+    <code>createitem</code> has always used and <a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a> confirmed against the client.</p>
+    <p><strong>That run also confirmed the basis-points guess, on a table that is on the kill path.</strong> "Melded Loot
+    Common" (5463) is reached from monster 528's second loot table and its rows are 5000/1000/100. Read
+    as percentages that is a distribution that drops something every time; it is out of 10000.
+    <code>LootRoller</code> now decides the scale per table from its own rows. See <a href="../gaps/data.md">DATA-16</a>.</p>
+    <p><strong>KILL-REWARDS-2 settled on 2026-08-16 and the stream is now 3 of 5.</strong> Thirty-nine kills of monster 528 in one
+    post-fix session paid crystite on <strong>8</strong>, which is 20.5% against an expected 25% — inside the noise
+    band, and large enough to mean something where the two earlier sessions were not. KILL-REWARDS-3 passed the day
+    before. KILL-REWARDS-4's hazard half passed; its NPC-on-NPC half has still never had the two hostile factions
+    put in reach of each other, and KILL-REWARDS-5 needs a second client.</p>
+  </section>
+  <section class="doc" id="what-changed-about-this-milestone">
+    <h2>What changed about this milestone</h2>
+    <p>M5 was written as XP first and loot second. It is now crystite first and no XP (decision 2026-08-13,
+    user-chosen). Two reasons:</p>
+    <ul>
+    <li><strong>Nothing consumes XP.</strong> <code>ProgressionXPRefresh</code> already sends zero at scope-in, so paying out a
+      number nothing reads changes nothing on screen. The half that spends it is a milestone of its own.</li>
+    <li><strong>Nothing shipped to size it from.</strong> <code>dbcharacter::Monster.xp_resource_id</code> is non-zero on <strong>2 rows
+      of 3109</strong> and <code>xpreward_type</code> on 12. The loot tables, by contrast, are complete and tuned.</li>
+    </ul>
+    <p><strong>Not because levels are out.</strong> An earlier draft of this said so and it was wrong: the beta had XP
+    without levels, as a currency you earned and spent on upgrading your frame (correction 2026-08-13,
+    user). XP fits the level-less model rather than contradicting it, and could return once something
+    consumes it. See <a href="../Restoration.md">Restoration</a>.</p>
+  </section>
+  <section class="doc" id="where-the-numbers-come-from">
+    <h2>Where the numbers come from</h2>
+    <p>Nothing here is invented. <code>dbitems::LootTable</code> shipped with 2472 rows and <code>LootTableItemDist</code> with
+    34159, none of it loaded by PIN until now. Zone 448's two monster types resolve all the way down:</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th></th>
+    <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>monster <strong>528</strong> (Gaia, <code>difficulty_cost</code> 20)</td>
+    <td>loot table 5703, "CORE Gaia Creature Kill Loot 2 (Small)"</td>
+    </tr>
+    <tr>
+    <td>monster <strong>1196</strong> (Chosen, <code>difficulty_cost</code> 35)</td>
+    <td>loot table 5697, "CORE Chosen Creature Kill Loot 2 (Small)"</td>
+    </tr>
+    <tr>
+    <td>both, at 100%</td>
+    <td>table <strong>2</strong>, "CORE NPC Kill Loot 2 (Small) - Crystite/Powerups Subtable"</td>
+    </tr>
+    <tr>
+    <td>table 2, at 25%</td>
+    <td>table <strong>25</strong>, "Small Crystite Drops (2-20)"</td>
+    </tr>
+    <tr>
+    <td>table 25</td>
+    <td>crystite (<strong>item 10</strong>): 2–4 at 80, 5–10 at 10, 11–15 at 5, 16–20 at 5</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><strong>So three kills in four pay nothing, and the fourth pays 2 to 20.</strong> That is retail's rate for a
+    small creature and it is the single most important thing to know before running any of this: a dry
+    kill is the expected case, not a failure, and no entry below can be judged on one kill.</p>
+    <p>Both monsters also carry a second table (<code>loot_table2_id</code> 5458 and 5368, the Melded and Chosen
+    sub-loot) and both roll equipment and resource-item tiers. <strong>The equipment and powerups are not
+    paid</strong> — they are items rather than resources, and putting an item in a player's hands is
+    <a href="Inventory.html">INVENTORY-1</a>'s unsolved problem, so <code>KillRewardSim</code> logs each one it rolled and drops it.</p>
+    <p><strong>The melded resources off that second table are paid, and KILL-REWARDS-1 is where that turned up.</strong> 77343,
+    77344 and 77345 carry the <code>Resource</code> flag, so they take the same route crystite does and land in the
+    resource pane. That means a kill can pay you something even when the crystite roll misses, and it
+    means the resource pane is worth a look before concluding a kill paid nothing.</p>
+  </section>
+  <section class="doc" id="what-is-a-guess">
+    <h2>What is a guess</h2>
+    <p><code>roll_mode</code> is a guess. The column carries six distinct values, the client is the only thing that
+    ever read them, and the two behaviours PIN implements were inferred from the arithmetic of the
+    tables themselves — mode 2 as independent per-entry chances (100/100/8 on one table can't be
+    anything else), everything else as a weighted single pick (80/10/5/5 summing to exactly 100 can't be
+    anything else). Modes 1, 4 and 5 are unexercised.</p>
+    <p>The probability scale is the second guess, and KILL-REWARDS-1's first run turned it from theoretical into a live
+    defect. Both scales are in the file, nothing marks which is which, and "Melded Loot Common" (5463) —
+    reached from monster 528 — carries 5000/1000/100, which cannot be percentages. <code>LootRoller</code> now
+    decides per table: any row above 100 means the table is out of 10000, otherwise 100. That gets both
+    known cases right and is still an inference.</p>
+    <p><code>LootRollerTests</code> pins the reading offline. It cannot tell you the reading is right — only the
+    client's own drop rates could, and they are gone. <strong>These entries are the only check on it</strong>, which
+    is why KILL-REWARDS-2 is a count over many kills rather than a yes/no.</p>
+  </section>
+  <section class="doc" id="setup-for-every-entry">
+    <h2>Setup for every entry</h2>
+    <p>Confirm the build banner first, the way <a href="NPC-Combat.html">NPC Combat</a> describes, then keep the log
+    open:</p>
+    <span class="cmd"><pre><code>grep -a "Running build" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    tail -f ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>The three lines this stream reads:</p>
+    <span class="cmd"><pre><code>grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "rolled nothing" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "not paid — item drops are unbuilt" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Zone 448 has thirteen monsters standing in it at login and they respawn about two minutes after
+    death, so there is no shortage of targets. <code>npc 528</code> and <code>npc 1196</code> spawn more at your feet.</p>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-1-a-kill-pays-crystite">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-1</span>
+      <span class="block-t">A kill pays crystite</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-1</span><span class="marker pass">[x]</span><span class="entry-t">A kill pays crystite</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on the second attempt, and it closes <a href="../streams/m5-kill-rewards.md">M5</a>.</strong> A
+      Gaia creature died and paid 4 crystite, which the tester saw arrive:</p></div>
+      <span class="cmd"><pre><code>20:22:47 NPC 2305176846901314560 died to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:22:47 Kill of monster type 528 paid 4 of resource 10 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:22:47 Kill of monster type 528 paid 1 of resource 77344 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:23:07 Kill of monster type 1196 rolled item 33815 x1, not paid — item drops are unbuilt</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:23:07 Kill of monster type 1196 paid 1 of resource 77345 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>4 is the bottom band of "Small Crystite Drops (2-20)", the 80% row — the common case landing on the
+      common outcome. <strong>Two melded resources were paid alongside it and are easy to miss</strong>: 77344 and
+      77345 come off the second loot table, the "Melded Loot Common"/"Uncommon" pair, and they carry the
+      <code>Resource</code> flag so they land in the resource pane rather than the bag. They arrived at all only
+      because of the scale fix below — before it, that table dropped its common row on every kill.</p>
+      <p><strong>The first attempt failed, and the failure was one line of PIN rather than anything about loot.</strong>
+      21 kills, 10 crystite rolls, 0 paid. Every line read
+      <code>rolled item 10 x2, not paid — item drops are unbuilt</code>, and <strong>item 10 is crystite</strong> — the roller was
+      right and the classifier was wrong. <code>IsResourceItem</code> consulted <code>dbitems::ResourceItem</code>, a table that
+      exists, has 111 rows, and is the wrong one: it lists gatherable materials from id 75537 up, not the
+      contents of the resource pane. It now reads <code>ItemFlags.Resource</code> off <code>RootItem</code>, the same check
+      <code>createitem</code> uses.</p>
+      <p>Worth keeping as a shape: <strong>neither of this entry's own failure branches applied.</strong> The server was
+      not quietly right while the screen was wrong, and the log was not silent. The log was talkative and
+      accurate about what it had done, and what made the bug findable in one pass was naming the id and
+      quantity of the thing it declined to pay — the KILL-REWARDS-3 line, written for a different reason, is what
+      identified it.</p>
+      <p>The milestone's exit condition. Everything else here is a qualifier on it.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="kill-rewards-1-1" type="checkbox"/><span class="step-body"><span class="lede">Log in to zone 448. <code>dbg_inventory</code> and write down the crystite count.</span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-1-2" type="checkbox"/><span class="step-body"><span class="lede">Find a monster and kill it. Repeat until the log prints a <code>paid</code> line — <strong>expect to need four
+         or more kills</strong>, and don't stop at two.</span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-1-4" type="checkbox"/><span class="step-body"><span class="lede">Look at the crystite count in the inventory <strong>without closing and reopening it</strong>.</span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: step 3 prints a line reading <code>Kill of monster type 528 paid N of resource 10 to &lt;id&gt;</code> with N
+      between 2 and 20, the count on screen goes up by N while you're looking at it, and step 5 agrees.</p></div>
+      <div class="callout fail"><p><strong>Fail, <code>rolled nothing</code> on every kill across a dozen or more:</strong> either the chance reading is wrong
+      or the chain isn't being walked. <code>grep -a "names no loot table"</code> separates them — that line means
+      the monster resolved but carries no table, which for 528 and 1196 would mean the SDB the server
+      opened isn't the full <code>clientdb.sd2</code>. Check <code>GameServer.dll.config</code>'s <code>StaticDBPath</code>; a pruned db
+      will not have <code>dbitems::LootTable</code> in it.</p></div>
+      <div class="callout fail"><p><strong>Fail, the server has it and the screen doesn't:</strong> the partial <code>InventoryUpdate</code> isn't merging.
+      That contradicts <a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a>, which established that it does, so check a relog before
+      concluding anything.</p></div>
+      <div class="callout fail"><p><strong>Fail, nothing at all in the log for a kill:</strong> <code>CharacterDiedEvent</code> isn't reaching the subscriber.
+      It is enqueued in <code>CharacterEntity.Die</code> and dispatched by <code>EventBus.Flush</code> at the end of the tick,
+      so a kill that logs <code>died to</code> and nothing after it means the subscription didn't happen —
+      <code>KillRewardSim</code> is constructed in the <code>Shard</code> constructor and held in a field for exactly that
+      reason.</p></div><div class="result"><label for="r-kill-rewards-1">Result</label><textarea data-k="n-kill-rewards-1" id="r-kill-rewards-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-2-the-rate-is-about-one-kill-in-four">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-2</span>
+      <span class="block-t">The rate is about one kill in four</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-2</span><span class="marker pass">[x]</span><span class="entry-t">The rate is about one kill in four</span></div><p><strong>Measured 2026-08-16, and it settles.</strong> Thirty-nine kills of monster 528 in one post-fix session —
+      the sample this entry asked for and two earlier sessions could not supply.</p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Outcome</th>
+      <th>Kills</th>
+      <th>Share</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>Paid crystite (resource 10)</td>
+      <td><strong>8</strong></td>
+      <td><strong>20.5%</strong></td>
+      </tr>
+      <tr>
+      <td>Paid resource 77343</td>
+      <td>4</td>
+      <td>10%</td>
+      </tr>
+      <tr>
+      <td>Rolled an item, unpaid (33815 / 33816)</td>
+      <td>13</td>
+      <td>33%</td>
+      </tr>
+      <tr>
+      <td>Rolled nothing</td>
+      <td>14</td>
+      <td>36%</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p><strong>20.5% against an expected 25%, on 39 kills.</strong> That is comfortably inside the noise band and it is
+      the answer: the weighted pick is happening and mode 2 is not being misapplied. The two disagreeing
+      sessions above (48% and 8%) were both too small to mean anything, and this supersedes them.</p>
+      <p><strong>Steps 2 and 3 do not add up to the kill count, and that is the entry's arithmetic being wrong
+      rather than a defect.</strong> 8 + 14 = 22 against 39 kills, because a third outcome exists that the entry
+      never allowed for: 13 kills rolled an <em>item</em> instead of crystite or nothing. Any future run should
+      count four outcomes, not two.</p>
+      <p>The 4 payments of <strong>resource 77343</strong> are the melded sub-loot this stream already documents above,
+      arriving as designed — worth noting only because a tester counting crystite alone will read those
+      four kills as dry when the resource pane says otherwise.</p>
+      <p>The only check that exists on the <code>roll_mode</code> reading, and the reason it is written as a count.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="kill-rewards-2-1" type="checkbox"/><span class="step-body"><span class="lede">Kill twenty monsters of type 528 or 1196. Use the standing spawn groups and let them respawn, or
+         <code>npc 528</code> repeatedly.</span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-2-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -ac "paid .* of resource 10" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -ac "rolled nothing" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: step 2 and step 3 add up to roughly the number of kills, and step 2 is somewhere around a
+      quarter of them. Two to nine out of twenty is a normal spread and passes.</p></div>
+      <p><strong>Two KILL-REWARDS-1 sessions took this measurement by accident, they disagree, and neither settles anything.</strong></p>
+      <div class="tbl-scroll"><table>
+      <thead>
+      <tr>
+      <th>Session</th>
+      <th>Kills</th>
+      <th>Crystite</th>
+      <th>Rate</th>
+      <th>Notes</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>KILL-REWARDS-1 attempt 1</td>
+      <td>21</td>
+      <td>10</td>
+      <td>48%</td>
+      <td>pre-fix; crystite was rolled and not paid, so these are rolls</td>
+      </tr>
+      <tr>
+      <td>KILL-REWARDS-1 attempt 2</td>
+      <td>12</td>
+      <td>1</td>
+      <td>8%</td>
+      <td>post-fix, and the run that passed</td>
+      </tr>
+      </tbody>
+      </table></div>
+      <p>Expected is 25%. One session came out roughly double, the next roughly a third, on 21 and 12 kills.
+      At that size both are ordinary noise — 12 kills has a 95% interval running from about 0 to 6 — so
+      the honest reading is that <strong>nothing has been measured yet.</strong> Do not tune anything on these.</p>
+      <p>Take it in one sitting of 40 or more, all post-fix, and count from a single session rather than
+      adding these together: attempt 1 predates the scale change, which altered how the second loot table
+      rolls, so the two are not the same experiment. If 40 kills still land near half, the 25% subtable is
+      not the only crystite source on the path and the chain wants tracing again from <code>loot_table2_id</code>.</p>
+      <div class="callout fail"><p><strong>Fail, every kill pays:</strong> mode 2 is being applied where a weighted pick belongs, or the 25%
+      subtable roll isn't happening. This is the failure that looks like success in game and is worth
+      watching for on that account.</p></div>
+      <div class="callout fail"><p><strong>Fail, no kill ever pays across twenty:</strong> the weighted branch is consuming the roll wrong, or
+      probability isn't a percentage on this path after all.</p></div>
+      <p>Record the actual count either way. It is the only measurement of these tables anyone has.</p><div class="result"><label for="r-kill-rewards-2">Result</label><textarea data-k="n-kill-rewards-2" id="r-kill-rewards-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-3-equipment-and-powerups-are-rolled-and-visibly-not-paid">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-3</span>
+      <span class="block-t">Equipment and powerups are rolled and visibly not paid</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-3</span><span class="marker pass">[x]</span><span class="entry-t">Equipment and powerups are rolled and visibly not paid</span></div><div class="callout pass"><p><strong>Passed 2026-08-15.</strong> Both halves, including the one KILL-REWARDS-1 left open. Two rolls of powerup 33816 —
+      22:36:11 off a 528 and 22:37:43 off a 1189 — each logged
+      <code>rolled item 33816 x1, not paid — item drops are unbuilt</code>. The bag was counted either side:
+      <code>249 item(s) [Gear 249], 2 resource(s), 20 loadout(s)</code> at 22:34:51 and the identical line at
+      22:47:57. Nothing arrived, and the log said so both times rather than staying quiet. The
+      <code>Resource</code> flag is behaving.</p></div>
+      <p>Resource payout kept working across the same kills — 2, 3 and 4 of resource 10 on three separate
+      kills — so the unpaid item path is not swallowing the paid resource path.</p>
+      <p>A check that the gap is honest rather than silent — the thing RESOURCE-PAYOUT-5 taught, that "nothing arrived" and
+      "nothing was owed" must be distinguishable from the log alone.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="kill-rewards-3-1" type="checkbox"/><span class="step-body"><span class="lede">Kill monsters until the log has at least one line about an unpaid item. Powerups (33815, 33816)
+         come off table 2 at 20% and 15%, so this should take fewer kills than KILL-REWARDS-1.</span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-3-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "not paid — item drops are unbuilt" ~/Games/PIN/logs/GameServer.log</code></span></span></label>
+      <label class="step"><input checked data-k="kill-rewards-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: step 2 names an item id and a quantity, and step 3 shows no new item. The point is that the
+      roll is recorded even though nothing is delivered.</p></div>
+      <div class="callout fail"><p><strong>Fail, an item does arrive in the bag:</strong> the <code>Resource</code> flag on that item's <code>RootItem</code> row is set
+      when it shouldn't be, so the resource path is being handed an item id. Check the flag before
+      blaming the code — the powerups 33815 and 33816 both read 8192, with bit 0x10 clear.</p></div>
+      <p><strong>Half-answered by KILL-REWARDS-1's passing run.</strong> The log printed
+      <code>rolled item 33815 x1, not paid — item drops are unbuilt</code>, so the roll is recorded and named. What
+      was not checked is step 3: nobody looked at the bag afterwards to confirm nothing arrived.</p><div class="result"><label for="r-kill-rewards-3">Result</label><textarea data-k="n-kill-rewards-3" id="r-kill-rewards-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-4-an-environmental-death-and-an-npc-on-npc-kill-pay-nobody">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-4</span>
+      <span class="block-t">An environmental death and an NPC-on-NPC kill pay nobody</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-4</span><span class="marker warn">[~]</span><span class="entry-t">An environmental death and an NPC-on-NPC kill pay nobody</span></div><p><strong>Hazard half passed 2026-08-16.</strong> The player was killed outright by the melding at 11:44:59 —
+      <code>went down to nothing</code>, no killer entity — and no <code>paid</code>, <code>rolled</code> or <code>Kill of monster type</code> line
+      appears anywhere around it. A death with no attacker pays nobody, which is the half that could
+      plausibly have crashed or credited a null.</p>
+      <p><strong>The NPC-on-NPC half did not happen, and the reason is that this entry named a pair that cannot
+      fight.</strong> It used to say Aranha and Chosen are mutually hostile. They are not. Read out of the
+      shipped <code>dbcharacter::FactionRelations</code> on 2026-08-16: <strong>528 is faction 6 ("melding"), 1196 is
+      faction 2 ("chosen"), and the row for that pair is <code>hostility_stance=2, hostility_bidirectional=1</code>
+      — positive, so allied, in both directions.</strong> Zone 448's three standing groups mix 528 and 1196 for
+      exactly that reason and have never fought each other.</p>
+      <p><strong>Use 1189 instead.</strong> It is faction <strong>7 ("gaea")</strong>, and gaea against chosen reads
+      <code>hostility_stance=-1, hostility_bidirectional=1</code> — hostile, stated outright in both directions, so
+      neither side has to be provoked. 1189 is also already proven in game: it is <a href="Damage-Loop.html">DMG-LOOP-7</a>'s
+      subject, spawns, renders and dies. 1189 against 528 works too (gaea against melding), but that one
+      leans on a one-way row plus a default-stance fallback where gaea against chosen is stated flat out.</p>
+      <p>The guards. Both are reachable without another player.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="kill-rewards-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stand at a melding wall or walk into deep water and die to it. See <a href="Environment.html">ENV-1</a> for which
+         hazards are live.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-4-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -3</code></span></span></label>
+      <label class="step"><input data-k="kill-rewards-4-3" type="checkbox"/><span class="step-body"><span class="lede">Let two hostile NPCs fight. <code>npc 1189</code>, walk five or six paces, <code>npc 1196</code> — a gaea creature and
+         a Chosen Fiend, which are hostile both ways. Stand well clear and watch. It is the same mutual
+         hostility that killed zone 448 four times over in <a href="NPC-Combat.html">NPC-COMBAT-14</a>, only with a pair that
+         really is hostile; see the note above for why 528 was the wrong choice</span></span></label>
+      <label class="step"><input data-k="kill-rewards-4-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "died to|paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -6</code> — the <code>died
+         to</code> line is what says the fight happened at all, and without it a clean <code>paid</code> result means
+         nothing</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: neither step adds a line. A hazard death has no killer at all, and an NPC killer has no
+      <code>Player</code> to pay.</p></div>
+      <div class="callout fail"><p><strong>Fail, your own death pays you:</strong> the victim/killer check is inverted. That would also mean a
+      player death is being treated as a lootable monster, which is the PvP case
+      <a href="../Restoration.md">Restoration</a> says is out of scope.</p></div><div class="result"><label for="r-kill-rewards-4">Result</label><textarea data-k="n-kill-rewards-4" id="r-kill-rewards-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-5-the-kill-that-pays-is-the-killers-not-the-last-player-to-log-in">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-5</span>
+      <span class="block-t">The kill that pays is the killer's, not the last player to log in</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-5</span><span class="marker none">[ ]</span><span class="entry-t">The kill that pays is the killer's, not the last player to log in</span></div><p>Only runnable with two clients, which is what usually makes an entry like this sit unrun. Left in
+      the queue because credit is the whole point of the feature.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="kill-rewards-5-1" type="checkbox"/><span class="step-body"><span class="lede">Two clients logged in to zone 448, standing apart.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-5-2" type="checkbox"/><span class="step-body"><span class="lede">One kills a monster on its own. The other does not fire.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-5-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "paid .* of resource" ~/Games/PIN/logs/GameServer.log | tail -1</code></span></span></label>
+      <label class="step"><input data-k="kill-rewards-5-4" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> on both.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the entity id in the log line is the killer's character, and only that client's crystite moved.</p></div>
+      <div class="callout fail"><p><strong>Fail, the wrong character is named:</strong> <code>CharacterDiedEvent.Killer</code> is being filled from whatever
+      last damaged the entity rather than what landed the killing blow. Worth checking against
+      <code>CharacterEntity.Die</code>'s own <code>killer</code> parameter before blaming the reward code.</p></div>
+      <p><strong>Not runnable is a valid outcome</strong> — mark it <code>[-]</code> and say so. Retail also shared credit across a
+      squad and PIN does not; that gap belongs to M7, not here.</p><div class="result"><label for="r-kill-rewards-5">Result</label><textarea data-k="n-kill-rewards-5" id="r-kill-rewards-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-kill-rewards-v1"></script>
+

@@ -339,12 +339,12 @@ public class CharacterInventory
     /// </summary>
     /// <remarks>
     ///     The size is logged, broken down by sub-inventory, because nothing else measures it and it
-    ///     is a standing suspect for <see href="../../../Docs/In-Game-Tests/Inventory.md">I1</see>.
+    ///     is a standing suspect for <see href="../../../Docs/In-Game-Tests/Inventory.html">I1</see>.
     ///     PIN gives a character every frame in the game at login — 20 chassis and their default
     ///     modules in two configurations each — which is not what a retail character carried, and a
     ///     client that caps a bag would have nowhere to put the next item. Resources are counted
     ///     separately here for the same reason: they arrive in their own array and
-    ///     <see href="../../../Docs/In-Game-Tests/Resource-Payout.md">G1</see> proved they arrive
+    ///     <see href="../../../Docs/In-Game-Tests/Resource-Payout.html">G1</see> proved they arrive
     ///     fine, so any ceiling that exists is on the item side.
     /// </remarks>
     public void SendFullInventory()

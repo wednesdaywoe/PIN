@@ -1,0 +1,230 @@
+<title>PIN — Death and Respawn (DEATH-RESPAWN-1–DEATH-RESPAWN-5)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Death and Respawn (DEATH-RESPAWN-1–DEATH-RESPAWN-5)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>The check on <a href="../gaps/network.md#net-23">NET-23</a>, which is the last thing standing between the
+    project's loop and a session that survives losing a fight. Until now a player who died stayed dead:
+    the server killed them correctly, the client offered nothing, and the only way on was to reconnect.
+    <a href="NPC-Combat.html">NPC-COMBAT-16</a> found it on 2026-08-13, and <a href="Thumper-Defence.html">M7</a> made it matter — a
+    defended thumper is a fight the tester can lose.</p>
+    <p><strong>Written 2026-08-15 and closed on both routes the same day: <a href="#-death-respawn-1-a-dead-player-gets-back-up">DEATH-RESPAWN-1</a>
+    and <a href="#-death-respawn-3-doing-nothing-still-gets-you-back-up">DEATH-RESPAWN-3</a> pass, 2 of 5.</strong> Two deaths, one for each way
+    back. At 11:03:51 the tester went down and waited, and the fallback returned them 31 seconds later.
+    At 11:17:02 they went down and pressed Reload, and were back in three.</p>
+    <p>Everything the design depends on is now evidenced: the state change lands (all six attackers dropped
+    target inside the same second, the M2 signature of a character going non-alive), the offer goes out,
+    the give-up prompt appears within its 2-second gate, the key reaches the server, the fallback covers
+    anyone who ignores it, and both respawns put the character on real footing.</p>
+    <p><strong>Both sessions ended in menu logouts with clean character saves.</strong> Every previous PIN session that
+    contained a player death ended in a reconnect. <a href="../gaps/network.md#net-23">NET-23</a>'s symptom is
+    gone.</p>
+    <p>What is left is small: the countdown's visible reading (DEATH-RESPAWN-2, whose main risk DEATH-RESPAWN-1 already retired),
+    monsters still dying properly (DEATH-RESPAWN-4), and dying inside a thumper defence (DEATH-RESPAWN-5).</p>
+    <p>What was built, in one paragraph. Retail's death was two stages, and the client still ships both:
+    you go down and bleed out first, and only then die. The death screen —
+    <code>gui/components/MainUI/HUD/Bleedout/Bleedout.lua</code> in the installed client — opens on character
+    state <code>incapacitated</code> and nothing else, and the give-up prompt that actually sends the respawn
+    command lives inside it, gated on a permission flag. PIN went straight from alive to <code>Dead</code>, so the
+    screen never opened. A player now goes to <code>Incapacitated</code>, gets the <code>respawn_input</code> permission and a
+    <code>RespawnTimesData</code> pair, and either taps out on the Reload key or is respawned by
+    <a href="../../UdpHosts/GameServer/Systems/Combat/BleedoutSim.cs">BleedoutSim</a> after 30 seconds. NPCs are
+    untouched and still die outright.</p>
+    <p><strong>Two invented numbers and one unverified guess, all of which this stream is here to catch.</strong> The
+    2-second wait before the prompt appears and the 30-second forced respawn have no source — nothing
+    shipped carries either, and the client draws whatever it is told. The guess is the <em>units</em>: PIN
+    sends both times as absolute shard times, following <code>TimedDailyRewardData.CountdownToTime</code>, the only
+    other countdown target in this protocol PIN already sends, while the client's Lua consumes them as
+    remaining seconds. If the engine does that subtraction, DEATH-RESPAWN-2 passes. If it doesn't, DEATH-RESPAWN-2 shows a wrong
+    or missing timer while DEATH-RESPAWN-1 still passes, which is exactly why they are separate entries.</p>
+    <p>The 2016 capture cannot help with any of this: nobody dies in it. See
+    <a href="Capture-Replay.html">Capture Replay</a>.</p>
+    <p>The log lines this stream reads:</p>
+    <span class="cmd"><pre><code>grep -a "went down to" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "downed, tap-out" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "did not tap out" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "died to" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+    <p>Run the whole stream with <code>invuln</code> <strong>off</strong>. That is the point of it, and it is the one stream where
+    being killed is the pass condition rather than the accident.</p>
+  </section>
+  <section class="block" data-open="true" id="-death-respawn-1-a-dead-player-gets-back-up">
+    <button class="block-head" type="button">
+      <span class="block-n">DEATH-RESPAWN-1</span>
+      <span class="block-t">A dead player gets back up</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEATH-RESPAWN-1</span><span class="marker pass">[x]</span><span class="entry-t">A dead player gets back up</span></div><p>The exit condition. Everything else in this stream diagnoses a failure of it.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15 on the second death of the day.</strong> The tester was killed by the Basin Mouth pack,
+      the give-up prompt appeared, they pressed Reload, and the respawn was immediate:</p></div>
+      <span class="cmd"><pre><code>11:17:02 INF Player 11072869122414870784 downed, tap-out in 2000ms, forced at 30000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:17:02 INF Player 11072869122414870784 went down to 2235467298599207936</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:17:05 INF SendFullInventory: 246 item(s) [Gear 246], 2 resource(s), 20 loadout(s)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:17:06 DBG Ground sample &lt;176.65, 250.13, 491.94&gt; from 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>Three seconds from down to respawned, and <strong>no <code>did not tap out in time</code> line above it</strong>, which is
+      what distinguishes this from <a href="#-death-respawn-3-doing-nothing-still-gets-you-back-up">DEATH-RESPAWN-3</a>. The fallback is the
+      only other route into <code>Respawn</code>, and it announces itself.</p>
+      <p><strong>This entry was first recorded as unattempted, and the mistake is worth keeping.</strong> The reader
+      checking the log grepped for <code>RequestRespawn</code> — a string that appears in the source and never in the
+      output, because the handler had no log line — got zero hits, and reported a passing entry as a client
+      that had never sent the command. The evidence was always there in what <code>Respawn</code> does rather than in
+      what the handler says. <code>RequestRespawn</code> now logs <code>Player &lt;id&gt; tapped out</code>, so the next reader does
+      not have to reason about absences. Same lesson as KILL-REWARDS-1's <code>rolled item 10 x2, not paid</code>: the log line
+      written so two outcomes can be told apart is the one that pays for itself.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="death-respawn-1-1" type="checkbox"/><span class="step-body"><span class="lede">Log in to zone 448. Confirm <code>invuln</code> is off — if you have run it this session, run <code>invuln</code>
+         again and check the feedback says it is disabled.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-1-2" type="checkbox"/><span class="step-body"><span class="lede">Walk to the Basin Mouth pack and let it kill you. Do not fight back; the pack that killed the
+         tester in <a href="NPC-Combat.html">NPC-COMBAT-16</a> is the reliable way to die.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-1-3" type="checkbox"/><span class="step-body"><span class="lede">On screen: expect the bleedout panel across the bottom, a red bar draining, and a prompt naming
+         the <strong>Reload</strong> key.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-1-4" type="checkbox"/><span class="step-body"><span class="lede">Press Reload.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "went down to" ~/Games/PIN/logs/GameServer.log</code> — expect one
+         <code>Player &lt;id&gt; went down to &lt;id&gt;</code> line.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: you are back in the world, at a spawn point, alive and able to move and shoot, without
+      reconnecting.</p></div>
+      <div class="callout fail"><p>Fail, no panel at all: the state change is not reaching the client. Check the <code>went down to</code> line
+      exists — if it does, the server did its half and the fault is the <code>Incapacitated</code> state or the
+      permission flag not arriving.</p></div>
+      <div class="callout fail"><p>Fail, panel appears but Reload does nothing: the permission flag is the suspect. The prompt is drawn
+      from the same flag that lets the engine send the command, so a <em>visible</em> prompt that does nothing
+      means the flag arrived and the command did not — record the exact on-screen text.</p></div><div class="result"><label for="r-death-respawn-1">Result</label><textarea data-k="n-death-respawn-1" id="r-death-respawn-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-death-respawn-2-the-countdown-is-a-real-number">
+    <button class="block-head" type="button">
+      <span class="block-n">DEATH-RESPAWN-2</span>
+      <span class="block-t">The countdown is a real number</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEATH-RESPAWN-2</span><span class="marker none">[ ]</span><span class="entry-t">The countdown is a real number</span></div><p>The one that tests the units guess, and the only reason it is separate from DEATH-RESPAWN-1.</p>
+      <p>Read from DEATH-RESPAWN-1's death, before pressing anything.</p>
+      <p><strong>Not formally run 2026-08-15, but DEATH-RESPAWN-1's pass retires most of its risk.</strong> The failure this entry
+      exists to catch is the client reading an absolute shard time as a number of seconds. If that were
+      happening, the tap-out gate — <code>elapsed &gt;= resurrect</code>, the same value on the same clock — would be a
+      number in the millions and the give-up prompt would <strong>never</strong> appear. It appeared, and the tester
+      used it, three seconds after going down against a 2-second gate.</p>
+      <p>So the engine does convert absolute to remaining, and the units guess is right. What is still
+      unread is the visible countdown itself: whether it starts near 30 and falls one per second, or shows
+      something wrong while the gate underneath it works. That is a glance on the next death, not a
+      sitting.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="death-respawn-2-1" type="checkbox"/><span class="step-body"><span class="lede">Die as in DEATH-RESPAWN-1.</span></span></label>
+      <label class="step"><input data-k="death-respawn-2-2" type="checkbox"/><span class="step-body"><span class="lede">Watch the timer on the bleedout panel for a few seconds without pressing Reload.</span></span></label>
+      <label class="step"><input data-k="death-respawn-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "downed, tap-out" ~/Games/PIN/logs/GameServer.log</code> — expect
+         <code>tap-out in 2000ms, forced at 30000ms</code>.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the timer counts down from roughly 30 seconds, one second per second, and the give-up prompt
+      becomes available about 2 seconds in.</p></div>
+      <div class="callout fail"><p>Fail, timer reads a huge number or blank: the absolute-versus-relative guess is wrong. Record what
+      it read. The fix is sending an offset rather than an absolute time, and DEATH-RESPAWN-2 is the only thing that
+      can tell the two apart.</p></div><div class="result"><label for="r-death-respawn-2">Result</label><textarea data-k="n-death-respawn-2" id="r-death-respawn-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-death-respawn-3-doing-nothing-still-gets-you-back-up">
+    <button class="block-head" type="button">
+      <span class="block-n">DEATH-RESPAWN-3</span>
+      <span class="block-t">Doing nothing still gets you back up</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEATH-RESPAWN-3</span><span class="marker pass">[x]</span><span class="entry-t">Doing nothing still gets you back up</span></div><p>The safety net. <code>IsOverdue</code> is pinned offline by <code>BleedoutTests</code>, so this entry is about whether it
+      is reached at all, not about the arithmetic.</p>
+      <div class="callout pass"><p><strong>Passed 2026-08-15, first attempt, and it passed by accident</strong> — the tester meant to run DEATH-RESPAWN-1 and
+      watched instead, which is the most honest way this entry could ever have been run. The sequence:</p></div>
+      <span class="cmd"><pre><code>11:03:51 INF Player 11072869122414870784 went down to 2235455710777443840</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:03:51 INF Player 11072869122414870784 downed, tap-out in 2000ms, forced at 30000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:04:22 INF Player 11072869122414870784 did not tap out in time, respawning them</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:04:22 INF SendFullInventory: 246 item(s) [Gear 246], 2 resource(s), 20 loadout(s)</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      11:04:22 DBG Ground sample &lt;176.65, 250.13, 491.93323&gt; from 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span>
+      <p>31 seconds against a 30-second deadline, which is the deadline plus one 250ms tick plus the second
+      the log rounds to. The ground sample is the part worth keeping: it only gets written for a grounded
+      character, so the respawn put the player on real footing rather than leaving them nominally alive
+      somewhere unreachable.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="death-respawn-3-1" type="checkbox"/><span class="step-body"><span class="lede">Die as in DEATH-RESPAWN-1.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-3-2" type="checkbox"/><span class="step-body"><span class="lede">Press nothing. Wait out the full 30 seconds.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "did not tap out" ~/Games/PIN/logs/GameServer.log</code>.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the line appears once and you respawn without touching the keyboard.</p></div>
+      <div class="callout fail"><p>Fail, nothing after a minute: the sim is not seeing the character. This is the failure that looks
+      identical to NET-23 unfixed from the player's seat, which is why it has its own entry.</p></div><div class="result"><label for="r-death-respawn-3">Result</label><textarea data-k="n-death-respawn-3" id="r-death-respawn-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-death-respawn-4-monsters-still-die-properly">
+    <button class="block-head" type="button">
+      <span class="block-n">DEATH-RESPAWN-4</span>
+      <span class="block-t">Monsters still die properly</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEATH-RESPAWN-4</span><span class="marker pass">[x]</span><span class="entry-t">Monsters still die properly</span></div><div class="callout pass"><p><strong>Passed 2026-08-15.</strong> Five <code>NPC &lt;id&gt; died to &lt;id&gt;</code> lines — died, not went down — and the kills kept
+      paying resources and rolling items alongside. The tester saw the body dissolve with visual effects
+      after about five seconds.</p></div>
+      <p><strong>Five seconds is right, and the "about 30 seconds" below is measuring something else.</strong> The server
+      holds the corpse for 30,000ms (<code>SetRemainingLifetime</code> in <code>Die</code>) before the entity is removed. What
+      the client does inside that window is its own dissolve animation, and it hides the body when the
+      animation finishes. So the pass condition is: the body stays put, then goes, and no respawn prompt
+      appears. The wall-clock number belongs to the server and is not visible in game.</p>
+      <p>The regression. <code>Die</code> now branches on who is dying, and NPCs take the other path.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="death-respawn-4-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 528</code> and kill it.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-4-2" type="checkbox"/><span class="step-body"><span class="lede">Watch the corpse.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-4-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "died to" ~/Games/PIN/logs/GameServer.log</code>.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the log says <code>NPC &lt;id&gt; died to &lt;id&gt;</code> — <strong>died</strong>, not went down — the body stays put and
+      disappears after about 30 seconds, and the kill still pays as in <a href="Kill-Rewards.html">Kill Rewards</a>.</p></div>
+      <div class="callout fail"><p>Fail, a monster goes down instead of dying: the player check in <code>Die</code> is wrong and every corpse in
+      the zone is now waiting for a respawn prompt it will never get.</p></div><div class="result"><label for="r-death-respawn-4">Result</label><textarea data-k="n-death-respawn-4" id="r-death-respawn-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-death-respawn-5-dying-in-a-thumper-defence-doesnt-break-the-encounter">
+    <button class="block-head" type="button">
+      <span class="block-n">DEATH-RESPAWN-5</span>
+      <span class="block-t">Dying in a thumper defence doesn't break the encounter</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEATH-RESPAWN-5</span><span class="marker pass">[x]</span><span class="entry-t">Dying in a thumper defence doesn't break the encounter</span></div><div class="callout pass"><p><strong>Passed 2026-08-16.</strong> The player went down at 11:33:16, mid-defence, between waves 2 and 3. The
+      encounter carried on without them and finished at <strong>completion 1.00</strong> at 11:35:39, with waves 3 and 4
+      standing up on schedule after the death. Nothing about the encounter depended on the defender being
+      alive.</p></div>
+      <p><strong>The kill did not come from the wave, and that is its own finding.</strong> The tester had to move the
+      thumper to ground that already had creatures on it, because <em>the thumper event cannot kill the player
+      at all</em> — with a 19,192 health pool against attackers landing 49 a swing, no table of this size
+      threatens anything. What killed them was a standing spawn-group Aranha, not a wave member.</p>
+      <p>That is the player-scale problem in <a href="../Design/Combat-Scale.md">Combat Scale</a> showing up as a testing
+      obstacle rather than a balance complaint. Note that the 2026-08-16 wave retune cut escorts from four
+      to two, which makes it <em>less</em> lethal still — the retune was aimed at the machine surviving, and it
+      moved this in the wrong direction on purpose, because the player's pool is the thing to fix.</p>
+      <p>The interaction worth checking deliberately, because <a href="Thumper-Defence.html">M7</a> is where players will
+      actually die, and death now leaves a character in a state no encounter has ever seen.</p>
+      <p>A code read says this should be uneventful, and the entry exists to confirm the read rather than to
+      express a doubt: encounter deaths are addressed by an <code>EncounterComponent</code>, only NPCs, the machine,
+      vehicles and terminals are ever given one, and the kill-reward subscriber skips player victims by
+      name. So a player's death should route nowhere. What no read can settle is the second half — whether
+      the defence survives the player being absent for thirty seconds.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="death-respawn-5-1" type="checkbox"/><span class="step-body"><span class="lede">Call a thumper down at deposit 1's center, <code>199.8 315.7 401.3</code>, with <code>thumper</code>.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-5-2" type="checkbox"/><span class="step-body"><span class="lede">Let wave 2 or 3 kill you. Do not use <code>invuln</code>.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-5-3" type="checkbox"/><span class="step-body"><span class="lede">Respawn by either route.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-5-4" type="checkbox"/><span class="step-body"><span class="lede">Walk back and finish the defence.</span></span></label>
+      <label class="step"><input checked data-k="death-respawn-5-5" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code>.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the encounter carries on while you are down, the waves keep attacking the machine, and the
+      cycle still ends in a payout or a destruction line. Your death must not appear as a wave-member
+      kill.</p></div>
+      <div class="callout fail"><p>Fail, the shard stops: read the tail of the log for an exception. A player death routes through the
+      same event M7 uses to count wave kills (<a href="../streams/m7-encounter-combat.md">EncounterComponent</a>),
+      and a downed player is a new case on that path.</p></div><div class="result"><label for="r-death-respawn-5">Result</label><textarea data-k="n-death-respawn-5" id="r-death-respawn-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-death-and-respawn-v1"></script>
+

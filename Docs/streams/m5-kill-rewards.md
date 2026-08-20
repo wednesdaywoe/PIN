@@ -56,7 +56,7 @@ the obvious input for scaling anything that wants to be harder-is-worth-more.
 | Pay the killer on `CharacterDiedEvent` | [KillRewardSim](../../UdpHosts/GameServer/Systems/Loot/KillRewardSim.cs) |
 
 Exit: kill a monster, watch crystite go up. **Met 2026-08-13 by
-[K1](../In-Game-Tests/Kill-Rewards.md)** — a Gaia creature paid 4 crystite, the bottom band of "Small
+[K1](../In-Game-Tests/Kill-Rewards.html)** — a Gaia creature paid 4 crystite, the bottom band of "Small
 Crystite Drops (2-20)", and the tester saw it arrive.
 
 The melded resources off `loot_table2_id` are paid too, which nobody predicted: 77343/77344/77345
@@ -81,5 +81,5 @@ directly, with no object in the world.
 `roll_mode` — six values in the column, no documentation, and the client was the only reader. PIN
 implements two readings inferred from the tables' own arithmetic and documents them on `LootRoller`.
 [LootRollerTests](../../Tests/GameServer.Tests/Loot/LootRollerTests.cs) pins the reading; only
-[K2](../In-Game-Tests/Kill-Rewards.md) can say whether the reading is right, and even then only
+[K2](../In-Game-Tests/Kill-Rewards.html) can say whether the reading is right, and even then only
 loosely, because the rate it measures is the thing being inferred.

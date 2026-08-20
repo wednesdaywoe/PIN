@@ -31,7 +31,7 @@ public class OrientationLockCommand : Command, ICommand
     // ForcedMovementCancelled.CommandId is an apt::BaseCommandDef id matching a uint in the same
     // position of ForcedMovementData, so a cancel looks like it's meant to name a movement the client
     // already knows about. Sending the start was tried and dropped (D5f in
-    // Docs/In-Game-Tests/Charge-Camera.md): it fixed nothing, and every OrientationLock that matters
+    // Docs/In-Game-Tests/Charge-Camera.html): it fixed nothing, and every OrientationLock that matters
     // has an SDB duration of 0, so the start needs an end time nobody can derive. Guessing one risks
     // a real aim clamp lasting that long on some ability where it isn't masked by a camera. Fill
     // this in from a capture, not from a guess.

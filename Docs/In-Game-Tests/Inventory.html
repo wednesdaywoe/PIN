@@ -1,0 +1,237 @@
+<title>PIN — Inventory Delivery (INVENTORY-1–INVENTORY-3)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Inventory Delivery (INVENTORY-1–INVENTORY-3)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p><a href="../../UdpHosts/GameServer/Data/CharacterInventory.cs">CharacterInventory</a> holds the items and sends
+    <code>InventoryUpdate</code> — once in full at spawn, then one partial message per change. <code>createitem</code> and
+    <code>dbg_inventory</code> are in
+    <a href="../../UdpHosts/GameServer/Systems/Admin/Commands">Systems/Admin/Commands</a>.</p>
+  </section>
+  <section class="doc" id="why-this-file-exists">
+    <h2>Why this file exists</h2>
+    <p><code>createitem 20003</code> was reported on 2026-08-11 as showing the "Dev Shotgun" pickup toast and then
+    putting nothing in the inventory. The toast is the giveaway: it comes from <code>SimulateLootPickup</code>,
+    which the command sends unconditionally, so seeing it only proves the type id resolved. Nothing
+    about it says the item was delivered.</p>
+    <p>That gates every entry from PREDICT-SWEEP-0 down, all of which have to slot a module that doesn't exist yet. The
+    R series in <a href="Damage-Decay.html">Damage Decay</a> got out from under it a different way — the Biotech
+    frame's default weapon is a shotgun that decays, so DMG-DECAY-1 and DMG-DECAY-2 were answered on 2026-08-11 without
+    conjuring anything. Worth remembering as the first thing to try when <code>createitem</code> blocks an entry:
+    some frame already owns a weapon with the property you're after.</p>
+    <p><strong>What the 2016 capture says.</strong> Diffing PIN's message against a real one — 200 <code>InventoryUpdate</code>
+    messages, <code>--controller 2 --message 129</code>, see <a href="Capture-Replay.html">Capture Replay</a> — turns up two
+    divergences and rules out several other suspects:</p>
+    <div class="tbl-scroll"><table>
+    <thead>
+    <tr>
+    <th>Field</th>
+    <th>PIN sent</th>
+    <th>Live server sent</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>Item.Unk5</code></td>
+    <td>0</td>
+    <td><strong>1</strong>, on all 211 items sampled, every type, equipped or not</td>
+    </tr>
+    <tr>
+    <td><code>InventoryUpdate.Unk</code></td>
+    <td>1 always</td>
+    <td><strong>0</strong> on partial updates, 1 on the full one</td>
+    </tr>
+    </tbody>
+    </table></div>
+    <p><code>Unk5</code> is the interesting one: it is the last scalar before a count-prefixed array, it never varies
+    in the recording, and 0 is what an empty stack would look like — which is exactly the shape of a
+    bug where the client accepts a message and lists nothing. Both are now fixed to match.</p>
+    <p><strong>One suspect is now ruled out by evidence rather than by reading.</strong>
+    <a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a> passed on 2026-08-13: three <code>createitem 10 200</code> calls in a row moved a
+    crystite count from 0 to 600 in an inventory that was already open. Resources ride in a different
+    array of the same <code>InventoryUpdate</code> and go out through <code>SendResourceUpdate</code>, the sibling of the call
+    that sends items — so <strong>the client does accept a partial update and does merge it into a UI on
+    screen</strong>. INVENTORY-1's second bullet below, which would have had the client refusing partial merges
+    outright, cannot be what is happening. Whatever hides an item is in the item struct or the item
+    arrays.</p>
+    <p><strong>And a suspect nobody had looked at: there may be no room.</strong> Every entry above asks whether the
+    item was built correctly and whether the message carried it. None asks whether the client had
+    anywhere to put it. PIN gives a character <strong>every battleframe in the game at login</strong> — 20 chassis,
+    each with its default modules in a PvE and a PvP configuration, built by
+    <code>GenerateCharCreateLoadoutAndItems</code> — which is not a quantity any retail character carried, and
+    Firefall's bag had a size. An item created into a full inventory would produce exactly what INVENTORY-1
+    describes: the type id resolves, the toast fires, the server lists it, and it is never drawn.</p>
+    <p>It also explains why RESOURCE-PAYOUT-1 sails through while INVENTORY-1 doesn't. Resources are not bag items; they have their
+    own pool and their own array. A ceiling on the item side would leave the resource side untouched,
+    which is precisely the split that has been observed.</p>
+    <p>Nothing about this is confirmed — it is a hypothesis with a shape that fits, and <strong>INVENTORY-3 is the entry
+    that measures it.</strong> The item count is now written to the server log at every full send, which
+    nothing did before.</p>
+    <p>Ruled out along the way, so nobody re-checks them:</p>
+    <ul>
+    <li><strong>Sub-inventory mapping.</strong> Retail put a looted Consumable in 2/Cache, weapons and modules in
+      4/Gear, TinkerTools in 1/Bag. PIN's <code>GetInventoryTypeByItemType</code> agrees on every one of them.</li>
+    <li><strong><code>DynamicFlags</code> and <code>Durability</code>.</strong> PIN writes 0 and 1000; the live inventory holds items at 0,
+      1, 7 and 0, 827, 1000 respectively. Neither can be what hides an item.</li>
+    <li><strong>GUID shape.</strong> Retail item guids end in type byte <code>0xFD</code>; <code>GuidService.AdditionalTypes.Item</code> is
+      <code>0xFD</code> and PIN's come out the same way.</li>
+    <li><strong>Item flags on 20003.</strong> It carries only <code>0x800</code>, which reads like "deprecated", but 0x800 is
+      also set on ordinary weapons sitting in the live capture's inventory, so it isn't a hidden bit.</li>
+    <li><strong><code>EnablePartialUpdates</code>.</strong> Set true right after the full send in <code>NetworkPlayer.Respawn</code>, which
+      runs on the first <code>ScheduleUpdateRequest</code> at zone-in — long before you can type a command.</li>
+    </ul>
+    <p>Message order was also wrong and is now corrected: retail sent <code>SimulateLootPickup</code> first (seq
+    55934) and the <code>InventoryUpdate</code> two sequence numbers later, PIN had them the other way round.</p>
+  </section>
+  <section class="block" data-open="true" id="-inventory-1-createitem-puts-a-visible-item-in-the-inventory">
+    <button class="block-head" type="button">
+      <span class="block-n">INVENTORY-1</span>
+      <span class="block-t"><code>createitem</code> puts a visible item in the inventory</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">INVENTORY-1</span><span class="marker fail">[!]</span><span class="entry-t"><code>createitem</code> puts a visible item in the inventory</span></div><p><strong>Ran 2026-08-14 and landed on its own middle branch, confirmed twice.</strong> The DevTEST Shotgun
+      (20003) did <strong>not</strong> appear until <code>dbg_inventory resend</code> pushed the full inventory; module 86074
+      repeated the same pattern later in the sitting. After the resend the item is entirely real: it sits
+      in the garage's weapon picker, was dragged into the Secondary slot by hand, and works —
+      <code>dbg_inventory 20003: guid 1F026F1900030DFD in Gear flags IsBound, IsEquipped, slotted in a loadout</code>
+      (guid type byte <code>FD</code>, as the ruled-out list predicted). So creation, the item struct, and the full
+      send are all right, and <strong>the client declines to merge PIN's partial item update</strong> — exactly the
+      outcome the second bullet below describes. Not fullness: INVENTORY-3 measured no ceiling, and resend helping
+      rules it out anyway. Resources merge fine (<a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a>), so the defect is confined to
+      the item arrays of the partial message; the next comparison is capture message [9], the 37-byte
+      retail single-item add reproduced in <a href="Capture-Replay.html">Capture Replay</a>.
+      <a href="../ISSUE-REGISTER.md">NET-18</a> re-scoped to exactly this and stays open.</p>
+      <p><strong>That comparison ran on 2026-08-15 and produced one change to re-run INVENTORY-1 against.</strong> The envelope
+      was already retail's exactly, so the message shape was never the problem — but message [9] turned
+      out to be the session's <em>only</em> single-item add of its kind, and PIN's item flags were calibrated on
+      it. The other 13 all carry <code>DynamicFlags = 2</code>, guessed as "is new", where PIN sent <code>1</code> (bound only).
+      PIN now sends both bits. If that was it, the item appears without a resend and INVENTORY-1 passes outright;
+      if it doesn't, the flag is eliminated and the remaining suspects are <code>Modules</code> (retail sends two
+      empty slots, PIN sends none) and <code>Unk4</code> (non-zero and varying in retail, always zero in PIN). Either
+      way the workaround below still works, so nothing downstream is blocked on the answer.</p>
+      <p><strong>Workaround for every entry that spawns an item:</strong> <code>createitem &lt;id&gt;</code>, then <code>dbg_inventory resend</code>,
+      then look in the <strong>garage picker</strong> — not the inventory window, whose search doesn't find the item
+      (searching "Dev" returns nothing; possibly the search matches localization entries a dev item
+      doesn't have) and whose 246-piece Gear seed makes finding one by eye impractical.</p>
+      <p>Blocks PREDICT-SWEEP-0–PREDICT-SWEEP-6. Run it before anything that spawns an item.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="inventory-1-1" type="checkbox"/><span class="step-body"><span class="lede">Log in, open the inventory before creating anything, and note whether the frame's default gear
+         is listed. This is the control — if the starting inventory is empty too, the problem was never
+         about <code>createitem</code>.</span></span></label>
+      <label class="step"><input checked data-k="inventory-1-2" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 20003</code></span></span></label>
+      <label class="step"><input checked data-k="inventory-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code></span></span></label>
+      <label class="step"><input checked data-k="inventory-1-4" type="checkbox"/><span class="step-body"><span class="lede">Look for the Dev Shotgun in the inventory and in the garage's weapon slot picker — weapons land
+         in the Gear sub-inventory, which is where the loadout screen reads from, so check both.</span></span></label>
+      <label class="step"><input checked data-k="inventory-1-5" type="checkbox"/><span class="step-body"><span class="lede">If it still isn't there: <code>dbg_inventory resend</code>, which pushes the same full <code>InventoryUpdate</code>
+         the client already accepted once at spawn, and look again.</span></span></label>
+      </ol></div>
+      <p>Read the console output from step 3 alongside what you see:</p>
+      <ul>
+      <li>Pass: the item shows, and <code>dbg_inventory</code> lists it as
+        <code>20003 guid &lt;hex&gt; Weapon in Gear flags 0</code>.</li>
+      <li><strong>Listed by <code>dbg_inventory</code> but not shown, and <code>resend</code> makes it appear</strong> — the item struct is
+        right and delivery is right, but the client will not merge this particular partial
+        <code>InventoryUpdate</code>. It cannot be partial merging as a mechanism: <a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a> watched
+        three of them land. So read it as the item arrays specifically, and run INVENTORY-3 before concluding
+        anything, because a full inventory would also make <code>resend</code> fail to help.</li>
+      <li><strong>Listed by <code>dbg_inventory</code> but not shown, and <code>resend</code> doesn't help either</strong> — the client is
+        rejecting or hiding the item itself, and the remaining suspects are all in the item struct.
+        Bring back the <code>dbg_inventory</code> line and the client log
+        (<a href="Client-Logging.html">Client Logging</a>); the next comparison to make is against the retail item in
+        capture message [9], which is a 37-byte single-item add reproduced in full in
+        <a href="Capture-Replay.html">Capture Replay</a>.</li>
+      <li><strong>Not listed by <code>dbg_inventory</code></strong> — nothing was created, and the grep below says why:</li>
+      </ul>
+      <span class="cmd"><pre><code>grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
+      </code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-inventory-1">Result</label><textarea data-k="n-inventory-1" id="r-inventory-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-inventory-2-equipping-still-round-trips">
+    <button class="block-head" type="button">
+      <span class="block-n">INVENTORY-2</span>
+      <span class="block-t">Equipping still round-trips</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">INVENTORY-2</span><span class="marker pass">[x]</span><span class="entry-t">Equipping still round-trips</span></div><div class="callout pass"><p><strong>Passed 2026-08-14, in a stronger form than written.</strong> The swap wasn't between two seeded weapons
+      but onto the freshly created 20003: dragged into the Secondary slot in the garage, and
+      <code>dbg_inventory 20003</code> came back <code>flags IsBound, IsEquipped, slotted in a loadout</code> — the
+      client-initiated equip reached the server and was recorded. The displaced weapon's cleared flag
+      wasn't read separately; if a future session cares, that half-check is one <code>dbg_inventory</code> away.</p></div>
+      <p>A regression check, not a feature check. <code>SendEquipmentChanges</code> sends the same partial
+      <code>InventoryUpdate</code> and its <code>Unk</code> changed from 1 to 0 with everything else, so it wants one look.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="inventory-2-1" type="checkbox"/><span class="step-body"><span class="lede">In the garage, unequip a weapon and equip another</span></span></label>
+      <label class="step"><input checked data-k="inventory-2-2" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the swap holds in the client, and <code>dbg_inventory</code> shows the new item carrying the <code>IsEquipped</code>
+      flag and the old one without it.</p></div><div class="result"><label for="r-inventory-2">Result</label><textarea data-k="n-inventory-2" id="r-inventory-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-inventory-3-there-is-room-for-one-more-item">
+    <button class="block-head" type="button">
+      <span class="block-n">INVENTORY-3</span>
+      <span class="block-t">There is room for one more item</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">INVENTORY-3</span><span class="marker pass">[x]</span><span class="entry-t">There is room for one more item</span></div><p><strong>Ran 2026-08-14, and the measurement says the hypothesis is dead.</strong> The UI states no slot
+      capacity anywhere; its only meter is weight, reading <strong>0/255</strong> with the whole seed on board — so
+      whatever the seed costs, the client isn't weighing it, and there is no visible ceiling to be at.
+      The server's side: <code>SendFullInventory: 246 item(s) [Gear 246], 0 resource(s), 20 loadout(s)</code>,
+      and after <code>createitem 20003</code>, <code>dbg_inventory: 247 item(s) [Gear 247]</code>. The entire seed lives in
+      Gear; Bag and Cache are empty, so a created weapon isn't competing with the prestock for bag
+      room either. Unless the client hides a Gear-only cap of exactly ~246, fullness is not what
+      hides an item — INVENTORY-1's cause is back in the item struct or the item arrays.</p>
+      <p>Run this before INVENTORY-1, and before trusting any conclusion INVENTORY-1 has already produced.</p>
+      <p>Every other line of investigation here assumes the item was malformed or the message was wrong. This
+      one asks whether the client simply had nowhere to put it. PIN hands a character all 20 battleframes
+      at login with their default modules in two configurations each, which no retail character carried,
+      and Firefall's inventory had a capacity. A created item arriving at a full bag looks identical to a
+      created item the client rejected: type id resolves, toast fires, server lists it, nothing appears.</p>
+      <p><strong>This entry is a measurement, not a pass/fail on the feature.</strong> What it is really doing is putting
+      a number next to a hypothesis, and the number is new — nothing measured the inventory before
+      2026-08-13.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="inventory-3-1" type="checkbox"/><span class="step-body"><span class="lede">Log in and let the world finish loading.</span></span></label>
+      <label class="step"><input checked data-k="inventory-3-2" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "SendFullInventory:" ~/Games/PIN/logs/GameServer.log | tail -1</code></span></span></label>
+      <label class="step"><input checked data-k="inventory-3-3" type="checkbox"/><span class="step-body"><span class="lede">Open the inventory and find whatever the UI says about capacity — a slot count, an <code>x / y</code>, a
+         "full" state. Write down both numbers. If the UI says nothing about capacity anywhere, that is
+         the answer to step 6 and worth recording as such.</span></span></label>
+      <label class="step"><input checked data-k="inventory-3-4" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 20003</code></span></span></label>
+      <label class="step"><input checked data-k="inventory-3-5" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code>, then <code>grep -a "dbg_inventory:" ~/Games/PIN/logs/GameServer.log | tail -1</code></span></span></label>
+      <label class="step"><input checked data-k="inventory-3-6" type="checkbox"/><span class="step-body"><span class="lede">Compare: does the server's item count exceed what the UI is willing to hold?</span></span></label>
+      </ol></div>
+      <p>The log line breaks the total down by sub-inventory, because that is where a ceiling would bite:</p>
+      <span class="cmd"><pre><code>SendFullInventory: 412 item(s) [Gear 380, Bag 24, Cache 8], 0 resource(s), 20 loadout(s)
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass — meaning the hypothesis is dead and INVENTORY-1's cause is elsewhere: the count is comfortably under
+      whatever the client shows as capacity, and the new item still doesn't appear.</p></div>
+      <p><strong>Confirmed — the inventory is full or over:</strong> the count is at or above the UI's ceiling. Then INVENTORY-1 is
+      not a wire-format bug at all, and none of the item-struct suspects above need chasing. The fix is to
+      stop prestocking: <code>LoadHardcodedInventory</code> generates all 20 frames because the garage reads owned
+      chassis out of the loadouts, so the thing to cut is the <em>items</em>, not the loadouts. Re-run INVENTORY-1
+      immediately after, and if the Dev Shotgun appears, <a href="../ISSUE-REGISTER.md">NET-18</a> closes without a
+      single byte of the message changing.</p>
+      <p><strong>Ambiguous — the count is high but under the ceiling:</strong> worth knowing anyway, and worth trying
+      <code>createitem</code> on a character whose bag is deliberately near-empty before moving on. Note the two
+      numbers here either way; the next person should not have to re-derive them.</p><div class="result"><label for="r-inventory-3">Result</label><textarea data-k="n-inventory-3" id="r-inventory-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-inventory-v1"></script>

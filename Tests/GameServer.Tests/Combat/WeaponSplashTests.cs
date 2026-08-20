@@ -6,7 +6,7 @@ namespace GameServer.Tests.Combat;
 
 /// <summary>
 ///     Pins <see cref="WeaponSplash"/>'s reading of <c>dbitems::Ammo</c>. Whether a grenade feels right is
-///     an in-game question (V7 and D3 in Docs/In-Game-Tests/Deployables-And-Vehicles.md and Damage-Loop.md);
+///     an in-game question (V7 and D3 in Docs/In-Game-Tests/Deployables-And-Vehicles.html and Damage-Loop.html);
 ///     these hold the two decisions that would silently change every weapon in the game if they were wrong —
 ///     that a rifle still does not splash, and that -1 means "no blast" rather than a one-metre one.
 ///

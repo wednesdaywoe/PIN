@@ -1,0 +1,224 @@
+<title>PIN — Damage to Deployables and Vehicles (DEPLOY-VEH-1–DEPLOY-VEH-7)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Damage to Deployables and Vehicles (DEPLOY-VEH-1–DEPLOY-VEH-7)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the deployable/vehicle type
+id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the deployable/vehicle type
+    id table: <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>Added in the current working tree:
+    <a href="../../UdpHosts/GameServer/Systems/Combat/IDamageable.cs">IDamageable</a>,
+    implemented by <code>CharacterEntity</code>, <code>DeployableEntity</code> and <code>VehicleEntity</code>. See
+    <a href="../Architecture/06-combat-and-damage.md">layer 6</a>.</p>
+    <p>Everything about the funnel is covered offline. What isn't, and what these are for, is whether the
+    health numbers read off the SDB are the right columns and whether the client accepts health updates
+    on entity types that have never sent one.</p>
+  </section>
+  <section class="doc" id="pick-a-type-that-can-actually-be-hit">
+    <h2>Pick a type that can actually be hit</h2>
+    <p><strong>Read this before DEPLOY-VEH-1–DEPLOY-VEH-4.</strong> Health and a hitbox are two different columns, and most deployables have
+    one without the other. <code>start_hitpoints</code> decides whether damage is allowed to land;
+    <code>collision_id</code> decides whether a bullet ever arrives to land it. A row with health and no collision
+    looks fine in the log and is untouchable in game — shots pass straight through and nothing is ever
+    written about it.</p>
+    <p>The 2026-08-15 run lost the whole block to this. Type <strong>517</strong>, named by DEPLOY-VEH-3 below, ships with
+    <code>collision_id = 0</code>. It was never destructible and never could have been. The server says so at spawn:</p>
+    <span class="cmd"><pre><code>[23:03:35 WRN] Deployable 517 info has no collision id, what do?
+    </code></pre><button class="copy" type="button">Copy</button></span>
+    <p>That warning goes to the log, not to the person who typed the command, so it reads in game as an
+    invulnerable deployable. It is not a bug in the damage code.</p>
+    <p>This is not a rare row. Of 3,902 deployable types, <strong>1,017 have health and no collision at all</strong>,
+    and of the 274 that are faction 2 — the ones you are allowed to shoot — only <strong>101</strong> have both
+    health and a hitbox whose pose file is actually on disk.</p>
+    <p><strong>Use type 1229 for DEPLOY-VEH-1 through DEPLOY-VEH-4.</strong> 2,400 health, scale 1.35 so it is large enough to hit, faction
+    2, collision 189604 with a real pose file, turret 23, and death ability 35277 — the same death
+    ability 517 had, so it is the same kind of thing, only hittable. At 39 damage a round it takes 62
+    hits, which fits inside one Heavy Machine Gun clip and still leaves the health bar somewhere to
+    travel.</p>
+    <p>Type <strong>356</strong> is also sound on paper — 10,000 health, collision 189632, faction 2 — but 10,000 health
+    is 257 rounds, more than a clip, and the 2026-08-15 run never got it to spawn at all. Its pose file
+    <code>00189632.pose</code> was never requested in either log, so the command never reached the server. If you
+    use it, watch the client for the command's own reply.</p>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-1-deployables-have-health-at-all-blocks-v2-v4">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-1</span>
+      <span class="block-t">Deployables have health at all (blocks DEPLOY-VEH-2–DEPLOY-VEH-4)</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-1</span><span class="marker none">[ ]</span><span class="entry-t">Deployables have health at all (blocks DEPLOY-VEH-2–DEPLOY-VEH-4)</span></div><p>Verifies that <code>StartHitpoints</code> is the right column and that a deployable can be hit.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-1-1" type="checkbox"/><span class="step-body"><span class="lede"><code>deployable 1229</code> — 2400 health, faction 2, and a hitbox that loads</span></span></label>
+      <label class="step"><input data-k="deploy-veh-1-2" type="checkbox"/><span class="step-body"><span class="lede">Shoot it</span></span></label>
+      <label class="step"><input data-k="deploy-veh-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "has no StartHitpoints|has no collision id|Deployable .* took" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <ul>
+      <li>Pass: no <code>Deployable 356 has no StartHitpoints</code> line, and shooting prints
+        <code>Deployable {Type} took {Amount} damage</code>.</li>
+      <li>Fail: the warning appears for 356 too. <code>StartHitpoints</code> isn't the health column; check the record
+        in <a href="../../Tools/MinimalSDB">MinimalSDB</a> dump mode against <code>StandardHealth</code> and the scaling table
+        before changing <code>SpawnDeployable</code>.</li>
+      </ul>
+      <p>The warning appearing for <code>deployable 395</code> is correct behaviour, not a failure — it really does have
+      <code>StartHitpoints = 0</code>.</p><div class="result"><label for="r-deploy-veh-1">Result</label><textarea data-k="n-deploy-veh-1" id="r-deploy-veh-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-2-a-deployables-health-bar-moves">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-2</span>
+      <span class="block-t">A deployable's health bar moves</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-2</span><span class="marker none">[ ]</span><span class="entry-t">A deployable's health bar moves</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code>deployable 1229</code> — 2400 health, so the bar has somewhere to travel and one clip empties it</span></span></label>
+      <label class="step"><input data-k="deploy-veh-2-2" type="checkbox"/><span class="step-body"><span class="lede">Shoot it and watch the client, not just the log</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the bar drops. This is the first time anything has written <code>CurrentHealthPct</code> on a deployable,
+      so a bar that doesn't move means the client wants something else changed alongside it, or wants a
+      keyframe rather than a delta.</p></div><div class="result"><label for="r-deploy-veh-2">Result</label><textarea data-k="n-deploy-veh-2" id="r-deploy-veh-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-3-destroying-a-deployable">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-3</span>
+      <span class="block-t">Destroying a deployable</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-3</span><span class="marker none">[ ]</span><span class="entry-t">Destroying a deployable</span></div><p><strong>Type changed 2026-08-15.</strong> This used to say <code>deployable 517</code>, which has no hitbox and therefore
+      cannot be shot at all — see <a href="#pick-a-type-that-can-actually-be-hit">Pick a type that can actually be hit</a>.
+      1229 carries the same turret family and the same death ability 35277, so it tests the same thing.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>deployable 1229</code> — 2400 health and turret 23, so it dies inside one clip and has a turret to lose</span></span></label>
+      <label class="step"><input data-k="deploy-veh-3-2" type="checkbox"/><span class="step-body"><span class="lede">Shoot it until it dies</span></span></label>
+      <label class="step"><input data-k="deploy-veh-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Deployable .* took" ~/Games/PIN/logs/GameServer.log | tail -10</code>
+      <code>Destroy</code> itself logs nothing, so the last line reaching <code>0 of 2400 health left</code> is the signal.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the death ability fires, the deployable disappears about 2s later, its turret goes with it, and
+      shots stop registering against it as soon as it dies. Watch for a turret left floating, which means
+      the <code>Remove(Turret)</code> in <code>Destroy</code> didn't take.</p></div><div class="result"><label for="r-deploy-veh-3">Result</label><textarea data-k="n-deploy-veh-3" id="r-deploy-veh-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-4-a-destroyed-deployable-doesnt-leave-an-invisible-wall">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-4</span>
+      <span class="block-t">A destroyed deployable doesn't leave an invisible wall</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-4</span><span class="marker none">[ ]</span><span class="entry-t">A destroyed deployable doesn't leave an invisible wall</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-4-1" type="checkbox"/><span class="step-body"><span class="lede">Do DEPLOY-VEH-3, then wait for the model to disappear</span></span></label>
+      <label class="step"><input data-k="deploy-veh-4-2" type="checkbox"/><span class="step-body"><span class="lede">Walk to a spot past where it stood and <code>npc 1196</code> there, so there's something to hit behind it</span></span></label>
+      <label class="step"><input data-k="deploy-veh-4-3" type="checkbox"/><span class="step-body"><span class="lede">Shoot through where it was</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: shots hit whatever is behind it. This is what the <code>Physics.RemoveEntity</code> call in
+      <code>EntityManager.OnRemovedEntity</code> is for, and the same check applies to an NPC corpse after its 30s
+      despawn, which had the same problem before this change.</p></div><div class="result"><label for="r-deploy-veh-4">Result</label><textarea data-k="n-deploy-veh-4" id="r-deploy-veh-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-5-vehicle-damage-and-wrecking">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-5</span>
+      <span class="block-t">Vehicle damage and wrecking</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-5</span><span class="marker none">[ ]</span><span class="entry-t">Vehicle damage and wrecking</span></div><p>Needs a second person, or an occupied vehicle you can shoot from outside, to see the ejection.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-5-1" type="checkbox"/><span class="step-body"><span class="lede"><code>vehicle 116</code> — one of the two debug vehicles, spawned under NPC 2312's ownership</span></span></label>
+      <label class="step"><input data-k="deploy-veh-5-2" type="checkbox"/><span class="step-body"><span class="lede">Have the second player get in</span></span></label>
+      <label class="step"><input data-k="deploy-veh-5-3" type="checkbox"/><span class="step-body"><span class="lede">Shoot it until it's destroyed</span></span></label>
+      <label class="step"><input data-k="deploy-veh-5-4" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -a "Vehicle .* took" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: health drops on the client, occupants are ejected on destruction with camera and movement
+      control returned to them, the death ability runs, and the vehicle disappears. Ejection is the risky
+      part; a player left attached to a removed entity is the failure to watch for.</p></div><div class="result"><label for="r-deploy-veh-5">Result</label><textarea data-k="n-deploy-veh-5" id="r-deploy-veh-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-6-friendly-deployables-are-still-safe">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-6</span>
+      <span class="block-t">Friendly deployables are still safe</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-6</span><span class="marker none">[ ]</span><span class="entry-t">Friendly deployables are still safe</span></div><p>Verifies that <code>SpawnDeployable</code> hands out the right faction, since <code>HostilityRules</code> itself is
+      covered offline.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-6-1" type="checkbox"/><span class="step-body"><span class="lede"><code>deployable 348</code> — faction 1, the same as you</span></span></label>
+      <label class="step"><input data-k="deploy-veh-6-2" type="checkbox"/><span class="step-body"><span class="lede"><code>target</code> with no argument while aiming at it, then <code>hostility</code></span></span></label>
+      <label class="step"><input data-k="deploy-veh-6-3" type="checkbox"/><span class="step-body"><span class="lede">Shoot it</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: <code>hostility</code> reports <code>Friendly</code> with <code>can damage: False</code>, and no <code>Deployable ... took</code> line
+      appears in the log.</p></div>
+      <p>Read <code>SpawnDeployable</code> before trusting a result here. It computes a <code>factionId</code> from owner faction,
+      then <code>overrideFactionId</code>, then the SDB default, and then assigns <code>deployableInfo.DefaultFaction</code>
+      directly instead of the value it just worked out. <code>useOwnerFaction</code> and <code>overrideFactionId</code>
+      therefore do nothing, and a record whose <code>DefaultFaction</code> is 0 gets faction 0 rather than the
+      intended fallback of 1. For <code>deployable 348</code>, whose default is already 1, the result happens to be
+      right — so this entry passing says nothing about the two paths that are broken. A player-placed
+      deployable is the case that would actually fail.</p><div class="result"><label for="r-deploy-veh-6">Result</label><textarea data-k="n-deploy-veh-6" id="r-deploy-veh-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-deploy-veh-7-splash-reaches-deployables-and-vehicles">
+    <button class="block-head" type="button">
+      <span class="block-n">DEPLOY-VEH-7</span>
+      <span class="block-t">Splash reaches deployables and vehicles</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-7</span><span class="marker none">[ ]</span><span class="entry-t">Splash reaches deployables and vehicles</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="deploy-veh-7-1" type="checkbox"/><span class="step-body"><span class="lede"><code>deployable 211</code>, walk three or four paces, <code>vehicle 116</code> — close enough that one blast covers
+         both. Spawn them by walking rather than typing coordinates: the numbers on these commands are
+         absolute world positions, not offsets from you (<a href="README.md">method notes</a>)</span></span></label>
+      <label class="step"><input data-k="deploy-veh-7-2" type="checkbox"/><span class="step-body"><span class="lede">Fire a splash ability into the gap between them</span></span></label>
+      <label class="step"><input data-k="deploy-veh-7-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "Deployable .* took|Vehicle .* took" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: both take splash damage, and neither takes it twice from one execution.</p></div>
+      <p><strong>A weapon works for this now, and that is new.</strong> The 2026-08-16 morning run found that no weapon
+      splashed at all — a Grenade Launcher fired between two touching enemies killed neither, because the
+      grenade hit the ground and the ground has no health (<a href="../ISSUE-REGISTER.md">DATA-21</a>). That was
+      built and verified the same day, <strong>against creatures</strong>, so what is left for this entry is the
+      narrower and still-open half: whether a deployable and a vehicle <em>accept</em> splash the way a character
+      does. They reach <code>TakeDamage</code> through <code>IDamageable</code> like anything else, but neither has ever been
+      paid by a second damage pass, and <code>ApplySplash</code> walks the shard's entities rather than a filtered
+      list. Either the weapon or the ability path is a valid run; say which one you used.</p>
+      <p>Do not judge this one by watching health bars — they are drawn only while your aim is on the target
+      (<a href="README.md#health-bars-are-aim-driven-so-splash-cannot-be-read-off-them">method notes</a>), which the
+      second thing a blast reaches never is. The greps below are the reading.</p>
+      <p><strong>Find out whether your weapon explodes before you fire it</strong>, rather than reading a miss as a
+      defect:</p>
+      <span class="cmd"><pre><code>dbg_weapon
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <p>The <code>Splash:</code> line says either <code>none (ammo impact_radius 0), direct hits only</code> — which is correct
+      for most weapons, including every ordinary rifle — or a radius and a table of what the blast is
+      worth at four distances from the impact. Only a weapon with a radius can pass this entry. If yours
+      reads <code>none</code>, switch to a grenade launcher or a mortar rather than concluding anything.</p>
+      <p>Then, on a weapon that does explode, aim at the <strong>ground between the two targets</strong> rather than at
+      either one. That is the case that used to do nothing at all, and it is the one worth running:</p>
+      <span class="cmd"><pre><code>grep -a "Splash from" ~/Games/PIN/logs/GameServer.log | tail -5
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass adds one clause for the weapon path: the direct target, if you hit one, is damaged once and
+      not twice — its own round and the blast are separate numbers in the log and the blast must skip it.</p></div>
+      <p>If you would rather run the ability path, and you don't know which of your abilities splashes, find
+      out rather than guessing: <code>npc 1196</code>, walk two paces, <code>npc 1196</code>, then fire each ability at the gap
+      in turn, and grep for an <code>ExecutionId</code> that produced two <code>damage from</code> lines. One execution damaging
+      two entities is the splash.</p><div class="result"><label for="r-deploy-veh-7">Result</label><textarea data-k="n-deploy-veh-7" id="r-deploy-veh-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-deployables-and-vehicles-v1"></script>

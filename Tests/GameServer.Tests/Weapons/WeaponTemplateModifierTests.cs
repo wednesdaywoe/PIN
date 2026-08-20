@@ -11,7 +11,7 @@ namespace GameServer.Tests.Weapons;
 ///     Reading it literally is not a hypothetical. It shipped, and it resolved 269 weapons down to no
 ///     range and 220 to no damage — including every weapon two of the monsters used for in-game
 ///     testing carry, which is how NPC combat came to look broken in two different ways at once
-///     (N2 and N6 in Docs/In-Game-Tests/NPC-Combat.md). The real rows are used as the cases below.
+///     (N2 and N6 in Docs/In-Game-Tests/NPC-Combat.html). The real rows are used as the cases below.
 /// </summary>
 public class WeaponTemplateModifierTests
 {
