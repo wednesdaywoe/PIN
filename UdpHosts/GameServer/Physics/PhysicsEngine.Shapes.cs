@@ -204,7 +204,9 @@ public partial class PhysicsEngine
             return entry.ShapeIndex;
         }
 
-        _logger.Debug("Returning fallback shape for assetId {assetId}", key.AssetId);
+        // Cache the miss too, or this logs on every query for the asset (22k lines in one sitting for assetId 0).
+        _compoundCache[key] = new CompoundCacheEntry { ShapeIndex = _fallbackShape };
+        _logger.Debug("Returning fallback shape for assetId {assetId}, caching the miss", key.AssetId);
         return _fallbackShape;
     }
 
