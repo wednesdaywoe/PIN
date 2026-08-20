@@ -14,17 +14,17 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../streams/m4-thump-placement.md">M4</a>. The milestone is that where you thump matters:
+    <p>The check on <a href="../Docs/streams/m4-thump-placement.md">M4</a>. The milestone is that where you thump matters:
     zone 448 now carries four resource deposits, a scan shows them, a ground report reads one, and a
     thumper's payout comes from the spot it stands on rather than from a constant. <strong>The flat 200-crystite
     grant is gone</strong> — <a href="Resource-Payout.html">Resource Payout</a>'s RESOURCE-PAYOUT-2 record describes the old behaviour.</p>
     <p>The four deposits, from
-    <a href="../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json">resource_deposit.json</a>. All
+    <a href="../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json">resource_deposit.json</a>. All
     four centers are coordinates a tester has stood on, and <strong>deposit 1's is the only one the client has
     also confirmed you may thump</strong> — it was moved there on 2026-08-13 after the original center turned
-    out to be inside the station's no-thumping zone (<a href="../ISSUE-REGISTER.md">DATA-17</a>). The other three
+    out to be inside the station's no-thumping zone (<a href="../Docs/ISSUE-REGISTER.md">DATA-17</a>). The other three
     are walked spawn-group footings whose discs extend over unwalked ground, and none of them has been
     scanned yet:</p>
     <div class="tbl-scroll"><table>
@@ -116,7 +116,7 @@
       above uses the data's name.) The heat-blob overlay was not reported on either way; it is a bonus
       layer and the entry does not turn on it.</p></div>
       <p><strong>Two half-passes came first, and reading the client's own interface source ended the guessing.</strong>
-      The full account is in <a href="../Client-UI-Source.md">Client UI Source</a>; the short version is that the map
+      The full account is in <a href="../Docs/Client-UI-Source.md">Client UI Source</a>; the short version is that the map
       never had one resource layer, it had three, and PIN was feeding the only one that is switched off.</p>
       <div class="tbl-scroll"><table>
       <thead>
@@ -168,7 +168,7 @@
       where the resources are", because it is retail's own live mechanism.</p></div>
       <p><strong>The blobs are a bonus, and their absence is diagnostic</strong>: readout working but no blob means either
       the client-side heatmap patch did not take (the two files are listed in
-      <a href="../Client-UI-Source.md">Client UI Source</a>) or <code>ResourceLocationInfo</code>'s field order is wrong after
+      <a href="../Docs/Client-UI-Source.md">Client UI Source</a>) or <code>ResourceLocationInfo</code>'s field order is wrong after
       all. The order is taken from the heatmap's own Lua, which reads <code>plot.x/y/z</code>, <code>plot.radius</code> and
       <code>plot.composition[i].{itemTypeId, percent}</code>, so wrong-but-plausible is unlikely.</p>
       <div class="callout fail"><p><strong>Fail, the radar is still empty:</strong> the outpost view is built once when the outpost spawns, so a
@@ -227,7 +227,7 @@
       <p>Two fixes came out of that. Deposit 1's old center sat 14.7m from the station outpost, entirely
       inside its no-thumping zone, so <strong>it was moved to 199.8, 315.7 — one of the three coordinates the
       client itself said <code>OK</code> to</strong>, 67m from the station and reachable on foot
-      (<a href="../ISSUE-REGISTER.md">DATA-17</a>, now closed). And a barren reading now names the nearest deposit
+      (<a href="../Docs/ISSUE-REGISTER.md">DATA-17</a>, now closed). And a barren reading now names the nearest deposit
       and its distance, so a miss says which way to walk instead of only that you missed.</p>
       </details>
       <h3 id="how-to-run-it-again">How to run it again</h3>
@@ -270,7 +270,7 @@
       <p><strong>Not runnable is a valid outcome</strong> if no UI action sends the request — mark <code>[-]</code>, note it, and the
       server half stays covered by the grep in THUMP-PLACE-3's setup. The handler also fires on whatever the client
       does send, so the grep after any session says whether the message ever arrived at all.</p>
-      <p><strong>What the client's interface source says, 2026-08-13</strong> (<a href="../Client-UI-Source.md">Client UI Source</a>):
+      <p><strong>What the client's interface source says, 2026-08-13</strong> (<a href="../Docs/Client-UI-Source.md">Client UI Source</a>):
       the receiving half of this entry is alive and well. <code>HUD/ResourceScans/ResourceScans.lua</code> is fully
       bound and draws a world-space report card — an icon per resource with its percentage — plus a map
       marker, straight off <code>GeographicalReportResponse</code>. It also handles the invalid answer, which it

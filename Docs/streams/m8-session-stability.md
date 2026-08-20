@@ -32,7 +32,7 @@ a lossy link, which makes verification the expensive part.
 
 ## What landed, 2026-08-14
 
-Code complete and unverified in game. [L1–L6](../In-Game-Tests/Reliability.html) are the check, and L1
+Code complete and unverified in game. [L1–L6](../../Game Testing/Reliability.html) are the check, and L1
 is the exit condition.
 
 | Piece | Where |
@@ -85,7 +85,7 @@ theory is retired, which is worth as much.
 ## Keeping this current
 
 A milestone is done when its exit criterion has been seen in game, not when the code compiles.
-Move the check into [Test Register](../In-Game-Tests/index.html) as the work lands and record the result
+Move the check into [Test Register](../../Game Testing/index.html) as the work lands and record the result
 there. When a milestone turns out to be two milestones, split it in [PROGRESS.md](../PROGRESS.md)
 rather than quietly widening it, and when something in the Deferred list becomes necessary, move it
 up with the reason it changed.

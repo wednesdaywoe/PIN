@@ -14,12 +14,12 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p><a href="../../UdpHosts/GameServer/Data/CharacterInventory.cs">CharacterInventory</a> holds the items and sends
+    <p><a href="../UdpHosts/GameServer/Data/CharacterInventory.cs">CharacterInventory</a> holds the items and sends
     <code>InventoryUpdate</code> — once in full at spawn, then one partial message per change. <code>createitem</code> and
     <code>dbg_inventory</code> are in
-    <a href="../../UdpHosts/GameServer/Systems/Admin/Commands">Systems/Admin/Commands</a>.</p>
+    <a href="../UdpHosts/GameServer/Systems/Admin/Commands">Systems/Admin/Commands</a>.</p>
   </section>
   <section class="doc" id="why-this-file-exists">
     <h2>Why this file exists</h2>
@@ -114,7 +114,7 @@
       rules it out anyway. Resources merge fine (<a href="Resource-Payout.html">RESOURCE-PAYOUT-1</a>), so the defect is confined to
       the item arrays of the partial message; the next comparison is capture message [9], the 37-byte
       retail single-item add reproduced in <a href="Capture-Replay.html">Capture Replay</a>.
-      <a href="../ISSUE-REGISTER.md">NET-18</a> re-scoped to exactly this and stays open.</p>
+      <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> re-scoped to exactly this and stays open.</p>
       <p><strong>That comparison ran on 2026-08-15 and produced one change to re-run INVENTORY-1 against.</strong> The envelope
       was already retail's exactly, so the message shape was never the problem — but message [9] turned
       out to be the session's <em>only</em> single-item add of its kind, and PIN's item flags were calibrated on
@@ -225,7 +225,7 @@
       not a wire-format bug at all, and none of the item-struct suspects above need chasing. The fix is to
       stop prestocking: <code>LoadHardcodedInventory</code> generates all 20 frames because the garage reads owned
       chassis out of the loadouts, so the thing to cut is the <em>items</em>, not the loadouts. Re-run INVENTORY-1
-      immediately after, and if the Dev Shotgun appears, <a href="../ISSUE-REGISTER.md">NET-18</a> closes without a
+      immediately after, and if the Dev Shotgun appears, <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> closes without a
       single byte of the message changing.</p>
       <p><strong>Ambiguous — the count is high but under the ceiling:</strong> worth knowing anyway, and worth trying
       <code>createitem</code> on a character whose bag is deliberately near-empty before moving on. Note the two

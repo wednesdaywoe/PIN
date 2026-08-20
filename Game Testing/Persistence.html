@@ -14,9 +14,9 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../streams/m6-persistence.md">M6</a>. The milestone is that a session leaves a mark: what
+    <p>The check on <a href="../Docs/streams/m6-persistence.md">M6</a>. The milestone is that a session leaves a mark: what
     you thumped, what you killed for and where you logged out are all there when you come back. Nothing
     about this involves RIN, which has never answered a request in this project. The GameServer writes
     one JSON file per character.</p>
@@ -144,7 +144,7 @@
       memory.</p></div>
       <p>This is the one that matters most in practice and it is the one PERSIST-1 doesn't cover. Most PIN sessions
       end without <code>RequestLogout</code>: the client gets closed, the connection times out, or the player dies and
-      has to reconnect because nothing sends <code>RequestRespawn</code> (<a href="../ISSUE-REGISTER.md">NET-23</a>).</p>
+      has to reconnect because nothing sends <code>RequestRespawn</code> (<a href="../Docs/ISSUE-REGISTER.md">NET-23</a>).</p>
       <div class="steps"><ol>
       <label class="step"><input checked data-k="persist-5-1" type="checkbox"/><span class="step-body"><span class="lede">Earn crystite as in PERSIST-1.</span></span></label>
       <label class="step"><input checked data-k="persist-5-2" type="checkbox"/><span class="step-body"><span class="lede">Wait for a <code>Saved character</code> line ending <code>(autosave)</code>. It comes within a minute of the change.</span></span></label>

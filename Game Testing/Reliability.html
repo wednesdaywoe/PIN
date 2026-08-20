@@ -14,11 +14,11 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../streams/m8-session-stability.md">M8</a>. Until 2026-08-14 "reliable" only meant the
+    <p>The check on <a href="../Docs/streams/m8-session-stability.md">M8</a>. Until 2026-08-14 "reliable" only meant the
     server acked what the client sent; nothing tracked what the server itself sent, so a dropped packet
-    was gone (<a href="../gaps/network.md#net-1">NET-1</a>). Now every packet on Matrix and ReliableGss is held
+    was gone (<a href="../Docs/gaps/network.md#net-1">NET-1</a>). Now every packet on Matrix and ReliableGss is held
     until the client acks it and resent if it isn't.</p>
     <p><strong>This stream is the only one in the queue that has to break the network on purpose.</strong> Everything
     else here runs over loopback, where a packet is lost only when a socket buffer overflows, and that
@@ -172,7 +172,7 @@
       entry cannot say is <em>which</em> fix killed it — the retransmit queue getting the scope-out through, or
       the failed-keyframe-answers-with-scope-out change ending the loop at request two —
       <a href="Resource-Payout.html">RESOURCE-PAYOUT-6</a> is written to date the loop from Debug lines and settle that.</p></div>
-      <p><a href="../gaps/network.md#net-24">NET-24</a> is a finished thumper the client leaves standing in the world
+      <p><a href="../Docs/gaps/network.md#net-24">NET-24</a> is a finished thumper the client leaves standing in the world
       forever, asking for keyframes of it every 5.5 seconds. A code read pinned the suspicion on the
       scope-out being sent once on a channel that never resent anything, which is what M8 just fixed. So
       this entry asks whether M8 closed a live defect or only a theoretical one.</p>

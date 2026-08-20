@@ -14,12 +14,12 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
     <a href="Session-Setup.html">Session Setup</a>.</p>
     <p>Added in the current working tree:
-    <a href="../../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs">HostilityRules</a>,
+    <a href="../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs">HostilityRules</a>,
     <code>SDBUtils.GetFactionStance</code>, <code>hostility</code>. See
-    <a href="../Architecture/06-combat-and-damage.md">layer 6</a>.</p>
+    <a href="../Docs/Architecture/06-combat-and-damage.md">layer 6</a>.</p>
   </section>
   <section class="block" data-open="true" id="-hostility-1-confirm-the-faction-stance-encoding-blocks-h2-h6">
     <button class="block-head" type="button">
@@ -37,7 +37,7 @@
       </ol></div>
       <p><strong>It has to be a cross-faction pair, and "fire one shot at anything" is not enough.</strong> The table
          is a <code>Lazy&lt;&gt;</code> built on the first call to <code>SDBUtils.GetFactionStance</code>, and
-         <a href="../../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs#RELIABILITY-26-RELIABILITY-38">HostilityRules.GetStance</a>
+         <a href="../UdpHosts/GameServer/Systems/Hostility/HostilityRules.cs#RELIABILITY-26-RELIABILITY-38">HostilityRules.GetStance</a>
          returns early — before reaching it — whenever the two entities share a team or a faction. Every
          player character is faction 1, so shooting scenery, another player, or nothing at all never
          builds the table and the grep below comes back empty with the server working correctly. Any
@@ -70,7 +70,7 @@
       step 3 and the log has since been truncated. Grep them off the next session if the exact values are
       ever wanted; nothing depends on them now.</p></div>
       <p>The consequence: <code>ToStance</code> needed no change, and the <code>!Signed</code> fallback in
-      <a href="../../UdpHosts/GameServer/StaticDB/SDBUtils.cs">SDBUtils.GetFactionStance</a> — which forced every
+      <a href="../UdpHosts/GameServer/StaticDB/SDBUtils.cs">SDBUtils.GetFactionStance</a> — which forced every
       cross-faction pair to Neutral while the encoding was in doubt — has been removed. The warning that
       fires when the values aren't signed stays, as the tripwire for a db that doesn't look like retail.</p><div class="result"><label for="r-hostility-1">Result</label><textarea data-k="n-hostility-1" id="r-hostility-1" placeholder="What happened"></textarea></div></div>
     </div>
@@ -148,16 +148,16 @@
       shields and 19192 health left</code>, then 2641, then 2640.</p></div>
       <p><strong>The character looked invulnerable and isn't.</strong> Standing in front of a Chosen Fiend, nothing
       visible happens, and the arithmetic is why: its rifle does 1 damage a round at 8 rounds a second —
-      8 dps, measured off the log — against 3000 shields (<a href="../gaps/data.md#data-1">DATA-1</a>'s stand-in) and
+      8 dps, measured off the log — against 3000 shields (<a href="../Docs/gaps/data.md#data-1">DATA-1</a>'s stand-in) and
       19192 health. That is six minutes to strip the shields and three quarters of an hour to finish the
       job. See <a href="Session-Setup.html">Session Setup</a> for what to spawn when the point is to watch something
       die.</p>
       <p>Walking into a melding wall or deep water doing nothing was a different thing entirely, and not a
       damage-routing failure: at the time <strong>there was no environmental damage in the server at all</strong> —
       every <code>TakeDamage</code> call came from a projectile or an <code>InflictDamage</code> aptitude command.
-      <a href="../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs">HazardSim</a> has since closed that, and its
+      <a href="../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs">HazardSim</a> has since closed that, and its
       own checks are <a href="Environment.html">ENV-1–ENV-7</a>. What is left of it is in
-      <a href="../PROGRESS.md#deferred">Deferred</a>: NPCs are still exempt from both hazards, and nothing models
+      <a href="../Docs/PROGRESS.md#deferred">Deferred</a>: NPCs are still exempt from both hazards, and nothing models
       fall damage.</p><div class="result"><label for="r-hostility-5">Result</label><textarea data-k="n-hostility-5" id="r-hostility-5" placeholder="What happened"></textarea></div></div>
     </div>
   </section>

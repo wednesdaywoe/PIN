@@ -18,9 +18,9 @@ cross-reference.
 
 **How an entry gets found.** Mostly by reading, not by running anything: a code comment that says
 `// TODO` or names a hardcoded stand-in, a divergence noticed while cross-referencing a live
-capture against an SDB column, or a test in the [Test Register](../In-Game-Tests/index.html) that fails
+capture against an SDB column, or a test in the [Test Register](../../Game Testing/index.html) that fails
 and turns out to name a real defect rather than a not-yet-implemented feature. The
-[Capture Replay](../In-Game-Tests/Capture-Replay.html) tool is the main way "what did the real
+[Capture Replay](../../Game Testing/Capture-Replay.html) tool is the main way "what did the real
 server actually send" gets checked against "what does PIN send" without a trip to the game
 machine.
 

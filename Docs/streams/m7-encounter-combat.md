@@ -127,7 +127,7 @@ What it took, by the work table:
   The curve and the wave schedule are invented in the DATA-10 sense; the health pool is not.
 
 What no offline test can settle is sized in the new test stream,
-[Thumper-Defence (F1–F6)](../In-Game-Tests/Thumper-Defence.html): whether the beacon's collision
+[Thumper-Defence (F1–F6)](../../Game Testing/Thumper-Defence.html): whether the beacon's collision
 asset loads in the deployment (F3's `fallback shape` grep), and whether Aranha claws against a
 4000-point pool make the failure path reachable at all (F3/F5 record the DPS reading that tunes
 the schedule).
@@ -137,7 +137,7 @@ harder, and either extract with the resources or lose them.
 
 ## Closed 2026-08-15, 6 of 6, the same morning
 
-[Thumper-Defence F1–F6](../In-Game-Tests/Thumper-Defence.html) all passed in one sitting, and the
+[Thumper-Defence F1–F6](../../Game Testing/Thumper-Defence.html) all passed in one sitting, and the
 exit condition happened in both directions: the tester *lost* the first defended cycle at 91% (the
 F3 observation window plus wave 4's four-second kill of the remaining pool), then won the re-run
 14 kills for 14 spawns at `completion 1.00, defence 0.63`, ledger balanced to the unit. Both

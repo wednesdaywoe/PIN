@@ -14,11 +14,11 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../streams/m5-kill-rewards.md">M5</a>. One sentence: kill something and come away holding
+    <p>The check on <a href="../Docs/streams/m5-kill-rewards.md">M5</a>. One sentence: kill something and come away holding
     crystite you didn't have.</p>
-    <p><strong>KILL-REWARDS-1 passed on 2026-08-13 and closed <a href="../streams/m5-kill-rewards.md">M5</a></strong> — a Gaia creature paid 4
+    <p><strong>KILL-REWARDS-1 passed on 2026-08-13 and closed <a href="../Docs/streams/m5-kill-rewards.md">M5</a></strong> — a Gaia creature paid 4
     crystite and the tester saw it arrive. It took two attempts. The first found that crystite was being
     rolled correctly and then filed as an unpayable item, because the resource-or-item check asked
     <code>dbitems::ResourceItem</code> — the gatherable-materials list (ids 75537 and up), which does not contain
@@ -27,7 +27,7 @@
     <p><strong>That run also confirmed the basis-points guess, on a table that is on the kill path.</strong> "Melded Loot
     Common" (5463) is reached from monster 528's second loot table and its rows are 5000/1000/100. Read
     as percentages that is a distribution that drops something every time; it is out of 10000.
-    <code>LootRoller</code> now decides the scale per table from its own rows. See <a href="../gaps/data.md">DATA-16</a>.</p>
+    <code>LootRoller</code> now decides the scale per table from its own rows. See <a href="../Docs/gaps/data.md">DATA-16</a>.</p>
     <p><strong>KILL-REWARDS-2 settled on 2026-08-16 and the stream is now 3 of 5.</strong> Thirty-nine kills of monster 528 in one
     post-fix session paid crystite on <strong>8</strong>, which is 20.5% against an expected 25% — inside the noise
     band, and large enough to mean something where the two earlier sessions were not. KILL-REWARDS-3 passed the day
@@ -47,7 +47,7 @@
     <p><strong>Not because levels are out.</strong> An earlier draft of this said so and it was wrong: the beta had XP
     without levels, as a currency you earned and spent on upgrading your frame (correction 2026-08-13,
     user). XP fits the level-less model rather than contradicting it, and could return once something
-    consumes it. See <a href="../Restoration.md">Restoration</a>.</p>
+    consumes it. See <a href="../Docs/Restoration.md">Restoration</a>.</p>
   </section>
   <section class="doc" id="where-the-numbers-come-from">
     <h2>Where the numbers come from</h2>
@@ -128,7 +128,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-1</span><span class="marker pass">[x]</span><span class="entry-t">A kill pays crystite</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on the second attempt, and it closes <a href="../streams/m5-kill-rewards.md">M5</a>.</strong> A
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-1</span><span class="marker pass">[x]</span><span class="entry-t">A kill pays crystite</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on the second attempt, and it closes <a href="../Docs/streams/m5-kill-rewards.md">M5</a>.</strong> A
       Gaia creature died and paid 4 crystite, which the tester saw arrive:</p></div>
       <span class="cmd"><pre><code>20:22:47 NPC 2305176846901314560 died to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:22:47 Kill of monster type 528 paid 4 of resource 10 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:22:47 Kill of monster type 528 paid 1 of resource 77344 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:23:07 Kill of monster type 1196 rolled item 33815 x1, not paid — item drops are unbuilt</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:23:07 Kill of monster type 1196 paid 1 of resource 77345 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span>
       <p>4 is the bottom band of "Small Crystite Drops (2-20)", the 80% row — the common case landing on the
@@ -348,7 +348,7 @@
       <code>Player</code> to pay.</p></div>
       <div class="callout fail"><p><strong>Fail, your own death pays you:</strong> the victim/killer check is inverted. That would also mean a
       player death is being treated as a lootable monster, which is the PvP case
-      <a href="../Restoration.md">Restoration</a> says is out of scope.</p></div><div class="result"><label for="r-kill-rewards-4">Result</label><textarea data-k="n-kill-rewards-4" id="r-kill-rewards-4" placeholder="What happened"></textarea></div></div>
+      <a href="../Docs/Restoration.md">Restoration</a> says is out of scope.</p></div><div class="result"><label for="r-kill-rewards-4">Result</label><textarea data-k="n-kill-rewards-4" id="r-kill-rewards-4" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-kill-rewards-5-the-kill-that-pays-is-the-killers-not-the-last-player-to-log-in">

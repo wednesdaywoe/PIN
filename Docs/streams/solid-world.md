@@ -13,7 +13,7 @@ relates:
 # Solid World
 
 **Scoped 2026-08-16, the day the collision merge landed. Run 2026-08-17 —
-[Solid World](../In-Game-Tests/solid-world.html) went 5 of 7, and the results are folded in below
+[Solid World](../../Game Testing/solid-world.html) went 5 of 7, and the results are folded in below
 rather than left as predictions.** The short version: the merge is sound, the world behaves, and
 every defect the sitting found belongs to PIN's own code rather than to the terrain.
 **Follow-up run 2026-08-19 — 3 of 3, closing [DATA-23](../gaps/data.md#data-23).** The ground query
@@ -79,7 +79,7 @@ measurement.
 | Site | What it does today | What terrain should allow |
 |---|---|---|
 | [Steering.cs](../../UdpHosts/GameServer/Systems/AI/Steering.cs) | An NPC has no idea where the floor is, so it borrows the height of whoever it is chasing and is capped at a 45° climb to stop it levitating | A downward raycast. The NPC stands on the ground it is actually on, and `MaxSlope` stops being a substitute for terrain |
-| [Sightline.cs](../../UdpHosts/GameServer/Systems/AI/Sightline.cs) | Cover has to be a spawned object, because a hill is not there to block anything ([N3](../In-Game-Tests/NPC-Combat.html)) | Real cover. Breaking line of sight by stepping behind a rock |
+| [Sightline.cs](../../UdpHosts/GameServer/Systems/AI/Sightline.cs) | Cover has to be a spawned object, because a hill is not there to block anything ([N3](../../Game Testing/NPC-Combat.html)) | Real cover. Breaking line of sight by stepping behind a rock |
 | [Submersion.cs](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs) | Drowning depth is whatever the client says it is, packed into one byte of every movement pose | A server-side reading, if the water layers get consumed — see below |
 | [world-authoring.md](world-authoring.md) | Placing anything by coordinate is blind, which is how three Chosen ended up anchored under the terrain and shooting a player who never saw them | Placement that can be checked before it is committed |
 
@@ -164,10 +164,10 @@ consequence of this slice to the point of it.
 1. ~~**One sitting, before any code.**~~ Done 2026-08-17, 5 of 7, results above.
 2. ~~**A ground query, and its two callers.**~~ Built 2026-08-17 as
    `PhysicsEngine.TryGetGroundHeight`, verified in game 2026-08-19 by
-   [SOLID-WORLD-8 and SOLID-WORLD-9](../In-Game-Tests/solid-world.html), both passed. That is
+   [SOLID-WORLD-8 and SOLID-WORLD-9](../../Game Testing/solid-world.html), both passed. That is
    [DATA-23](../gaps/data.md#data-23) whole, both symptoms, closed.
 3. ~~**An admin command that reports what a ray hits**~~ — built 2026-08-17 as `probe`, verified in
-   game 2026-08-19 by [SOLID-WORLD-10](../In-Game-Tests/solid-world.html): world answered with a
+   game 2026-08-19 by [SOLID-WORLD-10](../../Game Testing/solid-world.html): world answered with a
    static id and distance, a creature answered by name, the sky answered nothing, and the ground
    line tracked the caller's footing.
 4. **The failed hulls** — lives in the register as [DATA-22](../gaps/data.md#data-22), which is its

@@ -14,9 +14,9 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../gaps/network.md#net-23">NET-23</a>, which is the last thing standing between the
+    <p>The check on <a href="../Docs/gaps/network.md#net-23">NET-23</a>, which is the last thing standing between the
     project's loop and a session that survives losing a fight. Until now a player who died stayed dead:
     the server killed them correctly, the client offered nothing, and the only way on was to reconnect.
     <a href="NPC-Combat.html">NPC-COMBAT-16</a> found it on 2026-08-13, and <a href="Thumper-Defence.html">M7</a> made it matter — a
@@ -30,7 +30,7 @@
     the give-up prompt appears within its 2-second gate, the key reaches the server, the fallback covers
     anyone who ignores it, and both respawns put the character on real footing.</p>
     <p><strong>Both sessions ended in menu logouts with clean character saves.</strong> Every previous PIN session that
-    contained a player death ended in a reconnect. <a href="../gaps/network.md#net-23">NET-23</a>'s symptom is
+    contained a player death ended in a reconnect. <a href="../Docs/gaps/network.md#net-23">NET-23</a>'s symptom is
     gone.</p>
     <p>What is left is small: the countdown's visible reading (DEATH-RESPAWN-2, whose main risk DEATH-RESPAWN-1 already retired),
     monsters still dying properly (DEATH-RESPAWN-4), and dying inside a thumper defence (DEATH-RESPAWN-5).</p>
@@ -41,7 +41,7 @@
     command lives inside it, gated on a permission flag. PIN went straight from alive to <code>Dead</code>, so the
     screen never opened. A player now goes to <code>Incapacitated</code>, gets the <code>respawn_input</code> permission and a
     <code>RespawnTimesData</code> pair, and either taps out on the Reload key or is respawned by
-    <a href="../../UdpHosts/GameServer/Systems/Combat/BleedoutSim.cs">BleedoutSim</a> after 30 seconds. NPCs are
+    <a href="../UdpHosts/GameServer/Systems/Combat/BleedoutSim.cs">BleedoutSim</a> after 30 seconds. NPCs are
     untouched and still die outright.</p>
     <p><strong>Two invented numbers and one unverified guess, all of which this stream is here to catch.</strong> The
     2-second wait before the prompt appears and the 30-second forced respawn have no source — nothing
@@ -198,7 +198,7 @@
       thumper to ground that already had creatures on it, because <em>the thumper event cannot kill the player
       at all</em> — with a 19,192 health pool against attackers landing 49 a swing, no table of this size
       threatens anything. What killed them was a standing spawn-group Aranha, not a wave member.</p>
-      <p>That is the player-scale problem in <a href="../Design/Combat-Scale.md">Combat Scale</a> showing up as a testing
+      <p>That is the player-scale problem in <a href="../Docs/Design/Combat-Scale.md">Combat Scale</a> showing up as a testing
       obstacle rather than a balance complaint. Note that the 2026-08-16 wave retune cut escorts from four
       to two, which makes it <em>less</em> lethal still — the retune was aimed at the machine surviving, and it
       moved this in the wrong direction on purpose, because the player's pool is the thing to fix.</p>
@@ -220,7 +220,7 @@
       cycle still ends in a payout or a destruction line. Your death must not appear as a wave-member
       kill.</p></div>
       <div class="callout fail"><p>Fail, the shard stops: read the tail of the log for an exception. A player death routes through the
-      same event M7 uses to count wave kills (<a href="../streams/m7-encounter-combat.md">EncounterComponent</a>),
+      same event M7 uses to count wave kills (<a href="../Docs/streams/m7-encounter-combat.md">EncounterComponent</a>),
       and a downed player is a new case on that path.</p></div><div class="result"><label for="r-death-respawn-5">Result</label><textarea data-k="n-death-respawn-5" id="r-death-respawn-5" placeholder="What happened"></textarea></div></div>
     </div>
   </section>

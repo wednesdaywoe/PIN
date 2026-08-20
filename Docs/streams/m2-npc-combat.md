@@ -56,9 +56,9 @@ This is the biggest milestone on the list and the one most likely to split furth
 Target selection and attacking are testable offline as pure functions; nothing about how the client
 renders NPC movement is, so expect the locomotion pass to need several trips to the game machine.
 
-H5 in [Hostility](../In-Game-Tests/Hostility.html) is permanently blocked until this lands — it needs
+H5 in [Hostility](../../Game Testing/Hostility.html) is permanently blocked until this lands — it needs
 an NPC that actually decides to shoot. — *unblocked by the attack pass; run it with
-[N2](../In-Game-Tests/NPC-Combat.html).*
+[N2](../../Game Testing/NPC-Combat.html).*
 
 ## What's landed
 
@@ -164,7 +164,7 @@ often than it means anything.
 **The ground is the part with no good answer.** The milestone doc planned "a downward raycast to
 clamp to ground", and there is nothing to raycast against: `LoadMapsCollision` is off and `MapsPath`
 is empty, so the physics world holds entity colliders and no terrain at all — the thing
-[N3](../In-Game-Tests/NPC-Combat.html) found the hard way. What the server does have is where a player
+[N3](../../Game Testing/NPC-Combat.html) found the hard way. What the server does have is where a player
 is standing, which is a ground height measured at that spot by the only participant that owns the
 terrain. So an NPC takes its target's height as ground and climbs toward it, with two rules keeping
 that from turning into a flying monster: the height is only believed while the target is *not*
@@ -191,7 +191,7 @@ turn this from a broadcast with no listener into something that matters.
 
 ## What the client sessions found
 
-[NPC Combat](../In-Game-Tests/NPC-Combat.html) N1–N7, all passing as of 2026-08-12. An NPC notices you,
+[NPC Combat](../../Game Testing/NPC-Combat.html) N1–N7, all passing as of 2026-08-12. An NPC notices you,
 turns to face you, respects cover, opens fire, damages you, disengages when you leave, and dies
 mid-burst without leaving a corpse stuck firing. Perception, target selection and the attack pass are
 confirmed against a real client rather than code-complete.
@@ -298,7 +298,7 @@ were placed on the same spot, which is one keystroke away when you place by stan
 
 ## Closed, 2026-08-13
 
-**[N14 to N16](../In-Game-Tests/NPC-Combat.html) all passed on the fourth attempt at the content and
+**[N14 to N16](../../Game Testing/NPC-Combat.html) all passed on the fourth attempt at the content and
 the first one that failed at nothing.** Thirteen monsters were standing in zone 448 at login, the
 hostile-neighbour audit was clean, North Flats refilled all three of its slots at ninety seconds to
 the digit and at the recorded position rather than a drifted one, and Basin Mouth killed the tester.

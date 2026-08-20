@@ -62,7 +62,7 @@ edits before any of it is scheduled.
   and priced against the economy CRAFT3 picks.
 - [ ] **CRAFT5** — **The loop closes in game.** One sitting: thump a deposit, craft from the
   payout, equip the result, relog, still have it. Gets its own run sheet in
-  [In-Game-Tests](../In-Game-Tests/) when the build lands.
+  [In-Game-Tests](../../Game Testing/) when the build lands.
 
 ## Deferred
 

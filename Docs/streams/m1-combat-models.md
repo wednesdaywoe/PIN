@@ -10,7 +10,7 @@ relates:
 
 Three combat numbers were guesses that a real client answers in an afternoon: the faction stance
 encoding, the range decay curve, and whether `Battleframe` shipped live shield values. All three
-were already queued in [In-Game Tests](../In-Game-Tests/README.md), and all three degrade safely
+were already queued in the In-Game Tests, and all three degrade safely
 when wrong.
 
 It went first because everything after it tunes against these. Building AI that fights the player
@@ -27,7 +27,7 @@ shields are invented.
   [DamageFalloff.cs](../../UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs).
 - **`dbitems::Battleframe` shields.** 5 of 1676 rows carry a non-zero `base_shields`, so build 1962
   had no shields; the recharge pair is real at 150/sec and 10000ms. Done 2026-08-11, numbers read
-  in [Capture Replay](../In-Game-Tests/Capture-Replay.html).
+  in [Capture Replay](../../Game Testing/Capture-Replay.html).
 - The placeholders were replaced: recharge pair now the shipped values, pool kept non-zero on
   purpose as a divergence — see [HardcodedCharacterData.cs](../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs)
   and issue [DATA-1](../gaps/data.md).

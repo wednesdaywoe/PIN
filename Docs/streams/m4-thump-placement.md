@@ -9,7 +9,7 @@ relates:
 # M4: Where You Thump Matters
 
 **Code complete 2026-08-13, none of it seen in game.** Every row of the table below landed in one
-pass; [S1–S6](../In-Game-Tests/Thump-Placement.html) are the check, and the exit condition at the
+pass; [S1–S6](../../Game Testing/Thump-Placement.html) are the check, and the exit condition at the
 bottom is unchanged and unmet. What follows first is the original framing, kept because the
 decisions only make sense against it; the record of what was actually built, and the two guesses it
 stands on, is at the end.
@@ -114,7 +114,7 @@ rest. What nothing here answers is which UI action makes the client send
 ## What the capture corrected, 2026-08-13
 
 S1's first sitting was the predicted half-pass: five scans, four deposits sent every time, nothing
-drawn. The [2016 retail capture](../In-Game-Tests/Capture-Replay.html) then reframed the milestone's
+drawn. The [2016 retail capture](../../Game Testing/Capture-Replay.html) then reframed the milestone's
 protocol picture. **All four messages the framing above is built on are absent from a full live
 session** — `FoundResourceAreas`, `FindNearbyResourceAreas` and both geographical-report directions
 appear zero times in 400,000 messages. They are beta-era scanning; the 2016-era client learned
@@ -206,7 +206,7 @@ under `builds/authored/` and the deploy says where it went. S6 runs with `--no-b
 
 ## Closed: the numbers a player watched arrive
 
-**2026-08-14, [S1–S6](../In-Game-Tests/Thump-Placement.html) all passing.** The milestone asked
+**2026-08-14, [S1–S6](../../Game Testing/Thump-Placement.html) all passing.** The milestone asked
 whether where you thump matters. One sitting answered it four times over:
 
 | Where the thumper stood | Node type | Paid |

@@ -15,12 +15,12 @@ id table: Session Setup .</p>
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the deployable/vehicle type
+    <p>Part of the in-game test queue. Setup, admin commands and the deployable/vehicle type
     id table: <a href="Session-Setup.html">Session Setup</a>.</p>
     <p>Added in the current working tree:
-    <a href="../../UdpHosts/GameServer/Systems/Combat/IDamageable.cs">IDamageable</a>,
+    <a href="../UdpHosts/GameServer/Systems/Combat/IDamageable.cs">IDamageable</a>,
     implemented by <code>CharacterEntity</code>, <code>DeployableEntity</code> and <code>VehicleEntity</code>. See
-    <a href="../Architecture/06-combat-and-damage.md">layer 6</a>.</p>
+    <a href="../Docs/Architecture/06-combat-and-damage.md">layer 6</a>.</p>
     <p>Everything about the funnel is covered offline. What isn't, and what these are for, is whether the
     health numbers read off the SDB are the right columns and whether the client accepts health updates
     on entity types that have never sent one.</p>
@@ -68,7 +68,7 @@ id table: Session Setup .</p>
       <li>Pass: no <code>Deployable 356 has no StartHitpoints</code> line, and shooting prints
         <code>Deployable {Type} took {Amount} damage</code>.</li>
       <li>Fail: the warning appears for 356 too. <code>StartHitpoints</code> isn't the health column; check the record
-        in <a href="../../Tools/MinimalSDB">MinimalSDB</a> dump mode against <code>StandardHealth</code> and the scaling table
+        in <a href="../Tools/MinimalSDB">MinimalSDB</a> dump mode against <code>StandardHealth</code> and the scaling table
         before changing <code>SpawnDeployable</code>.</li>
       </ul>
       <p>The warning appearing for <code>deployable 395</code> is correct behaviour, not a failure — it really does have
@@ -183,21 +183,21 @@ id table: Session Setup .</p>
       <div class="entry"><div class="entry-head"><span class="id">DEPLOY-VEH-7</span><span class="marker none">[ ]</span><span class="entry-t">Splash reaches deployables and vehicles</span></div><div class="steps"><ol>
       <label class="step"><input data-k="deploy-veh-7-1" type="checkbox"/><span class="step-body"><span class="lede"><code>deployable 211</code>, walk three or four paces, <code>vehicle 116</code> — close enough that one blast covers
          both. Spawn them by walking rather than typing coordinates: the numbers on these commands are
-         absolute world positions, not offsets from you (<a href="README.md">method notes</a>)</span></span></label>
+         absolute world positions, not offsets from you (method notes)</span></span></label>
       <label class="step"><input data-k="deploy-veh-7-2" type="checkbox"/><span class="step-body"><span class="lede">Fire a splash ability into the gap between them</span></span></label>
       <label class="step"><input data-k="deploy-veh-7-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "Deployable .* took|Vehicle .* took" ~/Games/PIN/logs/GameServer.log | tail -20</code></span></span></label>
       </ol></div>
       <div class="callout pass"><p>Pass: both take splash damage, and neither takes it twice from one execution.</p></div>
       <p><strong>A weapon works for this now, and that is new.</strong> The 2026-08-16 morning run found that no weapon
       splashed at all — a Grenade Launcher fired between two touching enemies killed neither, because the
-      grenade hit the ground and the ground has no health (<a href="../ISSUE-REGISTER.md">DATA-21</a>). That was
+      grenade hit the ground and the ground has no health (<a href="../Docs/ISSUE-REGISTER.md">DATA-21</a>). That was
       built and verified the same day, <strong>against creatures</strong>, so what is left for this entry is the
       narrower and still-open half: whether a deployable and a vehicle <em>accept</em> splash the way a character
       does. They reach <code>TakeDamage</code> through <code>IDamageable</code> like anything else, but neither has ever been
       paid by a second damage pass, and <code>ApplySplash</code> walks the shard's entities rather than a filtered
       list. Either the weapon or the ability path is a valid run; say which one you used.</p>
       <p>Do not judge this one by watching health bars — they are drawn only while your aim is on the target
-      (<a href="README.md#health-bars-are-aim-driven-so-splash-cannot-be-read-off-them">method notes</a>), which the
+      (method notes), which the
       second thing a blast reaches never is. The greps below are the reading.</p>
       <p><strong>Find out whether your weapon explodes before you fire it</strong>, rather than reading a miss as a
       defect:</p>

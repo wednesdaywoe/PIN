@@ -14,9 +14,9 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on everything <a href="../streams/m2-npc-combat.md">M2</a> has built. NPC-COMBAT-1–NPC-COMBAT-7 cover a monster that
+    <p>The check on everything <a href="../Docs/streams/m2-npc-combat.md">M2</a> has built. NPC-COMBAT-1–NPC-COMBAT-7 cover a monster that
     stands still and fights — it notices, turns, and shoots — NPC-COMBAT-8–NPC-COMBAT-12 cover the locomotion pass that
     landed after them, which is the half that decides where it stands in the first place, and NPC-COMBAT-13 checks
     that any of it is drawn on the client at all. NPC-COMBAT-14–NPC-COMBAT-16 cover the spawn groups, and they are the ones
@@ -30,7 +30,7 @@
     somewhere else. The steering was innocent; nothing replicated it. <code>Character_MovementView</code> is
     deliberately not flushed to scoped clients, and an NPC had nothing sending a pose on its behalf
     either, so a client held its scope-in position until a checksum mismatch corrected it in one jump
-    (<a href="../gaps/network.md#net-22">NET-22</a>). Nothing about that run was markable: NPC-COMBAT-8 asks you to watch a
+    (<a href="../Docs/gaps/network.md#net-22">NET-22</a>). Nothing about that run was markable: NPC-COMBAT-8 asks you to watch a
     monster the whole way in and NPC-COMBAT-9 asks whether the run animates, and neither question was answerable.</p>
     <p>The same defect explained something that had been shrugged off as roughness since combat testing
     began — a Chosen taking seconds to react to a moving player, firing where you were and then snapping
@@ -44,19 +44,19 @@
     guard rather than a note, which is why the entry now greps for a hostile-neighbour audit line and
     why placements are made by walking rather than by typing coordinates.</p>
     <p>The closing run produced two findings and neither is an M2 defect. Death is a one-way door —
-    <a href="../gaps/network.md#net-23">NET-23</a>, the first time the game rather than a command killed a player,
+    <a href="../Docs/gaps/network.md#net-23">NET-23</a>, the first time the game rather than a command killed a player,
     and the client never asks to respawn. And the first balance reading taken against real content says
-    monsters are bullet sponges, which is <a href="../gaps/data.md#data-6">DATA-6</a>'s flat 2500 health pool
+    monsters are bullet sponges, which is <a href="../Docs/gaps/data.md#data-6">DATA-6</a>'s flat 2500 health pool
     rather than anything about the pack. Both are written up under the entries that found them.</p>
     <p>With the pose replicated, the whole set went green. Two things the sitting turned up are recorded as
     gaps rather than as failures, both under NPC-COMBAT-10: a Melded Aranha renders about 90° off the player it is
     attacking, which a side-by-side against a Chosen pinned on the creature model rather than on
-    <code>Facing.Towards</code> (<a href="../gaps/client.md#client-3">CLIENT-3</a>); and its first movement decision used the
+    <code>Facing.Towards</code> (<a href="../Docs/gaps/client.md#client-3">CLIENT-3</a>); and its first movement decision used the
     ranged standoff before its own weapon had been resolved, since fixed.</p>
     <p>Four of the seven failed the first time and only one of those was the AI's fault. Two failures
     (NPC-COMBAT-2, NPC-COMBAT-6) turned out to be the same weapon-resolution bug wearing different disguises, one stripping
     a rifle's range and the other a rifle's damage, live in every weapon the server had ever resolved:
-    <a href="../gaps/data.md#data-11">DATA-11</a>. One (NPC-COMBAT-4) was a real AI defect. One (NPC-COMBAT-3) was the entry itself
+    <a href="../Docs/gaps/data.md#data-11">DATA-11</a>. One (NPC-COMBAT-4) was a real AI defect. One (NPC-COMBAT-3) was the entry itself
     being wrong about what the server can see. That ratio is the argument for writing entries that say
     what to grep — none of it was visible from the screen.</p>
     <p>A stale <code>GameServer.dll</code> fails every entry here identically and silently — an empty <code>AIEngine.Tick</code>
@@ -110,7 +110,7 @@
     </tbody>
     </table></div>
     <p><strong><code>npc &lt;id&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</code> takes a world position, not an offset from where you're standing</strong> —
-    <a href="../../UdpHosts/GameServer/Systems/Admin/Commands/SpawnCharacterServerCommand.cs">SpawnCharacterServerCommand</a>
+    <a href="../UdpHosts/GameServer/Systems/Admin/Commands/SpawnCharacterServerCommand.cs">SpawnCharacterServerCommand</a>
     passes the three numbers straight through. With no coordinates at all it spawns at your feet, which
     is the form to reach for when you don't care where. To put one a measured distance away, read your
     own position off <code>hazard</code> first and do the arithmetic — the locomotion entries below all start that
@@ -135,7 +135,7 @@
     <div class="block-body">
       <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-1</span><span class="marker pass">[x]</span><span class="entry-t">An NPC notices you and turns to face you</span></div><div class="steps"><ol>
       <label class="step"><input checked data-k="npc-combat-1-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, then walk about five paces away — a Chosen Fiend five metres off. Coordinates on
-         this command are absolute world positions, not offsets; see the <a href="README.md">method notes</a></span></span></label>
+         this command are absolute world positions, not offsets; see the method notes</span></span></label>
       <label class="step"><input checked data-k="npc-combat-1-2" type="checkbox"/><span class="step-body"><span class="lede">Stand still and watch it for a few seconds</span></span></label>
       <label class="step"><input checked data-k="npc-combat-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>grep -aE "NPC [0-9]+ target" ~/Games/PIN/logs/GameServer.log | tail -5</code></span></span></label>
       </ol></div>
@@ -173,7 +173,7 @@
       second, so 8 dps</strong> — counted straight off a 2026-08-12 log, which runs exactly 8 <code>damage from</code> lines
       per second for 190 lines. (The template rate would be 11.4; the floor is why it isn't. Both numbers
       are real, 8 is the one that lands.) Against the 3000-shield stand-in from
-      <a href="../gaps/data.md#data-1">DATA-1</a> that's six minutes before health moves at all, and continuous fire
+      <a href="../Docs/gaps/data.md#data-1">DATA-1</a> that's six minutes before health moves at all, and continuous fire
       keeps resetting the recharge delay so the bar just sits there. A working attack pass and a broken one
       look identical on screen; the <code>damage from</code> lines are the difference. See
       <a href="Session-Setup.html">Session Setup</a> for what to spawn instead when the point is to watch something die.</p>
@@ -185,7 +185,7 @@
       <p><strong>First run, 2026-08-12: failed, and the AI wasn't at fault.</strong> The Chosen turned to aim and never
       fired. It logged <code>holding fire ... WeaponUnusable (weapon NPC Assault Rifle, reach 0m)</code> 20 times a
       second: its rifle resolved to a range of zero, so there was no distance at which shooting made
-      sense. Root cause was <a href="../gaps/data.md#data-11">DATA-11</a>, a zero multiplier in the weapon's
+      sense. Root cause was <a href="../Docs/gaps/data.md#data-11">DATA-11</a>, a zero multiplier in the weapon's
       <code>WeaponTemplateModifiers</code> row being read as a literal zero — the rifle's real reach is 180m. Fixed
       and deployed; re-run.</p>
       <p>The failure was only diagnosable because the hold-fire reason gets logged. The run before that one
@@ -239,7 +239,7 @@
       <div class="callout pass"><p>Pass: firing stops and the log shows the target dropping back to empty, somewhere around 60m out —
       the leash, deliberately wider than the 40m it takes to notice you in the first place so that
       shuffling across the boundary doesn't make it drop and re-acquire you every tick.</p></div>
-      <p>40m and 60m are invented, from <a href="../gaps/data.md#data-10">DATA-10</a>, not numbers from <code>dbmonster</code>. This
+      <p>40m and 60m are invented, from <a href="../Docs/gaps/data.md#data-10">DATA-10</a>, not numbers from <code>dbmonster</code>. This
       entry confirms disengagement behaves like a radius, not that it's the right radius.</p>
       <p><strong>First run, 2026-08-12: failed, and found a real one.</strong> The NPC only stopped firing when it left
       draw distance, and resumed the instant it came back — no measurable radius at all. Two causes, both
@@ -304,7 +304,7 @@
       shooting never lost a point of health. Not one <code>damage from</code> line the whole session. The Accord's
       Famas resolved to <strong>0 damage per round</strong>, and <code>TakeDamage</code> drops anything that rounds to zero before
       it logs, so the shots were real, reached the target, and were worth nothing.</p>
-      <p>Same root cause as NPC-COMBAT-2's failure, from the opposite column: <a href="../gaps/data.md#data-11">DATA-11</a> zeroed
+      <p>Same root cause as NPC-COMBAT-2's failure, from the opposite column: <a href="../Docs/gaps/data.md#data-11">DATA-11</a> zeroed
       this weapon's <code>damage_per_round</code> where it zeroed the Chosen's <code>range</code>. Its real damage is 65. Passed
       whole on the re-run, including the half that never got to run the first time: one of them dies, the
       corpse despawns, and the survivor stops firing rather than emptying rounds into the body.</p>
@@ -355,10 +355,10 @@
       line tells you apart.</p></div>
       <p>6 m/s is not invented — it is monster 1196's chassis <code>FastSpeed</code>, read through
       <code>MoveSpeed.Resolve</code>. What is invented is the 12m it stops at
-      (<a href="../gaps/data.md#data-10">DATA-10</a>); nothing in <code>dbmonster</code> says how close a monster likes to be.</p>
+      (<a href="../Docs/gaps/data.md#data-10">DATA-10</a>); nothing in <code>dbmonster</code> says how close a monster likes to be.</p>
       <p>If it sets off and never arrives, check the log for it repeatedly setting off and stopping — that
       is the stopping distance oscillating, and it means the hysteresis in <code>NpcMovement</code> isn't holding.</p>
-      <p>If it jumps instead of walking, that is <a href="../gaps/network.md#net-22">NET-22</a> coming back: the
+      <p>If it jumps instead of walking, that is <a href="../Docs/gaps/network.md#net-22">NET-22</a> coming back: the
       approach is happening on the server and not being sent. It is the one failure in this entry the log
       cannot help with, because every line the AI writes describes the server's own copy — which was
       correct throughout the 2026-08-13 sitting, while the client was drawing a teleport. Watching the
@@ -375,7 +375,7 @@
       <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-9</span><span class="marker pass">[x]</span><span class="entry-t">The run reads as a run</span></div><p>Separate from NPC-COMBAT-8 because they fail separately: an NPC can arrive at exactly the right place while
       looking wrong the whole way, and that is the more likely of the two.</p>
       <p>Not answerable on 2026-08-13 — a teleporting monster has no gait to judge
-      (<a href="../gaps/network.md#net-22">NET-22</a>). This is still the entry most likely to come back with
+      (<a href="../Docs/gaps/network.md#net-22">NET-22</a>). This is still the entry most likely to come back with
       something, because <code>0x2004</code> has never been seen on the wire and now finally gets to be.</p>
       <div class="steps"><ol>
       <label class="step"><input checked data-k="npc-combat-9-1" type="checkbox"/><span class="step-body"><span class="lede">Run NPC-COMBAT-8 and watch the monster's legs, not its position</span></span></label>
@@ -384,7 +384,7 @@
       <div class="callout fail"><p>Fail, it slides along in an idle pose the whole way: <code>RunningState</code> in <code>NpcMovement</code> is wrong. It's
       <code>0x2004</code> — <code>Movestate.Running</code> in the high nibble, <code>MovementFlags.Movement</code> in the low byte —
       derived from those two enums and never seen on the wire, on top of a packing that
-      <a href="../gaps/network.md#net-12">NET-12</a> already has down as unconfirmed. Nothing else in the server
+      <a href="../Docs/gaps/network.md#net-12">NET-12</a> already has down as unconfirmed. Nothing else in the server
       sets a movement state for a character it owns, so this is the first time the value has been asserted
       rather than echoed back from a client. Write down what it did do, because the failure is the
       evidence: a sliding idle says the high nibble is being read somewhere else, and a monster that
@@ -427,10 +427,10 @@
       this coming back, and it is not visible from the screen because the Aranha does eventually arrive.</p>
       <p>Two things watched during this entry are not failures of it and are recorded elsewhere. The Aranha
       stands about 90° off the player while attacking — the model's forward axis, confirmed against a
-      Chosen in the same place (<a href="../gaps/client.md#client-3">CLIENT-3</a>), and cosmetic, since the shot is
+      Chosen in the same place (<a href="../Docs/gaps/client.md#client-3">CLIENT-3</a>), and cosmetic, since the shot is
       aimed from live positions rather than from what is drawn. And 4m looks far for a claw, but chasing
       that turned up <code>combatDist=4</code> in the shipped behaviour strings for full-body melee
-      (<a href="../gaps/data.md#data-10">DATA-10</a>) — the invented 80%-of-reach lands on the number retail used, so
+      (<a href="../Docs/gaps/data.md#data-10">DATA-10</a>) — the invented 80%-of-reach lands on the number retail used, so
       there is nothing to change until that table can be read properly.</p><div class="result"><label for="r-npc-combat-10">Result</label><textarea data-k="n-npc-combat-10" id="r-npc-combat-10" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
@@ -456,7 +456,7 @@
       <p>Watch for it turning round and immediately coming back out, which would show up as <code>has chased</code> and
       <code>is home</code> alternating every few seconds. That oscillation is what the <code>Returning</code> flag exists to
       prevent, and it's the most likely thing to be wrong here.</p>
-      <p>50m is invented (<a href="../gaps/data.md#data-10">DATA-10</a>). This entry confirms an NPC leashes, not that
+      <p>50m is invented (<a href="../Docs/gaps/data.md#data-10">DATA-10</a>). This entry confirms an NPC leashes, not that
       it leashes at the right distance.</p>
       <p>It keeps shooting while it walks home, which looks odd and is deliberate — only movement is leashed.
       It stops on its own when you pass the 60m NPC-COMBAT-4 measured, since past that it forgets you entirely.</p><div class="result"><label for="r-npc-combat-11">Result</label><textarea data-k="n-npc-combat-11" id="r-npc-combat-11" placeholder="What happened"></textarea></div></div>
@@ -506,7 +506,7 @@
       <div class="entry"><div class="entry-head"><span class="id">NPC-COMBAT-13</span><span class="marker pass">[x]</span><span class="entry-t">It tracks you while it shoots</span></div><p>Written off a symptom that had been misread as roughness since combat testing started, and only
       recognised as a defect on 2026-08-13: a Chosen would take several seconds to react to a player
       moving, holding its aim and firing where you had been before snapping round. It was
-      <a href="../gaps/network.md#net-22">NET-22</a> — the same unreplicated pose as the teleporting — and this entry
+      <a href="../Docs/gaps/network.md#net-22">NET-22</a> — the same unreplicated pose as the teleporting — and this entry
       exists to make sure it stays fixed, because it is the half nobody would look for after watching a
       monster walk correctly.</p>
       <div class="steps"><ol>
@@ -521,7 +521,7 @@
       degree — and the pose goes out on the same tick, so a lag longer than a tick or two is the wire, not
       the AI. Half a second of delay on <em>first</em> acquisition is correct and not a failure: threat gains
       20/s against a threshold of 10, so an NPC takes 0.5s to decide it has a target at all
-      (<a href="../gaps/data.md#data-10">DATA-10</a> — the rates are invented).</p>
+      (<a href="../Docs/gaps/data.md#data-10">DATA-10</a> — the rates are invented).</p>
       <div class="callout fail"><p>Fail, it lags by seconds and snaps: <code>NpcPose</code> is not sending, or not being flushed. Fail, it turns
       smoothly but late by a fixed amount: that is client interpolation working off <code>ShortTime</code>, and worth
       writing down as a number rather than an impression.</p></div>
@@ -547,12 +547,12 @@
       them and fought without spawning anything. That closes M2.</p></div>
       <p>The milestone's exit condition, and the only entry here that forbids the <code>npc</code> command. Everything
       NPC-COMBAT-1 to NPC-COMBAT-13 checked was checked against a monster put in front of the tester by hand. This asks
-      whether <a href="../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json">spawn_group.json</a> puts
+      whether <a href="../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json">spawn_group.json</a> puts
       them there on its own.</p>
       <p>Zone 448 ships three groups and thirteen monsters, twelve of them on the basin floor at Z 401
       south-west of the station and one placed in game on the shelf above at Z 413, and every one of them
       stands on a position a player has already stood on. There is deliberately nothing within 120m of
-      where you log in; see <a href="../gaps/data.md#data-15">DATA-15</a> for why, because it is a constraint rather
+      where you log in; see <a href="../Docs/gaps/data.md#data-15">DATA-15</a> for why, because it is a constraint rather
       than a design.</p>
       <p>The thirteenth is worth knowing about before you go looking for it. It was added mid-session with
       <code>spawngroup add 1196 1</code> and belongs to Basin Mouth for its respawn delay only — it stands about 70m
@@ -586,7 +586,7 @@
       <span class="cmd"><pre><code>spawngroup list</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      spawngroup add 1196 1</code></pre><button class="copy" type="button">Copy</button></span>
       <p><code>add</code> puts the monster at your feet, saves, and respawns the group, so you see the result
       immediately. It refuses while you are airborne. Everything the command does is in
-      <a href="../streams/world-authoring.md">Authoring World Content</a>, including how to copy the edited file back
+      <a href="../Docs/streams/world-authoring.md">Authoring World Content</a>, including how to copy the edited file back
       into the repo, which is the step that is easy to forget and loses the session's work.</p>
       <div class="callout fail"><p>Fail, nothing spawns and step 2 prints nothing: the loader never ran. <code>SpawnGroupSim.Load</code> is called
       from <code>EntityManager.SpawnZoneEntities</code>, so check the zone is 448 and that
@@ -690,9 +690,9 @@
       against a 45m spread, so arriving separately is arithmetic, not a defect. Judge the feel, and record
       it as a placement note rather than a bug.</p></div>
       <div class="callout fail"><p>Fail, the fight is trivially easy or instantly lethal: not a spawn group defect, and worth reading
-      against <a href="../gaps/data.md#data-6">DATA-6</a> (monster health is a hardcoded placeholder) and
-      <a href="../gaps/data.md#data-14">DATA-14</a> before touching the pack size.</p></div>
-      <p><strong>Death is a dead end, and that is <a href="../ISSUE-REGISTER.md">NET-23</a>, not this entry.</strong> When the tester
+      against <a href="../Docs/gaps/data.md#data-6">DATA-6</a> (monster health is a hardcoded placeholder) and
+      <a href="../Docs/gaps/data.md#data-14">DATA-14</a> before touching the pack size.</p></div>
+      <p><strong>Death is a dead end, and that is <a href="../Docs/ISSUE-REGISTER.md">NET-23</a>, not this entry.</strong> When the tester
       hit zero the server did everything right — all six attackers dropped target and walked home in the
       same second — and then nothing happened. <code>RequestRespawn</code> is implemented and the client never sends
       it, so the session ends with a reconnect. Budget for that when you run this with <code>invuln off</code>.</p>
@@ -700,10 +700,10 @@
       tester's judgement was that low-level enemies do barely any damage while also being bullet sponges,
       and that their memory of retail's time-to-kill is too hazy to check it against. The log splits that
       in two and only one half is a gap. Incoming is roughly right: 19192 player health is
-      <a href="../gaps/data.md#data-3">DATA-3</a>'s live-observed figure, and the Chosen's 1 damage a shot works out
-      near the 8 dps <a href="../gaps/data.md#data-14">DATA-14</a> measured for monster 1196, so several minutes to
+      <a href="../Docs/gaps/data.md#data-3">DATA-3</a>'s live-observed figure, and the Chosen's 1 damage a shot works out
+      near the 8 dps <a href="../Docs/gaps/data.md#data-14">DATA-14</a> measured for monster 1196, so several minutes to
       chew through a full health bar is close to what retail did. Outgoing is the gap: every monster in the
-      game has <a href="../gaps/data.md#data-6">DATA-6</a>'s flat 2500 pool, about 64 rifle shots, whatever it is and
+      game has <a href="../Docs/gaps/data.md#data-6">DATA-6</a>'s flat 2500 pool, about 64 rifle shots, whatever it is and
       whatever level it is. Don't tune the pack for this — it is one number in one file, and re-judging
       after DATA-6 closes is cheaper than re-placing monsters twice.</p><div class="result"><label for="r-npc-combat-16">Result</label><textarea data-k="n-npc-combat-16" id="r-npc-combat-16" placeholder="What happened"></textarea></div></div>
     </div>

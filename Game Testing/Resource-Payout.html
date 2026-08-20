@@ -14,9 +14,9 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type-id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../streams/m3-resource-payout.md">M3</a>. The milestone is one sentence — finish a
+    <p>The check on <a href="../Docs/streams/m3-resource-payout.md">M3</a>. The milestone is one sentence — finish a
     thumper and come away holding crystite you didn't have — and the code for it was written twice over
     without anyone watching it run.</p>
     <p><strong>RESOURCE-PAYOUT-1, RESOURCE-PAYOUT-2 and RESOURCE-PAYOUT-5 pass as of 2026-08-13, all first attempt, and RESOURCE-PAYOUT-2 is the milestone's exit
@@ -117,7 +117,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">RESOURCE-PAYOUT-2</span><span class="marker pass">[x]</span><span class="entry-t">A thumper you called down pays you</span></div><div class="callout pass"><p><strong>Passed 2026-08-13, first attempt, and <a href="../streams/m3-resource-payout.md">M3</a>'s exit condition with
+      <div class="entry"><div class="entry-head"><span class="id">RESOURCE-PAYOUT-2</span><span class="marker pass">[x]</span><span class="entry-t">A thumper you called down pays you</span></div><div class="callout pass"><p><strong>Passed 2026-08-13, first attempt, and <a href="../Docs/streams/m3-resource-payout.md">M3</a>'s exit condition with
       it.</strong> The greps were run afterwards off the session log rather than during, which turned out to be
       enough — the whole run is in there, to the second:</p></div>
       <span class="cmd"><pre><code>18:48:51 thumper 766269 for 11072869122414870784 at &lt;-123.92, 438.70, 401.32&gt;, calldown 12000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      18:49:03 Thumper 2305086966120779008 entered WARMINGUP, for 10000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      18:49:13 Thumper 2305086966120779008 entered THUMPING, for 300000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      18:54:13 Thumper 2305086966120779008 entered CLOSING, for 6000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      18:54:19 Thumper 2305086966120779008 entered COMPLETED, for 120000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      18:54:22 Thumper 2305086966120779008 entered LEAVING, for 12000ms</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      18:54:34 Encounter 2305086966120779264 paying 200 of resource 10 to 1 participant(s)</code></pre><button class="copy" type="button">Copy</button></span>
@@ -231,7 +231,7 @@
       applies effect <strong>155</strong> — and the client is evidently binding the launch to the effect rather than to
       the ability. 34216 also runs an <code>ImpactRemoveEffectCommand</code> that fails outright
       (<code>Don't know which effect to remove</code>) with both 154 and 155 active at the time.</p>
-      <p>So the next step for <a href="../ISSUE-REGISTER.md">DATA-18</a> is to read effects 154 and 155, not to hunt for
+      <p>So the next step for <a href="../Docs/ISSUE-REGISTER.md">DATA-18</a> is to read effects 154 and 155, not to hunt for
       a missing animation command. Swapping 34216 for the shipped <code>CompletedAbility</code> is the obvious
       candidate fix and is now evidenced, but it has not been tried.</p>
       <p>Rewritten for M4 on 2026-08-13, before ever running. The original entry asked whether the flat
@@ -242,7 +242,7 @@
       <p>Run it inside the Basin Head Crystite deposit (walk to within a few metres of 199.8, 315.7, 67m
       from the Battleframe Station), because a fraction of a 40–100 roll is measurable and a fraction of
       barren ground's single unit is not. That deposit moved on 2026-08-13: its old center by the station
-      was inside a no-thumping zone (<a href="../ISSUE-REGISTER.md">DATA-17</a>).</p>
+      was inside a no-thumping zone (<a href="../Docs/ISSUE-REGISTER.md">DATA-17</a>).</p>
       <div class="steps"><ol>
       <label class="step"><input checked data-k="resource-payout-4-1" type="checkbox"/><span class="step-body"><span class="lede">Note the crystite count. <code>thumper</code> — expect <code>in deposit [1] Basin Head Crystite</code>.</span></span></label>
       <label class="step"><input checked data-k="resource-payout-4-2" type="checkbox"/><span class="step-body"><span class="lede">Let it reach <code>THUMPING</code> — <code>grep -a "Thumper .* entered" ~/Games/PIN/logs/GameServer.log | tail -3</code>
@@ -265,7 +265,7 @@
       speed, instantly and in silence. Nothing about the deposit is involved — a deposit only carries a
       node type and a yield gradient, and touches neither the state machine nor any animation. <strong>What
       differs is which ability fires</strong>, and there are two paths through
-      <a href="../../UdpHosts/GameServer/Systems/Encounters/Encounters/Thumper.cs#RELIABILITY-27-RELIABILITY-40">Thumper.OnInteraction</a>:</p>
+      <a href="../UdpHosts/GameServer/Systems/Encounters/Encounters/Thumper.cs#RELIABILITY-27-RELIABILITY-40">Thumper.OnInteraction</a>:</p>
       <div class="tbl-scroll"><table>
       <thead>
       <tr>
@@ -288,7 +288,7 @@
       </tbody>
       </table></div>
       <p>So the early path plays retail's own extraction and the ordinary path plays PIN's stand-in, which
-      is <a href="../ISSUE-REGISTER.md">DATA-18</a>. Note in step 3 which one you took and whether the departure had
+      is <a href="../Docs/ISSUE-REGISTER.md">DATA-18</a>. Note in step 3 which one you took and whether the departure had
       an animation and a sound; that is the observation the issue is waiting on, and this entry is the
       only one that takes the early path deliberately.</p>
       <p>The natural cycle fires two more literals on its way past — <code>34579</code> when warm-up ends and <code>34215</code>
@@ -340,7 +340,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">RESOURCE-PAYOUT-6</span><span class="marker none">[ ]</span><span class="entry-t">A finished thumper leaves the world, and stops being asked about</span></div><p>The check on <a href="../ISSUE-REGISTER.md">NET-24</a>. Until 2026-08-14 a thumper that ran its full cycle paid
+      <div class="entry"><div class="entry-head"><span class="id">RESOURCE-PAYOUT-6</span><span class="marker none">[ ]</span><span class="entry-t">A finished thumper leaves the world, and stops being asked about</span></div><p>The check on <a href="../Docs/ISSUE-REGISTER.md">NET-24</a>. Until 2026-08-14 a thumper that ran its full cycle paid
       out, vanished from the shard, and <strong>stayed standing on screen</strong> — while the client asked for a fresh
       keyframe of the dead entity every ~5.5 seconds for the rest of the session. One 32-minute sitting
       logged 648 of those across four finished thumpers, and the server's whole response was a warning.</p>
@@ -368,7 +368,7 @@
       it was removed.</p></div>
       <div class="callout pass"><p><strong>Pass on the model but the requests continue:</strong> the client is ignoring a scope-out it is now being
       sent twice. That moves the fault into the client and makes
-      <a href="../Client-UI-Source.md">Client UI Source</a> the next place to read — the resource-node components are
+      <a href="../Docs/Client-UI-Source.md">Client UI Source</a> the next place to read — the resource-node components are
       the only remaining oracle for what makes the client drop a node.</p></div>
       <p><strong>The requests start well before the payout:</strong> the loop is desync recovery, not a removal artifact,
       and the thumper's view deltas going out on <code>UnreliableGss</code> are the suspect — a full cycle sends about
@@ -376,7 +376,7 @@
       2026-08-14 sitting saw. <code>Character_CombatView</code> is already pinned to <code>ReliableGss</code> for the same
       reason. Do not make that change before this reading; it is the thing being measured.</p>
       <p><strong>The requests start at the payout and stop after one scope-out:</strong> the first scope-out was lost, and
-      NET-24 is <a href="../gaps/network.md#net-1">NET-1</a> — a reliable channel that acks but never resends — in
+      NET-24 is <a href="../Docs/gaps/network.md#net-1">NET-1</a> — a reliable channel that acks but never resends — in
       costume. That is the one outcome that closes this entry and reopens a bigger one.</p><div class="result"><label for="r-resource-payout-6">Result</label><textarea data-k="n-resource-payout-6" id="r-resource-payout-6" placeholder="What happened"></textarea></div></div>
     </div>
   </section>

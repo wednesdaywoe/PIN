@@ -14,9 +14,9 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup and launch:
+    <p>Part of the in-game test queue. Setup and launch:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on route 2 of <a href="../streams/battleframe-constraints.md">Battleframe Constraints</a>: sending
+    <p>The check on route 2 of <a href="../Docs/streams/battleframe-constraints.md">Battleframe Constraints</a>: sending
     capacity numbers to the garage by extending the <code>garage_slots</code> web payload. That route only exists
     if the client's native JSON parser passes keys it has never heard of through to Lua instead of
     parsing against a known schema and dropping the rest. The parser is engine code, so no source read
@@ -27,8 +27,8 @@
     response passes through — dumped any <code>garage_slots</code> response to <code>console.log</code>. Both ends were
     removed after the run; the client file went back to its original from a <code>.pinbak</code> copy, and the
     probe properties were deleted from
-    <a href="../../WebHosts/WebHost.ClientApi/Characters/Models/GarageSlots.cs">GarageSlots.cs</a> and
-    <a href="../../WebHosts/WebHost.ClientApi/Accounts/AccountsController.cs">AccountsController.cs</a>.</p>
+    <a href="../WebHosts/WebHost.ClientApi/Characters/Models/GarageSlots.cs">GarageSlots.cs</a> and
+    <a href="../WebHosts/WebHost.ClientApi/Accounts/AccountsController.cs">AccountsController.cs</a>.</p>
     <p>No garage visit is needed for a probe like this: the durability HUD subscribes to <code>garage_slots</code>
     with auto-request at <code>OnPlayerReady</code>, so world entry fires the fetch.</p>
     <hr/>

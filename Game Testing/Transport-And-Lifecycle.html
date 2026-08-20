@@ -14,13 +14,13 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup and admin commands: <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>Part of the in-game test queue. Setup and admin commands: <a href="Session-Setup.html">Session Setup</a>.</p>
   </section>
   <section class="doc" id="http-only-transport-blocks-everything-needing-world-entry">
     <h2>HTTP-only transport (blocks everything needing world entry)</h2>
     <p>Every advertised URL is plain HTTP, which needs a 1-byte patch to <code>FirefallClient.exe</code> removing its
     HTTPS-only check on the oracle URL. Background and undo steps:
-    <a href="../Http-Only-Setup.md">Http-Only-Setup.md</a>. Keep it: it is what made login work. It was also
+    <a href="../Docs/Http-Only-Setup.md">Http-Only-Setup.md</a>. Keep it: it is what made login work. It was also
     believed to be the world-entry freeze fix, and TRANSPORT-4 disproved that — the freeze was a server bug, and
     the Wine WinHTTP warnings that pointed at TLS turn out to appear just as often on healthy runs.</p>
     <p>Run TRANSPORT-1 and TRANSPORT-2 before anything else in the queue — a client that can't reach the world can't run
@@ -81,7 +81,7 @@
       </ol></div>
       <span class="cmd"><pre><code>cd ~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Firefall/system/bin</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      python3 -c "print('%02x' % open('FirefallClient.exe','rb').read()[0x4950af])"</code></pre><button class="copy" type="button">Copy</button></span>
       <p>Expect <code>eb</code>. If it prints <code>74</code> the patch is gone — Steam's "verify integrity of game files"
-         reverts it. Re-apply per <a href="../Http-Only-Setup.md">Http-Only-Setup.md</a>.</p>
+         reverts it. Re-apply per <a href="../Docs/Http-Only-Setup.md">Http-Only-Setup.md</a>.</p>
       <div class="steps"><ol start="2">
       <label class="step"><input checked data-k="transport-2-2" type="checkbox"/><span class="step-body"><span class="lede">Launch Firefall from Steam, log in, pick a character, enter the world.</span></span></label>
       <label class="step"><input checked data-k="transport-2-3" type="checkbox"/><span class="step-body"><span class="lede">While it loads, from another terminal:</span></span></label>
@@ -409,7 +409,7 @@
       <strong>zero</strong> <code>https</code> — the 266 MB / 2.6-million-fault storm from earlier captures was the post-freeze
       crash handler, not the cause. WinHTTP option-38 still logs 35 times, faulting on nothing. The freeze
       happens with the network path completely quiet. (See the superseded
-      <a href="../../MEMORY.md">client-crash memory note</a> for that trail.)</p>
+      client-crash memory note for that trail.)</p>
       <p><strong>It correlates with heavy streaming.</strong> In every TRANSPORT-6 run <code>console.log</code> shows RAM climbing 320 MB →
       ~1050 MB and FPS collapsing 143 → ~24 across the New Eden zone load, and the hang lands in that
       window. DXVK is doing resource work (VT tiles, zone assets) when the main thread stops.</p>
@@ -512,7 +512,7 @@
       mechanism is identified and the fix is mechanistically correct: fsync sits below both DXVK and
       wined3d, which is exactly why the freeze was driver-independent (TRANSPORT-7/TRANSPORT-8) and intermittent.</p>
       <p><strong>Shipping config:</strong> <code>PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1 %command%</code> on DXVK is now the required
-      client launch line — see <a href="../Http-Only-Setup.md#client-launch-options">Http-Only-Setup.md</a>. The
+      client launch line — see <a href="../Docs/Http-Only-Setup.md#client-launch-options">Http-Only-Setup.md</a>. The
       alternative fix, if the small fsync speed cost ever matters, is a Proton whose fsync carries the
       wakeup fix; that is not worth chasing while this holds.</p><div class="result"><label for="r-transport-9">Result</label><textarea data-k="n-transport-9" id="r-transport-9" placeholder="What happened"></textarea></div></div>
     </div>

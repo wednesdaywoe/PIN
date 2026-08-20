@@ -57,7 +57,7 @@ answers with the deposit under the calldown position, out of the per-zone
 shipped yield is one unit of sifted earth). All three callers resolve: the real calldown, the
 `thumper` admin command, and the zone 448 debug thumper.
 
-Closed on 2026-08-14 by [S3–S5](../In-Game-Tests/Thump-Placement.html). Four node types resolved from
+Closed on 2026-08-14 by [S3–S5](../../Game Testing/Thump-Placement.html). Four node types resolved from
 position in a single sitting (242, 241, 233, and 20 where no deposit covers the ground), and the
 payouts came apart with them: 48 crystite near the rich vein's center against 33 from the same vein
 59% of the way out, 8 from the poor trace, and one unit of sifted earth from barren ground. Two runs
@@ -69,7 +69,7 @@ it rules out the reading where a lookup happens to work once.
 ### DATA-3 — `Battleframe.base_health` doesn't match observed live health [ ] open
 
 The SDB column reads roughly 1000; a live capture shows the real value was 19192
-([Capture Replay](../In-Game-Tests/Capture-Replay.html)). Something scales base health before it
+([Capture Replay](../../Game Testing/Capture-Replay.html)). Something scales base health before it
 reaches the wire, and PIN doesn't do it — no scaling logic exists yet, so any health derived
 straight from this column is off by roughly 19x.
 
@@ -144,7 +144,7 @@ shaped, how many spawn steps it took and in what order, without saying what any 
 [CharacterEntity.cs:342-347](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L342-L347)
 gives every monster the same placeholder max health/shields regardless of type or level.
 
-**This is what "bullet sponge" means, and [N16](../In-Game-Tests/NPC-Combat.html) is the first entry
+**This is what "bullet sponge" means, and [N16](../../Game Testing/NPC-Combat.html) is the first entry
 that felt it.** 2500 health against a player rifle landing 39 a shot is about 64 shots to kill a
 level 1 Chosen Fiend, and it is the same 64 shots for every monster in the game. The other half of
 that session's balance reading is not this entry: the player's 19192 is
@@ -186,7 +186,7 @@ what it fixes is the slog and not the entry. Deliberately above `MonsterScaling`
 figure of 100: level is the input PIN doesn't have, and 100 across the board would make everything
 trivial for exactly the reason 2500 made everything a slog. **Nothing in game has confirmed the new
 feel yet** — the first read on it will come from whoever runs
-[K1](../In-Game-Tests/Kill-Rewards.html), which needs a lot of kills.
+[K1](../../Game Testing/Kill-Rewards.html), which needs a lot of kills.
 
 The proposed fix keeps the shipped curve and puts the one missing number where PIN already authors
 world content: an optional per-member `level` in `spawn_group.json`, defaulting per group, set in
@@ -294,9 +294,9 @@ set.
 
 **Changed 2026-08-15 (user-approved): `MonsterMaxHealth` 500 → 1200.** Two seconds of held Heavy MG
 fire, the conservative end of the band. The band's top is 1,800 and the choice of its bottom is
-deliberate: [N16](../In-Game-Tests/NPC-Combat.html) reported a sponge at 2500, so the known failure
+deliberate: [N16](../../Game Testing/NPC-Combat.html) reported a sponge at 2500, so the known failure
 direction is from above, and 500 → 1200 is already a 2.4× move. **Confirmed in game the same day by
-[D6](../In-Game-Tests/Damage-Loop.html#-d6-a-basic-creature-dies-in-about-two-seconds).** Three kills,
+[D6](../../Game Testing/Damage-Loop.html#-d6-a-basic-creature-dies-in-about-two-seconds).** Three kills,
 31 hits each with no variance, health stepping down by 39 to land exactly on 0 from 1200. Time to
 kill was **about 3.1 seconds** rather than the predicted 2.0, because the run measured the assault
 rifle at 10 rounds a second and not the Heavy MG at 15 — the equip had silently failed on
@@ -309,7 +309,7 @@ two weapons, no variance in any of them — so 1200 is confirmed independently o
 
 It also closed the ×0.85 question. All 93 hits of the Heavy MG run landed a full **39**, with no
 other value in the set, so the 46-into-39 that
-[D2](../In-Game-Tests/Damage-Loop.html#-d2-headshot-and-crit) saw on the rifle is neither a blanket
+[D2](../../Game Testing/Damage-Loop.html#-d2-headshot-and-crit) saw on the rifle is neither a blanket
 rule nor a weapon property: `ProjectileSim` resolves `damage = decayed * hit.DamageMod` and
 `hit.DamageMod` arrives on the **client's** hit message, so it is a per-hit value (most likely hit
 location) rather than anything the server or the item carries.
@@ -350,7 +350,7 @@ HealthPerGradePoint = AnchorHealth / AnchorGrade = 1200 / 20 = 60
 ```
 
 `AnchorGrade` 20 is monster 528's shipped grade; `AnchorHealth` 1200 is what
-[D6](../In-Game-Tests/Damage-Loop.html#-d6-a-basic-creature-dies-in-about-two-seconds) confirmed for it
+[D6](../../Game Testing/Damage-Loop.html#-d6-a-basic-creature-dies-in-about-two-seconds) confirmed for it
 across six kills. Moving the anchor moves the whole ladder and keeps its shape, which is why it is
 expressed as a quotient rather than as a table anyone can edit row by row.
 
@@ -402,7 +402,7 @@ Thirteen unit tests pin the mapping in
 [`MonsterTierTests`](../../Tests/GameServer.Tests/Combat/MonsterTierTests.cs), including the two
 promises that keep a bad grade from breaking a spawn: monotonicity across every grade the game
 actually uses, and a missing curve costing tiering rather than throwing. The in-game check is
-[D7](../In-Game-Tests/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size), which isolates
+[D7](../../Game Testing/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size), which isolates
 the tier by using two creatures that share a weapon.
 
 <a id="data-7"></a>
@@ -438,7 +438,7 @@ plumb the def value through instead of the placeholder.
 `CharactersController.cs:36-38`'s `CharacterData` endpoint returns `Key`/`Namespace`/`Value`
 fields the code itself flags with "ToDo: What are these?". `garage_slots` and
 `character_sheet.json` return a fixed frame (Firecat / Rhino) regardless of the actual character
-([Prediction-Sweep.md:171-172](../In-Game-Tests/Prediction-Sweep.html)) — currently the leading
+([Prediction-Sweep.md:171-172](../../Game Testing/Prediction-Sweep.html)) — currently the leading
 suspect if [NET-19](network.md#net-19)'s P0 verification doesn't hold.
 
 <a id="data-10"></a>
@@ -530,7 +530,7 @@ still fall through it. What the numbers do settle is what the fallbacks should b
 from the distribution of what shipped is defensible in a way that 40m is not.
 
 **Perception stayed at 40m through M2 and was narrowed to 25m on 2026-08-13** (both decisions
-user-chosen). Holding it was the right call while it lasted: [N4](../In-Game-Tests/NPC-Combat.html)
+user-chosen). Holding it was the right call while it lasted: [N4](../../Game Testing/NPC-Combat.html)
 measured disengagement against the 40m radius, and moving the number underneath a spawn-group test
 would have made a failure ambiguous between the content and the tuning. N14 to N16 have now passed,
 so that reason expired.
@@ -555,7 +555,7 @@ stands: 1196, 528 and 2342 are all in the 695-row third that carries only a `Beh
 set, and they describe exactly the pause [DATA-14](#data-14) says is missing from NPC cadence. That
 is a second lead out of the same strings and it covers 301 monsters, not 150.
 
-The leash and the cap were added after [N4](../In-Game-Tests/NPC-Combat.html) ran, and are worth
+The leash and the cap were added after [N4](../../Game Testing/NPC-Combat.html) ran, and are worth
 separating from the rest: they are invented numbers, but they exist to fix a genuine defect rather
 than to fill a hole in the data. Without them engagement was bounded by the weapon's reach instead of
 perception — 180m against a 40m radius — and threat was uncapped, so an NPC that had watched a target
@@ -571,7 +571,7 @@ guess. What this does mean is that reading -1 as a speed would have every one of
 backwards, which is [DATA-11](#data-11) again with a different sentinel.
 
 None of the invented numbers are confirmed against anything, and [N1 to
-N13](../In-Game-Tests/NPC-Combat.html) passing doesn't change that. Those entries check that
+N13](../../Game Testing/NPC-Combat.html) passing doesn't change that. Those entries check that
 disengagement behaves like a radius, that a monster stops short and that it walks home. They can't
 check that 60m, 12m and 50m are the numbers Firefall used, and the table above now says two of the
 three aren't.
@@ -602,7 +602,7 @@ Two things are worth taking from how this was found. It had been live in every w
 ever resolved and no test caught it, because the resolution was only ever exercised through a player
 firing a weapon that happened to have a non-zero multiplier. It took an NPC — which picks its weapon
 from `dbmonster` rather than from what a player chose to equip — to land on the broken rows. And it
-presented as two unrelated bugs: [N2](../In-Game-Tests/NPC-Combat.html) looked like broken AI (a
+presented as two unrelated bugs: [N2](../../Game Testing/NPC-Combat.html) looked like broken AI (a
 monster that aims and never fires, because its rifle's reach was 0) while N6 looked like broken
 damage routing (a monster firing with full muzzle VFX into a target that never lost health, because
 its rounds did 0). One zero, two symptoms, neither of them where the bug was.
@@ -630,7 +630,7 @@ The reasonable reading is that retail drove the wall from zone logic on the serv
 shipped to a client and so isn't in a client db.
 
 Retail killed faster than twelve seconds. The rate is deliberately survivable so that
-[E4](../In-Game-Tests/Environment.html) can be watched happening rather than inferred from a corpse;
+[E4](../../Game Testing/Environment.html) can be watched happening rather than inferred from a corpse;
 tightening it is one constant.
 
 <a id="data-13"></a>
@@ -664,7 +664,7 @@ standing in a river. `Submersion.Against` treats an unresolvable row as harmless
 reason. What it costs is that if 448 has any non-standard water, it currently behaves like a lake.
 
 `HazardSim` logs each distinct nibble the first time it sees one, which is what a real mapping would
-have to be built from; [E1](../In-Game-Tests/Environment.html) is the entry that collects them.
+have to be built from; [E1](../../Game Testing/Environment.html) is the entry that collects them.
 
 <a id="data-14"></a>
 
@@ -691,7 +691,7 @@ are exactly the ids whose numbers are made up.
 
 Nothing needs this to close the slice, and the fix is a clip counter plus a reload gate in
 `NpcCombat`, not new data. Recorded because the numbers are live and wrong today, and because
-[Session Setup](../In-Game-Tests/Session-Setup.html) now recommends monsters by dps, which is a
+[Session Setup](../../Game Testing/Session-Setup.html) now recommends monsters by dps, which is a
 recommendation this defect can poison.
 
 <a id="data-15"></a>
@@ -750,14 +750,14 @@ What is still worth writing down is which parts are guesses and which aren't:
 
   **A fourth way to get this wrong showed up on the run that closed the milestone, and it is the one
   that undermines the method rather than a placement.** The client reports grounded inside terrain
-  exactly as it does on top of it. [N16](../In-Game-Tests/NPC-Combat.html) teleported to a coordinate
+  exactly as it does on top of it. [N16](../../Game Testing/NPC-Combat.html) teleported to a coordinate
   nobody had stood on, landed about 8m under the basin floor, and its destination entered the footing
   record indistinguishable from a real measurement. Placement is only trustworthy if the footing was
   walked to, so `CharacterEntity.PlacedPosition` marks any position a character was *put* at,
   `RecordGroundSample` writes nothing until it leaves that spot, and `spawngroup add` refuses until
   then.
 - **Which monsters are chosen is constrained, not free**, and the first cut got it wrong. 1196, 528
-  and 2342 are the three [N1 to N13](../In-Game-Tests/NPC-Combat.html) ran against, so all three
+  and 2342 are the three [N1 to N13](../../Game Testing/NPC-Combat.html) ran against, so all three
   resolve a working weapon and read as hostile to faction 1, and that is the only relationship
   anyone checked before shipping them 25m apart. They are also in three mutually hostile factions:
   1196 is chosen (2), 528 is melding (6), 2342 is gaea (7), and gaea is hostile to everything while
@@ -815,7 +815,7 @@ otherwise 100 — which keeps a table internally consistent and gets both known 
 **What this costs is drop rates, not correctness.** A wrong reading pays too often or too rarely; it
 does not pay the wrong thing, because quantities and item ids come off the rows directly.
 [LootRollerTests](../../Tests/GameServer.Tests/Loot/LootRollerTests.cs) pins the reading so a change
-to it is deliberate, and [K2](../In-Game-Tests/Kill-Rewards.html) — twenty kills counted against an
+to it is deliberate, and [K2](../../Game Testing/Kill-Rewards.html) — twenty kills counted against an
 expected quarter — is the only measurement available in game. Unlike [DATA-10](#data-10), there is no
 shipped string to recover the answer from: the semantics were never data.
 
@@ -880,7 +880,7 @@ difference.
 That makes the shipped `completed_ability` the strong candidate for what retail played on
 extraction, and PIN's `34216` a stand-in that renders as an instant silent launch. The fix is to
 read the def in both branches, but the reading is worth confirming side by side first —
-[G4](../In-Game-Tests/Resource-Payout.html) takes the early path deliberately and now asks for the
+[G4](../../Game Testing/Resource-Payout.html) takes the early path deliberately and now asks for the
 observation. Purely cosmetic: the payout, the participants and the completion event are all
 resolved in `OnSuccess`, which neither branch changes.
 
@@ -891,7 +891,7 @@ resolved in `OnSuccess`, which neither branch changes.
 
 ### DATA-19 — No ultimate-charge model [ ] open, found 2026-08-14
 
-Found by [Prediction-Sweep P1](../In-Game-Tests/Prediction-Sweep.html) rather than by reading:
+Found by [Prediction-Sweep P1](../../Game Testing/Prediction-Sweep.html) rather than by reading:
 module 141814 — the second owner of the camera-lock effect, ability 41232 — turns out to be an
 **Ultimate**. Slotting it empties the ultimate charge meter, the meter is supposed to refill
 through combat, and in PIN it never does, so the ability can never be pressed. P1 is blocked on
@@ -1004,7 +1004,7 @@ more dangerous" has to mean if it is to mean anything mechanical.
 
 The anchor grade comes out at exactly **×1.00** by construction. That is not a rounding convenience —
 it is what makes monster 528 a usable control, and it is why
-[D7](../In-Game-Tests/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size) can isolate the
+[D7](../../Game Testing/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size) can isolate the
 tier: 528 (grade 20) and 1189 (grade 45) carry the **same weapon, 20046**, the same empty behaviour
 script and the same regen, so the only thing that can differ between them is the scalar.
 
@@ -1037,7 +1037,7 @@ creature types are DATA-6's remainder, not this one's.
 
 **A tester was shot through a rock formation by a Chosen Fiend that should have had no line of
 sight, on the first deliberate sitting against terrain collision
-([X4](../In-Game-Tests/solid-world.html), 2026-08-17). The tester's own reading was that world
+([X4](../../Game Testing/solid-world.html), 2026-08-17). The tester's own reading was that world
 terrain and environment meshes behave differently, and that reading is right in substance — but not
 because they are two systems. They are two shape formats with two different success rates.**
 
@@ -1085,7 +1085,7 @@ neither explains this entry; they are recorded here because the same rebuild is 
 **The instrument for finding these in game exists as of 2026-08-17**, which it did not when this
 entry was opened: `probe` casts a ray where you are aiming and says whether it met the world, an
 entity or nothing. Aiming squarely at something solid and being told nothing is this entry, standing
-in front of one instance of it. [X10](../In-Game-Tests/solid-world.html) is the sweep and has not
+in front of one instance of it. [X10](../../Game Testing/solid-world.html) is the sweep and has not
 run. Until then the only census is the offline rebuild above, which counts the failures without
 saying which object or where.
 
@@ -1142,7 +1142,7 @@ above rather than at the point because the point is usually a guess, and a guess
 a hillside would find nothing at all with the surface behind the ray. `Steering.TryStep` takes it as
 an optional probe and lands each step on the ground under where the step lands; the thumper's wave
 ring drops each of its points onto the ground under it.
-[SOLID-WORLD-8 and SOLID-WORLD-9](../In-Game-Tests/solid-world.html) ran 2026-08-19 and both
+[SOLID-WORLD-8 and SOLID-WORLD-9](../../Game Testing/solid-world.html) ran 2026-08-19 and both
 passed: the creature that rose alongside the slope on 2026-08-17 kept its feet on the surface up
 the slope, across its face and down a drop, with 284 ground samples in the log doing the work; and
 the wave ring on a slope spawned its members between heights 401.0 and 407.3 across 20m — the

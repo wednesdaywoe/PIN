@@ -74,5 +74,5 @@ endings turns a two-line change into a whole-file rewrite and makes future diffs
 
 This is a client-side change and travels with the install, not with the server — a second machine
 needs it applied again. It is checked by
-[Thump Placement S1](In-Game-Tests/Thump-Placement.html), which passes on the outpost readout alone,
+[Thump Placement S1](../Game Testing/Thump-Placement.html), which passes on the outpost readout alone,
 so a revert costs the overlay and nothing else.

@@ -311,7 +311,7 @@ relationship the event wants. The ask is met.
 land, and it is the easiest table the event should ever have.
 
 **What it does not fix, and moves the wrong way.** The event still cannot kill the player — a
-[B5](../In-Game-Tests/Death-And-Respawn.html) run had to import creatures from a standing spawn group
+[B5](../../Game Testing/Death-And-Respawn.html) run had to import creatures from a standing spawn group
 to die at all, because 49 a swing against 19,192 threatens nothing. Cutting escorts from four to two
 made that worse. That is deliberate: this pass was aimed at the machine surviving, and the defender's
 survivability is §8 item 2's problem, not a wave table's.
@@ -446,7 +446,7 @@ display name, not its entity id.** `CharacterEntity.ToString` returns `StaticInf
 `IsPlayerControlled`, so every hit on the tester reads `Fallback took 49 damage from
 CharacterEntity (…)` — the id is on the *attacker*. A grep built around the player's entity id
 matches nothing and looks exactly like a system that never ran. See
-[the method notes](../In-Game-Tests/README.md#a-player-logs-under-its-name-and-everything-else-under-an-id).
+the method notes.
 
 ---
 

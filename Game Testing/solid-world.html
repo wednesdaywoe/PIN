@@ -871,7 +871,7 @@
           onto it</b>, holding a height that belongs to ground it has not reached. Cause is certain and
           is not the terrain: nothing in the server casts a ray downward, so a destination carries the
           <i>player's</i> height, and the creature's position lags the player's. Filed as
-          <a href="../ISSUE-REGISTER.md">DATA-23</a>. Nothing in the log shows this — 208 ground samples
+          <a href="../Docs/ISSUE-REGISTER.md">DATA-23</a>. Nothing in the log shows this — 208 ground samples
           and 675 damage lines are all consistent with a clean session, which is why the entry was
           written for eyes rather than for a grep.</div>
         <div class="result"><label for="r-solid-world-5">Uphill / across the slope / off the drop</label><textarea id="r-solid-world-5" data-k="n-solid-world-5"></textarea></div>
@@ -939,7 +939,7 @@
           them at the machine's own height, so on a slope an arc of it is underground. That was cosmetic
           until this week; now the ground stops the player's bullets, so a buried sapper cannot be killed
           while it goes on damaging the machine. Same root cause as SOLID-WORLD-5, same fix, filed together as
-          <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
+          <a href="../Docs/ISSUE-REGISTER.md">DATA-23</a>.</div>
         <div class="result"><label for="r-solid-world-6">Waves / machine hits / payout</label><textarea id="r-solid-world-6" data-k="n-solid-world-6"></textarea></div>
       </div>
 
@@ -1024,7 +1024,7 @@
           Feet on the surface the whole way — up the slope, across its face, and down the drop. The
           floating that failed SOLID-WORLD-5 is gone. The log agrees the query was doing the work:
           284 ground samples across the session, tracking the chase. Closes the creature half of
-          <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
+          <a href="../Docs/ISSUE-REGISTER.md">DATA-23</a>.</div>
         <div class="result"><label for="r-solid-world-8">Uphill / across / off the drop / at a wall</label><textarea id="r-solid-world-8" data-k="n-solid-world-8"></textarea></div>
       </div>
 
@@ -1058,7 +1058,7 @@
           across a 20m ring, where the failed run put an arc of one flat height inside the hill.
           All four waves arrived, sappers landed 100 hits, and the defended cycle paid out at
           defence 0.89 with 6 attackers down. Closes the wave-ring half of
-          <a href="../ISSUE-REGISTER.md">DATA-23</a>.</div>
+          <a href="../Docs/ISSUE-REGISTER.md">DATA-23</a>.</div>
         <div class="result"><label for="r-solid-world-9">Ring heights, and could you kill all of them</label><textarea id="r-solid-world-9" data-k="n-solid-world-9"></textarea></div>
       </div>
 
@@ -1083,7 +1083,7 @@
           nothing, and those are exactly the two answers that had to be told apart.</p>
         <div class="callout"><b>The interesting answer is the boring one</b>
           Aiming squarely at something solid and being told <b>nothing was found</b> means that object has
-          no collision on the server. That is <a href="../ISSUE-REGISTER.md">DATA-22</a> — 252 objects in
+          no collision on the server. That is <a href="../Docs/ISSUE-REGISTER.md">DATA-22</a> — 252 objects in
           zone 448 convert to an empty shape at load. This is the first time it can be checked while
           standing in front of one instead of by rebuilding the zone offline.</div>
         <div class="steps">
@@ -1136,7 +1136,7 @@
       235 produce an empty hull, 17 are rejected as malformed, and no other shape type fails anywhere in the
       zone. A failed object becomes a 1m placeholder at the chunk origin at height zero, about 400m under the
       basin floor, so nothing invisible blocks anything — the object is simply absent, and you can shoot
-      through a rock that is visibly there. Filed as <a href="../ISSUE-REGISTER.md">DATA-22</a>.</p>
+      through a rock that is visibly there. Filed as <a href="../Docs/ISSUE-REGISTER.md">DATA-22</a>.</p>
     <p><strong>One theory died on the way</strong>, and it is worth recording so nobody re-runs it. These map
       files store the world at five levels of detail and the loader reads only level 3, which looks exactly
       like where small scenery would be lost. Parsing a raw chunk file directly says level 3 is the only level

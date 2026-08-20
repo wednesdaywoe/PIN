@@ -14,9 +14,9 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the type id tables:
+    <p>Part of the in-game test queue. Setup, admin commands and the type id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The first check of <a href="../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs">HazardSim</a>, which is the
+    <p>The first check of <a href="../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs">HazardSim</a>, which is the
     first thing in the server that can hurt you without something else pulling a trigger. Until it landed
     every <code>TakeDamage</code> call came from a projectile or an <code>InflictDamage</code> aptitude command, so deep water
     and melding walls — both near-instant deaths in retail — did nothing, and a character read as
@@ -29,7 +29,7 @@
       the server intact.</li>
     <li><strong>The melding is inferred.</strong> Where the wall is comes from the same control points the client draws,
       but <em>which side of it is lethal</em> is read off the winding of those points, and the damage rate is
-      invented (<a href="../gaps/data.md#data-12">DATA-12</a>). ENV-3 is the entry that matters: it is the only thing
+      invented (<a href="../Docs/gaps/data.md#data-12">DATA-12</a>). ENV-3 is the entry that matters: it is the only thing
       standing between this and a server that kills players in safe territory.</li>
     </ul>
     <p>Run <strong>ENV-3 before ENV-4</strong>, and run ENV-3 with <code>invuln</code> on.</p>
@@ -103,7 +103,7 @@
       description nibbles turned up in zone 448, not one</strong>:</p></div>
       <span class="cmd"><pre><code>[23:02:18 DBG] Water description nibble 0 seen for the first time; every nibble is read as WaterDesc 10001</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      [23:04:52 DBG] Water description nibble 2 seen for the first time; every nibble is read as WaterDesc 10001</code></pre><button class="copy" type="button">Copy</button></span>
       <p>So the zone has at least two water bodies with different descriptions, and the assumption in
-      <a href="../gaps/data.md#data-13">DATA-13</a> is doing real work rather than covering a case that never
+      <a href="../Docs/gaps/data.md#data-13">DATA-13</a> is doing real work rather than covering a case that never
       happens. If nibble 2 indexes the six rows in id order it would be row 10003, which starts drowning
       at 0.0845 and killing at 0.328 — knee deep. That is a guess about the indexing and not a reason to
       act, but it is the reason not to resolve the nibble on a hunch. Nobody drowned in the shallows,
@@ -235,7 +235,7 @@
       <div class="callout pass"><p>Pass: <code>entered the melding at New Eden Melding 03</code> appears as you cross, damage starts, and you die
       in about twelve seconds — 5% of max health every 500ms through shields and health both.</p></div>
       <p>That 5% is invented and is the only invented number in this stream
-      (<a href="../gaps/data.md#data-12">DATA-12</a>). Retail killed you faster than this. It is tuned to be
+      (<a href="../Docs/gaps/data.md#data-12">DATA-12</a>). Retail killed you faster than this. It is tuned to be
       unmistakably lethal while still leaving time to turn around, on the grounds that a wall which kills
       you before the log line renders is harder to test than one that doesn't. If it feels wrong in play,
       say how it felt — that is the only evidence available, since no melding-wall effect survives in the
@@ -256,7 +256,7 @@
       under longer. Damage stopped inside one tick of surfacing each time. That is the whole of what this
       entry was asking.</p>
       <p><strong>The shield step is void and should be ignored, not retried.</strong> Step 3 says "let shields recharge",
-      and the pool has been 0 since <a href="../ISSUE-REGISTER.md">DATA-1</a> closed — the 1962 client has no shield
+      and the pool has been 0 since <a href="../Docs/ISSUE-REGISTER.md">DATA-1</a> closed — the 1962 client has no shield
       display and PIN no longer invents one. Shields were never what this entry measured; the ramp was.
       Read step 3 as "surface, wait a moment, go back under".</p>
       <p>For reference, the melding does <strong>not</strong> ramp: it lands a flat 960 a tick and killed the player in

@@ -198,13 +198,16 @@ public class CharacterInventory
             SubInventory = GetInventoryTypeByItemTypeId(sdbId),
             Durability = 1000,
 
-            // 82337 — the capture's one 37-byte single-item add, and what this was originally
-            // calibrated on — carries IsBound alone. It is the outlier. The session's other 13
-            // single-item adds all carry IsBound|Unk_0x02, and 0x02 is guessed as "is new", which is
-            // what an inventory list would read to decide whether to draw an arriving row. NET-18 is
-            // exactly that symptom: the item is real and equippable but never listed until the whole
-            // inventory is redrawn. Untested against a client.
-            DynamicFlags = (byte)(ItemDynamicFlags.IsBound | ItemDynamicFlags.Unk_0x02),
+            // NET-18 — a created item is real and equippable but the client never lists it until the
+            // whole inventory is redrawn (it only appears after a full <c>dbg_inventory resend</c>).
+            // The partial <c>InventoryUpdate</c> the client declines is missing its arrival flag.
+            // Retail's ordinary single-item add carries DynamicFlags = 2 (the 0x02 "is new" bit, which
+            // an inventory list reads to decide whether to draw a new row); PIN was sending 1
+            // (IsBound), calibrated on the capture's one outlier single-item add (82337, which was
+            // bound). 0x02 is that arrival flag. The extra IsBound retail's ordinary adds do not carry
+            // is dropped to match them exactly. Untested against a client — the flag is a suspect, not
+            // a finding, until the item actually shows.
+            DynamicFlags = (byte)ItemDynamicFlags.Unk_0x02,
             TimestampEpoch = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Modules = [],
             Unk1 = 0,

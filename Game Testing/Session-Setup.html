@@ -15,7 +15,7 @@ servers up, the log being watched, and the type ids to hand.</p>
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>What every entry in the <a href="README.md">test queue</a> assumes is already done: a build deployed, the
+    <p>What every entry in the test queue assumes is already done: a build deployed, the
     servers up, the log being watched, and the type ids to hand.</p>
   </section>
   <section class="doc" id="starting-a-session">
@@ -76,10 +76,10 @@ servers up, the log being watched, and the type ids to hand.</p>
     <p>Two named tags predate the archive and are kept only because test entries written at the time name
     them: <code>good</code> is the <code>c659335</code> build from before the Damage/Effect work, and <strong><code>current</code> is a
     misnomer</strong> — it is the 2026-08-11 build, not the newest, and selecting it silently rolls back
-    environmental damage, <code>invuln</code>, the <a href="../ISSUE-REGISTER.md">DATA-11</a> weapon-modifier fix and NPC
+    environmental damage, <code>invuln</code>, the <a href="../Docs/ISSUE-REGISTER.md">DATA-11</a> weapon-modifier fix and NPC
     locomotion. The listing prints real dates beside every entry so no tag has to be trusted.</p>
     <h3 id="where-the-scripts-live">Where the scripts live</h3>
-    <p>In the repo, at <a href="../../Tools/Session/">Tools/Session/</a> — <code>start-pin.sh</code>, <code>deploy.sh</code>,
+    <p>In the repo, at <a href="../Tools/Session/">Tools/Session/</a> — <code>start-pin.sh</code>, <code>deploy.sh</code>,
     <code>use-build.sh</code> and <code>openssl-legacy.cnf</code>. <code>~/Games/PIN</code> holds symlinks to them, so every path in
     this doc and in the older entries still works and the pipeline is version-controlled with the code
     it builds. It used to exist only in the deployment directory, one <code>rm -rf</code> from gone.</p>
@@ -435,7 +435,7 @@ servers up, the log being watched, and the type ids to hand.</p>
     spawn several, or use <code>1375</code>, which is the hardest-hitting id here that is both hostile and ranged.</p>
     <p><strong>Don't reach past that for something faster without checking its clip.</strong> PIN doesn't model ammo or
     reloading, so a weapon that shipped with a one-round clip fires continuously instead of once per
-    reload, and its damage comes out wildly inflated — <a href="../gaps/data.md#data-14">DATA-14</a>. Monster 281
+    reload, and its damage comes out wildly inflated — <a href="../Docs/gaps/data.md#data-14">DATA-14</a>. Monster 281
     (Chosen Sniper) is the clean example: 500 damage a round, <code>clip = 1</code>, <code>reload = 1000ms</code>, so retail
     gave it about 450 dps and PIN gives it 2000. It will kill you in eleven seconds, and none of that is
     a real number. Prefer ids with a large clip — 1375 carries 500 rounds, 2342 carries 9600.</p>

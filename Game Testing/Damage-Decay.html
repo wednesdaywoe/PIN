@@ -14,14 +14,14 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
     <a href="Session-Setup.html">Session Setup</a>.</p>
     <p>Added in the current working tree:
-    <a href="../../UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs">DamageFalloff</a>,
+    <a href="../UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs">DamageFalloff</a>,
     wired into <code>ProjectileSim.FireProjectile</code>, printed by <code>dbg_weapon</code>. See
-    <a href="../Architecture/06-combat-and-damage.md">layer 6</a>.</p>
+    <a href="../Docs/Architecture/06-combat-and-damage.md">layer 6</a>.</p>
     <p>The curve maths is already covered offline by <code>DamageFalloffTests</code> in
-    <a href="../../Tests/GameServer.Tests">Tests/GameServer.Tests</a>, so these checks are only about whether the
+    <a href="../Tests/GameServer.Tests">Tests/GameServer.Tests</a>, so these checks are only about whether the
     model matches the client and whether the SDB values make it fire at all.</p>
     <p>Reading <code>dbitems::Ammo</code> and <code>dbitems::WeaponTemplates</code> out of the retail <code>clientdb.sd2</code> answers the
     "does it fire at all" half without a client. <code>Resolve</code> enables decay for 120 of the 318 weapon
@@ -275,7 +275,7 @@
       <div class="entry"><div class="entry-head"><span class="id">DMG-DECAY-4</span><span class="marker pass">[x]</span><span class="entry-t">The client draws the server's number, and doesn't argue with it</span></div><p>This entry was written as "the real test of the model, since the client computes its own expectation
       from the same SDB columns". <strong>That premise is wrong for PIN</strong>, and finding that out is most of what
       running it was worth. <code>CharacterEntity.TakeDamage</code> hands the applied amount to
-      <a href="../../UdpHosts/GameServer/Systems/Combat/DamageEvents.cs">DamageEvents.Describe</a>, which puts it in
+      <a href="../UdpHosts/GameServer/Systems/Combat/DamageEvents.cs">DamageEvents.Describe</a>, which puts it in
       <code>DealtHit.DamageData.DamageValue</code> and sends it to the attacker. The floating number over the target
       <em>is</em> the server's number. It cannot disagree, so no run of this entry can confirm or kill the curve.</p>
       <p>What it does establish, and what the 2026-08-11 run did establish: <code>DealtHit</code> reaches the client and
@@ -296,7 +296,7 @@
       multiplying predicts 45, 43.5, 40.5 and 37.5, and gets three of the four wrong. So decay applies to
       the full-precision damage per round, <code>HeadshotMult</code> scales what's left, and the single rounding
       happens last, exactly as
-      <a href="../Architecture/06-combat-and-damage.md">layer 6</a> describes it.</p>
+      <a href="../Docs/Architecture/06-combat-and-damage.md">layer 6</a> describes it.</p>
       <h3 id="what-remains-genuinely-unverified">What remains genuinely unverified</h3>
       <p>Not the two anchors — DMG-DECAY-1 confirmed those come straight out of <code>Range × DamageDecayRangefrac</code> and
       <code>DamagePerRound × MinDamageFrac</code>. What no test here can reach is the <strong>shape between them</strong>.
@@ -304,7 +304,7 @@
       466 <code>TookHit</code> damage values in the 2016 recording, and pairing one with a distance means
       reconstructing both entities' positions from the <code>MovementView</code> and <code>ConfirmedPoseUpdate</code> traffic
       around it — see <a href="Capture-Replay.html">Capture Replay</a>.</p>
-      <p>Deliberately not queued. The <a href="../Restoration.md">restoration charter</a> doesn't treat fidelity as a
+      <p>Deliberately not queued. The <a href="../Docs/Restoration.md">restoration charter</a> doesn't treat fidelity as a
       constraint, the curve is anchored correctly at both ends, and a different interpolation would move
       mid-range damage by a couple of points. Worth doing if the shape ever starts mattering to how
       something feels; not worth the archaeology now.</p><div class="result"><label for="r-dmg-decay-4">Result</label><textarea data-k="n-dmg-decay-4" id="r-dmg-decay-4" placeholder="What happened"></textarea></div></div>

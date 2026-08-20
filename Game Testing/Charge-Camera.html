@@ -14,7 +14,7 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup and admin commands:
+    <p>Part of the in-game test queue. Setup and admin commands:
     <a href="Session-Setup.html">Session Setup</a>. The client-side logging these entries lean on is set up in
     <a href="Client-Logging.html">Client Logging</a>.</p>
     <p>Eight attempts at one bug, kept in full because the dead ends are the argument for the fix. Read
@@ -375,7 +375,7 @@
       <code>LocalEffectsController</code>, <code>EntityManager.ScopeIn</code> keyframes it to the owning player only, and
       <code>FlushChanges</code> flushes it alongside the other controllers. All 64 slots have just always been null.</p>
       <p>The change is in
-      <a href="../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs">CharacterEntity.SetStatusEffect</a>,
+      <a href="../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs">CharacterEntity.SetStatusEffect</a>,
       next to the existing <code>StatusEffects_N</code> writes: fill <code>LocalStatusEffects_{index}</code> with
       <code>{ Entity = data.Initiator, Effect = data.Id, Time = data.Time }</code> on apply and null it on clear,
       using the same slot index the 32-slot array uses. Nothing else moves, and the two arrays can't

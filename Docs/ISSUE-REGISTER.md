@@ -5,7 +5,7 @@ title: Issue Register
 id-prefix: DATA / NET / CLIENT
 relates:
   - PROGRESS.md
-  - In-Game-Tests/index.html
+  - ../Game Testing/index.html
 ---
 
 # Issue Register
@@ -22,7 +22,7 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 **The first deliberate sitting on terrain ran on 2026-08-17 and the world held: five of seven
 entries passed, and the two findings are both PIN's, not the merge's.**
-[Solid World](In-Game-Tests/solid-world.html) went 5 of 7 with one measurement and one failure.
+[Solid World](../Game Testing/solid-world.html) went 5 of 7 with one measurement and one failure.
 Shots stop where the world is (391 world hits, none nearer than a metre), creatures still shoot on
 open ground (675 hits on the player), and **a rise is cover now** — four holds for `NoLineOfSight`
 at 12–15m against a 180m rifle, which is the behaviour the whole merge was for. The muzzle problem
@@ -39,7 +39,7 @@ uphill walks into the air and why wave members spawn inside hillsides. That seco
 one worth watching, because it is an old placement bug that only became a defect when the ground
 started stopping bullets. **The query was written the same day** — one downward raycast against
 statics, feeding creature movement and the wave ring — **and verified in game 2026-08-19**:
-[the follow-up run](In-Game-Tests/solid-world.html) went 3 of 3, the chasing creature stayed on the
+[the follow-up run](../Game Testing/solid-world.html) went 3 of 3, the chasing creature stayed on the
 surface, the wave ring spawned at the slope's own heights with every member killable, and `probe`
 answered all of its controls. DATA-23 closes, and with it
 [DATA-15](gaps/data.md#data-15)'s walk-there-and-place discipline stops being the only ground truth.
@@ -54,7 +54,7 @@ and damage together, which is the property that closes
 constants could not. The only invented step is the conversion, and it has exactly one free parameter,
 expressed as a quotient of two constants so that moving it moves the whole ladder and keeps its
 shape: `1200 health / grade 20 = 60 health a grade point`, where both numbers come from
-[D6](In-Game-Tests/Damage-Loop.html#-d6-a-basic-creature-dies-in-about-two-seconds) rather than from
+[D6](../Game Testing/Damage-Loop.html#-d6-a-basic-creature-dies-in-about-two-seconds) rather than from
 preference. A grade-300 miniboss lands at 17,334 health against the player's 19,192 — a real fight
 that is still winnable — and nothing between the anchor and there had to be argued for separately,
 because the shipped grades already order them. Levels stay internal, which is what the
@@ -65,7 +65,7 @@ they fall back to the anchor row, so nothing regresses, but grade 0 means *unrat
 tier multiplier is a *ratio* of two curve rows, which cancels whatever unit the `damage` column is
 in, but a weapon template shipping `damage_per_round` **1** still rounds to 1 or 2 across every grade
 below 65. Verified against the real SDB on the running server; the in-game check is
-[D7](In-Game-Tests/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size), which uses two
+[D7](../Game Testing/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size), which uses two
 creatures that share a weapon so the tier is the only thing that can differ.
 
 **The 2026-08-15 sitting's most useful hour was spent on a bug that wasn't one, and it closed
@@ -157,7 +157,7 @@ one being confirmed — a resend that was recognised and then handled a second t
 resent split fragment that threw on the shard thread the way [NET-21](gaps/network.md#net-21) did.
 Neither would have been found by running the code, because neither happens on a link that doesn't
 drop anything. **[NET-1](gaps/network.md#net-1) came out of the same read**, built the same day and
-calibrated entirely off that capture; it stays `[~]` until [L1](In-Game-Tests/Reliability.html) plays a
+calibrated entirely off that capture; it stays `[~]` until [L1](../Game Testing/Reliability.html) plays a
 session under induced loss.
 
 **[NET-25](gaps/network.md#net-25) is the one that same read opened and left open, on purpose.** PIN
@@ -175,13 +175,13 @@ the world forever while asking for keyframes of it every 5.5 seconds, and
 [DATA-18](gaps/data.md#data-18), the hardcoded ability that sends it away. They come off the same
 `OnInteraction`/`OnUpdate` split, and NET-24's code read makes it a likely costume for
 [NET-1](gaps/network.md#net-1) — one scope-out sent once on a channel that acks but never resends.
-That channel resends now, so [L6](In-Game-Tests/Reliability.html) is written to settle it either way:
+That channel resends now, so [L6](../Game Testing/Reliability.html) is written to settle it either way:
 a count that drops to zero closes NET-24, and one that keeps climbing retires the theory, which is
 worth as much.
 
 **What this register is short of is a re-audit, not entries.** Everything below was mined in one
 sweep on 2026-08-12 across [the progress ledger](PROGRESS.md)'s milestone write-ups, the
-[Architecture Guide](Architecture/README.md), the [Test Register](In-Game-Tests/index.html)'s incident
+[Architecture Guide](Architecture/README.md), the [Test Register](../Game Testing/index.html)'s incident
 narratives (Charge-Camera and Transport-And-Lifecycle especially), and a grep for
 TODO/hardcoded/guess markers across the codebase. Only entries a sitting touched have been looked at
 since, so the parts of the codebase the test queue hasn't reached are still on their first pass.
@@ -203,7 +203,7 @@ has no entries in that category, which reflects nothing having run rather than n
   Recharge values (150/sec, 10000ms) are shipped data and unchanged
 - [x] **DATA-2** — Thump `nodeType` hardcoded to `20`, every deposit identical. Fixed in code
   2026-08-13 by M4 — node type resolves from the deposit under the calldown, barren ground stays
-  20 — and **confirmed in game 2026-08-14** by [S3–S5](In-Game-Tests/Thump-Placement.html): four
+  20 — and **confirmed in game 2026-08-14** by [S3–S5](../Game Testing/Thump-Placement.html): four
   distinct node types resolved from position in one sitting (242, 241, 233, and 20 for barren), and
   the same deposit paid 48 near its center against 33 at 59% out
 - [~] **DATA-3** — `Battleframe.base_health` reads ~1000 in SDB vs. 19192 observed live, no scaling
@@ -226,7 +226,7 @@ has no entries in that category, which reflects nothing having run rather than n
 - [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs
 - [~] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
   pool for every creature, and at 2500 that was ~64 player rifle shots each — the "bullet sponge"
-  reading [N16](In-Game-Tests/NPC-Combat.html) came back with. Researched 2026-08-13: `MonsterScaling`
+  reading [N16](../Game Testing/NPC-Combat.html) came back with. Researched 2026-08-13: `MonsterScaling`
   shipped whole (80 levels, 100..153726 health) but is keyed by level, and level was server content.
   Dropped to 500 on 2026-08-13, then **raised to 1200 on 2026-08-15** when the beta-video reading
   that produced the 500 was re-converted with a real rate of fire — 600 dps of Heavy MG makes 500
@@ -249,7 +249,7 @@ has no entries in that category, which reflects nothing having run rather than n
   seen hitting a player in one evening for materially different amounts — monster **1189 for 112 a
   hit**, monster **528 for 49** — so damage is no longer one number for everything that walks.
   That is the `damage` column of the matched `MonsterScaling` row arriving intact, and it is what
-  [D7](In-Game-Tests/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size) was written to
+  [D7](../Game Testing/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size) was written to
   ask. It does not close D7, which wants *health* read off two graded creatures side by side; it
   does say the path from grade to live number is not broken anywhere along its length.
   **Built the same day and the entry is now partly closed.**
@@ -263,7 +263,7 @@ has no entries in that category, which reflects nothing having run rather than n
   pool**, falling back to the anchor row so nothing regresses — but 0 means unrated, not harmless
   (`EliteWanderer` rates 0), which is what keeps this open. Verified against the real SDB on the
   running server, 13 unit tests, in-game check is
-  [D7](In-Game-Tests/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size)
+  [D7](../Game Testing/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size)
 - [ ] **DATA-7** — Character level comes from `HardcodedCharacterData`, not real progression
 - [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
   (muzzle offset, GlobalCooldown, ForcePush force)
@@ -274,11 +274,11 @@ has no entries in that category, which reflects nothing having run rather than n
   `perceptionDist` in the file
 - [x] **DATA-11** — A zero in a `WeaponTemplateModifiers` multiplier column was read literally and
   annihilated the stat, resolving 269 weapons to no range and 220 to no damage; found by
-  [N2/N6](In-Game-Tests/NPC-Combat.html), fixed 2026-08-12
+  [N2/N6](../Game Testing/NPC-Combat.html), fixed 2026-08-12
 - [ ] **DATA-12** — Melding wall damage rate is invented; no melding-wall effect survives in the
   client db to read one from, unlike drowning's 787/789
 - [ ] **DATA-13** — The water description nibble indexes per-zone map data the server doesn't have,
-  so every body of water is read as the standard row 10001; [E1](In-Game-Tests/Environment.html)
+  so every body of water is read as the standard row 10001; [E1](../Game Testing/Environment.html)
   confirmed zone 448 uses at least two of them
 - [ ] **DATA-14** — No ammo or reload model, so an NPC weapon with a small clip fires continuously
   and its damage comes out inflated — monster 281's sniper reads 2000 dps against a real ~450
@@ -287,7 +287,7 @@ has no entries in that category, which reflects nothing having run rather than n
   holds a monster placement. Open by necessity, not pending work
 - [ ] **DATA-16** — `dbitems::LootTable.roll_mode` is unmapped, so how a loot table's entries combine
   is inferred from the tables' own arithmetic; costs drop rates, not correctness, and
-  [K2](In-Game-Tests/Kill-Rewards.html) is the only measurement available
+  [K2](../Game Testing/Kill-Rewards.html) is the only measurement available
 
 - [x] **DATA-17** — Deposit 1, the zone's richest, sat inside the starting station's no-thumping
   zone: its center was 14.7m from outpost 17's, and every scan taken on the shelf on 2026-08-13 came
@@ -307,7 +307,7 @@ has no entries in that category, which reflects nothing having run rather than n
   split between the two paths, so the hardcoded `34216` is the suspect and the shipped
   `completed_ability` (123 on all 40 `aptfs::ResourceNodeBeaconCalldownCommandDef` rows) is what
   retail played. Cosmetic, and a one-line read to fix once a side-by-side confirms it —
-  [G4](In-Game-Tests/Resource-Payout.html) is written to take that reading.
+  [G4](../Game Testing/Resource-Payout.html) is written to take that reading.
   **The side-by-side ran 2026-08-16 and confirms the split, but rules out the mechanism this entry
   assumed.** Early collection played the full launch animation; the ordinary departure shot straight
   up with none, in the same session on the same deposit. However **both abilities carry a
@@ -324,7 +324,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 - [ ] **DATA-19** — No ultimate-charge model: slotting an Ultimate empties its charge meter and
   nothing ever refills it, so every Ultimate is a one-way trip to unusable. Found 2026-08-14 by
-  [P1](In-Game-Tests/Prediction-Sweep.html): module 141814 (the second Charge, ability 41232) is an
+  [P1](../Game Testing/Prediction-Sweep.html): module 141814 (the second Charge, ability 41232) is an
   Ultimate, slotting it emptied the meter, and the in-combat refill the client expects never came —
   which blocks P1 outright and any other sweep candidate that turns out to be an Ultimate. Retail
   charged the meter through combat activity; whatever stat or message carries that gain, PIN never
@@ -376,7 +376,7 @@ has no entries in that category, which reflects nothing having run rather than n
   **Reading the result in game is the hard part, and it is not this system's fault**: the shipped
   client only draws a creature's health bar while your aim is on it, so the entity the splash
   reaches is by definition the one whose bar is hidden (see
-  [the method notes](In-Game-Tests/README.md#health-bars-are-aim-driven-so-splash-cannot-be-read-off-them)).
+  the method notes)).
   The `Splash from` line is the reading, not the screen.
   `WeaponSplash` resolves the ammo columns and
   `ProjectileSim` runs a second pass over everything in reach of the impact, sharing `SplashFalloff`
@@ -390,7 +390,7 @@ has no entries in that category, which reflects nothing having run rather than n
   including every thrown grenade and mortar shell, so it counts projectile penetration instead.
   `dbg_weapon` now prints the resolved radius and what the blast is worth at four distances, which
   is how to tell a weapon that cannot splash from one that should have.
-  [V7](In-Game-Tests/Deployables-And-Vehicles.html) and [D3](In-Game-Tests/Damage-Loop.html) are the
+  [V7](../Game Testing/Deployables-And-Vehicles.html) and [D3](../Game Testing/Damage-Loop.html) are the
   check and both are rewritten to run against a weapon.
   `dbitems::Ammo.impact_radius` carries a real radius on **612 of 1264 ammo rows**, from 2m up to
   30m, and PIN loads the record without ever looking at that field. `ProjectileSim.TryResolveHit`
@@ -401,7 +401,7 @@ has no entries in that category, which reflects nothing having run rather than n
   `Splashrange` (set on 2081 of 2449 damage steps) and applies `SplashFalloff`, so the falloff
   curve [DATA-4](gaps/data.md#data-4) questions is only ever reached through an ability. Closing
   this means giving the weapon path the same second pass, keyed on the ammo radius rather than on a
-  command def. It also blocks [V7 and D3](In-Game-Tests/Deployables-And-Vehicles.html) from being run
+  command def. It also blocks [V7 and D3](../Game Testing/Deployables-And-Vehicles.html) from being run
   with a weapon at all
 
 - [ ] **DATA-22** — **252 objects in New Eden have no collision on the server**, found 2026-08-17
@@ -414,7 +414,7 @@ has no entries in that category, which reflects nothing having run rather than n
   is no phantom wall in the playable world — the whole cost is the object being absent. Killed on
   the way past: the loader reads only detail level 3 of five, which looks like the obvious culprit
   and is not — level 3 is the only level carrying collision at all. Same rebuild confirmed water and
-  movement-blocker collision are parsed and consumed by nobody. **Findable in game, and the instrument is verified**: the new `probe` command reports whether the aim ray met the world, an entity or nothing — [SOLID-WORLD-10](In-Game-Tests/solid-world.html) ran 2026-08-19 and every control answered correctly, though the night's hunt found no collision-less object, so the 252 remain known only from the offline rebuild. The sweep now costs nothing and can ride along in any sitting
+  movement-blocker collision are parsed and consumed by nobody. **Findable in game, and the instrument is verified**: the new `probe` command reports whether the aim ray met the world, an entity or nothing — [SOLID-WORLD-10](../Game Testing/solid-world.html) ran 2026-08-19 and every control answered correctly, though the night's hunt found no collision-less object, so the 252 remain known only from the offline rebuild. The sweep now costs nothing and can ride along in any sitting
 - [x] **DATA-23** — **Terrain is loaded and nothing queries it**, found 2026-08-17, **built the same day, verified in game 2026-08-19**. Every height in
   the server is still borrowed or assumed, with two symptoms from one missing capability: a creature
   chasing a player uphill **walks into the air**, because `Steering` gives a destination the
@@ -425,7 +425,7 @@ has no entries in that category, which reflects nothing having run rather than n
   against the loaded statics. So does [DATA-15](gaps/data.md#data-15)'s walk-there-and-place
   discipline, which exists only because a player's own footing was the sole ground truth reaching
   this server. No admin command can ask what a ray hits either — `target` reports a world strike as
-  "Failed to find target", so DATA-22 had to be measured offline. **The query is written**: `PhysicsEngine.TryGetGroundHeight`, statics only, called from `Steering` and from the wave ring, with the slope limit measured between two pieces of ground rather than against the creature's own height — measuring from its own Z freezes anything that starts buried or airborne, which the first cut did and a test caught. **Verified 2026-08-19 by [SOLID-WORLD-8 and SOLID-WORLD-9](In-Game-Tests/solid-world.html), both passed**: a chasing creature kept its feet on the surface up, across and down the same hillside that failed on 2026-08-17, and a wave ring on a slope spawned its members at the slope's own heights (6m of spread across the 20m ring), all killable, cycle paid out. The slope-limit freeze did not appear
+  "Failed to find target", so DATA-22 had to be measured offline. **The query is written**: `PhysicsEngine.TryGetGroundHeight`, statics only, called from `Steering` and from the wave ring, with the slope limit measured between two pieces of ground rather than against the creature's own height — measuring from its own Z freezes anything that starts buried or airborne, which the first cut did and a test caught. **Verified 2026-08-19 by [SOLID-WORLD-8 and SOLID-WORLD-9](../Game Testing/solid-world.html), both passed**: a chasing creature kept its feet on the surface up, across and down the same hillside that failed on 2026-08-17, and a wave ring on a slope spawned its members at the slope's own heights (6m of spread across the 20m ring), all killable, cycle paid out. The slope-limit freeze did not appear
 
 ## Networking & Protocol — NET
 
@@ -434,7 +434,7 @@ has no entries in that category, which reflects nothing having run rather than n
 - [x] **NET-1** — No retransmit queue; "reliable" only acked, never resent. Built 2026-08-14:
   `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it and resends
   after 450ms, giving up loudly after three attempts, every constant measured off the 2016 capture
-  rather than chosen. **Verified the same day by [L1–L6](In-Game-Tests/Reliability.html), 6 of 6**:
+  rather than chosen. **Verified the same day by [L1–L6](../Game Testing/Reliability.html), 6 of 6**:
   ten minutes at 5% induced loss played indistinguishably from a clean session while ~2,550
   resends did the repair work — 94% accepted on the first attempt, none reaching attempt 3,
   nothing abandoned, the queue peaking at 82 unacked. Closing it also closed
@@ -465,19 +465,25 @@ has no entries in that category, which reflects nothing having run rather than n
   by design
 - [ ] **NET-16** — Predicted effects reach the owning client twice, likely diverging from retail
 - [~] **NET-17** — `LocalEffectsData.Entity` semantics (initiator vs. target) unconfirmed
-- [ ] **NET-18** — re-scoped 2026-08-14 from "unverified" to a confirmed live defect: **the
+- [~] **NET-18** — re-scoped 2026-08-14 from "unverified" to a confirmed live defect; cause + fix 2026-08-20: **the
   client declines to merge PIN's partial item `InventoryUpdate`** — a created item appears only
   after `dbg_inventory resend` pushes the full inventory. Confirmed twice in one sitting (20003,
   then 86074). Everything else is ruled out: the item struct is right (the full send lists it, the
   garage equips it, flags round-trip), fullness is dead
-  ([I3](In-Game-Tests/Inventory.html) measured no ceiling), and resources merge fine (G1), so the
+  ([I3](../Game Testing/Inventory.html) measured no ceiling), and resources merge fine (G1), so the
   defect is confined to the item arrays of the partial message. **Capture message [9] compared
   2026-08-15**: the envelope is already retail's exactly, but message [9] is the session's one
   outlier single-item add and PIN was calibrated on it — 13 ordinary adds carry `DynamicFlags = 2`
-  (guessed `is_new?`) where PIN sends `1`. Untested against a client. Durability ruled out. The
-  `createitem` → `resend` workaround unblocks the queue meanwhile
+  (the `0x02` `is_new?` arrival flag an inventory list reads to draw a new row), where PIN sent `1`
+  (`IsBound`). **Fix 2026-08-20**: `CreateItem` now sends `0x02`, matching the ordinary adds and
+  dropping the speculative `IsBound` (this also resolves a record disagreement — the code comment
+  said the adds carried `3`, but the measured table says `2`; the flag is set either way, so the
+  NET-18 direction was right all along). **Headless check passed**: the created item carries `0x02`
+  and that update is what goes out ([network.md#net-18](gaps/network.md#net-18)). Client
+  confirmation still open — watch the item appear after `createitem` with no `resend`. Durability
+  ruled out. The `createitem` → `resend` workaround unblocks the queue meanwhile
 - [x] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) confirmed by
-  [P0](In-Game-Tests/Prediction-Sweep.html) on 2026-08-14: the cert-gated 86074 slots on the
+  [P0](../Game Testing/Prediction-Sweep.html) on 2026-08-14: the cert-gated 86074 slots on the
   Dreadnaught and every garage frame reads level 45
 - [~] **NET-20** — The 47-effect Prediction Sweep is almost entirely unverified
 - [x] **NET-21** — An encounter throwing from `Tick` killed the whole shard thread; the Coral Forest
@@ -495,15 +501,15 @@ has no entries in that category, which reflects nothing having run rather than n
   sitting, growing by one loop per thumper. A code read pinned it as [NET-1](gaps/network.md#net-1)
   in costume — one scope-out, sent once, on a channel that never resent — and landed three changes
   alongside the retransmit queue. **Closed 2026-08-14 by
-  [L6](In-Game-Tests/Reliability.html)**: the first post-fix full-cycle thumper left 2 stale requests,
+  [L6](../Game Testing/Reliability.html)**: the first post-fix full-cycle thumper left 2 stale requests,
   static on a re-read, and the ground was empty when the tester returned. Which change did it —
   the retransmit queue or the failed-request-answers-with-scope-out fallback — is undetermined;
-  [G6](In-Game-Tests/Resource-Payout.html)'s Debug-line dating remains the optional measurement, and
+  [G6](../Game Testing/Resource-Payout.html)'s Debug-line dating remains the optional measurement, and
   the full history is in [the gap entry](gaps/network.md#net-24)
 
 - [~] **NET-23** — A dead player had no way back: `Die` ran correctly and `RequestRespawn` was
   implemented, but the client never sent it, so death ended the session in a reconnect. Found by
-  [N16](In-Game-Tests/NPC-Combat.html) on 2026-08-13, the first time the game rather than a command
+  [N16](../Game Testing/NPC-Combat.html) on 2026-08-13, the first time the game rather than a command
   killed a player. **Root-caused 2026-08-15 from the client's own `Bleedout.lua`**: retail's death
   is two stages, and the screen carrying the give-up prompt opens only on character state
   `incapacitated`. PIN went straight from alive to `Dead`, so the screen never opened and
@@ -512,7 +518,7 @@ has no entries in that category, which reflects nothing having run rather than n
   **Built the same day, unverified**: a player now goes to `Incapacitated` with the `respawn_input`
   permission and a `RespawnTimesData` pair, taps out on Reload, and is respawned after 30s by
   `BleedoutSim` if they don't. **Run the same day and both routes pass**:
-  [B1](In-Game-Tests/Death-And-Respawn.html) on the give-up key (down 11:17:02, respawned 11:17:05)
+  [B1](../Game Testing/Death-And-Respawn.html) on the give-up key (down 11:17:02, respawned 11:17:05)
   and B3 on the fallback (down 11:03:51, respawned 11:04:22), with both sessions ending in menu
   logouts rather than the reconnect every previous death forced. **The symptom is gone.** B1 also
   retires the units guess: the tap-out gate reads the same clock value the countdown does, so a
@@ -536,18 +542,18 @@ has no entries in that category, which reflects nothing having run rather than n
   which on loopback is never
 
 - [ ] **NET-26** — A predicted toggle cancels itself while the server still holds the effect.
-  Found by [P2](In-Game-Tests/Prediction-Sweep.html) on 2026-08-14, the first prediction entry run
+  Found by [P2](../Game Testing/Prediction-Sweep.html) on 2026-08-14, the first prediction entry run
   after P0 opened the gate: Turret Mode (effect 10810) engages on keypress and shuts off seconds
   later, unprompted. The client log shows apply, the server's confirmation landing (`too many
   stacks`), then removal and cancel with no toggle-off pressed; the server log shows 10810 set and
   **never cleared**, its companions 10812–10815 each set and cleared within ~40ms, and 1184 gone
-  after 1.5s. The mirror image of the stuck camera ([D5h](In-Game-Tests/Charge-Camera.html)): there
+  after 1.5s. The mirror image of the stuck camera ([D5h](../Game Testing/Charge-Camera.html)): there
   the client kept an effect the server had dropped, here it abandons one the server keeps.
   **Confirmed a class bug the same sitting**: Frontline Medic I (effect 2322, FRAME+CSTATE, no
   `serverconfirmed`) self-cancels identically, so the common denominator is the `requirecstate`
   check — the client requiring a character state the server never sets — and the
   missing-confirmation theory is out as the common cause. The critical experiment —
-  [P3](In-Game-Tests/Prediction-Sweep.html) Hover Mode, whose required state (airborne) the client
+  [P3](../Game Testing/Prediction-Sweep.html) Hover Mode, whose required state (airborne) the client
   tracks locally — ran the same sitting and **held for the whole flight**, so the failing CSTATEs
   are specifically **server-owned states** the server never sets. A post-sitting server-log read
   sharpened it further: Turret's chain set its effects in full and the client cancelled anyway,

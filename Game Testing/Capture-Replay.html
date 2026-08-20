@@ -14,10 +14,10 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>.</p>
+    <p>Part of the in-game test queue.</p>
     <p>Some of what's queued elsewhere is a question about what the real server sent, not about what PIN
     does with it. Those can be read off a recording of a live session instead of waiting for a trip to
-    the game machine. <a href="../../Tools/CaptureReplay">Tools/CaptureReplay</a> decodes a capture through PIN's
+    the game machine. <a href="../Tools/CaptureReplay">Tools/CaptureReplay</a> decodes a capture through PIN's
     own framing and AeroMessages types.</p>
     <p>Get the captures once — they are not in this repo:</p>
     <span class="cmd"><pre><code>git clone --depth 1 https://github.com/themeldingwars/Documentation.git ~/Games/PIN/captures</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    gunzip -k "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng.gz"</code></pre><button class="copy" type="button">Copy</button></span>
@@ -38,7 +38,7 @@
   <section class="doc" id="what-it-answers">
     <h2>What it answers</h2>
     <p><strong>Live shield values.</strong> The roadmap's M1 wants to know whether <code>Battleframe</code> shipped real shields
-    or whether <a href="../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs">HardcodedCharacterData</a> is
+    or whether <a href="../UdpHosts/GameServer/Data/HardcodedCharacterData.cs">HardcodedCharacterData</a> is
     inventing them. <code>Character_BaseController</code> carries <code>CurrentShields</code> and <code>MaxShields</code> next to
     <code>CurrentHealth</code> and <code>MaxHealth</code>, so the live server's answer is in the third query above. Across
     the 36 messages that carry those fields for the player entity, <code>CurrentShields</code> and <code>MaxShields</code>
@@ -59,7 +59,7 @@
     <p><code>base_health</code> in the same table reads ~1000 against the capture's live 19192, which confirms it as a
     pre-scaling base. Worth remembering before anything tries to source health from it directly; the
     scaling that closes that gap isn't implemented.</p>
-    <p>What <a href="../../UdpHosts/GameServer/Data/HardcodedCharacterData.cs">HardcodedCharacterData</a> does with
+    <p>What <a href="../UdpHosts/GameServer/Data/HardcodedCharacterData.cs">HardcodedCharacterData</a> does with
     this: the recharge pair now uses the shipped 150/10000, and the pool stays non-zero at 3000 — a
     value that at least occurs in the table — as a deliberate divergence, so the absorb-with-overflow
     path in <code>TakeDamage</code> stays observable. Setting it to 0 matches retail exactly and is a one-line
@@ -93,13 +93,13 @@
     skips the messages and reads the framing: what got resent, how long the sender waited, and how the
     far side acked.</p>
     <span class="cmd"><pre><code>dotnet run --project Tools/CaptureReplay -- "$HOME/Games/PIN/captures/Captures/2016-11-15 - Gameplay.pcapng" \</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>        --no-deserialize --transport</code></pre><button class="copy" type="button">Copy</button></span>
-    <p>The whole of <a href="../streams/m8-session-stability.md">M8</a> was calibrated off this on 2026-08-14, and it
+    <p>The whole of <a href="../Docs/streams/m8-session-stability.md">M8</a> was calibrated off this on 2026-08-14, and it
     is the first time this stream has decided an implementation rather than confirmed one. 24 resends
     across 456619 sub-packets give the retransmit timeout (322–665ms, median 452), the resend count the
     header carries (3 on all 24, never 1 or 2), that a resend is byte-identical to its original (15 of 15
     where both survive), and that an ack is cumulative rather than per packet (60% of the server's
     reliable packets acked, 24 resends in the session). It also closed
-    <a href="../ISSUE-REGISTER.md">NET-3</a> outright: the XOR decode PIN had been carrying a TODO about is correct,
+    <a href="../Docs/ISSUE-REGISTER.md">NET-3</a> outright: the XOR decode PIN had been carrying a TODO about is correct,
     and the 15 pairs are the proof.</p>
   </section>
   <section class="doc" id="what-it-does-not-answer">
@@ -111,9 +111,9 @@
     <p><strong>Nothing about death, checked 2026-08-15.</strong> The session holds zero <code>Killed</code> messages
     (<code>Character_CombatView</code> 108), one <code>Respawned</code> — the login spawn — and a null <code>RespawnTimes</code> in all
     500 of the player's <code>Character_BaseController</code> keyframes. Nobody dies in it. So
-    <a href="../ISSUE-REGISTER.md">NET-23</a> cannot be answered here, and the trip is recorded rather than
+    <a href="../Docs/ISSUE-REGISTER.md">NET-23</a> cannot be answered here, and the trip is recorded rather than
     repeated. The client's own <code>Bleedout.lua</code> answered it instead; see
-    <a href="../Client-UI-Source.md">Client UI Source</a> for why that oracle usually wins for UI-gated questions.</p>
+    <a href="../Docs/Client-UI-Source.md">Client UI Source</a> for why that oracle usually wins for UI-gated questions.</p>
     <p><strong>Array-valued fields are truncated in the dump.</strong> <code>PrintValue</code> stops after four entries per array,
     so a message carrying 255 items shows four. Counting field values across a whole inventory needs
     the printer changed first; single-item messages are complete and safe to count.</p>

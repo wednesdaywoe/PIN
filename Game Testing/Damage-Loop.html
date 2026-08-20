@@ -14,7 +14,7 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p>Part of the <a href="README.md">in-game test queue</a>. Setup, admin commands and the monster type id table:
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
     <a href="Session-Setup.html">Session Setup</a>.</p>
     <p>These landed in commits <code>9768cf4</code>, <code>31f0ff3</code>, <code>4a8075e</code> but predate the pause, so their in-game
     state is unknown. Prune whatever you've already seen working.</p>
@@ -69,10 +69,10 @@
       creature was standing out near the edge, which is where it was.</p>
       <p>What is still open is the <em>shape</em>, which is the harder half and the reason the steps below want
       three targets rather than two. One reading cannot tell a straight line from a curve, and the line
-      is a guess about how the client interpolates (<a href="../ISSUE-REGISTER.md">DATA-4</a>). Run it as written.</p>
+      is a guess about how the client interpolates (<a href="../Docs/ISSUE-REGISTER.md">DATA-4</a>). Run it as written.</p>
       <p><strong>Renamed 2026-08-16.</strong> This used to say <code>InflictDamage</code> splash falloff, because that command was
       the only splash in the game. Weapons have their own now, off the ammunition's shipped blast radius
-      (<a href="../ISSUE-REGISTER.md">DATA-21</a>), and both use the same linear falloff, so the entry covers either.
+      (<a href="../Docs/ISSUE-REGISTER.md">DATA-21</a>), and both use the same linear falloff, so the entry covers either.
       The weapon path is the unverified one and is the better run.</p>
       <p><strong>Check the weapon explodes first.</strong> <code>dbg_weapon</code> prints a <code>Splash:</code> line: <code>none (ammo impact_radius
       0), direct hits only</code> for most weapons, or a radius and what the blast is worth at four distances.
@@ -80,7 +80,7 @@
       <div class="steps"><ol>
       <label class="step"><input data-k="dmg-loop-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, walk three paces, <code>npc 1196</code>, walk three more, <code>npc 1196</code> — three targets at
          increasing distance from one blast centre. Spawn them by walking rather than typing coordinates;
-         the numbers on this command are absolute world positions (<a href="README.md">method notes</a>). Keep the
+         the numbers on this command are absolute world positions (method notes). Keep the
          total spread inside the radius <code>dbg_weapon</code> printed, or the far one is simply out of reach and
          reads as a failure</span></span></label>
       <label class="step"><input data-k="dmg-loop-3-2" type="checkbox"/><span class="step-body"><span class="lede">Fire at the <strong>ground under the first one</strong>, not at it. That keeps the direct hit out of the
@@ -93,7 +93,7 @@
       not one doubled and not three.</p></div>
       <p>The four figures <code>dbg_weapon</code> prints are the prediction. Compare the log against them rather than
       judging the shape by eye; the falloff curve itself is a guess about how the client interpolates
-      (<a href="../ISSUE-REGISTER.md">DATA-4</a>) and this entry is the only thing that can say whether it is right.</p><div class="result"><label for="r-dmg-loop-3">Result</label><textarea data-k="n-dmg-loop-3" id="r-dmg-loop-3" placeholder="What happened"></textarea></div></div>
+      (<a href="../Docs/ISSUE-REGISTER.md">DATA-4</a>) and this entry is the only thing that can say whether it is right.</p><div class="result"><label for="r-dmg-loop-3">Result</label><textarea data-k="n-dmg-loop-3" id="r-dmg-loop-3" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-dmg-loop-4-setweapondamage-restores-on-effect-end">
@@ -134,7 +134,7 @@
       all three kills — which is 100 ms a round. That is the assault rifle's 105 ms, not the Heavy MG's
       65 ms. Confirming it: <code>equipitem</code> logs at Information on success and <strong>there is no such line in the
       log</strong>, only <code>13:50:59 INF createitem 85968 as item, item type Weapon, x1</code>. The equip bailed out at
-      its not-carrying guard, which is <a href="../gaps/network.md#net-18">NET-18</a> — a created item is not in the
+      its not-carrying guard, which is <a href="../Docs/gaps/network.md#net-18">NET-18</a> — a created item is not in the
       server's inventory list until it is resent.</p>
       <p>Two authoring mistakes, both worth keeping:</p>
       <div class="steps"><ol>
@@ -157,7 +157,7 @@
       resolved damage, with no reduction. So the ×0.85 step
       <a href="#-dmg-loop-2-headshot-and-crit">DMG-LOOP-2</a> recorded on the rifle is <strong>not a blanket rule and not a weapon
       property</strong>, and reading the code says why:
-      <a href="../../UdpHosts/GameServer/Systems/ProjectileSim/ProjectileSim.cs#RELIABILITY-49">ProjectileSim.cs</a> resolves
+      <a href="../UdpHosts/GameServer/Systems/ProjectileSim/ProjectileSim.cs#RELIABILITY-49">ProjectileSim.cs</a> resolves
       <code>damage = decayed * hit.DamageMod</code>, and <code>hit.DamageMod</code> arrives <strong>on the client's hit message</strong>. It
       is a per-hit value the client supplies, most likely hit location. The rifle's 39-from-46 was one
       client-sent modifier on those particular shots, not a discount applied to a weapon. Question closed.</p>
@@ -195,7 +195,7 @@
       would be a 35% damage shortfall on every automatic weapon in the game.</p>
       <p>Distinguishing them needs a shots-fired counter next to the hits, which does not exist. Worth adding
       before anyone tunes automatic weapons; not worth blocking on now.</p>
-      <p><code>MonsterMaxHealth</code> moved from 500 to 1200 that day (<a href="../gaps/data.md#data-6">DATA-6</a>). The 500 came
+      <p><code>MonsterMaxHealth</code> moved from 500 to 1200 that day (<a href="../Docs/gaps/data.md#data-6">DATA-6</a>). The 500 came
       from a tester's beta-video reading that a small Aranha died to "a few seconds of sustained chaingun
       fire", and that reading had never been divided by a rate of fire. The Heavy Machine Gun lands <strong>39 a
       round every 65 ms</strong> — <code>Rounds/burst</code> is 1 — which is <strong>600 damage a second</strong>, so 500 health was
@@ -204,7 +204,7 @@
       count measures the server.</p>
       <p>The prediction is a <strong>range, not a number, and which end it lands on is itself a result.</strong>
       <a href="#-dmg-loop-2-headshot-and-crit">DMG-LOOP-2</a> above records that a rifle resolving to 46 in
-      <a href="../Wiki/Reference/Weapons.md">Weapons.md</a> lands <strong>39</strong> on a body shot — an unexplained ×0.85 step
+      <a href="../Docs/Wiki/Reference/Weapons.md">Weapons.md</a> lands <strong>39</strong> on a body shot — an unexplained ×0.85 step
       applied at hit time, after item resolution. Whether the Heavy MG takes the same step is unknown:</p>
       <div class="tbl-scroll"><table>
       <thead>
@@ -242,7 +242,7 @@
       <label class="step"><input checked data-k="dmg-loop-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 85968</code> — the Heavy Machine Gun, 39 a round, 250-round clip, 80m range.</span></span></label>
       <label class="step"><input checked data-k="dmg-loop-6-5" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> — <strong>required, not optional.</strong> A created item is absent from the server's
          inventory list until it is resent, and <code>equipitem</code> will silently refuse it
-         (<a href="../gaps/network.md#net-18">NET-18</a>). Skipping this is what made the first run of this entry
+         (<a href="../Docs/gaps/network.md#net-18">NET-18</a>). Skipping this is what made the first run of this entry
          measure the wrong gun.</span></span></label>
       <label class="step"><input checked data-k="dmg-loop-6-6" type="checkbox"/><span class="step-body"><span class="lede"><code>equipitem 85968 Primary</code>, then <strong>confirm it took</strong>:
          <code>grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1</code> must show
@@ -262,15 +262,15 @@
       creature dies. Record both numbers, not just the count.</p></div>
       <div class="callout fail"><p>Fail, hits log a per-hit figure that is neither 39 nor 33: the health number is not the problem and
       this entry is not the one to read. A wrong per-hit figure is weapon resolution, so go to
-      <a href="../gaps/data.md#data-11">DATA-11</a> — that bug stripped a rifle's damage once already and the melee
-      weapon in <a href="../gaps/data.md#data-20">DATA-20</a> is the only live confirmation it stays fixed.</p></div>
+      <a href="../Docs/gaps/data.md#data-11">DATA-11</a> — that bug stripped a rifle's damage once already and the melee
+      weapon in <a href="../Docs/gaps/data.md#data-20">DATA-20</a> is the only live confirmation it stays fixed.</p></div>
       <div class="callout fail"><p>Fail, the count matches but it reads as far too long in the hand: the arithmetic is right and the
       target is wrong. Record how it felt — this is the one place a tester's judgement outranks the
       number, and it is why 1200 was taken from the bottom of the band rather than the middle. Note that
       <a href="NPC-Combat.html">NPC-COMBAT-16</a> called 2500 a bullet sponge, so there is a known ceiling somewhere below that.</p></div>
       <div class="callout fail"><p>Fail, far more hits than either row predicts: something is adding health after spawn, or the
       creature is not 528. Check the spawn line named the type you asked for.</p></div>
-      <p><strong>Whatever this returns, it does not close <a href="../gaps/data.md#data-6">DATA-6</a>.</strong> One flat pool for
+      <p><strong>Whatever this returns, it does not close <a href="../Docs/gaps/data.md#data-6">DATA-6</a>.</strong> One flat pool for
       every creature in the game is the entry, and 1200 is still one flat pool. What a pass buys is
       confidence in the <em>band</em>, which is what the <code>difficulty_cost</code> → level work will be anchored against.</p><div class="result"><label for="r-dmg-loop-6">Result</label><textarea data-k="n-dmg-loop-6" id="r-dmg-loop-6" placeholder="What happened"></textarea></div></div>
     </div>
@@ -362,7 +362,7 @@
       <label class="step"><input checked data-k="dmg-loop-7-4" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln on</code> — this part is about your damage, not theirs.</span></span></label>
       <label class="step"><input checked data-k="dmg-loop-7-5" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem 85968</code> — the Heavy Machine Gun, 39 a round, 250-round clip, 80m range.</span></span></label>
       <label class="step"><input checked data-k="dmg-loop-7-6" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> — <strong>required, not optional.</strong> A created item is absent from the server's inventory
-         list until it is resent (<a href="../gaps/network.md#net-18">NET-18</a>).</span></span></label>
+         list until it is resent (<a href="../Docs/gaps/network.md#net-18">NET-18</a>).</span></span></label>
       <label class="step"><input checked data-k="dmg-loop-7-7" type="checkbox"/><span class="step-body"><span class="lede"><code>equipitem 85968 Primary</code>, then confirm it took:
          <code>grep -a "equipitem" ~/Games/PIN/logs/GameServer.log | tail -1</code> must show
          <code>equipitem 85968 guid ... into Primary</code>. No line means the run is void.</span></span></label>
@@ -380,7 +380,7 @@
       <a href="#-dmg-loop-6-a-basic-creature-dies-in-about-two-seconds">DMG-LOOP-6</a> already found that per-hit damage carries a
       client-sent modifier.</p></div>
       <h3 id="part-c-damage-differs-with-the-weapon-held-constant">Part C — damage differs, with the weapon held constant</h3>
-      <p>This is the half <a href="../gaps/data.md#data-20">DATA-20</a> is about, and the shared weapon is what makes it
+      <p>This is the half <a href="../Docs/gaps/data.md#data-20">DATA-20</a> is about, and the shared weapon is what makes it
       readable.</p>
       <div class="steps"><ol>
       <label class="step"><input checked data-k="dmg-loop-7-11" type="checkbox"/><span class="step-body"><span class="lede"><code>invuln off</code> — <strong>required for this part</strong>, and it is the step that makes 1189 dangerous.</span></span></label>
@@ -396,7 +396,7 @@
          which is how the 2026-08-15 run briefly read as "no damage logged" while the log held 63 hits.</p>
       <p>To see the raw lines instead:
          <code>grep -a "Fallback took .* damage from" ~/Games/PIN/logs/GameServer.log | tail -20</code></p>
-      <p>Weapon 20046 is the melee weapon <a href="../gaps/data.md#data-20">DATA-20</a> already measured: template
+      <p>Weapon 20046 is the melee weapon <a href="../Docs/gaps/data.md#data-20">DATA-20</a> already measured: template
       <code>damage_per_round</code> 225 × modifier 0.22 = 49.5, observed as <strong>49</strong>. So the predicted pair is concrete
       rather than a ratio:</p>
       <div class="tbl-scroll"><table>
@@ -438,8 +438,8 @@
       the anchor is wrong rather than the mapping. This is the failure mode most worth catching early, and
       a tester's judgement outranks the arithmetic here.</p></div>
       <h3 id="what-this-closes-and-what-it-does-not">What this closes and what it does not</h3>
-      <p>A pass closes the health half of <a href="../gaps/data.md#data-6">DATA-6</a> for the <strong>906 graded creature
-      types</strong> and the damage half of <a href="../gaps/data.md#data-20">DATA-20</a>.</p>
+      <p>A pass closes the health half of <a href="../Docs/gaps/data.md#data-6">DATA-6</a> for the <strong>906 graded creature
+      types</strong> and the damage half of <a href="../Docs/gaps/data.md#data-20">DATA-20</a>.</p>
       <p>It does not close either entry outright. <strong>2203 of 3109 creature types carry no grade at all</strong> and
       still share one flat pool, and <code>EliteWanderer</code> is among them — so an ungraded creature is unrated,
       not harmless, and the fallback is a known gap rather than an answer. Grade 0 is also why the log
