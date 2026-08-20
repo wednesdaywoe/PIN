@@ -2,6 +2,7 @@
 project: pin
 kind: stream
 title: "Solid World: what the terrain merge changes"
+satisfied: 2026-08-19
 relates:
   - ../PROGRESS.md
   - world-authoring.md
@@ -20,7 +21,10 @@ holds from both sides (a chasing creature stands on the hill; a wave ring spawns
 surface, every member killable) and `probe` answers all of its controls, though the night's hunt
 found no collision-less object for [DATA-22](../gaps/data.md#data-22).
 
-Not on any milestone yet. Whether this becomes M9 is the first decision at the bottom.
+**Closed satisfied 2026-08-19** (decision 2026-08-19, user-chosen): this does not become M9. The
+vertical slice is done and proven, so the next work opens as a new stream with new goals —
+[crafting](crafting.md), per the [charter](../Restoration.md)'s "thumping first, crafting second" —
+rather than as a ninth milestone on a finished plan. Leftovers are dispatched at the bottom.
 
 ## What the sitting settled
 
@@ -166,14 +170,13 @@ consequence of this slice to the point of it.
    game 2026-08-19 by [SOLID-WORLD-10](../In-Game-Tests/solid-world.html): world answered with a
    static id and distance, a creature answered by name, the sky answered nothing, and the ground
    line tracked the caller's footing.
-4. **The failed hulls** ([DATA-22](../gaps/data.md#data-22)). The real fix is finding why
-   `ConvexHullHelper.ComputeHull` returns an empty hull for 235 objects. The cheap mitigation, which
-   is not the fix, is placing the fallback box at the object's own centroid instead of the chunk
-   origin, so a broken rock is solid and wrong rather than absent.
-5. **Consume the water and movement-blocker layers.** Still cheap, still not urgent.
-6. **Correct the documentation.** Eleven files across `Docs/` state as fact that the server holds no
-   terrain — the Architecture guide, PROGRESS, the Test Register, four test streams and
-   `world-authoring.md` itself — and they will be read as true by whoever comes next.
+4. **The failed hulls** — lives in the register as [DATA-22](../gaps/data.md#data-22), which is its
+   home now that this stream is closed. The real fix is finding why
+   `ConvexHullHelper.ComputeHull` returns an empty hull for 235 objects.
+5. **Consume the water and movement-blocker layers** — evicted on closure to the deferred backlog
+   in [PROGRESS.md](../PROGRESS.md). Still cheap, still not urgent.
+6. **Correct the documentation** — evicted on closure to the same backlog: files across `Docs/`
+   still state as fact that the server holds no terrain.
 
 ## Exit
 
@@ -185,20 +188,17 @@ Three of those four are true as of 2026-08-19 — the standing-on-it half passed
 remains is the checked-placement half: the query exists and `probe` reads it back, but nothing in
 the authoring path calls it yet before committing a coordinate.
 
-## Decisions this needs
+## Decisions this needed — resolved or dispatched on closure
 
-- **Is this M9, or is it maintenance?** The milestone plan is finished and PROGRESS.md says so in
-  as many words. Adding a ninth milestone is a statement that the slice is not the end of the plan,
-  which may be exactly right, but it is the user's call rather than a bookkeeping detail. The
-  sitting strengthens the case: the ground query in step 2 retires the authoring discipline three
-  milestones were built around.
-- **Does the 13 GB cache stay outside the repo?** It is generated, machine-specific and enormous.
-  Nothing currently documents how to rebuild it, and the next machine will need to. One rebuild
-  command is now recorded in [DATA-22](../gaps/data.md#data-22); it took about four minutes for all
-  93 chunks of zone 448 and wrote 5.6 GB. **A loose end worth one look**: the deployed cache loads
-  1,364,926 shapes where a fresh rebuild produces 1,364,781, a difference of 145. Small enough to be
-  harmless and large enough to mean the deployed cache predates some change in the loader.
-- **Is server-side water worth having** when the client's own reading is confirmed and working.
+- **Is this M9, or is it maintenance?** Resolved (decision 2026-08-19, user-chosen): neither. The
+  slice is done and proven; new work opens as a new stream with new goals rather than as a ninth
+  milestone. Rejected: M9 (extends a plan that declared itself finished); silent maintenance
+  (understates work that retired the authoring discipline three milestones were built around).
+- **Does the 13 GB cache stay outside the repo?** Still open, moved to the deferred backlog in
+  [PROGRESS.md](../PROGRESS.md) along with its loose end — the deployed cache loads 1,364,926
+  shapes where a fresh rebuild produces 1,364,781, a difference of 145.
+- **Is server-side water worth having?** Still open, moved to the same backlog with the
+  water/movement-blocker item it belongs to.
 
 ## What can't be done from here
 

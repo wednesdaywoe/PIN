@@ -593,7 +593,9 @@ Out of scope because the slice closes without them:
 - **Army, mail, market, chat beyond what exists** — social systems, none gate a session
 - **Crafting and blueprints** — spending resources needs `RequireResource` and
   `RequireResourceFromTarget`, both stubs, plus `Blueprint_Resources` which nothing reads;
-  gathering is the loop, crafting is a second one (see [Restoration](Restoration.md))
+  gathering is the loop, crafting is a second one (see [Restoration](Restoration.md)).
+  **No longer deferred as of 2026-08-19**: this is the next stream,
+  [streams/crafting.md](streams/crafting.md), opened when the vertical slice closed
 - **Battleframe mass/power/CPU constraints** — the three-bar budget the beta built loadouts
   against. Scoped 2026-08-14 and not scheduled: the used half is already summed and already on the
   wire, the frame capacities have no source anywhere and must be authored, and retail's own item
@@ -610,9 +612,14 @@ Out of scope because the slice closes without them:
   `PhysicsEngine.TryGetGroundHeight` and was **verified in game 2026-08-19**: a chasing creature
   stands on the hill, a wave ring spawns on the slope's surface, and the `probe` command reads the
   same query back. That closes [DATA-23](ISSUE-REGISTER.md);
-  [DATA-22](ISSUE-REGISTER.md), the 252 objects that convert to nothing on the way in, stays open. See
-  [streams/solid-world.md](streams/solid-world.md), which supersedes the terrain half of
-  [streams/world-authoring.md](streams/world-authoring.md)
+  [DATA-22](ISSUE-REGISTER.md), the 252 objects that convert to nothing on the way in, stays open.
+  [streams/solid-world.md](streams/solid-world.md) closed satisfied 2026-08-19 (decision: no M9 —
+  the next work opens as [streams/crafting.md](streams/crafting.md) instead), leaving three evicted
+  leftovers here: consume the parsed-but-unused water and movement-blocker layers (and with them,
+  decide whether server-side water is worth having when the client's reading works); sweep the docs
+  that still state the server holds no terrain; decide whether the 13 GB collision cache stays
+  outside the repo (rebuild command in [DATA-22](gaps/data.md#data-22); loose end: the deployed
+  cache loads 145 more shapes than a fresh rebuild)
 - **Public-server hardening** (identity/auth, input validation, topology, ops, distribution) — not
   scheduled and shouldn't start before the slice closes; full detail in
   [streams/public-server-hardening.md](streams/public-server-hardening.md)
