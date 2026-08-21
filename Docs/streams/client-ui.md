@@ -241,9 +241,18 @@ Ore now visibly draws from. The other half is real and worse than a display gap 
 paid — item drops are unbuilt"`). Nothing has anywhere to go because nothing is sent.
 
 Not a UI item: no surface can show an award the server never makes. It belongs to
-[m3-resource-payout](m3-resource-payout.md) or [m4](m4-thump-placement.md). **Also untested**: no
-`paying ... of resource` line appears in any current log, so the thumper-to-inventory path is correct
-by reading and unconfirmed by running. The 24 Iron Ore on screen came from `createitem`.
+[m3-resource-payout](m3-resource-payout.md) or [m4](m4-thump-placement.md).
+
+**The resource half is now confirmed end to end, 2026-08-21.** A thumper on node 233 at deposit [2]
+Basin Mouth Iron logged `paying 21 of resource 86668 to 1 participant(s)`, and MatList went from
+`86668 x24` to `86668 x45` on the next redraw — the exact 21, live, without reopening the panel. So
+thumped resources reach the inventory and reach the screen; the tester's "a thumper doesn't put
+resources in your inventory" was true of retail, not of PIN.
+
+Two things came out of the same run. A second thumper on node type **20** (the barren-ground default,
+no deposit) paid 1 of resource 30404 "Useless Dirt" to **0 participant(s)** — nobody was standing in
+it, which `BaseEncounter` documents as not an error. And the item-drop gap is not thumper-specific:
+the same run logged kills rolling items 33815 and 33816 with `not paid — item drops are unbuilt`.
 
 ## Not in this stream
 
