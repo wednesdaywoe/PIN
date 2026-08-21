@@ -417,8 +417,11 @@ grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesof
       and the tester had it in the inventory panel with no resend. The server's own numbers agree from both sides:
       resource kinds fell 7 to 6 as one stack emptied out entirely, items rose 21 to 22. The refusals hold too —
       an attempt one ingredient short was turned down with <code>missing item 86679 (ResourceItem) x1 (holding
-      0)</code> and spent nothing, and blueprint 80411 was refused for being priced in materials no 1962 item
-      belongs to. <strong>Ingredients are spent and the output item arrives.</strong></p></div>
+      0)</code> and spent nothing. <strong>Ingredients are spent and the output item arrives.</strong></p>
+      <p><strong>One line of that pass has since been withdrawn.</strong> Blueprint 80411 was recorded as
+      correctly refused for being priced in materials nothing belongs to. It was refused for the wrong reason:
+      its cost is 250 of class 128, which is Metals, and Iron Bars are still in it. CRAFT2b re-tests the
+      refusal against a class that really is empty.</p></div>
 
       <div class="callout"><p><strong>The first two sittings were void, and neither was crafting's fault. Both
       bugs were older than this entry and both are fixed.</strong></p>
@@ -477,6 +480,105 @@ craft 92906</code></pre><button class="copy" type="button">Copy</button></span><
       <div class="callout warn"><p>The free craft is the failure mode to watch for, and it looks like a pass.
       An item appearing proves delivery, which CRAFT-0 already proved. Only the ingredient counts falling proves
       crafting. Step 2 exists to catch this before any ingredient is in the inventory to confuse the reading.</p></div><div class="result"><label for="r-crafting-2">Result</label><textarea data-k="n-crafting-2" id="r-crafting-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-2b-recipes-priced-in-material-classes">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT2b</span>
+      <span class="block-t">Recipes priced in material classes</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT2b</span><span class="marker pass">[x]</span><span class="entry-t">Recipes priced in material classes</span></div>
+
+      <div class="callout pass"><p><strong>Passed in game 2026-08-21, and the key step passed better than it was
+      designed to.</strong> The tester stocked 30 of one metal and 30 of another rather than 30 and 20, and the
+      build spent <code>86667 x30 toward class 128, 86669 x20 toward class 128</code> — filling the line from the
+      first material and taking only the shortfall from the second. A partial draw is stronger evidence than the
+      planned split: it shows the class is being counted, not the stacks. The Cryogenic Recharger arrived.
+      Blueprint 80411, which CRAFT2 recorded as correctly refused, is now accepted and priced at 250 Metals
+      reading CPU — the withdrawal above stands confirmed.</p>
+      <p><strong>The re-run closed it out.</strong> Blueprint 81986 was refused by name:
+      <code>costs material class(es) 3299, 3298, which no surviving item belongs to</code>, with each line
+      printing <code>nothing belongs to it any more</code>. The corrected shortfall message reads properly too —
+      <code>missing 50 units of material class 128 (holding 10, ...)</code> where it used to print the holding
+      where the shortfall belonged. And the class line drew a second time at different proportions, <strong>40
+      from one metal and 10 from another</strong>, then refused once the class was empty. Three different splits
+      across two sittings, all correct.</p>
+
+      <p><strong>Step 6 failed on the first attempt, and the step was wrong rather than the server.</strong> Blueprint 80606 was
+      accepted, because classes 2375 and 2303 are not empty: each still holds one item (81802, 81744). The
+      candidate was picked by asking which classes had no <em>resource-flagged</em> items, which is not the same
+      question — those two hold ordinary items, so a player holding one could legitimately build the recipe, and
+      accepting it is right. <strong>Nine classes are genuinely empty</strong>, and they are the gathered raw
+      materials the 1.6 cull removed outright: Composite, Reactive Gas, Enzymes, Optional Component, Crystite
+      Hybrid, Gas, Organic, Inert Gas, Mineral. Step 6 is re-pointed at blueprint 81986 below, and re-run.</p>
+      <p>One message was also wrong and is fixed: a class line nobody could pay reported
+      <code>missing 0 of 50 units</code>, printing what you held where the shortfall belonged. It now reads
+      <code>50 units of material class 128 (holding 0, ...)</code>, matching how item lines report.</p></div>
+
+      <div class="callout warn"><p><strong>CRAFT2 shipped with a false claim in it, and this entry is the
+      correction.</strong> It recorded <code>Blueprint_Resources</code> as dead data on the grounds that only 137
+      of its 5,509 rows named a surviving item — 2.5%. That join used the wrong column. Its
+      <code>item_type</code> is not an item id at all: it is a <code>RootItem.item_subtype</code>, a material
+      <em>class</em>, and <strong>925 of its 934 distinct values match one, against exactly 1 as an item
+      id</strong>. <strong>188 classes still have items in them.</strong> The five-stat material economy is
+      intact, and <code>craft</code> was refusing recipes it should have been building.</p></div>
+
+      <p>How a raw-material cost actually reads: a recipe asks for so many units of a <em>class</em>, and any
+      member settles it. Iron Bars, Tungsten Bars, Titanium Bars and Uranium Rods are all class 128, "Metals" — a
+      recipe wanting 50 Metals takes whichever of the four you are carrying, in any mixture. Each line also names
+      which of the five stats in <code>dbitems::ResourceStat</code> it reads from what you supply: 1 Purity,
+      2 Power, 3 Mass, 4 CPU, and a fifth whose name never shipped.</p>
+
+      <p><strong>The stat is reported and does nothing yet, on purpose.</strong> A material's stat values are
+      per-batch: they ride on the item as a packed string rather than living in static data, and PIN does not
+      write them. So this entry proves the class half only — that a class line is met, spent and refused
+      correctly. What the stats then do to the output is CRAFT4's question.</p>
+
+      <p>The recipe here is <strong>blueprint 82081</strong>, which builds <strong>Cryogenic Recharger I^Q
+      (item 81626)</strong> for <strong>50 units of class 128, Metals</strong>, reading their Power. The
+      ingredients are deliberately split across two different members, because one material covering the whole
+      line would not prove the class is what is being counted.</p>
+
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-2b-1" type="checkbox"/><span class="step-body"><span class="lede">Read the plan. It should show one class line, not an item line: 50 units of class 128 reading stat
+         2 (Power), 4 members, and 0 held.</span>
+      <span class="cmd"><pre><code>craft check 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2b-2" type="checkbox"/><span class="step-body"><span class="lede">Try it empty-handed. Refused, nothing spent.</span>
+      <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2b-3" type="checkbox"/><span class="step-body"><span class="lede">Stock 50 units as <strong>two different metals</strong>, 30 and 20. Neither covers the line alone.
+         Then check again: it should read 50 held across the class, and name both.</span>
+      <span class="cmd"><pre><code>createitem 86667 30
+createitem 86669 20
+craft check 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2b-4" type="checkbox"/><span class="step-body"><span class="lede">Build it. The reply should name both metals separately, 30 and 20, spent toward the one class.</span>
+      <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2b-5" type="checkbox"/><span class="step-body"><span class="lede">Confirm on screen: both metal stacks gone, and Cryogenic Recharger I^Q in the inventory. Watch the
+         toasts — CLIENT-4 means the metals themselves may have no row in the panel.</span>
+      <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2b-6" type="checkbox"/><span class="step-body"><span class="lede">Now the refusal, against a class that really is empty. Blueprint 81986 builds Plasma Reactor I^Q for
+         75 units of "Gas" and 50 of "Mineral" — two of the nine classes with no item of any kind left in them. It
+         must be refused, naming both.</span>
+      <span class="cmd"><pre><code>craft check 81986</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2b-7" type="checkbox"/><span class="step-body"><span class="lede">And confirm the recipe CRAFT2 wrongly recorded as refused is now accepted, and asks for Metals.</span>
+      <span class="cmd"><pre><code>craft check 80411</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      </ol></div>
+
+      <p>Pass: step 2 refuses and spends nothing; step 4 builds, drawing 30 from one metal and 20 from another;
+      step 5 shows both stacks gone and the item on screen; step 6 refuses by naming the empty classes; step 7
+      accepts 80411 and prices it in Metals.</p>
+      <p><strong>What "empty" means here, since the first attempt got it wrong:</strong> a class with no item of
+      any kind, not a class with no <em>gatherable</em> item. The 1.6 cull removed the raw materials — gases,
+      minerals, enzymes — outright, and those nine classes are unpayable. It left the intermediate components in
+      place as ordinary items, so a recipe costed in one is buildable by anybody holding it, and the server is
+      right to accept it.</p>
+
+      <div class="callout warn"><p>The failure to watch for is a class line met by the wrong count — 50 taken
+      from one stack while the other is untouched, or 50 taken from each. The split in step 3 exists so the log
+      has to show 30 and 20 separately. A build that spends the right total from the wrong places would pass a
+      total-only check and be wrong.</p></div>
+      <div class="result"><label for="r-crafting-2b">Result</label><textarea data-k="n-crafting-2b" id="r-crafting-2b" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-crafting-3-the-economy-decisions">

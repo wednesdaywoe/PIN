@@ -54,6 +54,7 @@ public class SDBInterface
     private static Dictionary<KeyValuePair<uint, ushort>, ItemModuleScalars> _itemModuleScalars;
     private static Dictionary<KeyValuePair<uint, ushort>, ItemCharacterScalars> _itemCharacterScalars;
     private static Dictionary<uint, RootItem> _rootItem;
+    private static Dictionary<uint, List<uint>> _itemsBySubtype;
     private static Dictionary<uint, Certificate> _certificate;
     private static Dictionary<uint, AbilityModule> _abilityModule;
     private static Dictionary<uint, Battleframe> _battleframe;
@@ -323,6 +324,9 @@ public class SDBInterface
         _itemModuleScalars = loader.LoadItemModuleScalars();
         _itemCharacterScalars = loader.LoadItemCharacterScalars();
         _rootItem = loader.LoadRootItem();
+        _itemsBySubtype = _rootItem.Values
+                                   .GroupBy(row => (uint)row.ItemSubtype)
+                                   .ToDictionary(group => group.Key, group => group.Select(row => row.SdbId).Order().ToList());
         _certificate = loader.LoadCertificate();
         _abilityModule = loader.LoadAbilityModule();
         _battleframe = loader.LoadBattleframe();
@@ -624,6 +628,18 @@ public class SDBInterface
 
     // dbitems
     public static RootItem GetRootItem(uint id) => _rootItem.GetValueOrDefault(id);
+
+    /// <summary>
+    ///     Every item belonging to one material class, ordered by id.
+    /// </summary>
+    /// <remarks>
+    ///     A blueprint's raw-material cost names a class, not an item: <c>Blueprint_Resources.item_type</c>
+    ///     is a <c>RootItem.item_subtype</c>, which 925 of its 934 distinct values match against 1 as an
+    ///     item id. So "250 Metals" is met by Iron Bars, Tungsten Bars, Titanium Bars or Uranium Rods
+    ///     indifferently — they are all subtype 128. 188 of the 934 classes still have items; the rest are
+    ///     intermediate components the 1.6 cull removed.
+    /// </remarks>
+    public static List<uint> GetItemsOfSubtype(uint subtype) => _itemsBySubtype.GetValueOrDefault(subtype) ?? [];
     public static Certificate GetCertificate(uint id) => _certificate.GetValueOrDefault(id);
     public static IReadOnlyDictionary<uint, Certificate> GetAllCertificates() => _certificate;
     public static AbilityModule GetAbilityModule(uint id) => _abilityModule.GetValueOrDefault(id);

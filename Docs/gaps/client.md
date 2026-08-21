@@ -125,19 +125,66 @@ path, so nothing in the server is currently wrong, but any future inbound read o
 (or capture analysis, which is how it surfaced) must decode by the encoder's convention, as
 `FacingReport.Dequantise` does.
 
-### CLIENT-4 — The inventory panel lists only two resources, whatever the character holds [ ] open
+### CLIENT-4 — Some held resources never appear in the inventory panel [ ] open, partly walked back
 
 Found 2026-08-21 on the [CRAFT2](../../Game%20Testing/Crafting.html) pass. The build spent 15
 Crystite, 1 Chitin Fibers and 1 Copper Wiring, and the server's counts moved correctly for all
 three — the character's resource kinds went 7 to 6 as one stack emptied out. **The tester saw the
-deduction toasts for all three, but the inventory panel itself only ever draws Crystite and Red
-Bean tokens.** Every other resource is held, spent and delivered invisibly.
+deduction toasts for all three, but could not find the two crafting materials in the panel**, and
+read it at the time as the panel only ever drawing Crystite and Red Bean tokens.
 
-This is a client display limit, not a delivery gap: `InventoryUpdate` carries the rows and the
-toasts prove they arrive. The panel is presumably filtering by sub-inventory or by an item flag,
-the same shape of problem as [DATA-25](data.md#data-25), where the item panel draws 45 of a
-character's 62 items and the split falls on two low flag bits. `system/gui` is loose Lua and names
-what the panel binds, so this is readable rather than guessable.
+**That reading was too strong, and CRAFT2b walked it back the same day.** On the class-line test the
+tester did see Iron Bars, Tungsten Bars and Copper Wiring listed, so refined materials are not
+undrawn. The tester then sharpened the claim to the tier below: **raw resources — Iron Ore,
+Petrochemical and the like — appear to have no display at all.**
+
+**The tester then supplied the answer from memory, and the client confirms it: raw resources were
+never shown in the inventory. They were shown in the molecular printer, and the printer is gone.**
+During the thumping work iron arrived as a toast and never appeared as a value anywhere — which is
+correct behaviour for this build, not a bug.
+
+**The printer's panel is still shipped, and it is an empty husk.**
+`system/gui/components/MainUI/Panels/FabTest/FabTest.lua` is 528 lines, 1,056 bytes, and **zero
+non-whitespace characters** — the file was blanked, not deleted. `FabTest.xml` keeps the component
+declaration and about a hundred blank lines where the layout used to be. Red 5 emptied the crafting
+UI and shipped the shell. Grepping all of `system/gui` for "printer", "molecular" or "fabrication"
+returns nothing else at all.
+
+So there is no display route for the raw tier, and no panel to fix — there is a named, empty slot
+where one would go. This is the same cull [CRAFT1](../../Game%20Testing/Crafting.html) found from the
+binary side, where 748 exported `Game.*` names contain no fabrication sender.
+
+**The category tree does not explain it, which rules out a data fix.** `dbitems::Resource_Types` is a
+parent tree and the inventory panel filters on subtype **15** (`lib_SubTypeIds.lua`,
+`Resource = 15`), which is **"Crafting Components"**. Both tiers hang under it: refined at 128 Metals
+/ 131 Biomaterials / 3614 Electronics directly beneath 15, raw at 3288 Raw Metals beneath **149 "Raw
+Resource"** beneath 15, with a **148 "Refined Resource"** node alongside. The ores are classified
+correctly. They have nowhere to be drawn.
+
+**This is a hard constraint on [CRAFT3](../../Game%20Testing/Crafting.html), not a bug to fix
+afterwards.** An economy priced in raw resources gives the player materials they cannot see, count or
+plan with. An economy priced in refined materials — Iron Bars, Chitin Fibers, Copper Wiring — uses
+items that already draw in the ordinary inventory today, confirmed in game. Either build the panel
+or price the economy where the display already works.
+
+This is not a delivery gap: `InventoryUpdate` carries the rows and the toasts prove they arrive.
+
+**A concrete sub-case did come out of CRAFT2b and is worth its own line.** The crafted output,
+Cryogenic Recharger I (item 81626), draws in the panel with **no name on the row**. The name text is
+not missing from the data — `name_id` 177438 resolves to "Cryogenic Recharger I^Q" in all six
+languages. What the item does not have is an icon: `web_icon_id` is **0**, where every item that
+displays normally carries one (Meteor Strike 231564, Iron Bars 263225, Heavy Machine Gun 441248).
+An iconless row is the first suspect for a row that draws blank. The `^Q` suffix marks it as
+pre-1.6 content, the same stratum as the `^CY` materials.
+
+It is also the first item this character has ever held outside Gear: `dbg_inventory` reads
+`[Gear 67, Bag 2]`, and the server had to guess the sub-inventory, logging
+`Unknown InventoryType for ItemType CraftingComponent, defaulting to Bag`. **There is no way to
+check that guess against retail** — the 2016 capture contains no crafting component at all, in a
+356-entry inventory.
+
+`system/gui` is loose Lua and names what the panel binds, so this is readable rather than
+guessable.
 
 **It blocks nothing yet and it blocks a lot soon.** CRAFT2 passed without it, because the toasts
 and the server log carried the evidence. But CRAFT3 chooses a resource economy and CRAFT4 prices

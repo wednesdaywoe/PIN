@@ -1,6 +1,9 @@
 using System;
 using System.Linq;
+using AeroMessages.GSS.V66.Character.Event;
+using GameServer.Enums;
 using GameServer.StaticDB;
+using GameServer.Packets;
 using GameServer.Systems.Crafting;
 
 namespace GameServer.Systems.Admin.Commands;
@@ -69,6 +72,29 @@ public class CraftServerCommand : ServerCommand
             SourceFeedback($"  costs x{line.Quantity} {BlueprintCrafting.Describe(line.ItemId)} — holding {held}", context);
         }
 
+        foreach (var line in plan.ClassInputs)
+        {
+            if (line.Members.Count == 0)
+            {
+                SourceFeedback($"  costs x{line.Quantity} of material class {line.ClassId} - nothing belongs to it any more", context);
+                continue;
+            }
+
+            // Class lines are met from every member at once, so the useful number is the total held
+            // across them, with the breakdown after it.
+            var held = line.Members.Sum(m => (long)inventory.GetResourceQuantity(m) + inventory.GetItems().Count(i => i.SdbId == m));
+            var carried = line.Members.Where(m => inventory.GetResourceQuantity(m) > 0 || inventory.GetItems().Any(i => i.SdbId == m))
+                                      .Select(m => $"{m} x{inventory.GetResourceQuantity(m) + (uint)inventory.GetItems().Count(i => i.SdbId == m)}")
+                                      .ToList();
+            var stat = line.StatRead == 0 ? string.Empty : $", reads stat {line.StatRead} ({StatName(line.StatRead)})";
+            SourceFeedback(
+                $"  costs x{line.Quantity} of material class {line.ClassId}{stat} - holding {held} across {line.Members.Count} member(s)",
+                context);
+            SourceFeedback(
+                carried.Count > 0 ? $"      you carry: {string.Join(", ", carried)}" : $"      any of: {string.Join(", ", line.Members.Take(6))}",
+                context);
+        }
+
         foreach (var line in plan.Outputs)
         {
             SourceFeedback($"  pays  x{line.Quantity} {BlueprintCrafting.Describe(line.ItemId)}", context);
@@ -86,7 +112,18 @@ public class CraftServerCommand : ServerCommand
             return;
         }
 
-        if (!BlueprintCrafting.TryCraft(inventory, plan, out var error, out var spent))
+        // createitem announces what it hands over and craft did not, so a crafted item arrived with no
+        // toast at all — the ingredients visibly left and nothing visibly replaced them.
+        void Announce(CraftLine line) =>
+            context.SourcePlayer.NetChannels[ChannelType.ReliableGss].SendMessage(
+                new SimulateLootPickup
+                {
+                    Item = new() { SdbId = line.ItemId, Quantity = (ushort)line.Quantity },
+                    RewardType = SimulateLootPickup.Type.General,
+                },
+                context.SourcePlayer.CharacterEntity.EntityId);
+
+        if (!BlueprintCrafting.TryCraft(inventory, plan, Announce, out var error, out var spent))
         {
             SourceFeedback($"Did not build: {error}", context);
             Logger.Information("craft {BlueprintId}: refused — {Error}", plan.BlueprintId, error);
@@ -100,6 +137,20 @@ public class CraftServerCommand : ServerCommand
             string.Join("; ", spent),
             string.Join("; ", plan.Outputs.Select(o => $"{o.ItemId} x{o.Quantity}")));
     }
+
+    /// <summary>
+    ///     The five names in <c>dbitems::ResourceStat</c>. The fifth's text never shipped: its
+    ///     localisation key sits one past CPU's and has no row, so it was authored and then dropped.
+    /// </summary>
+    private static string StatName(byte stat) => stat switch
+    {
+        1 => "Purity",
+        2 => "Power",
+        3 => "Mass",
+        4 => "CPU",
+        5 => "unnamed",
+        _ => "none",
+    };
 
     private void Find(string[] parameters, ServerCommandContext context)
     {
@@ -121,7 +172,7 @@ public class CraftServerCommand : ServerCommand
         foreach (var id in found.Take(10))
         {
             var plan = BlueprintCrafting.Resolve(id);
-            SourceFeedback($"  {id}: {plan.Inputs.Count} ingredient(s){(plan.IsBuildable ? string.Empty : " — " + plan.Problem)}", context);
+            SourceFeedback($"  {id}: {plan.Inputs.Count} item ingredient(s), {plan.ClassInputs.Count} material class(es){(plan.IsBuildable ? string.Empty : " - " + plan.Problem)}", context);
         }
     }
 }

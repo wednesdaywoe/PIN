@@ -630,6 +630,20 @@ has no entries in that category, which reflects nothing having run rather than n
   still read as full. Fixed 2026-08-21 and **confirmed by the CRAFT2 pass the same day**: the build
   emptied a stack to zero, the character's resource kinds went 7 to 6, and nothing threw
 
+- [x] **DATA-26** — **`Blueprint_Resources` was recorded as dead data and is not; crafting was refusing
+  recipes it should have built.** The 2026-08-21 CRAFT2 write-up judged the table dead because 137 of
+  its 5,509 rows named a surviving item — 2.5%. That join used the wrong column. Its `item_type` is
+  not an item id: it is a `RootItem.item_subtype`, a material **class**, and **925 of its 934 distinct
+  values match one, against exactly 1 as an item id**. Iron Bars and Tungsten Bars are both class 128
+  "Metals"; a recipe asking for 50 Metals takes whichever the player carries, in any mixture.
+  **188 classes still have items.** Fixed the same day: `SDBInterface.GetItemsOfSubtype` indexes items
+  by class, `CraftPlan.ClassInputs` carries the class half of a cost, and a class line draws across
+  every member at once. **Nine classes are genuinely empty** — Composite, Reactive Gas, Enzymes,
+  Optional Component, Crystite Hybrid, Gas, Organic, Inert Gas, Mineral, the gathered raw tier the
+  1.6 cull removed outright — and a recipe costed in one is still refused by name. Verified in game by
+  [CRAFT2b](../Game Testing/Crafting.html): three different splits across two sittings (30+20, 40+10,
+  and a refusal at 10 of 50), plus 81986 refused for classes 3299 and 3298
+
 ## Client & Environment — CLIENT
 
 [Full detail](gaps/client.md) — 2 of 4 closed
