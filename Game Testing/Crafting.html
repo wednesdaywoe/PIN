@@ -1,0 +1,242 @@
+<title>PIN — Crafting (CRAFT1–CRAFT5)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Crafting (CRAFT1–CRAFT5)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>. The stream doc:
+    <a href="../Docs/streams/crafting.md">Crafting — the second loop</a>.</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>. The stream this sheets entries come from:
+    <a href="../Docs/streams/crafting.md">Crafting — the second loop</a>.</p>
+    <p>Crafting is the second loop the charter ordered after thumping: turn resources the thumper brings
+    up into an item you equip. It runs <a href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s whole problem in
+    miniature — a crafted item has to arrive in your inventory the same way any created item does, so it
+    cannot start until item delivery is confirmed. The first entry below is that confirmation, and it is
+    the gate for everything after it.</p>
+  </section>
+  <section class="doc" id="why-this-file-exists">
+    <h2>Why this file exists</h2>
+    <p>The stream opened <strong>2026-08-19</strong>, the day the vertical slice closed, as a new stream with
+    new goals rather than a ninth milestone on a finished plan. The charter gave the reason: the economy
+    decision is easier to make once resources actually exist in the world, and they do now — thumping is
+    built, verified, and paying out on real ground.</p>
+    <p>Everything in the stream is a proposal from the charter's survival audit; the user edits it before any
+    of it is scheduled. The audit already settled that crafting is the recoverable case: v1.6 deleted the
+    crafting panel's Lua, but the full <code>Fabrication</code> command set survives in the client binary and
+    AeroMessages, and the engine still exports <code>GetRecipeIds</code>/<code>GetRecipeInfo</code> —
+    <code>Mainframe.lua</code> still calls them. Missing Lua can be authored; a dead engine feed could not. It
+    also settled that a curated subset of the 5,052 resolvable blueprints is a complete answer, and that the
+    server side already has named stubs — <code>RequireResource</code> and <code>RequireResourceFromTarget</code>
+    are stubs, <code>Blueprint_Resources</code> is shipped data that nothing reads — so the work has an address.</p>
+    <p><strong>The loop cannot open until items can be received.</strong> Every crafting entry below ends with an
+    item appearing in your inventory. If PIN's partial <code>InventoryUpdate</code> will not list a created item
+    (the <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> defect, still open), a crafted item would arrive the same
+    way any created item does — resolved, listed server-side, never drawn — and no amount of recipe work would
+    show. So the first entry is the client confirmation of the fix that just landed, and nothing past it runs
+    until it passes.</p>
+    <p><strong>What the fix was.</strong> On 2026-08-20 <code>CreateItem</code> was changed to send
+    <code>DynamicFlags = 0x02</code> — the <code>is_new</code> arrival flag an inventory list reads to draw a new
+    row — instead of <code>IsBound</code> alone, matching the 13 retail ordinary single-item adds exactly and
+    dropping the speculative <code>IsBound</code>. A headless test confirms the created item carries
+    <code>0x02</code> and that update is what goes out on the channel; it does not answer the question this sheet
+    asks, whether the client now draws the row. That is a live-client read, and it is the first entry here.</p>
+  </section>
+  <section class="block" data-open="true" id="-crafting-0-a-created-item-appears-without-a-resend">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT-0</span>
+      <span class="block-t">a created item appears without a resend</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT-0</span><span class="marker warn">[~]</span><span class="entry-t">a created item appears without a resend</span></div><p><strong>Headless check passed 2026-08-20; client confirmation open.</strong> This is the
+      in-game read on <a href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s fix: <code>CreateItem</code> now sends the
+      <code>0x02</code> arrival flag, and the question is whether the client now lists the created item on its own,
+      with no <code>dbg_inventory resend</code>. The item must appear without a resend because that is exactly the
+      thing <a href="Inventory.html">Inventory Delivery</a> found the client would not do — the partial update it
+      declines — and a crafted item arrives through the same path. If this passes, item delivery works and every
+      crafting entry after it can run. If it does not, the fix was wrong or incomplete and nothing below is
+      meaningful yet.</p>
+      <p>Blocks CRAFT1–CRAFT5. Run it before any of them.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-0-1" type="checkbox"/><span class="step-body"><span class="lede">Log in, open the inventory before creating anything, and note whether the frame's default gear
+         is listed. This is the control — if the starting inventory is empty too, the problem was never about
+         <code>createitem</code>.</span></span></label>
+      <label class="step"><input data-k="crafting-0-2" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem</code> an ordinary, equippable item — <code>20003</code> (the DevTEST Shotgun) is the
+         one <a href="Inventory.html">INVENTORY-1</a> used, a module like <code>86074</code> works too. This is an
+         ordinary single-item add, the shape the fix was calibrated against.</span></span></label>
+      <label class="step"><input data-k="crafting-0-3" type="checkbox"/><span class="step-body"><span class="lede">Watch the inventory <strong>without touching anything</strong>. The item should appear on its own — the
+         whole point is that no <code>resend</code> follows it. This is the pass condition.</span></span></label>
+      <label class="step"><input data-k="crafting-0-4" type="checkbox"/><span class="step-body"><span class="lede">If it appears: confirm it is real — <code>dbg_inventory</code> lists it, it equips in the garage, the flags
+         round-trip — then <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> closes and item delivery is confirmed.
+         Crafting can proceed.</span></span></label>
+      <label class="step"><input data-k="crafting-0-5" type="checkbox"/><span class="step-body"><span class="lede">If it does <strong>not</strong> appear without a resend: the arrival flag was not the fix. Run
+         <code>dbg_inventory resend</code> to confirm the item is server-side real (it should be), then fall back
+         to the <a href="Inventory.html">INVENTORY-1</a> comparison — capture message [9], the 37-byte retail
+         single-item add reproduced in <a href="Capture-Replay.html">Capture Replay</a> — and check the remaining
+         suspects, <code>Modules</code> and <code>Unk4</code>. Do not move to CRAFT1 until the item appears without a
+         resend.</span></span></label>
+      </ol></div>
+      <p>Read the console output alongside what you see:</p>
+      <ul>
+      <li><strong>Pass:</strong> the item shows on its own, and <code>dbg_inventory</code> lists it as
+        <code>&lt;id&gt; guid &lt;hex&gt; Weapon in Gear flags 0</code> (or the module's sub-inventory) with no resend
+        needed.</li>
+      <li><strong>Listed by <code>dbg_inventory</code> but not shown, and <code>resend</code> makes it appear</strong> — the
+        same <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> outcome, the arrival flag was not it. Re-run the
+        capture comparison above.</li>
+      <li><strong>Listed by <code>dbg_inventory</code> but not shown, and <code>resend</code> doesn't help</strong> — the
+        client rejects the item itself; the suspects are all in the item struct.</li>
+      <li><strong>Not listed by <code>dbg_inventory</code></strong> — nothing was created.</li>
+      </ul>
+      <span class="cmd"><pre><code>createitem 20003
+grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
+</code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-crafting-0">Result</label><textarea data-k="n-crafting-0" id="r-crafting-0" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-1-a-panel-reaches-fabrication">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT1</span>
+      <span class="block-t">A panel reaches fabrication</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT1</span><span class="marker none">[ ]</span><span class="entry-t">A panel reaches fabrication</span></div><p>The client surface. Settle how a panel reaches fabrication: repurpose
+      <code>Tinkering</code>, or author a minimal Lua panel against the surviving <code>GetRecipeIds</code>/<code>GetRecipeInfo</code>.
+      The deliverable is a decision with a working spike behind it, not a finished screen. The route is already
+      shown to be open — unknown wire keys survive into Lua (see <a href="Constraints-Transport.html">Constraints
+      Transport</a>), and <code>system/gui</code> is loose, readable source.</p>
+      <p>Run first among the real items: it is the only part with a real unknown in it, and the risk should be
+      retired before the server work assumes an answer. Requires CRAFT-0 to have passed.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-1-1" type="checkbox"/><span class="step-body"><span class="lede">Confirm the engine feed survives — from the client console, <code>GetRecipeIds</code> and
+         <code>GetRecipeInfo</code> resolve to real data, and <code>Mainframe.lua</code> still calls them.</span></span></label>
+      <label class="step"><input data-k="crafting-1-2" type="checkbox"/><span class="step-body"><span class="lede">Decide the surface: repurpose <code>Tinkering</code>, or author a minimal panel against the surviving
+         feed. Spike one, either way — a panel that lists a recipe and sends a fabrication request.</span></span></label>
+      <label class="step"><input data-k="crafting-1-3" type="checkbox"/><span class="step-body"><span class="lede">Send the request from the spike and watch the server accept it (nothing past CRAFT2 resolves the
+         recipe yet, so the request should reach the server and be handled — even if it currently fails on
+         ingredients).</span></span></label>
+      </ol></div>
+      <p>Pass: a panel lists a recipe, sends a fabrication request, and the request reaches the server. The
+      recipe itself resolving is CRAFT2's job.</p>
+      <div class="callout warn"><p>Not a finished screen. The charter says the deliverable is a decision with a working
+      spike behind it — a panel that proves the route is open is enough to open CRAFT2.</p></div><div class="result"><label for="r-crafting-1">Result</label><textarea data-k="n-crafting-1" id="r-crafting-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-2-fabrication-runs-server-side">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT2</span>
+      <span class="block-t">Fabrication runs server-side</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT2</span><span class="marker none">[ ]</span><span class="entry-t">Fabrication runs server-side</span></div><p>The server side. Handle the surviving <code>Fabrication</code> command set: resolve a recipe's
+      ingredients against inventory, spend them (<code>RequireResource</code> / <code>RequireResourceFromTarget</code> stop being stubs,
+      <code>Blueprint_Resources</code> gets a reader), and place the output item. Not gated on any decision below — the
+      charter's "none of these block starting" still holds. Can run beside CRAFT1.</p>
+      <p>Requires CRAFT-0 to have passed — the output item has to be deliverable.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-2-1" type="checkbox"/><span class="step-body"><span class="lede">Pick one recipe with a resolvable output and a small ingredient set. Confirm the ingredients exist in
+         the 5,052 resolvable blueprints and note their ids.</span></span></label>
+      <label class="step"><input data-k="crafting-2-2" type="checkbox"/><span class="step-body"><span class="lede">Send a fabrication request for that recipe and watch the server resolve the ingredients against the
+         inventory.</span></span></label>
+      <label class="step"><input data-k="crafting-2-3" type="checkbox"/><span class="step-body"><span class="lede">Confirm the ingredients are spent (the inventory count drops) and the output item is placed — it should
+         appear in the inventory without a resend, which is CRAFT-0's path.</span></span></label>
+      </ol></div>
+      <p>Pass: ingredients are spent and the output item arrives. The <code>RequireResource</code> stubs becoming real
+      and <code>Blueprint_Resources</code> getting a reader are the mechanism; the visible result is the crafted item on
+      screen.</p>
+      <div class="callout warn"><p>The stubs are the tell. <code>RequireResource</code> and <code>RequireResourceFromTarget</code> currently do
+      nothing — a fabrication that "succeeds" while they are still stubs would place an item for free and hide the
+      bug. Confirm the ingredients actually left the inventory, not just that the item appeared.</p></div><div class="result"><label for="r-crafting-2">Result</label><textarea data-k="n-crafting-2" id="r-crafting-2" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-3-the-economy-decisions">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT3</span>
+      <span class="block-t">The economy decisions</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT3</span><span class="marker none">[ ]</span><span class="entry-t">The economy decisions</span></div><p>The decisions, now decidable because resources exist in the world. Three calls: which resource
+      economy (five-stat graded materials, or the level-banded veins the node types are written for); where
+      crafted output lands (1962's item system, or a parallel track free of level-45 balance); how resources are
+      carried in inventory. The user's call; the data supports either economy and imposes neither. Wanted before
+      CRAFT4, not before CRAFT2 — the recipes are priced against whatever CRAFT3 picks.</p>
+      <p>This is a decision, not a pass/fail entry. The run sheet records the decision and the data behind it;
+      there is no client command that settles it.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-3-1" type="checkbox"/><span class="step-body"><span class="lede">Read the two economies against the node types and the five-stat materials. Note what each would price a
+         crafted item at, and what a thumper payout looks like under each.</span></span></label>
+      <label class="step"><input data-k="crafting-3-2" type="checkbox"/><span class="step-body"><span class="lede">Settle where crafted output lands: 1962's item system, or a parallel track. Note the trade — a parallel
+         track is free of level-45 balance but is a second inventory path to verify.</span></span></label>
+      <label class="step"><input data-k="crafting-3-3" type="checkbox"/><span class="step-body"><span class="lede">Record the three decisions in the stream doc, with the data behind each, so CRAFT4 has a price to meet and
+         a landing place to target.</span></span></label>
+      </ol></div>
+      <p>Pass: the three decisions are written down with the data behind them. CRAFT4 prices recipes against
+      them.</p>
+      <div class="result"><label for="r-crafting-3">Result</label><textarea data-k="n-crafting-3" id="r-crafting-3" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-4-a-curated-recipe-set">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT4</span>
+      <span class="block-t">A curated recipe set</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT4</span><span class="marker none">[ ]</span><span class="entry-t">A curated recipe set</span></div><p>The first recipes that consume what a thumper brings up and produce something worth
+      equipping, chosen from the 5,052 resolvable blueprints and priced against the economy CRAFT3 picks. The
+      curation approach, not the full set — expanding a working subset is cheap, authoring 5,052 up front is not.
+      Requires CRAFT3 (a price to meet) and CRAFT2 (the recipe to resolve).</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-4-1" type="checkbox"/><span class="step-body"><span class="lede">Choose recipes whose ingredients a thumper actually pays out (from the payout table in
+         <a href="Thump-Placement.html">Thump Placement</a>), and whose output is equippable and worth the cost
+         against the CRAFT3 price.</span></span></label>
+      <label class="step"><input data-k="crafting-4-2" type="checkbox"/><span class="step-body"><span class="lede">Craft each under CRAFT2 and confirm the ingredients cost what the economy says and the output arrives
+         without a resend (CRAFT-0's path). Note any recipe whose output the economy prices below its cost.</span></span></label>
+      </ol></div>
+      <p>Pass: a recipe consumes a real thumper payout, spends its ingredients, and produces an equippable item that
+      arrives on its own.</p>
+      <div class="result"><label for="r-crafting-4">Result</label><textarea data-k="n-crafting-4" id="r-crafting-4" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-5-the-loop-closes-in-game">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT5</span>
+      <span class="block-t">The loop closes in game</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT5</span><span class="marker none">[ ]</span><span class="entry-t">The loop closes in game</span></div><p>The exit condition. One sitting: thump a deposit, craft from the payout, equip the result,
+      relog, still have it. This is the whole stream end to end — resource gathering (already built and verified),
+      fabrication, equip, and persistence — and it cannot pass until every entry before it has. Requires CRAFT0
+      (delivery), CRAFT2 (fabrication), CRAFT4 (a recipe that consumes a thumper payout), and
+      <a href="Persistence.html">Persistence</a> (the item survives a relog).</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-5-1" type="checkbox"/><span class="step-body"><span class="lede">Thump a deposit and run its cycle to a payout (see <a href="Thump-Placement.html">Thump Placement</a> for
+         the payout table). Collect the resources.</span></span></label>
+      <label class="step"><input data-k="crafting-5-2" type="checkbox"/><span class="step-body"><span class="lede">Craft an item from that payout (CRAFT4's recipe) and confirm it arrives without a resend.</span></span></label>
+      <label class="step"><input data-k="crafting-5-3" type="checkbox"/><span class="step-body"><span class="lede">Equip the crafted result in the garage and confirm it holds on screen.</span></span></label>
+      <label class="step"><input data-k="crafting-5-4" type="checkbox"/><span class="step-body"><span class="lede">Menu logout, relog, and confirm the crafted item is still equipped and usable. This is <a
+         href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s persistence half and <a href="Persistence.html">PERSIST-6</a>'s
+         — a created item surviving a relog.</span></span></label>
+      </ol></div>
+      <p>Pass: the item you crafted from a thumper payout is equipped and still there after a relog. The loop is
+      closed.</p>
+      <div class="result"><label for="r-crafting-5">Result</label><textarea data-k="n-crafting-5" id="r-crafting-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-crafting-v1"></script>
