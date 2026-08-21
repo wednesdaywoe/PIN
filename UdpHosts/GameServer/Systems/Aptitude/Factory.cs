@@ -381,8 +381,8 @@ public class Factory
                 return new TurretControlCommand(CustomDBInterface.GetTurretControlCommandDef(commandId));
             // case CommandType.Bombardment:
             //     return new BombardmentCommand(SDBInterface.GetBombardmentCommandDef(commandId));
-            // case CommandType.RequireResource:
-            //     return new RequireResourceCommand(SDBInterface.GetRequireResourceCommandDef(commandId));
+            case CommandType.RequireResource:
+                return new RequireResourceCommand(SDBInterface.GetRequireResourceCommandDef(commandId));
             // case CommandType.InflictCooldown:
             //     return new InflictCooldownCommand(SDBInterface.GetInflictCooldownCommandDef(commandId));
             case CommandType.RequireMovestate:

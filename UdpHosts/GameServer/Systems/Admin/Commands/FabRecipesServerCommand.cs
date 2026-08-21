@@ -25,12 +25,13 @@ namespace GameServer.Systems.Admin.Commands;
 public class FabRecipesServerCommand : ServerCommand
 {
     /// <summary>
-    ///     What one message can carry, which is less than the client can receive. The client's decoder is
-    ///     chunked and takes a list of any length; PIN's Aero encoder writes one count byte and can't
-    ///     express the repeat, so a message tops out at 255 of the table's 285 rows. Sending the whole
-    ///     catalogue needs a hand-written encoder and isn't what this command is for.
+    ///     254, not 255. The client's decoder is chunked, and a count byte of exactly 255 means "another
+    ///     chunk follows", so it reads the next count off the end of the message and drops the
+    ///     connection. Only a short chunk terminates. PIN's Aero encoder writes one count byte and can't
+    ///     express the repeat, so a message carries 254 of the table's 285 rows; the rest need a
+    ///     hand-written encoder and aren't what this command is for.
     /// </summary>
-    private const int MaxRecipes = 255;
+    private const int MaxRecipes = 254;
 
     private const int DefaultRecipes = 10;
 
@@ -78,7 +79,9 @@ public class FabRecipesServerCommand : ServerCommand
 
             if (count > MaxRecipes)
             {
-                SourceFeedback($"{count} is more than one message can carry; sending {MaxRecipes}", context);
+                SourceFeedback(
+                    $"{count} is more than one message can carry; sending {MaxRecipes}. A chunk of exactly 255 reads as \"more follows\" and disconnects the client",
+                    context);
                 count = MaxRecipes;
             }
 

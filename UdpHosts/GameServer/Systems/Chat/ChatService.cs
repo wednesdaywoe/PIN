@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using AeroMessages.Common;
 using AeroMessages.GSS.V66;
 using AeroMessages.GSS.V66.Character.Command;
@@ -90,6 +91,65 @@ public class ChatService
         return _commandService.GetCommandList();
     }
 
+    /// <summary>
+    ///     Flattens a chat string to ASCII, because a single non-ASCII character throws the whole send
+    ///     away.
+    /// </summary>
+    /// <remarks>
+    ///     Aero's generated <c>ChatMessageList</c> sizes the buffer from <c>Message.Length</c> — a count
+    ///     of characters — and then writes <c>Encoding.UTF8.GetBytes(Message)</c> into it. For ASCII the
+    ///     two agree. For anything else the write is longer than the buffer and <c>Pack</c> throws
+    ///     IndexOutOfRange, which is not caught anywhere useful: it unwinds the whole admin command, so a
+    ///     command that printed one em dash on its third line loses every line after the second and looks
+    ///     like it silently stopped working. An accented character in a player's name or message does the
+    ///     same to ordinary chat.
+    ///     <para>
+    ///     The generator is the NuGet package Aero.Gen, not our source, so the size calculation cannot be
+    ///     corrected here. Transliterating at the boundary is the fix available: the punctuation that
+    ///     actually shows up gets a plain equivalent, and anything else becomes '?' rather than taking the
+    ///     message down with it.
+    ///     </para>
+    /// </remarks>
+    internal static string ToWireSafe(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        var needsWork = false;
+        foreach (var c in text)
+        {
+            if (c > 0x7F)
+            {
+                needsWork = true;
+                break;
+            }
+        }
+
+        if (!needsWork)
+        {
+            return text;
+        }
+
+        var builder = new StringBuilder(text.Length + 8);
+        foreach (var c in text)
+        {
+            switch (c)
+            {
+                case <= (char)0x7F: builder.Append(c); break;
+                case '\u2014': case '\u2013': builder.Append('-'); break;
+                case '\u2018': case '\u2019': builder.Append('\''); break;
+                case '\u201C': case '\u201D': builder.Append('"'); break;
+                case '\u2026': builder.Append("..."); break;
+                case '\u00A0': builder.Append(' '); break;
+                default: builder.Append('?'); break;
+            }
+        }
+
+        return builder.ToString();
+    }
+
     private ChatMessageList PrepareSingleMessage(string message, ChatChannel channel, IEntity sender)
     {
         var senderId = sender != null ? sender.AeroEntityId : new EntityId() { Backing = _shard.InstanceId };
@@ -103,8 +163,8 @@ public class ChatService
                 new()
                 {
                     SenderId = senderId,
-                    SenderName = senderName,
-                    Message = message,
+                    SenderName = ToWireSafe(senderName),
+                    Message = ToWireSafe(message),
                     Channel = (byte)channel,
                     ChatIconFlags = chatIconFlags,
                     AltData = new()

@@ -124,3 +124,23 @@ doesn't invert its own quantise — positives come back mirrored. PIN only ever 
 path, so nothing in the server is currently wrong, but any future inbound read of a quantised field
 (or capture analysis, which is how it surfaced) must decode by the encoder's convention, as
 `FacingReport.Dequantise` does.
+
+### CLIENT-4 — The inventory panel lists only two resources, whatever the character holds [ ] open
+
+Found 2026-08-21 on the [CRAFT2](../../Game%20Testing/Crafting.html) pass. The build spent 15
+Crystite, 1 Chitin Fibers and 1 Copper Wiring, and the server's counts moved correctly for all
+three — the character's resource kinds went 7 to 6 as one stack emptied out. **The tester saw the
+deduction toasts for all three, but the inventory panel itself only ever draws Crystite and Red
+Bean tokens.** Every other resource is held, spent and delivered invisibly.
+
+This is a client display limit, not a delivery gap: `InventoryUpdate` carries the rows and the
+toasts prove they arrive. The panel is presumably filtering by sub-inventory or by an item flag,
+the same shape of problem as [DATA-25](data.md#data-25), where the item panel draws 45 of a
+character's 62 items and the split falls on two low flag bits. `system/gui` is loose Lua and names
+what the panel binds, so this is readable rather than guessable.
+
+**It blocks nothing yet and it blocks a lot soon.** CRAFT2 passed without it, because the toasts
+and the server log carried the evidence. But CRAFT3 chooses a resource economy and CRAFT4 prices
+recipes against it, and a player cannot manage materials they cannot see — a thumper payout the
+inventory won't show is a loop with its middle missing. Settle it before CRAFT4, and treat the
+answer as a constraint on the CRAFT3 decision rather than a bug to fix afterwards.

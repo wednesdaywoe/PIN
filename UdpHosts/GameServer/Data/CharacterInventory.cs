@@ -453,7 +453,26 @@ public class CharacterInventory
             return;
         }
 
-        var resource = _resources[sdbId];
+        // Spending a stack down to exactly zero removes it from _resources, and ConsumeResource calls
+        // this straight afterwards — so the read has to survive the key being gone. It did not, and
+        // indexing threw KeyNotFoundException on the first stack anyone ever emptied. Nothing emptied
+        // one until crafting existed, which is why this sat here unhit.
+        //
+        // Sending nothing would be worse than the crash was loud: the client keeps drawing whatever
+        // count it was last told, so an emptied stack would still read as full. A row of zero is the
+        // update, and it is what a stack that just ran out actually holds.
+        if (!_resources.TryGetValue(sdbId, out var resource))
+        {
+            resource = new Resource()
+            {
+                Quantity = 0,
+                SdbId = sdbId,
+                SubInventory = GetInventoryTypeByItemTypeId(sdbId),
+                TextKey = string.Empty,
+                Unk2 = 0,
+            };
+        }
+
         var update = new InventoryUpdate()
         {
             ClearExistingData = 0,

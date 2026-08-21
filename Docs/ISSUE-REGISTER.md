@@ -598,9 +598,41 @@ has no entries in that category, which reflects nothing having run rather than n
   was sighted in the same log window, which is the first thing to rule out. (Hover's missing lift
   is a separate gap, likely [DATA-5](gaps/data.md#data-5), recorded in P3)
 
+- [x] **NET-27** — **A non-ASCII character in a chat message threw the message away and took the
+  rest of the command with it.** Found 2026-08-21 running [CRAFT2](../Game Testing/Crafting.html),
+  where `craft 92906` printed its first line to chat and then appeared to stop working. It had not
+  stopped: Aero's generated `ChatMessageList` sizes its buffer from `Message.Length`, a count of
+  **characters**, then writes `Encoding.UTF8.GetBytes(Message)` into it. The two agree only for
+  ASCII. An em dash is one character and three bytes, so `Pack` ran off the end of the buffer and
+  threw `IndexOutOfRangeException`, which unwound `AdminService.ExecuteCommand` entirely — every
+  later line of the command was never reached. Nothing was logged as a crafting failure because
+  crafting never ran. **The same fault applies to ordinary player chat**: an accented character in
+  a name or a message would have dropped it identically, silently, for every recipient. The
+  generator is the NuGet package `Aero.Gen` 1.3.3 and not our source, so the size calculation
+  cannot be corrected in this repo; `ChatService.ToWireSafe` transliterates at the send boundary
+  instead — the punctuation that actually occurs gets a plain equivalent, anything else becomes
+  `?`, and `SenderName` is covered as well as `Message`. Fixed 2026-08-21 and **confirmed by the
+  CRAFT2 pass the same day**: the command that could not get past its second line ran to completion
+
+- [x] **NET-28** — **Spending a resource stack to exactly zero threw and abandoned the operation
+  half-done.** Found 2026-08-21 on the [CRAFT2](../Game Testing/Crafting.html) re-run, immediately
+  behind [NET-27](#net-27): `craft 92906` charged all three ingredients and then died before
+  delivering the module, so the resources were gone and nothing was built — twice, since the second
+  attempt did the same. `CharacterInventory.ConsumeResource` removes a resource from `_resources`
+  when its quantity reaches zero and then calls `SendResourceUpdate`, which indexed
+  `_resources[sdbId]` directly and threw `KeyNotFoundException`. The exception unwound out through
+  `ExecuteCommand`, so the spend was already committed and the payout never ran. **This is not
+  crafting code and predates it**: `ModifyOwnerResourcesCommand` has always been able to reach it,
+  and `RequireResourceCommand` now can too. It sat unhit because nothing in PIN had ever emptied a
+  stack exactly — the arithmetic only goes wrong on the boundary. `SendResourceUpdate` now falls
+  back to a zero-quantity row rather than indexing: sending nothing would be quietly worse than the
+  crash, because the client keeps drawing the last count it was told and an emptied stack would
+  still read as full. Fixed 2026-08-21 and **confirmed by the CRAFT2 pass the same day**: the build
+  emptied a stack to zero, the character's resource kinds went 7 to 6, and nothing threw
+
 ## Client & Environment — CLIENT
 
-[Full detail](gaps/client.md) — 2 of 3 closed
+[Full detail](gaps/client.md) — 2 of 4 closed
 
 - [~] **CLIENT-1** — World-entry freeze traced to a lost wakeup in Wine's fsync path; closed via
   `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over 4 sessions, not yet proven un-recurring
@@ -616,6 +648,11 @@ has no entries in that category, which reflects nothing having run rather than n
   of the bearing, the convention client-authored orientations already use. Verified same day:
   Aranha attack head-on, and the watchtower thumper's own wave sappers face the machine correctly,
   which checks the convention against a non-character objective too
+
+- [ ] **CLIENT-4** — The inventory panel draws only Crystite and Red Bean tokens; every other
+  resource is held, spent and delivered invisibly. Found on the CRAFT2 pass 2026-08-21, where the
+  deduction toasts fired for all three ingredients but only Crystite had a row. Blocks nothing yet;
+  blocks CRAFT4, since a player cannot manage materials they cannot see
 
 ---
 

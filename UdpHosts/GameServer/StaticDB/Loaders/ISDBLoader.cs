@@ -68,6 +68,7 @@ public interface ISDBLoader
     Dictionary<uint, FrameProgressionLevel> LoadFrameProgressionLevel();
     Dictionary<uint, Blueprints> LoadBlueprints();
     Dictionary<uint, List<Blueprint_Items>> LoadBlueprintItems();
+    Dictionary<uint, List<Blueprint_Resources>> LoadBlueprintResources();
 
     // dbfabrication
     Dictionary<uint, Recipe> LoadFabricationRecipes();

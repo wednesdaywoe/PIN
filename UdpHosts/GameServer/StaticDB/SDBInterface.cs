@@ -72,6 +72,7 @@ public class SDBInterface
     private static Dictionary<uint, FrameProgressionLevel> _frameProgressionLevel;
     private static Dictionary<uint, Blueprints> _blueprints;
     private static Dictionary<uint, List<Blueprint_Items>> _blueprintItems;
+    private static Dictionary<uint, List<Blueprint_Resources>> _blueprintResources;
     private static Dictionary<uint, Recipe> _fabricationRecipes;
     private static Dictionary<uint, List<BattleframeVisuals>> _battleframeVisuals;
     private static Dictionary<uint, LootTable> _lootTable;
@@ -340,6 +341,7 @@ public class SDBInterface
         _frameProgressionLevel = loader.LoadFrameProgressionLevel();
         _blueprints = loader.LoadBlueprints();
         _blueprintItems = loader.LoadBlueprintItems();
+        _blueprintResources = loader.LoadBlueprintResources();
         _fabricationRecipes = loader.LoadFabricationRecipes();
         _battleframeVisuals = loader.LoadBattleframeVisuals();
         _lootTable = loader.LoadLootTable();
@@ -641,6 +643,18 @@ public class SDBInterface
     public static FrameProgressionLevel GetFrameProgressionLevel(uint level) => _frameProgressionLevel.GetValueOrDefault(level);
     public static Blueprints GetBlueprint(uint id) => _blueprints.GetValueOrDefault(id);
     public static List<Blueprint_Items> GetBlueprintItems(uint blueprintId) => _blueprintItems.GetValueOrDefault(blueprintId);
+
+    /// <summary>
+    ///     A blueprint's raw-material rows. Nearly always empty in 1962 — see
+    ///     <see cref="Loaders.StaticDBLoader.LoadBlueprintResources" /> for why the table is dead — but a
+    ///     blueprint that does carry one cannot be costed, and crafting has to say so instead of building
+    ///     it for nothing.
+    /// </summary>
+    public static List<Blueprint_Resources> GetBlueprintResources(uint blueprintId) => _blueprintResources.GetValueOrDefault(blueprintId) ?? [];
+
+    /// <summary>Every blueprint id whose <c>main_output_item_id</c> is a real item, ordered.</summary>
+    public static List<uint> GetBlueprintIdsProducing(uint outputItemId) =>
+        _blueprints.Values.Where(row => row.MainOutputItemId == outputItemId).Select(row => row.Id).Order().ToList();
 
     /// <summary>
     ///     Every <c>dbfabrication::Recipe</c> id, ordered. The only id space the client's fabrication

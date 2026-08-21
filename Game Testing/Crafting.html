@@ -278,11 +278,31 @@ mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Add
       <code>certificate</code> column is <strong>zero on all 285 rows</strong>, so there is nothing for a cert
       filter to filter on even if one existed.</p>
 
+      <p><strong>What the 285 hold.</strong> Twenty-one are Red 5&#8217;s own test content &#8212; ids 124820 to
+      125152, named <code>Tutorial Recipe 1</code>..<code>9</code>, <code>Generic Recipe Example</code>,
+      <code>TEST WPN L50</code>. Those are the ten a bare <code>fabrecipes</code> sends, being the lowest ids, so
+      the default sample is the least interesting slice of the table. From 137088 up it is real content, 263 rows
+      of it, in families of four tiers: weapons (<code>Assault Rifle Tier 1-4</code>, Shotgun, Burst Rifle),
+      battleframe parts by slot (<code>Chassis</code>, <code>Headgear</code>, <code>Arms Gear</code>,
+      <code>Legs Gear</code>, <code>Reactor</code>, <code>Operating System</code>) and ability modules
+      (<code>Teleportal</code>, <code>Smoke Screen</code>, <code>Arcing Bolts</code>). 252 name an output item
+      type and 265 a result loot table, so they point at something. Names resolved offline by joining the
+      recipe table&#8217;s text ids against the client&#8217;s localisation table, no session needed.</p>
+
+      <p>Worth carrying into CRAFT3: these are a <em>tiered</em> set, four grades per family, not a flat
+      catalogue. The economy decision has to price a ladder.</p>
+
+      <p>Two cosmetic things the 254-row run showed, neither blocking. Recipe 124820 prints with a blank name and
+      blank description, the one row of the 285 whose text ids resolve to nothing. And every real-content row
+      prints a name but an empty description &#8212; the tutorial rows are the only ones with description text
+      authored. A panel built on this shows names, not blurbs.</p>
+
       <p><strong>And there is no 255-recipe ceiling.</strong> The client&#8217;s codec for this array
       (reader <code>0xa0a1c0</code>, writer <code>0xa09910</code>) is chunked: read a byte <em>n</em>, read
       <em>n</em> ids, and <em>if n was 255, go round again</em>. Any length fits. PIN&#8217;s encoder is the Aero
-      definition, which writes exactly one count byte and cannot express the repeat, so one message still tops
-      out at 255 of the 285 rows &#8212; a limit on our side now, not the format&#8217;s.</p>
+      definition, which writes exactly one count byte and cannot express the repeat, so one message carries
+      <strong>254</strong> of the 285 rows &#8212; a limit on our side now, not the format&#8217;s. Not 255: see
+      the disconnect below.</p>
 
       <p>Method worth reusing: <code>StaticDB.GetHash(name)</code> in FauFau is the same hash the client uses for
       its <code>push &lt;imm32&gt;; call</code> table loads, so an unidentified table constant in the binary can
@@ -320,16 +340,25 @@ mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Add
       <label class="step"><input data-k="crafting-1b-4" type="checkbox"/><span class="step-body"><span class="lede">Read the client log for either signal. <strong>Do not</strong> read a
          <code>*_last_run.log</code> while the client is still running &#8212; that file is written at exit and you
          will be reading the previous session. <code>console.log</code> is the live one.</span></span></label>
-      <label class="step"><input data-k="crafting-1b-5" type="checkbox"/><span class="step-body"><span class="lede"><strong>The rows.</strong> Run <code>fabrecipes</code> again on the corrected build,
-         which now sends <code>dbfabrication::Recipe</code> ids. Expect ten <em>named</em> lines under the header
-         this time, not a bare header, and the Lua event to carry recipes rather than one key. <code>fabrecipes id
-         124820</code> asks about a single id, and the server says so in chat if an id you name is not in the
-         table.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-5" type="checkbox" checked="checked"/><span class="step-body"><span class="lede"><strong>Passed 2026-08-21 &#8212; the rows are there.</strong> <code>fabrecipes</code>
+         on the corrected build printed ten <em>named</em> lines under the header and a Lua event carrying ten
+         entries. The server sent bare numbers; every name and description on screen is the client&#8217;s own
+         lookup, which is the half that used to fail. <code>fabrecipes id 124820</code> asks about a single id,
+         and the server says so in chat if an id you name is not in the table.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-6" type="checkbox" checked="checked"/><span class="step-body"><span class="lede"><strong>Done &#8212; and it found the off-by-one.</strong> <code>fabrecipes 255</code>
+         disconnected the client instantly. Expected, in hindsight: a chunk of exactly 255 is the
+         continuation marker, so the client went looking for a second chunk, read its count byte off the end of
+         the message and dropped the link. The cap is <strong>254</strong>.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-7" type="checkbox" checked="checked"/><span class="step-body"><span class="lede"><strong>Passed 2026-08-21 at the cap.</strong> <code>fabrecipes 254</code> printed
+         <strong>254 rows</strong> and raised one event carrying <strong>254 entries</strong>, keys 1..254, with
+         the session intact &#8212; the close in the log 34 seconds later is a normal logout, saved as one. A list
+         twenty-five times the size of the first one rides the same path, and this entry is finished at the
+         largest message PIN can build.</span></span></label>
       </ol></div>
       <p>Pass: <code>Fabrication Recipe List:</code> appears in the client console, or
       <code>FabCart: EVENT fetch_recipes</code> appears, or both. Either proves the client still accepts a recipe
-      list PIN authored, and CRAFT2 can be built on that. <strong>Passed on the envelope 2026-08-21; the rows are
-      step 5 and untested.</strong></p>
+      list PIN authored, and CRAFT2 can be built on that. <strong>Passed 2026-08-21, envelope and contents both,
+      at 254 recipes.</strong></p>
       <div class="callout warn"><p>No reply in chat at all means the command never reached the server. The first
       time this was run it was typed as <code>/fabrecipes</code> and the leading slash swallowed it &#8212; the
       server log shows neither the command nor an &#8220;Unknown command&#8221; line, which is the signature of
@@ -347,29 +376,107 @@ grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesof
   <section class="block" data-open="true" id="-crafting-2-fabrication-runs-server-side">
     <button class="block-head" type="button">
       <span class="block-n">CRAFT2</span>
-      <span class="block-t">Fabrication runs server-side</span>
+      <span class="block-t">Crafting runs server-side</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT2</span><span class="marker none">[ ]</span><span class="entry-t">Fabrication runs server-side</span></div><p>The server side. Handle the surviving <code>Fabrication</code> command set: resolve a recipe's
-      ingredients against inventory, spend them (<code>RequireResource</code> / <code>RequireResourceFromTarget</code> stop being stubs,
-      <code>Blueprint_Resources</code> gets a reader), and place the output item. Not gated on any decision below — the
-      charter's "none of these block starting" still holds. Can run beside CRAFT1.</p>
-      <p>Requires CRAFT-0 to have passed — the output item has to be deliverable.</p>
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT2</span><span class="marker pass">[x]</span><span class="entry-t">Crafting runs server-side</span></div><p>The server side: resolve a recipe's ingredients against
+      inventory, spend them, place the output item. <strong>Built and passed 2026-08-21.</strong> Requires CRAFT-0
+      to have passed — the output item has to be deliverable.</p>
+
+      <div class="callout"><p><strong>Two premises in the original entry turned out to be wrong, and the build
+      follows the data instead.</strong></p>
+      <p><strong>1. The recipes with ingredients are blueprints, not fabrication recipes.</strong>
+      <code>dbfabrication::Recipe</code> — the 285 rows CRAFT1b proved the client will display — carries no
+      ingredient list and no output item. Its columns are a price (<code>build_cost</code>, 15..67), a level, and a
+      <code>result_loot_table_id</code>, so fabrication in 1962 is a paid roll on a loot table, not a recipe with a
+      cost. Its <code>item_type</code> column holds four distinct values across all 285 rows, which makes it a
+      category, not an output. The deterministic recipe system is <code>dbitems::Blueprints</code>, and that is what
+      this entry now builds.</p>
+      <p><strong>2. <code>Blueprint_Resources</code> is dead data, so the reader was built on
+      <code>Blueprint_Items</code> instead.</strong> Of the 5,509 rows in <code>Blueprint_Resources</code>, 137 name
+      an item that still exists — 2.5%. Its <code>item_type</code> values (128..132, 241..395, 1492..1598) are the
+      pre-1.6 graded-material classes, and no surviving item belongs to one. <code>Blueprint_Items</code> resolves on
+      25,823 of its 25,881 rows, 99.8%. The reader was still written, because a blueprint that cites a raw-material
+      row has to be <em>refused out loud</em> rather than built for nothing — which is exactly the free-craft trap
+      the warning below names.</p>
+      <p><strong>3. The trigger is a server command, because the client has no sender.</strong> CRAFT1 settled that:
+      748 exported <code>Game.*</code> names in the 1962 binary, not one of them sends a fabrication command. So
+      "send a fabrication request" is not a step anyone can perform. <code>craft</code> is the trigger.</p></div>
+
+      <p>What was built: <code>Systems/Crafting/BlueprintCrafting.cs</code> resolves a blueprint into a plan and
+      spends it check-all-then-spend-all, so a shortfall on the last ingredient cannot leave the first one already
+      gone. <code>craft</code> is the admin command. <code>RequireResource</code> is no longer a stub — its 41 rows
+      carry a <em>signed</em> amount, 34 of them negative, so it debits and credits a resource and fails the chain
+      when the character is short. It is an ability-charge command, unrelated to blueprints, but it was named in this
+      entry and it is real now. <code>RequireResourceFromTarget</code> stays a stub on purpose: its table has one row
+      asking for 1 of resource <code>1</code>, which is placeholder data with nothing to implement against.</p>
+
+      <div class="callout pass"><p><strong>Passed in game 2026-08-21, on the third sitting.</strong>
+      <code>craft 92906</code> spent 15 Crystite, 1 Chitin Fibers and 1 Copper Wiring and delivered Meteor Strike,
+      and the tester had it in the inventory panel with no resend. The server's own numbers agree from both sides:
+      resource kinds fell 7 to 6 as one stack emptied out entirely, items rose 21 to 22. The refusals hold too —
+      an attempt one ingredient short was turned down with <code>missing item 86679 (ResourceItem) x1 (holding
+      0)</code> and spent nothing, and blueprint 80411 was refused for being priced in materials no 1962 item
+      belongs to. <strong>Ingredients are spent and the output item arrives.</strong></p></div>
+
+      <div class="callout"><p><strong>The first two sittings were void, and neither was crafting's fault. Both
+      bugs were older than this entry and both are fixed.</strong></p>
+      <p><a href="../Docs/ISSUE-REGISTER.md">NET-27</a> — the command printed one line and appeared to stop.
+      It had thrown: Aero's generated chat message sizes its buffer by counting <em>characters</em> and then writes
+      <em>UTF-8 bytes</em>, so a single em dash overran it by two bytes and unwound the whole command before any
+      ingredient was checked. Ordinary player chat had the same fault, silently, for any accented character.</p>
+      <p><a href="../Docs/ISSUE-REGISTER.md">NET-28</a> — with chat fixed the command ran, charged all three
+      ingredients, and died before the payout. Emptying a resource stack to <em>exactly</em> zero threw inside
+      <code>ConsumeResource</code>, which removes the stack and then reads it straight back to update the client.
+      Nothing in PIN had ever emptied one exactly, so the boundary sat unhit; an ability that spends a resource
+      could always have reached it.</p>
+      <p>Worth carrying forward as method: the log showed lines the chat never received, and that mismatch was the
+      whole diagnosis. <code>SourceFeedback</code> writes to the log before it sends, so a command that logs more
+      than it says has thrown, not stopped.</p></div>
+
+      <div class="callout warn"><p><strong>One finding the pass turned up, and it lands on CRAFT3 and CRAFT4:
+      the inventory panel only draws Crystite and Red Bean tokens.</strong> The tester saw deduction toasts for
+      all three ingredients, but the two crafting materials have no row in the panel at all — they are held, spent
+      and delivered invisibly. Delivery is fine; this is a client display limit, the same shape as
+      <a href="../Docs/gaps/data.md#data-25">DATA-25</a>. It cost this entry nothing, because the toasts and the
+      server log carried the evidence. It costs CRAFT4 everything: a thumper payout the player cannot see is a
+      loop with its middle missing. Recorded as <a href="../Docs/gaps/client.md">CLIENT-4</a>, and it belongs in
+      the CRAFT3 decision rather than after it.</p></div>
+
+      <p>The recipe this run uses is <strong>blueprint 92906</strong>, which builds the ability module
+      <strong>Meteor Strike (item 88042, level 6)</strong> out of 15 Crystite (item <code>10</code>), 1 Chitin Fibers
+      (item <code>86679</code>) and 1 Copper Wiring (item <code>86703</code>). All three ingredients carry the
+      Resource flag, so all three are spent as counters and the count on screen has to drop.</p>
+
       <div class="steps"><ol>
-      <label class="step"><input data-k="crafting-2-1" type="checkbox"/><span class="step-body"><span class="lede">Pick one recipe with a resolvable output and a small ingredient set. Confirm the ingredients exist in
-         the 5,052 resolvable blueprints and note their ids.</span></span></label>
-      <label class="step"><input data-k="crafting-2-2" type="checkbox"/><span class="step-body"><span class="lede">Send a fabrication request for that recipe and watch the server resolve the ingredients against the
-         inventory.</span></span></label>
-      <label class="step"><input data-k="crafting-2-3" type="checkbox"/><span class="step-body"><span class="lede">Confirm the ingredients are spent (the inventory count drops) and the output item is placed — it should
-         appear in the inventory without a resend, which is CRAFT-0's path.</span></span></label>
+      <label class="step"><input data-k="crafting-2-1" type="checkbox"/><span class="step-body"><span class="lede">Read the plan without spending anything. It should print three costs and one payout, and say the
+         data is intact.</span>
+      <span class="cmd"><pre><code>craft check 92906</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2-2" type="checkbox"/><span class="step-body"><span class="lede"><strong>Try to build it with an empty cupboard first.</strong> This is the important one: it has to
+         be refused, and nothing may be spent. A build that succeeds here is the free-craft bug.</span>
+      <span class="cmd"><pre><code>craft 92906</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2-3" type="checkbox"/><span class="step-body"><span class="lede">Stock exactly the three ingredients, then open the inventory and write down the three counts
+         before building.</span>
+      <span class="cmd"><pre><code>createitem 10 15
+createitem 86679 1
+createitem 86703 1
+dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2-4" type="checkbox"/><span class="step-body"><span class="lede">Build it. The reply names what was spent.</span>
+      <span class="cmd"><pre><code>craft 92906</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2-5" type="checkbox"/><span class="step-body"><span class="lede">Confirm both halves on screen: all three counts dropped, and Meteor Strike is listed without a
+         resend, which is CRAFT-0's path. Then confirm a second build is refused, since the ingredients are gone.</span>
+      <span class="cmd"><pre><code>craft check 92906
+craft 92906</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-2-6" type="checkbox"/><span class="step-body"><span class="lede">Confirm a blueprint priced in dead raw materials is refused with a reason rather than built.
+         Blueprint 80411 asks for 250 of material class 128, which no 1962 item belongs to.</span>
+      <span class="cmd"><pre><code>craft check 80411</code></pre><button class="copy" type="button">Copy</button></span></span></label>
       </ol></div>
-      <p>Pass: ingredients are spent and the output item arrives. The <code>RequireResource</code> stubs becoming real
-      and <code>Blueprint_Resources</code> getting a reader are the mechanism; the visible result is the crafted item on
-      screen.</p>
-      <div class="callout warn"><p>The stubs are the tell. <code>RequireResource</code> and <code>RequireResourceFromTarget</code> currently do
-      nothing — a fabrication that "succeeds" while they are still stubs would place an item for free and hide the
-      bug. Confirm the ingredients actually left the inventory, not just that the item appeared.</p></div><div class="result"><label for="r-crafting-2">Result</label><textarea data-k="n-crafting-2" id="r-crafting-2" placeholder="What happened"></textarea></div></div>
+      <p>Pass: step 2 refuses and spends nothing, step 4 builds, and step 5 shows all three counts down and the
+      module on screen. A build without a matching drop in counts is a fail even though the item arrived.</p>
+      <div class="callout warn"><p>The free craft is the failure mode to watch for, and it looks like a pass.
+      An item appearing proves delivery, which CRAFT-0 already proved. Only the ingredient counts falling proves
+      crafting. Step 2 exists to catch this before any ingredient is in the inventory to confuse the reading.</p></div><div class="result"><label for="r-crafting-2">Result</label><textarea data-k="n-crafting-2" id="r-crafting-2" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-crafting-3-the-economy-decisions">

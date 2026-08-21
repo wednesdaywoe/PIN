@@ -1495,6 +1495,25 @@ public class StaticDBLoader : ISDBLoader
         .ToDictionary(group => group.Key, group => group.ToList());
     }
 
+    /// <summary>
+    ///     <c>dbitems::Blueprint_Resources</c>, the raw-material half of a blueprint's cost. Grouped by
+    ///     blueprint, same as <see cref="LoadBlueprintItems" />.
+    /// </summary>
+    /// <remarks>
+    ///     Mostly dead weight in 1962. Its <c>item_type</c> column is not an item id the way
+    ///     <c>Blueprint_Items.item_type</c> is: only 137 of its 5,509 rows name something that still
+    ///     exists in <c>dbitems::RootItem</c>, against 99.8% for Blueprint_Items. The ids it carries
+    ///     (128..132, 241..395, 1492..1598) are the pre-1.6 graded-material classes, which no surviving
+    ///     item belongs to. Loaded anyway so a blueprint that still cites one can be refused out loud
+    ///     rather than crafted for free.
+    /// </remarks>
+    public Dictionary<uint, List<Blueprint_Resources>> LoadBlueprintResources()
+    {
+        return LoadStaticDB<Blueprint_Resources>("dbitems::Blueprint_Resources")
+        .GroupBy(row => row.BlueprintId)
+        .ToDictionary(group => group.Key, group => group.ToList());
+    }
+
     public Dictionary<uint, PhysicsMaterial> LoadPhysicsMaterial()
     {
         return LoadStaticDB<PhysicsMaterial>("dbphysicsmaterials::PhysicsMaterial")
