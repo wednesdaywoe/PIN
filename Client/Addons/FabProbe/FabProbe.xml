@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Component xmlns="http://www.red5studios.com/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.red5studios.com/ ../../schemas/component.xsd">
+	<Info
+		title="FabProbe"
+		author="PIN"
+		description="Reads the client's surviving recipe API and logs what it returns"
+		url="https://github.com/"
+		uiVersion="1000"
+	/>
+
+	<Events>
+		<Event name="ON_COMPONENT_LOAD" bind="OnComponentLoad"/>
+		<Event name="ON_PLAYER_READY" bind="OnPlayerReady"/>
+	</Events>
+</Component>

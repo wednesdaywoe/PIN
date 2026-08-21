@@ -7,6 +7,7 @@ using Records.apt;
 using Records.aptfs;
 using Records.dbcharacter;
 using Records.dbencounterdata;
+using Records.dbfabrication;
 using Records.dbitems;
 using Records.dbphysicsmaterials;
 using Records.dbvisualrecords;
@@ -71,6 +72,7 @@ public class SDBInterface
     private static Dictionary<uint, FrameProgressionLevel> _frameProgressionLevel;
     private static Dictionary<uint, Blueprints> _blueprints;
     private static Dictionary<uint, List<Blueprint_Items>> _blueprintItems;
+    private static Dictionary<uint, Recipe> _fabricationRecipes;
     private static Dictionary<uint, List<BattleframeVisuals>> _battleframeVisuals;
     private static Dictionary<uint, LootTable> _lootTable;
     private static Dictionary<uint, List<LootTableItemDist>> _lootTableItemDist;
@@ -338,6 +340,7 @@ public class SDBInterface
         _frameProgressionLevel = loader.LoadFrameProgressionLevel();
         _blueprints = loader.LoadBlueprints();
         _blueprintItems = loader.LoadBlueprintItems();
+        _fabricationRecipes = loader.LoadFabricationRecipes();
         _battleframeVisuals = loader.LoadBattleframeVisuals();
         _lootTable = loader.LoadLootTable();
         _lootTableItemDist = loader.LoadLootTableItemDist();
@@ -638,6 +641,24 @@ public class SDBInterface
     public static FrameProgressionLevel GetFrameProgressionLevel(uint level) => _frameProgressionLevel.GetValueOrDefault(level);
     public static Blueprints GetBlueprint(uint id) => _blueprints.GetValueOrDefault(id);
     public static List<Blueprint_Items> GetBlueprintItems(uint blueprintId) => _blueprintItems.GetValueOrDefault(blueprintId);
+
+    /// <summary>
+    ///     Every <c>dbfabrication::Recipe</c> id, ordered. The only id space the client's fabrication
+    ///     messages can resolve, and it doesn't overlap the blueprint ids from
+    ///     <see cref="GetBlueprintIdsOfType" />. Ids it can't resolve are dropped silently.
+    /// </summary>
+    public static List<uint> GetFabricationRecipeIds() => _fabricationRecipes.Keys.Order().ToList();
+
+    public static Recipe GetFabricationRecipe(uint id) => _fabricationRecipes.GetValueOrDefault(id);
+
+    /// <summary>
+    ///     Every blueprint of one <c>dbitems::Blueprint_Types</c> row, ordered by id. Type 2 is Research,
+    ///     the only category the surviving client asks for by name (<c>Mainframe.lua</c>). These are not
+    ///     fabrication recipe ids: see <see cref="GetFabricationRecipeIds" />, and don't send one where the
+    ///     other is expected, since the mismatch is silent.
+    /// </summary>
+    public static List<uint> GetBlueprintIdsOfType(byte blueprintType) =>
+        _blueprints.Values.Where(row => row.BlueprintType == blueprintType).Select(row => row.Id).Order().ToList();
     public static List<BattleframeVisuals> GetBattleframeVisuals(uint id) => _battleframeVisuals.GetValueOrDefault(id);
     public static LootTable GetLootTable(uint id) => _lootTable.GetValueOrDefault(id);
     public static List<LootTableItemDist> GetLootTableItemDist(uint lootTableId) => _lootTableItemDist.GetValueOrDefault(lootTableId);

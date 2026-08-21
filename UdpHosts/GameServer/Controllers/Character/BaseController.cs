@@ -644,4 +644,65 @@ public class BaseController : Base
 
         client.AssignedShard.EncounterMan.HandleUiQueryResponse(response, (INetworkPlayer)player);
     }
+
+    /// <summary>
+    ///     The eight fabrication commands. None has ever arrived: v1.6 deleted the MPU panel, and the
+    ///     client's Lua binding table (748 exported names, read out of <c>FirefallClient.exe</c>) has no
+    ///     fabrication sender, so an addon can't send one either. Crafting has to be driven from this side,
+    ///     which is what <c>fabrecipes</c> starts. Handled anyway because the client's receiving half is
+    ///     intact, so if one ever does arrive the payload is the whole point.
+    /// </summary>
+    [MessageID((byte)Commands.Fabrication_FetchAllRecipes)]
+    public void FabricationFetchAllRecipes(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        _logger.Warning("Fabrication_FetchAllRecipes from 0x{EntityId:X8} -- first ever seen; the client asked for a recipe list", entityId);
+    }
+
+    [MessageID((byte)Commands.Fabrication_FetchAllInstances)]
+    public void FabricationFetchAllInstances(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        _logger.Warning("Fabrication_FetchAllInstances from 0x{EntityId:X8} -- first ever seen", entityId);
+    }
+
+    [MessageID((byte)Commands.Fabrication_FetchInstance)]
+    public void FabricationFetchInstance(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<FabricationFetchInstance>();
+        _logger.Warning("Fabrication_FetchInstance from 0x{EntityId:X8}: Unk1 {Unk1}", entityId, request.Unk1);
+    }
+
+    [MessageID((byte)Commands.Fabrication_Start)]
+    public void FabricationStart(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<FabricationStart>();
+        _logger.Warning("Fabrication_Start from 0x{EntityId:X8}: Unk1 {Unk1} Unk2 {Unk2}", entityId, request.Unk1, request.Unk2);
+    }
+
+    [MessageID((byte)Commands.Fabrication_ApplyAction)]
+    public void FabricationApplyAction(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<FabricationApplyAction>();
+        _logger.Warning("Fabrication_ApplyAction from 0x{EntityId:X8}: {Unk1} {Unk2} {Unk3}", entityId, request.Unk1, request.Unk2, request.Unk3);
+    }
+
+    [MessageID((byte)Commands.Fabrication_GenerateResult)]
+    public void FabricationGenerateResult(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<FabricationGenerateResult>();
+        _logger.Warning("Fabrication_GenerateResult from 0x{EntityId:X8}: {Unk1} {Unk2} {Unk3}", entityId, request.Unk1, request.Unk2, request.Unk3);
+    }
+
+    [MessageID((byte)Commands.Fabrication_Finalize)]
+    public void FabricationFinalize(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<FabricationFinalize>();
+        _logger.Warning("Fabrication_Finalize from 0x{EntityId:X8}: Unk1 {Unk1} Unk2 {Unk2}", entityId, request.Unk1, request.Unk2);
+    }
+
+    [MessageID((byte)Commands.Fabrication_Claim)]
+    public void FabricationClaim(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<FabricationClaim>();
+        _logger.Warning("Fabrication_Claim from 0x{EntityId:X8}: Unk1 {Unk1} Unk2 {Unk2}", entityId, request.Unk1, request.Unk2);
+    }
 }

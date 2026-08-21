@@ -8,6 +8,7 @@ using Records.apt;
 using Records.aptfs;
 using Records.dbcharacter;
 using Records.dbencounterdata;
+using Records.dbfabrication;
 using Records.dbitems;
 using Records.dbphysicsmaterials;
 using Records.dbvisualrecords;
@@ -1478,6 +1479,12 @@ public class StaticDBLoader : ISDBLoader
     public Dictionary<uint, Blueprints> LoadBlueprints()
     {
         return LoadStaticDB<Blueprints>("dbitems::Blueprints")
+            .ToDictionary(row => row.Id);
+    }
+
+    public Dictionary<uint, Recipe> LoadFabricationRecipes()
+    {
+        return LoadStaticDB<Recipe>("dbfabrication::Recipe")
             .ToDictionary(row => row.Id);
     }
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Component xmlns="http://www.red5studios.com/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.red5studios.com/ ../../schemas/component.xsd">
+	<Info
+		title="FabCart"
+		author="PIN"
+		description="Adds a recipe to the cart and removes it, logging every fabrication response"
+		url="https://github.com/"
+		uiVersion="1000"
+	/>
+
+	<Events>
+		<Event name="ON_COMPONENT_LOAD"					bind="OnComponentLoad"/>
+
+		<!-- Nothing shipped binds these. If one fires, the server answered a fabrication command. -->
+		<Event name="ON_FAB_START_RESPONSE"				bind="OnFabStartResponse"/>
+		<Event name="ON_FAB_FETCH_RECIPES"				bind="OnFabFetchRecipes"/>
+		<Event name="ON_FAB_FETCH_INSTANCE"				bind="OnFabFetchInstance"/>
+		<Event name="ON_FAB_APPLY_ACTION_RESPONSE"		bind="OnFabApplyActionResponse"/>
+		<Event name="ON_FAB_FINALIZED"					bind="OnFabFinalized"/>
+		<Event name="ON_FAB_CANCELED"					bind="OnFabCanceled"/>
+		<Event name="ON_RECIPE_LIST_UPDATE"				bind="OnRecipeListUpdate"/>
+	</Events>
+</Component>

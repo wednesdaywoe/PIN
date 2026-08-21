@@ -5,6 +5,7 @@ using Records.apt;
 using Records.aptfs;
 using Records.dbcharacter;
 using Records.dbencounterdata;
+using Records.dbfabrication;
 using Records.dbitems;
 using Records.dbphysicsmaterials;
 using Records.dbvisualrecords;
@@ -67,6 +68,9 @@ public interface ISDBLoader
     Dictionary<uint, FrameProgressionLevel> LoadFrameProgressionLevel();
     Dictionary<uint, Blueprints> LoadBlueprints();
     Dictionary<uint, List<Blueprint_Items>> LoadBlueprintItems();
+
+    // dbfabrication
+    Dictionary<uint, Recipe> LoadFabricationRecipes();
     Dictionary<uint, List<BattleframeVisuals>> LoadBattleframeVisuals();
     Dictionary<uint, LootTable> LoadLootTable();
     Dictionary<uint, List<LootTableItemDist>> LoadLootTableItemDist();
