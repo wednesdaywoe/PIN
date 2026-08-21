@@ -1164,3 +1164,106 @@ indistinguishable from hitting nothing, so "does this rock have collision?" coul
 game and [DATA-22](#data-22) had to be measured offline. `probe` answers it — the ray's verdict,
 the distance, and the ground height under the caller, which is the same query this entry is about
 made visible from inside the game.
+
+<a id="data-24"></a>
+
+### DATA-24 — Weapon damage was read off the shared template, so every item of a type hit for the same amount [x] fixed 2026-08-20, unverified in game
+
+**A stream sitting on 2026-08-20 produced two complaints an hour apart that turned out to be one
+bug from both ends: the Recon's rifle "does about 1 damage", and the Tigerclaw's Fusion Cannon is
+"a lot weaker than I remember".** The first was found by reading the db, the second by the combat
+log the first one prompted. They are the same defect seen from opposite sides.
+
+`dbitems::WeaponTemplates.damage_per_round` is **per weapon type, not per item**, and a type covers
+a whole family of gear: 248 items are Fusion Cannons, 236 are R36 rifles, 215 are Photon Lances. The
+per-item number lives on **attribute 954 (`WeaponDamage`)** in `dbitems::AttributeRange`, and its
+spread inside one type is enormous — across those 248 Fusion Cannons it runs 100 to 8,882.
+`SDBUtils.GetDetailedWeaponTemplateInfo` read the template and ignored the attribute, so **every
+item of a type dealt identical damage**. The three battleframe secondaries in the starting loadout
+are one type carrying 11, 32.6 and 60; all three dealt 46.
+
+The two ends of the complaint, measured rather than reasoned:
+
+| Weapon | Type's `damage_per_round` | Item's attribute 954 | Measured before | After |
+|--------|--------------------------|----------------------|-----------------|-------|
+| 86997 R36 rifle (Recon) | **1** | 115.4 | 1 a shot | 115 |
+| 87184 Fusion Cannon (Tigerclaw) | 200 | **1090** | 158 dps | 860 |
+| 87243 Photon Lance (Rhino) | 200 | **98** | 2,543 dps | 1,210 |
+| 87660 BioCrossbow (Recluse) | 260 | 354 | 371 dps | 505 |
+
+The Lance and the Cannon are the same row of that table read in both directions: **two weapons a
+factor of sixteen apart in their own data, both paying out the one number that belonged to
+neither.** The client has shown attribute 954 on the item card the whole time, so the card and the
+server disagreed in front of the player — 115 printed, 1 dealt.
+
+**Fixed by preferring the item's attribute and falling back to the template**, in
+`SDBUtils.ItemTunedDamage`, cached per item because the attribute lookup scans the whole table and
+the resolver runs on every shot.
+
+**Creature output is deliberately almost untouched, which is what keeps
+[DATA-6](#data-6)'s anchor still standing.** 513 of the 596 weapons monsters carry have no item
+attributes at all — including weapon 20046, the Spyder melee `MonsterTier` is calibrated against —
+so they keep reading the template exactly as before. The 83 that do carry a tuned number now get it.
+
+**What this does not fix is [DATA-20](#data-20), and the same session measured it again.** 45 of
+those 596 monster weapons have a template damage of 1 *and* no attribute, so there is nothing
+anywhere to read; 249 monster rows carry one. In the session that produced this entry the NPC
+Assault Rifle (85953) landed **128 hits for 2 damage each** against a 1000-health player, while the
+Spyder's melee landed 49s. That is DATA-20's quantisation problem unchanged, and this entry supplies
+no new evidence for it beyond confirming it survives.
+
+**How it was found is worth keeping.** The Recon half was read out of the db offline. The Tigerclaw
+half could not have been — it needed
+[`CombatLog`](../../UdpHosts/GameServer/Systems/Combat/CombatLog.cs), written the same day for the
+Lance question, which records every hit and a per-kill rollup to CSV. The kill rows are the "before"
+column above, and the offline reading had put the Lance at 2,222 dps against a measured 2,543. The
+instrument now exists for any question of this shape.
+
+**Unverified in game.** The numbers above are what the server will now pay out, computed from the
+same session's hit counts and intervals; nobody has fired the changed weapons yet.
+
+<a id="data-25"></a>
+
+### DATA-25 — 35,006 items carry no client-side listing bits, so the inventory panel will never draw them [ ] open, found 2026-08-20
+
+**Three sittings failed to see a created item, and the item was the defect.** `createitem 20003` (the
+DevTEST Shotgun) was the test [NET-18](network.md#net-18) had been run with since 2026-08-10. It
+never appeared. The finding that broke the deadlock was that **it was also absent after a full
+inventory** — the login send on 2026-08-20 at 22:14:51 carried 62 items including eight shotguns,
+and the panel's own search for "DevTEST" returned nothing. No delivery bug can explain an item that
+is missing from a message the client accepted and drew 45 other items out of.
+
+`dbitems::RootItem.flags` splits the inventory exactly:
+
+| Item | `flags` | Drawn |
+|------|---------|-------|
+| 87779 M6A Chief, 87243 L90 Sunbeam, 85968 Heavy Machine Gun | `0x4803` | yes |
+| 20003 DevTEST Shotgun | `0x0800` | no |
+| 75579 Battlemedic, 34146, 34461, 52501, 76118 | `0x0800` | no |
+| 76332/76132/76336 chassis | `0x2C00` | no |
+
+The two low bits (`0x1`, `0x2`) are present on every item the panel lists and absent from every item
+it does not. Splitting that session's 62 items on them alone gives **45 drawn and 17 not, and the 17
+are exactly the missing set** — eight shotguns, two Battlemedics, four unnamed items, three chassis.
+The chassis are expected to be absent (a battleframe is garage furniture, not bag contents), which
+is a point in the rule's favour rather than against it.
+
+**Across the whole table, 25,119 items carry the bits and 35,006 do not.** Whatever the two mean
+exactly — the client's Lua reads named flags (`is_tradable`, `is_salvageable`, `hidden`, `is_bound`,
+`is_new`, …) that the engine derives from this column — a majority of the item table is on the wrong
+side of the line.
+
+**Not fixable from the server, and probably not a defect at all.** The panel does not filter in
+script: `Inventory.lua` asks `Player.GetInventoryBags()` and the engine decides what a bag contains,
+inside the client binary. So the rule runs before anything PIN sends is involved. The likeliest
+reading is that these are exactly what they look like — dev and internal items retail never showed a
+player — in which case the entry is a **testing hazard rather than a bug**, and the work is to know
+which items are drawable before choosing one as an instrument.
+
+**What it cost.** It masked [NET-18](network.md#net-18) for ten days, and it produced a false
+regression report — "resend used to work and doesn't any more" — because a resend of an undrawable
+item looks identical to a broken resend. NET-18's client confirmation arrived the same evening the
+moment the test used `85968` instead.
+
+Open work: establish what the two bits are, from the client binary or by sampling items known to
+have been player-visible in retail, and record the drawable set so a test never picks a ghost again.

@@ -221,7 +221,7 @@ Blocks correctness for any effect predicted onto a target rather than the caster
 
 <a id="net-18"></a>
 
-### NET-18 — partial item `InventoryUpdate` is not merged by the client [~] fixed 2026-08-20 (headless), client confirmation pending
+### NET-18 — partial item `InventoryUpdate` is not merged by the client [x] fixed and confirmed in game 2026-08-20
 
 [Inventory.md](../../Game Testing/Inventory.html): I1 landed on its own middle branch, twice in one
 sitting (20003, then 86074): a created item appears only after `dbg_inventory resend` pushes the
@@ -275,8 +275,20 @@ a created item carries `DynamicFlags = 0x02` and that partial update is the mess
 the reliable channel. This reads the stored item, an exact proxy for the wire value —
 `SendItemUpdate` builds `ItemsPart1 = [item]` and Aero serialises that item's `DynamicFlags` byte
 straight onto the wire. It does *not* answer the defect's real question, whether the client now draws
-the row: that is a live-client read and stays open. The run sheet asks for it — `createitem <type>`
-then watch the item appear without a `resend`.
+the row: that is a live-client read.
+
+**That read came back the same evening and it passes.** `createitem 85968` (Heavy Machine Gun) was
+listed by the client on its own, with no `resend`, on
+[CRAFT-0](../../Game Testing/Crafting.html). The arrival flag was the fix and item delivery is
+confirmed working. This entry closes.
+
+**Three sittings failed first, and the item was the reason.** Every attempt before this one used
+`20003`, the DevTEST Shotgun, and it is one of the 35,006 items the client refuses to list under any
+circumstances — [DATA-25](data.md#data-25), found by noticing that the shotguns were missing from a
+*full* login inventory that carried eight of them. Against an undrawable item, a working delivery
+path and a working `resend` are indistinguishable from broken ones, which is exactly how this entry
+read from 2026-08-10 onward. The lesson is procedural rather than technical: an instrument has to be
+known-good before a negative result from it means anything.
 
 <a id="net-19"></a>
 

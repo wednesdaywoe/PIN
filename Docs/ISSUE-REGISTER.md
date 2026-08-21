@@ -415,6 +415,31 @@ has no entries in that category, which reflects nothing having run rather than n
   the way past: the loader reads only detail level 3 of five, which looks like the obvious culprit
   and is not — level 3 is the only level carrying collision at all. Same rebuild confirmed water and
   movement-blocker collision are parsed and consumed by nobody. **Findable in game, and the instrument is verified**: the new `probe` command reports whether the aim ray met the world, an entity or nothing — [SOLID-WORLD-10](../Game Testing/solid-world.html) ran 2026-08-19 and every control answered correctly, though the night's hunt found no collision-less object, so the 252 remain known only from the offline rebuild. The sweep now costs nothing and can ride along in any sitting
+- [x] **DATA-24** — **Weapon damage was read off the shared type template instead of the item**,
+  found and fixed 2026-08-20. `WeaponTemplates.damage_per_round` is per weapon *type* — 248 items are
+  Fusion Cannons, 215 are Photon Lances — while the tuned per-item number is attribute 954, whose
+  spread inside one type runs 100 to 8,882. So every item of a type dealt the same damage: the
+  Recon's rifle paid out its type's **1** against its own 115, and the Tigerclaw's Fusion Cannon its
+  type's **200** against its own 1,090, while the Rhino's Photon Lance paid out that same 200 against
+  its own 98 — **two weapons a factor of sixteen apart reading one number that belonged to neither**,
+  which is why one felt broken and the other unstoppable in the same sitting. The client had shown
+  the item's number on the card throughout. Fixed in `SDBUtils.ItemTunedDamage`, item first and
+  template as fallback. Creature output barely moves and DATA-6's anchor holds — 513 of the 596
+  monster weapons carry no attribute at all, weapon 20046 among them. **Found using
+  [`CombatLog`](../UdpHosts/GameServer/Systems/Combat/CombatLog.cs)**, written the same day: per-hit
+  and per-kill CSV, and the kill rollups are the measurement this entry is built on. Unverified in
+  game
+- [ ] **DATA-25** — **35,006 of the game's items carry no client-side listing bits**, so the
+  inventory panel never draws them however they are delivered, found 2026-08-20. `20003` (DevTEST
+  Shotgun) — the item [NET-18](gaps/network.md#net-18) had been tested with since 2026-08-10 — is one
+  of them, which is why three sittings saw nothing and why a working `resend` was reported as broken.
+  Settled by the observation no delivery bug can explain: the shotguns were **absent after a full
+  login inventory that carried eight of them**. `RootItem.flags` splits the session's 62 items
+  exactly — the two low bits are on all 45 drawn and none of the 17 missing (eight shotguns, two
+  Battlemedics, four unnamed, three chassis). Not fixable server-side: `Inventory.lua` asks
+  `Player.GetInventoryBags()` and the engine decides, inside the binary. Probably a **testing hazard
+  rather than a defect** — these look like items retail never showed a player. Open work is to
+  identify the bits and record the drawable set. See [DATA-25](gaps/data.md#data-25)
 - [x] **DATA-23** — **Terrain is loaded and nothing queries it**, found 2026-08-17, **built the same day, verified in game 2026-08-19**. Every height in
   the server is still borrowed or assumed, with two symptoms from one missing capability: a creature
   chasing a player uphill **walks into the air**, because `Steering` gives a destination the
@@ -465,7 +490,12 @@ has no entries in that category, which reflects nothing having run rather than n
   by design
 - [ ] **NET-16** — Predicted effects reach the owning client twice, likely diverging from retail
 - [~] **NET-17** — `LocalEffectsData.Entity` semantics (initiator vs. target) unconfirmed
-- [~] **NET-18** — re-scoped 2026-08-14 from "unverified" to a confirmed live defect; cause + fix 2026-08-20: **the
+- [x] **NET-18** — **confirmed fixed in game 2026-08-20**: `createitem 85968` was listed by the client
+  on its own, no `resend`. The `0x02` arrival flag was the fix. The confirmation took three failed
+  sittings first, and none of them were the server's fault — they used `20003`, which the client will
+  not draw however it arrives ([DATA-25](gaps/data.md#data-25)), so a working delivery path and a
+  working `resend` both read as broken. Full history follows.
+  Re-scoped 2026-08-14 from "unverified" to a confirmed live defect; cause + fix 2026-08-20: **the
   client declines to merge PIN's partial item `InventoryUpdate`** — a created item appears only
   after `dbg_inventory resend` pushes the full inventory. Confirmed twice in one sitting (20003,
   then 86074). Everything else is ruled out: the item struct is right (the full send lists it, the
@@ -479,9 +509,9 @@ has no entries in that category, which reflects nothing having run rather than n
   dropping the speculative `IsBound` (this also resolves a record disagreement — the code comment
   said the adds carried `3`, but the measured table says `2`; the flag is set either way, so the
   NET-18 direction was right all along). **Headless check passed**: the created item carries `0x02`
-  and that update is what goes out ([network.md#net-18](gaps/network.md#net-18)). Client
-  confirmation still open — watch the item appear after `createitem` with no `resend`. Durability
-  ruled out. The `createitem` → `resend` workaround unblocks the queue meanwhile
+  and that update is what goes out ([network.md#net-18](gaps/network.md#net-18)). Durability ruled
+  out. **Client confirmation arrived 2026-08-20** via
+  [CRAFT-0](../Game Testing/Crafting.html), once the test stopped using an undrawable item
 - [x] **NET-19** — Two 2026-08-11 prediction fixes (certificates, XP entity id) confirmed by
   [P0](../Game Testing/Prediction-Sweep.html) on 2026-08-14: the cert-gated 86074 slots on the
   Dreadnaught and every garage frame reads level 45

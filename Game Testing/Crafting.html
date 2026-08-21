@@ -59,33 +59,41 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT-0</span><span class="marker warn">[~]</span><span class="entry-t">a created item appears without a resend</span></div><p><strong>Headless check passed 2026-08-20; client confirmation open.</strong> This is the
-      in-game read on <a href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s fix: <code>CreateItem</code> now sends the
-      <code>0x02</code> arrival flag, and the question is whether the client now lists the created item on its own,
-      with no <code>dbg_inventory resend</code>. The item must appear without a resend because that is exactly the
-      thing <a href="Inventory.html">Inventory Delivery</a> found the client would not do — the partial update it
-      declines — and a crafted item arrives through the same path. If this passes, item delivery works and every
-      crafting entry after it can run. If it does not, the fix was wrong or incomplete and nothing below is
-      meaningful yet.</p>
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT-0</span><span class="marker pass">[x]</span><span class="entry-t">a created item appears without a resend</span></div><p><strong>Passed in game 2026-08-20, on the second attempt with a different item.</strong>
+      <code>createitem 85968</code> (Heavy Machine Gun) was listed by the client on its own, no
+      <code>dbg_inventory resend</code>. That is <a href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s client
+      confirmation: the <code>0x02</code> arrival flag was the fix, and item delivery works. CRAFT1–CRAFT5 are
+      unblocked.</p>
+      <p><strong>The first attempt failed and the item was at fault, not the server.</strong> Three sittings using
+      <code>20003</code> (DevTEST Shotgun) showed nothing — and the shotguns were not merely undrawn on arrival,
+      they were absent after a <em>full</em> inventory at login carried eight of them, which no delivery bug can
+      explain. <code>20003</code> carries client item flags <code>0x0800</code>; every item the panel does draw
+      carries <code>0x4803</code>. Splitting that inventory on the two low bits gives 45 drawn and 17 not, and the
+      17 are exactly the shotguns, the Battlemedics, the four unnamed items and the three chassis. 35,006 of the
+      game's items are on the wrong side of that line. See <a href="../Docs/gaps/data.md#data-25">DATA-25</a> —
+      <strong>do not test item delivery with 20003.</strong></p>
       <p>Blocks CRAFT1–CRAFT5. Run it before any of them.</p>
       <div class="steps"><ol>
       <label class="step"><input data-k="crafting-0-1" type="checkbox"/><span class="step-body"><span class="lede">Log in, open the inventory before creating anything, and note whether the frame's default gear
          is listed. This is the control — if the starting inventory is empty too, the problem was never about
          <code>createitem</code>.</span></span></label>
-      <label class="step"><input data-k="crafting-0-2" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem</code> an ordinary, equippable item — <code>20003</code> (the DevTEST Shotgun) is the
-         one <a href="Inventory.html">INVENTORY-1</a> used, a module like <code>86074</code> works too. This is an
-         ordinary single-item add, the shape the fix was calibrated against.</span></span></label>
+      <label class="step"><input data-k="crafting-0-2" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem</code> an item the client is willing to draw — <code>85968</code> (Heavy Machine Gun),
+         which carries the same item flags as the gear already visible in your bag. <strong>Not
+         <code>20003</code></strong>: the client never lists it however it is delivered
+         (<a href="../Docs/gaps/data.md#data-25">DATA-25</a>). This is an ordinary single-item add, the shape the
+         fix was calibrated against.</span></span></label>
       <label class="step"><input data-k="crafting-0-3" type="checkbox"/><span class="step-body"><span class="lede">Watch the inventory <strong>without touching anything</strong>. The item should appear on its own — the
          whole point is that no <code>resend</code> follows it. This is the pass condition.</span></span></label>
       <label class="step"><input data-k="crafting-0-4" type="checkbox"/><span class="step-body"><span class="lede">If it appears: confirm it is real — <code>dbg_inventory</code> lists it, it equips in the garage, the flags
          round-trip — then <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> closes and item delivery is confirmed.
          Crafting can proceed.</span></span></label>
-      <label class="step"><input data-k="crafting-0-5" type="checkbox"/><span class="step-body"><span class="lede">If it does <strong>not</strong> appear without a resend: the arrival flag was not the fix. Run
-         <code>dbg_inventory resend</code> to confirm the item is server-side real (it should be), then fall back
-         to the <a href="Inventory.html">INVENTORY-1</a> comparison — capture message [9], the 37-byte retail
-         single-item add reproduced in <a href="Capture-Replay.html">Capture Replay</a> — and check the remaining
-         suspects, <code>Modules</code> and <code>Unk4</code>. Do not move to CRAFT1 until the item appears without a
-         resend.</span></span></label>
+      <label class="step"><input data-k="crafting-0-5" type="checkbox"/><span class="step-body"><span class="lede">If it does <strong>not</strong> appear without a resend: check the item's flags before blaming the
+         server — an item whose client record lacks the two low bits will never be listed, however it arrives
+         (<a href="../Docs/gaps/data.md#data-25">DATA-25</a>). Only once the item is known drawable does the
+         old trail apply: run <code>dbg_inventory resend</code> to confirm it is server-side real, then the
+         <a href="Inventory.html">INVENTORY-1</a> comparison — capture message [9], the 37-byte retail
+         single-item add reproduced in <a href="Capture-Replay.html">Capture Replay</a> — and the remaining
+         suspects, <code>Modules</code> and <code>Unk4</code>.</span></span></label>
       </ol></div>
       <p>Read the console output alongside what you see:</p>
       <ul>
@@ -99,7 +107,7 @@
         client rejects the item itself; the suspects are all in the item struct.</li>
       <li><strong>Not listed by <code>dbg_inventory</code></strong> — nothing was created.</li>
       </ul>
-      <span class="cmd"><pre><code>createitem 20003
+      <span class="cmd"><pre><code>createitem 85968
 grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
 </code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-crafting-0">Result</label><textarea data-k="n-crafting-0" id="r-crafting-0" placeholder="What happened"></textarea></div></div>
     </div>
@@ -111,26 +119,229 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT1</span><span class="marker none">[ ]</span><span class="entry-t">A panel reaches fabrication</span></div><p>The client surface. Settle how a panel reaches fabrication: repurpose
-      <code>Tinkering</code>, or author a minimal Lua panel against the surviving <code>GetRecipeIds</code>/<code>GetRecipeInfo</code>.
-      The deliverable is a decision with a working spike behind it, not a finished screen. The route is already
-      shown to be open — unknown wire keys survive into Lua (see <a href="Constraints-Transport.html">Constraints
-      Transport</a>), and <code>system/gui</code> is loose, readable source.</p>
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT1</span><span class="marker warn">[~]</span><span class="entry-t">A panel reaches fabrication</span></div><p>The client surface. Scoped 2026-08-20 by reading
+      <code>system/gui</code> and the client binary; the entry below is what that found, and it changes the
+      choice this entry was written to make. <strong>Steps 1 and 2 ran the same evening and the unknown is
+      settled — see the probe result below.</strong></p>
+
+      <p><strong>Repurposing <code>Tinkering</code> is off the table.</strong> Its Lua is intact — 2,507 lines
+      across <code>Tinkering.lua</code> and <code>TinkeringView.lua</code> — but it is a different feed
+      entirely: <code>GetTinkerPlansForItem</code>, <code>GetTinkerIngredients</code>,
+      <code>ExecuteTinkeringPlan</code>, and nothing recipe- or fabrication-shaped anywhere in it. It offers a
+      layout to copy and no data path, so it is not the shortcut this entry assumed.</p>
+
+      <p><strong>What survives is larger than <code>GetRecipeIds</code>/<code>GetRecipeInfo</code>.</strong>
+      Eight recipe functions are still exported by the client binary: those two plus <code>GetRecipe</code>,
+      <code>GetRecipeList</code>, <code>AddRecipeToCart</code>, <code>RemoveRecipeFromCart</code>,
+      <code>CanTrackRecipe</code> and <code>IsTrackingRecipe</code>. A <strong>cart</strong> means the client
+      still has a notion of queuing a job. Only the first two have a surviving caller — <code>Mainframe.lua</code>,
+      feeding the web panel — so the other six are exports whose behaviour is unknown rather than absent.</p>
+
+      <p><strong>There is a dead panel slot to build into.</strong>
+      <code>components/MainUI/Panels/FabTest/</code> is the developers&#8217; own fabrication test screen: the
+      XML shell survives, <code>FabTest.lua</code> is 1,056 bytes of blank lines, and nothing else in the tree
+      references it. Better still, <code>UISets/MainUI.xml</code> names <code>%FF_DOCUMENTS%\Addons</code> as a
+      second component folder, so a panel can be added <em>without touching the Steam install</em>. See
+      <a href="../Client/Addons/README.md">Client/Addons</a>.</p>
+
+      <p><strong>The server side is defined and empty.</strong> Eight fabrication commands (240&#8211;247) and
+      eight responses (176&#8211;183) have AeroMessages classes and enum entries, and not one has a handler.
+      <code>FabricationFetchAllRecipesResponse</code> is a <em>byte</em>-counted array of recipe ids, which was
+      read at the time as a hard 255-recipe ceiling. <strong>It is not one</strong> &#8212; see the codec note
+      under CRAFT1b. The count byte is a chunk length, not a total.</p>
+
+      <div class="callout pass"><p><strong>Settled 2026-08-20: the recipe catalogue is entirely client-side, and
+      the panel leads.</strong> <code>FabProbe</code> ran at login against a PIN server that has no fabrication
+      handler of any kind, and the client answered <strong>6,251 recipes</strong> anyway. Nothing on commands
+      240&#8211;247 reached the server during the run. A panel can therefore list, describe and cost every recipe
+      in the game before PIN sends a single fabrication message, and CRAFT2 does not have to supply the
+      catalogue.</p></div>
+
+      <p><strong>What the probe found.</strong> All eight functions are callable.
+      <code>GetRecipeList()</code> returns 6,251 entries, which is exactly the sum of the per-category calls, so
+      it is the union rather than a separate list:</p>
+
+      <table>
+      <thead><tr><th>Category</th><th>Recipes</th></tr></thead>
+      <tbody>
+      <tr><td>None</td><td>4,270</td></tr>
+      <tr><td>Research</td><td>1,903</td></tr>
+      <tr><td>Nanotemplate</td><td>74</td></tr>
+      <tr><td>Refining</td><td>4</td></tr>
+      <tr><td>Upgrade, Master Crafting, Resource Blending, Item Upgrade</td><td>0 each</td></tr>
+      </tbody>
+      </table>
+
+      <p><strong>And the payload behind an id is complete, not a shell.</strong> <code>GetRecipeInfo</code>
+      returns 10&#8211;12 fields: <code>name</code>, <code>description</code>, <code>inputs</code>,
+      <code>outputs</code>, <code>build_time</code>, <code>max_parallel</code>, <code>required_certs</code>,
+      <code>cert_outputs</code>, <code>research_blueprint_id</code>, <code>head_blueprint_id</code>,
+      <code>resourceTypeId</code>, and <code>stage</code> on refining. Real examples out of the run: 92824
+      &#8220;Slaughter i10&#8221;, a Plasma Cannon with 3 inputs and a 19-second build; 75097 &#8220;Research
+      Medium Health Packs&#8221;, whose output is a certificate rather than an item; 52201 &#8220;Pack of Sonic
+      Detonators (10)&#8221;, five of which can run at once; 77474 &#8220;Raw Resource Refining II&#8221;.</p>
+
+      <p>One thing worth carrying into CRAFT2 and CRAFT3: recipes carry <code>required_certs</code>, so the
+      cert delivery closed under <a href="../Docs/ISSUE-REGISTER.md">NET-19</a> is load-bearing here.</p>
+
+      <div class="callout warn"><p><strong>Careful with these 6,251.</strong> They are the client&#8217;s
+      <em>Lua-facing</em> recipe store, built from <code>dbitems::Blueprints</code>. The client&#8217;s
+      fabrication messages do not use it. They resolve against a second, separate store of 285 recipes with a
+      different id space entirely, and 75097 is not in it. CRAFT1b has the detail.</p></div>
+
       <p>Run first among the real items: it is the only part with a real unknown in it, and the risk should be
-      retired before the server work assumes an answer. Requires CRAFT-0 to have passed.</p>
+      retired before the server work assumes an answer. Requires CRAFT-0 to have passed &#8212; it has.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="crafting-1-1" type="checkbox"/><span class="step-body"><span class="lede">Confirm the engine feed survives — from the client console, <code>GetRecipeIds</code> and
-         <code>GetRecipeInfo</code> resolve to real data, and <code>Mainframe.lua</code> still calls them.</span></span></label>
-      <label class="step"><input data-k="crafting-1-2" type="checkbox"/><span class="step-body"><span class="lede">Decide the surface: repurpose <code>Tinkering</code>, or author a minimal panel against the surviving
-         feed. Spike one, either way — a panel that lists a recipe and sends a fabrication request.</span></span></label>
-      <label class="step"><input data-k="crafting-1-3" type="checkbox"/><span class="step-body"><span class="lede">Send the request from the spike and watch the server accept it (nothing past CRAFT2 resolves the
-         recipe yet, so the request should reach the server and be handled — even if it currently fails on
-         ingredients).</span></span></label>
+      <label class="step"><input data-k="crafting-1-1" type="checkbox"/><span class="step-body"><span class="lede"><strong>Done 2026-08-20.</strong> Install the probe and read what the feed answers.
+         <code>FabProbe</code> is read-only (<a href="../Client/Addons/README.md">Client/Addons</a>): it calls all
+         eight functions, asks each of the eight <code>Blueprint_Types</code> categories for ids, and logs what
+         comes back. Copy it into the addons folder, restart the client, log in, then read the client log for
+         <code>FabProbe:</code>. The addon path is confirmed working:
+         <code>Documents\Firefall\Addons\&lt;Name&gt;\</code>, loaded at startup only.</span></span></label>
+      <label class="step"><input data-k="crafting-1-2" type="checkbox"/><span class="step-body"><span class="lede"><strong>Done 2026-08-20 — client-side, panel leads.</strong> 6,251 recipes with PIN
+         sending nothing. CRAFT2 stays behind this entry.</span></span></label>
+      <label class="step"><input data-k="crafting-1-3" type="checkbox"/><span class="step-body"><span class="lede">Author the panel into <code>FabTest</code>, listing whatever the probe proved reachable. Not a
+         finished screen &#8212; a list, and one button.</span></span></label>
+      <label class="step"><input data-k="crafting-1-4" type="checkbox" checked="checked"/><span class="step-body"><span class="lede"><strong>Done 2026-08-20 &#8212; there is no send.</strong> <code>FabCart</code> called
+         <code>AddRecipeToCart(75097)</code> and the server saw <code>UpdateShoppingList</code> (command 194, on
+         <code>Character_MissionAndMarkerController</code>) and nothing else. No <code>Fabrication_*</code> command,
+         no <code>ON_FAB_*</code> event. The cart is the tracked-recipe wishlist, not a build order.</span></span></label>
+      <label class="step"><input data-k="crafting-1-5" type="checkbox" checked="checked"/><span class="step-body"><span class="lede"><strong>Done 2026-08-20 &#8212; and no send can exist.</strong> The client&#8217;s Lua
+         binding table was read straight out of <code>FirefallClient.exe</code>: 748 exported names, of which the
+         only recipe- or craft-shaped ones are the eight read-only functions plus <code>ExecuteTinkeringPlan</code>
+         (a different system). No addon can ever send <code>Fabrication_Start</code>. <strong>The direction
+         reverses: the server drives fabrication and the client displays it</strong>, which is what CRAFT1b
+         starts.</span></span></label>
       </ol></div>
       <p>Pass: a panel lists a recipe, sends a fabrication request, and the request reaches the server. The
       recipe itself resolving is CRAFT2's job.</p>
+
+      <div class="callout warn"><p><strong>That pass condition is unreachable and the entry is superseded.</strong>
+      No client-side send exists to reach the server with, so the panel cannot be the thing that opens CRAFT2.
+      CRAFT1b replaces it: prove the client still <em>accepts</em> a server-authored fabrication message. Three
+      further things came out of the same binary read and are worth having on record. The client still prints
+      every fabrication reply to its own console (&#8220;Fabrication Recipe List:&#8221;, &#8220;Recipe
+      Finalized&#8221;, &#8220;Recipe Aborted&#8221;), so a reply is observable with no panel at all. The
+      nineteen unnamed fields of <code>FabricationCommonData1</code> have names in there &#8212;
+      <code>recipe_id</code>, <code>build_points</code>, <code>actions_left</code>, <code>turns_used</code>,
+      <code>quality_points</code>, <code>ingredient_multipliers</code>, <code>started_at</code>,
+      <code>ends_at</code>, <code>upgrade_chance</code> and about twenty more. And there is a client setting
+      called <code>fabrication.enabled</code> whose default and effect are both untested.</p></div>
       <div class="callout warn"><p>Not a finished screen. The charter says the deliverable is a decision with a working
-      spike behind it — a panel that proves the route is open is enough to open CRAFT2.</p></div><div class="result"><label for="r-crafting-1">Result</label><textarea data-k="n-crafting-1" id="r-crafting-1" placeholder="What happened"></textarea></div></div>
+      spike behind it — a panel that proves the route is open is enough to open CRAFT2.</p></div>
+      <span class="cmd"><pre><code>FF_DOCS=~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/Documents/Firefall
+mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Addons/"
+</code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-crafting-1">Result</label><textarea data-k="n-crafting-1" id="r-crafting-1" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-crafting-1b-the-client-accepts-a-server-sent-recipe-list">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT1b</span>
+      <span class="block-t">The client accepts a server-sent recipe list</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT1b</span><span class="marker pass">[x]</span><span class="entry-t">The client accepts a server-sent recipe list</span></div>
+
+      <div class="callout pass"><p><strong>Passed in game 2026-08-21, on both signals, three times.</strong> Each
+      <code>fabrecipes</code> produced, within the same second, <code>Fabrication Recipe List:</code> and its
+      column header in the client console <em>and</em> <code>FabCart: EVENT ON_FAB_FETCH_RECIPES</code> in Lua.
+      Server 23:58:16 &#8594; client elapsed 02:06; 00:00:22 &#8594; 04:12; 00:05:10 &#8594; 01:00 of the next
+      client session. <strong>An unprompted, server-authored fabrication message is accepted, decoded and acted
+      on.</strong> That is the premise everything after CRAFT1 rests on, and it is no longer an
+      assumption.</p></div>
+
+      <div class="callout warn"><p><strong>The list arrived empty three times.</strong> The header printed with
+      no rows under it, and the Lua event carried a table with one key &#8212; <code>event</code> &#8212; and no
+      recipes. Two candidates were on the table: PIN&#8217;s guess at the wire shape was wrong, or the response
+      is one character&#8217;s <em>unlocked</em> set and the client was filtering our ids against certs we do not
+      hold. <strong>Settled 2026-08-21, and it was neither.</strong></p></div>
+
+      <div class="callout pass"><p><strong>Settled: PIN was sending ids from the wrong table.</strong> Read
+      straight out of <code>FirefallClient.exe</code> and <code>clientdb.sd2</code>, no game session needed.</p>
+
+      <p>The response handler (client function <code>0x8d8bb0</code>) does three things in order. If the list it
+      received is empty it prints <code>-- No Recipes were found.</code> and stops &#8212; and <strong>that line
+      never appeared</strong>, so the ids did arrive and the wire shape is fine. Then, for each id, it looks the
+      id up in a recipe map; <strong>an id it cannot find is skipped in silence</strong>, printing no row and
+      adding nothing to the Lua event table. And nowhere in it is there a check against certificates. So the
+      unlocked-set theory is out on the code, not on the evidence.</p>
+
+      <p><strong>The client keeps two recipe stores with two separate id spaces, and we used the wrong one.</strong>
+      <code>Game.GetRecipeInfo</code> and the rest of the Lua functions answer out of a store built from
+      <code>dbitems::Blueprints</code> &#8212; 6,251 entries, and where 75097 lives, which is why
+      <code>FabProbe</code> could name it. The fabrication handler resolves against
+      <strong><code>dbfabrication::Recipe</code>: 285 rows, ids 124820&#8211;140556</strong>. Its 23 four-byte
+      columns are exactly the 92-byte record the disassembled loop walks, with the id at the offset the code
+      reads. None of 75097, 92824, 52201 or 77474 is in it, so all four were dropped. The record was already
+      named in <code>Records/dbfabrication/Recipe.cs</code>; nobody had connected it to this message. Its
+      <code>certificate</code> column is <strong>zero on all 285 rows</strong>, so there is nothing for a cert
+      filter to filter on even if one existed.</p>
+
+      <p><strong>And there is no 255-recipe ceiling.</strong> The client&#8217;s codec for this array
+      (reader <code>0xa0a1c0</code>, writer <code>0xa09910</code>) is chunked: read a byte <em>n</em>, read
+      <em>n</em> ids, and <em>if n was 255, go round again</em>. Any length fits. PIN&#8217;s encoder is the Aero
+      definition, which writes exactly one count byte and cannot express the repeat, so one message still tops
+      out at 255 of the 285 rows &#8212; a limit on our side now, not the format&#8217;s.</p>
+
+      <p>Method worth reusing: <code>StaticDB.GetHash(name)</code> in FauFau is the same hash the client uses for
+      its <code>push &lt;imm32&gt;; call</code> table loads, so an unidentified table constant in the binary can
+      be named by hashing candidates until one matches. That is how <code>dbfabrication::Recipe</code> got its
+      name.</p></div>
+
+      <p>CRAFT1 established that the client can never ask for a build, so every fabrication message from here on
+      is one PIN sends unprompted. That is a new thing for this server to do and it has never been tried, so it
+      gets tried on the cheapest message in the set before anything is built on top of it.</p>
+
+      <p><code>fabrecipes</code> sends <code>FabricationFetchAllRecipesResponse</code> &#8212; a counted list of
+      recipe ids, nothing else &#8212; to your own character. The ids now come from
+      <code>dbfabrication::Recipe</code>: 285 rows, ids 124820&#8211;140556. <strong>The first three runs sent
+      <code>dbitems::Blueprints</code> ids instead, and that was the whole of what went wrong.</strong> The
+      callout below is the working-out.</p>
+
+      <p>There are two independent ways to see it land, and either one passes. The client&#8217;s own console
+      prints <code>Fabrication Recipe List:</code> followed by a header row and one line per recipe &#8212; those
+      strings are still in the binary. And the reply raises <code>ON_FAB_FETCH_RECIPES</code> into Lua, which
+      <code>FabCart</code> binds and logs as <code>FabCart: EVENT fetch_recipes</code>. Nothing shipped binds that
+      event, so if it fires, it fired for us.</p>
+
+      <p>The server side is in place: the eight fabrication commands now have handlers rather than falling through
+      to &#8220;unrecognized MsgID&#8221;, and <code>UpdateShoppingList</code> is decoded and logged instead of
+      warned about.</p>
+
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-1b-1" type="checkbox"/><span class="step-body"><span class="lede">Make sure <code>FabCart</code> is installed, so the Lua half is watched too. Copy it in, then
+         restart the client if the folder is new.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-2" type="checkbox"/><span class="step-body"><span class="lede">Start the server and log in as normal.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-3" type="checkbox"/><span class="step-body"><span class="lede">In chat, on the same channel <code>createitem</code> goes to, type
+         <code>fabrecipes</code> &#8212; <strong>no leading slash</strong>, or the client&#8217;s own command
+         system eats it and nothing is sent. Ten recipe ids by default; <code>fabrecipes 50</code> sends fifty.
+         The server answers in chat with the id range it sent.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-4" type="checkbox"/><span class="step-body"><span class="lede">Read the client log for either signal. <strong>Do not</strong> read a
+         <code>*_last_run.log</code> while the client is still running &#8212; that file is written at exit and you
+         will be reading the previous session. <code>console.log</code> is the live one.</span></span></label>
+      <label class="step"><input data-k="crafting-1b-5" type="checkbox"/><span class="step-body"><span class="lede"><strong>The rows.</strong> Run <code>fabrecipes</code> again on the corrected build,
+         which now sends <code>dbfabrication::Recipe</code> ids. Expect ten <em>named</em> lines under the header
+         this time, not a bare header, and the Lua event to carry recipes rather than one key. <code>fabrecipes id
+         124820</code> asks about a single id, and the server says so in chat if an id you name is not in the
+         table.</span></span></label>
+      </ol></div>
+      <p>Pass: <code>Fabrication Recipe List:</code> appears in the client console, or
+      <code>FabCart: EVENT fetch_recipes</code> appears, or both. Either proves the client still accepts a recipe
+      list PIN authored, and CRAFT2 can be built on that. <strong>Passed on the envelope 2026-08-21; the rows are
+      step 5 and untested.</strong></p>
+      <div class="callout warn"><p>No reply in chat at all means the command never reached the server. The first
+      time this was run it was typed as <code>/fabrecipes</code> and the leading slash swallowed it &#8212; the
+      server log shows neither the command nor an &#8220;Unknown command&#8221; line, which is the signature of
+      chat text that never left the client.</p></div>
+      <div class="callout warn"><p>Silence is a real result, not a mistake. It would mean the receiving half is
+      gated on something &#8212; most likely having asked first, or the <code>fabrication.enabled</code> client
+      setting &#8212; and the next move would be to read that setting in game rather than to write more server
+      code.</p></div>
+      <span class="cmd"><pre><code>FF_DOCS=~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/Documents/Firefall
+mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabCart "$FF_DOCS/Addons/"
+grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/AppData/Local/Red 5 Studios/Firefall/console.log"
+</code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-crafting-1b">Result</label><textarea data-k="n-crafting-1b" id="r-crafting-1b" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-crafting-2-fabrication-runs-server-side">
