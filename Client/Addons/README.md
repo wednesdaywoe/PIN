@@ -87,18 +87,24 @@ does not reappear, restart.
   `enum` also prints the whole category tree, which is the only list PIN has of what 1962 considers a
   material. Only node **15** answers `GetInventoryItemsOfType`; all ~50 children return nothing.
 
-- **MatList** — a panel, not a probe. `/mats` opens a window listing every material the character
-  holds, with an icon and a quantity. It is the spike behind
-  [UI3](../../Docs/streams/client-ui.md), and it works: four materials on screen 2026-08-21,
-  including the two melded resources that no shipped surface has ever drawn.
+- **MatList** — a panel, not a probe, and the first PIN-authored screen a player uses. `/mats` opens a
+  scrolling list of every material the character holds, grouped by category, each row an icon, a name
+  and a quantity, with the client's own item tooltip on hover. It is
+  [UI3 and UI4](../../Docs/streams/client-ui.md), confirmed on screen 2026-08-21 — including the two
+  melded resources no shipped surface has ever drawn.
 
   The whole point is in `Gather()`. There is no single call that returns everything — `GetInventory()`
-  and `GetInventoryItemsOfType(15)` return **disjoint** halves — so it reads both and merges by item
-  id. Any future materials surface has to do the same.
+  and `GetInventoryItemsOfType(15)` return **disjoint** halves — so it reads both, sweeps the items
+  half for anything `Game.IsItemOfType(id, 15)` agrees is a material, and merges by item id. Any
+  future materials surface has to do the same.
 
-  **Widgets are looked up by `id=`, not `name=`.** A widget declared with `name=` returns nil from
-  `Component.GetWidget` with no error and the panel draws empty. Frames are the opposite: those use
-  `name=`.
+  Three traps, each of which failed silently rather than erroring:
+
+  - **Widgets are looked up by `id=`, not `name=`.** A widget declared with `name=` returns nil from
+    `Component.GetWidget` and the panel draws empty. Frames are the opposite and use `name=`.
+  - **`parentResourceTypeId` needs `tonumber` before comparing.** `lib_Items` does it too. A raw
+    `==` against a category id never matches, and the walk up the tree just ends early.
+  - **A row needs a `FocusBox`** before it can be hovered at all.
 
 ## Reading the output
 

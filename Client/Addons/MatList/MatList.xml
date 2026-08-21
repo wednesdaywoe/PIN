@@ -5,7 +5,7 @@ xsi:schemaLocation="http://www.red5studios.com/ ../../schemas/component.xsd">
 	<Info
 		title="MatList"
 		author="PIN"
-		description="Every material the character holds, merged from both accessors"
+		description="Every material the character holds, merged from every accessor that reports one"
 		url="https://github.com/"
 		uiVersion="1000"
 	/>
@@ -19,7 +19,7 @@ xsi:schemaLocation="http://www.red5studios.com/ ../../schemas/component.xsd">
 		<PanelFrame name="Main" dimensions="dock:fill" visible="false" depth="1">
 			<Children>
 				<FocusBox dimensions="dock:fill"/>
-				<Group id="window" dimensions="center-x:50%; center-y:50%; width:440; height:540">
+				<Group id="window" dimensions="center-x:50%; center-y:50%; width:460; height:560">
 					<Border class="ButtonSolid" dimensions="dock:fill" style="eatsmice:true; tint:#151616; exposure:0"/>
 					<Border class="ButtonBorder" dimensions="dock:fill" style="eatsmice:true; tint:#090a0a; exposure:0"/>
 
@@ -28,9 +28,11 @@ xsi:schemaLocation="http://www.red5studios.com/ ../../schemas/component.xsd">
 						<Text id="title" dimensions="dock:fill" style="font:Demi_13; halign:center; valign:center; color:PanelTitle; padding:0"/>
 					</Group>
 
-					<Text id="subtitle" dimensions="top:44; left:12; right:100%-12; height:18" style="font:UbuntuRegular_9; halign:center; valign:center; color:#8a9498; padding:0"/>
+					<Text id="subtitle" dimensions="top:44; left:12; right:100%-12; height:16" style="font:UbuntuRegular_9; halign:center; valign:center; color:#8a9498; padding:0"/>
 
-					<Group id="list" dimensions="top:66; left:12; right:100%-12; bottom:100%-12"/>
+					<Group id="list" dimensions="top:64; left:10; right:100%-10; bottom:100%-34"/>
+
+					<Text id="footer" dimensions="bottom:100%-10; left:12; right:100%-12; height:16" style="font:UbuntuRegular_9; halign:center; valign:center; color:#5f686b; padding:0"/>
 				</Group>
 			</Children>
 		</PanelFrame>

@@ -1,173 +1,328 @@
--- MatList -- every material the character holds, in one list, named and counted.
+-- MatList -- every material the character holds, in one readable list.
 --
--- The spike behind UI3 (Docs/streams/client-ui.md). It exists to settle one question: can a PIN-authored
--- addon draw a materials list that is actually complete? The shipped Inventory panel cannot, and not
--- because it filters anything -- UI1 found there is no single accessor that returns everything:
+-- UI4 of the client-ui stream (Docs/streams/client-ui.md). The stream's own exit condition: open it
+-- and read what you have, raw and refined together.
+--
+-- The reason this is an addon and not a patch to the shipped Inventory panel is the gather below.
+-- There is no single call that returns every material -- UI1 measured it -- and the shipped panel is
+-- built on the one that returns least:
 --
 --   Player.GetInventory()              -> Iron Ore, Copper Wiring
 --   Player.GetInventoryItemsOfType(15) -> Melded Chitin Fragment, Melded Blood Sample
 --
--- Disjoint sets, four materials between them, and Inventory.lua reads only the first. So the merge
--- below is the whole point of the file; everything else is a window to put it in.
+-- Disjoint. So all three sources are read and merged by item id, and the items half is swept as well
+-- in case something lands there that neither of the other two reports. Over-reading is cheap; the
+-- whole point of the panel is that it does not quietly omit a stack.
 --
--- 15 is SubTypeIds.Resource, "Crafting Components". Only that node answers -- all ~50 categories under
--- it return nothing (/invprobe enum), so this is one call, not a tree walk.
+-- 15 is SubTypeIds.Resource, "Crafting Components". Only that node answers GetInventoryItemsOfType --
+-- its ~50 child categories all return nothing (/invprobe enum) -- so it is one call, not a tree walk.
 --
 --   /mats    toggle the list
 
 require "table"
+require "math"
 require "lib/lib_Slash"
 require "lib/lib_MultiArt"
+require "lib/lib_RowScroller"
+require "lib/lib_SubTypeIds"
+require "lib/lib_Items"
+require "lib/lib_Tooltip"
+require "lib/lib_math"
 
 local FRAME = Component.GetFrame("Main")
 local TITLE = Component.GetWidget("title")
 local SUBTITLE = Component.GetWidget("subtitle")
 local LIST = Component.GetWidget("list")
+local FOOTER = Component.GetWidget("footer")
 
-local function Require(what, WIDGET)
-	if not WIDGET then
-		log("MatList: MISSING "..what.." -- check the id in MatList.xml")
-	end
-	return WIDGET
-end
-
-local c_CraftingComponents = 15
-local c_RowHeight = 34
-local c_MaxRows = 13
+local c_CraftingComponents = SubTypeIds.Resource
 local c_FallbackIcon = 231706
 
-local w_ROWS = {}
-local g_IsOpen = false
-
-local BP_ROW = [[<Group dimensions="left:0; right:100%; height:32">
-		<Border class="ButtonSolid" dimensions="dock:fill" style="tint:#1b1e1f; exposure:0; alpha:0.6"/>
-		<Group name="icon" dimensions="left:2; top:2; width:28; height:28"/>
-		<Text name="name" dimensions="left:38; right:100%-70; top:0; height:32" style="font:UbuntuRegular_11; valign:center; padding:0"/>
-		<Text name="qty" dimensions="right:100%-6; width:60; top:0; height:32" style="font:UbuntuBold_11; halign:right; valign:center; padding:0; color:#c8d2d6"/>
+local BP_ROW = [[<Group dimensions="left:0; right:100%; height:38">
+		<Border class="ButtonSolid" dimensions="dock:fill" style="tint:#1b1e1f; exposure:0; alpha:0.55"/>
+		<Group name="icon" dimensions="left:5; top:5; width:28; height:28"/>
+		<Text name="name" dimensions="left:42; right:100%-78; top:0; height:38" style="font:UbuntuRegular_11; valign:center; padding:0"/>
+		<Text name="qty" dimensions="right:100%-10; width:64; top:0; height:38" style="font:UbuntuBold_12; halign:right; valign:center; padding:0; color:#c8d2d6"/>
+		<FocusBox name="focus" dimensions="dock:fill"/>
 	</Group>]]
 
--- Both accessors, keyed by item id so a material reported by both is counted once. Nothing is assumed
--- about which one holds what: that split is the engine's business and it has already surprised us.
+-- Padded at the top rather than the bottom so a heading sits closer to the rows it introduces than to
+-- the group above it. Without that the list reads as evenly spaced bands with no grouping at all.
+local BP_HEADER = [[<Group dimensions="left:0; right:100%; height:34">
+		<Text name="label" dimensions="left:4; right:100%; top:12; height:20" style="font:Demi_10; valign:center; padding:0; color:#7fb0c0"/>
+		<Border dimensions="left:4; right:100%; bottom:100%; height:1" style="tint:#2b3235; exposure:0"/>
+	</Group>]]
+
+local c_RarityColors = {
+	salvage = "salvage", common = "common", uncommon = "uncommon",
+	rare = "rare", epic = "epic", legendary = "legendary",
+}
+
+local SCROLLER = nil
+local w_ROWS = {}
+local w_TOOLTIP = nil
+local g_IsOpen = false
+
+-- ------------------------------------------
+-- CATEGORIES
+-- ------------------------------------------
+
+-- Materials are filed in a tree under Crafting Components, and the immediate node is the one worth
+-- grouping by: "Raw Metals" and "Raw Biomaterials" tell a player something, while their shared parent
+-- "Raw Resource" would fold both into one heading and say less.
+--
+-- The walk upward only exists as a fallback. A subtype with no resource-type info of its own still
+-- gets a heading from the first ancestor that has one, so a material family PIN has never seen lands
+-- somewhere sensible instead of under "Other". Ids are compared through tonumber because the client's
+-- own lib_Items does the same before comparing parentResourceTypeId.
+local function CategoryOf(subTypeId)
+	local id, guard = tonumber(subTypeId), 0
+
+	while id and guard < 12 do
+		guard = guard + 1
+		local ok, info = pcall(Game.GetResourceTypeInfo, id)
+		if not ok or type(info) ~= "table" then
+			break
+		end
+
+		if info.name and info.name ~= "" and id ~= c_CraftingComponents then
+			return info.name
+		end
+		id = tonumber(info.parentResourceTypeId)
+	end
+
+	return "Other"
+end
+
+-- ------------------------------------------
+-- GATHER
+-- ------------------------------------------
+
 local function Gather()
 	local byId = {}
 
-	local function Take(entry, source)
+	local function Take(entry)
 		if type(entry) ~= "table" then
 			return
 		end
 		local id = entry.item_sdb_id or entry.itemTypeId
-		if not id then
+		if not id or byId[tostring(id)] then
 			return
 		end
 
-		local key = tostring(id)
-		if not byId[key] then
-			byId[key] = {
-				item_sdb_id = id,
-				name = entry.name,
-				icon_id = entry.icon_id or entry.web_icon_id,
-				quantity = entry.total or entry.quantity or Player.GetItemCount(id),
-				source = source,
-			}
-		elseif byId[key].source ~= source then
-			byId[key].source = "both"
+		local info
+		local ok, result = pcall(Game.GetItemInfoByType, id)
+		if ok and type(result) == "table" then
+			info = result
 		end
+
+		local subTypeId = entry.subTypeId or (info and info.subTypeId)
+
+		byId[tostring(id)] = {
+			item_sdb_id = id,
+			name = entry.name or (info and info.name) or ("Item "..tostring(id)),
+			icon_id = entry.icon_id or entry.web_icon_id or (info and info.web_icon_id),
+			-- GetItemCount is the one number that agreed with the server on every id (UI1), so it wins
+			-- over whatever the entry carries.
+			quantity = Player.GetItemCount(id) or entry.total or entry.quantity or 0,
+			category = CategoryOf(subTypeId),
+		}
 	end
 
-	local ok, _, resources = pcall(Player.GetInventory)
+	local ok, items, resources = pcall(Player.GetInventory)
 	if ok and type(resources) == "table" then
 		for _, RESOURCE in pairs(resources) do
 			if type(RESOURCE) == "table" then
-				Take(RESOURCE.raw, "inventory")
-				Take(RESOURCE.refined, "inventory")
+				Take(RESOURCE.raw)
+				Take(RESOURCE.refined)
 			end
 		end
 	end
 
-	local ok2, items = pcall(Player.GetInventoryItemsOfType, c_CraftingComponents)
-	if ok2 and type(items) == "table" then
-		for _, ITEM in pairs(items) do
-			Take(ITEM, "by-type")
+	local ok2, byType = pcall(Player.GetInventoryItemsOfType, c_CraftingComponents)
+	if ok2 and type(byType) == "table" then
+		for _, ITEM in pairs(byType) do
+			Take(ITEM)
 		end
 	end
 
-	-- A row with no name is a row the player cannot read, so fall back to the client's item database
-	-- before giving up on it. UI5 is where an unnamed row stops being acceptable.
+	-- Third sweep: anything in the items half that the client itself calls a crafting component. Neither
+	-- call above is documented to be complete, and this one costs a loop over a list already in hand.
+	if ok and type(items) == "table" then
+		for _, ITEM in pairs(items) do
+			local id = ITEM.item_sdb_id
+			local ok3, is_resource = pcall(Game.IsItemOfType, id, c_CraftingComponents)
+			if ok3 and is_resource then
+				Take(ITEM)
+			end
+		end
+	end
+
 	local list = {}
 	for _, MAT in pairs(byId) do
-		if not MAT.name or MAT.name == "" then
-			local ok3, info = pcall(Game.GetItemInfoByType, MAT.item_sdb_id)
-			if ok3 and type(info) == "table" then
-				MAT.name = info.name
-				MAT.icon_id = MAT.icon_id or info.web_icon_id
-			end
+		if MAT.quantity and MAT.quantity > 0 then
+			table.insert(list, MAT)
 		end
-		MAT.name = MAT.name or ("Item "..tostring(MAT.item_sdb_id))
-		table.insert(list, MAT)
 	end
 
 	table.sort(list, function(a, b)
+		if a.category ~= b.category then
+			return tostring(a.category) < tostring(b.category)
+		end
 		return tostring(a.name) < tostring(b.name)
 	end)
 	return list
 end
 
+-- ------------------------------------------
+-- TOOLTIP
+-- ------------------------------------------
+
+-- The client's own item tooltip, the same widget the Inventory panel puts under the cursor. It is
+-- built per hover and destroyed on leave because that is what lib_ItemCard does; a tooltip kept alive
+-- between rows shows the previous item for a frame.
+--
+-- Materials carry no stat block today (the packed resource_type string arrives empty, see UI6), so
+-- what this draws is name, rarity-tinted frame, category path and description. That is the whole of
+-- what 1962 has for a material, not a subset of it.
+local function HideTooltip()
+	if w_TOOLTIP then
+		w_TOOLTIP:Destroy()
+		w_TOOLTIP = nil
+	end
+	Tooltip.Show(false)
+end
+
+local function ShowTooltip(PARENT, MAT)
+	HideTooltip()
+
+	local ok, info = pcall(Game.GetItemInfoByType, MAT.item_sdb_id)
+	if not ok or type(info) ~= "table" then
+		return
+	end
+	info.quantity = MAT.quantity
+
+	w_TOOLTIP = LIB_ITEMS.CreateToolTip(PARENT)
+	w_TOOLTIP:DisplayInfo(info)
+
+	local bounds = w_TOOLTIP:GetBounds()
+	Tooltip.Show(w_TOOLTIP:GetWidget(), {
+		width = bounds.width,
+		height = bounds.height,
+		frame_color = Component.LookupColor(c_RarityColors[info.rarity] or "common"),
+		alpha = 0.3,
+	})
+end
+
+-- ------------------------------------------
+-- DRAW
+-- ------------------------------------------
+
 local function ReleaseRows()
+	HideTooltip()
+
 	for _, ROW in pairs(w_ROWS) do
-		ROW.ICON:Destroy()
-		Component.RemoveWidget(ROW.GROUP)
+		if ROW.ICON then
+			ROW.ICON:Destroy()
+		end
+		Component.RemoveWidget(ROW.WIDGET)
 	end
 	w_ROWS = {}
+
+	if SCROLLER then
+		SCROLLER:Destroy()
+		SCROLLER = nil
+	end
+end
+
+local function AddHeader(label)
+	local WIDGET = Component.CreateWidget(BP_HEADER, LIST)
+	WIDGET:GetChild("label"):SetText(tostring(label):upper())
+
+	SCROLLER:AddRow(WIDGET)
+	table.insert(w_ROWS, {WIDGET = WIDGET})
+end
+
+local function AddMaterial(MAT)
+	local WIDGET = Component.CreateWidget(BP_ROW, LIST)
+
+	local ICON = MultiArt.Create(WIDGET:GetChild("icon"))
+	local icon_id = MAT.icon_id
+	if not icon_id or icon_id == 0 then
+		icon_id = c_FallbackIcon
+	end
+	ICON:SetIcon(icon_id)
+
+	WIDGET:GetChild("name"):SetText(tostring(MAT.name))
+	WIDGET:GetChild("qty"):SetText(_math.MakeReadable(MAT.quantity, true))
+
+	local FOCUS = WIDGET:GetChild("focus")
+	FOCUS:BindEvent("OnMouseEnter", function()
+		ShowTooltip(WIDGET, MAT)
+	end)
+	FOCUS:BindEvent("OnMouseLeave", function()
+		HideTooltip()
+	end)
+
+	SCROLLER:AddRow(WIDGET)
+	table.insert(w_ROWS, {WIDGET = WIDGET, ICON = ICON})
 end
 
 local function Draw()
 	ReleaseRows()
 
+	SCROLLER = RowScroller.Create(LIST)
+	SCROLLER:SetSlider(RowScroller.SLIDER_DEFAULT)
+	SCROLLER:ShowSlider("auto")
+	SCROLLER:SetSpacing(4)
+	SCROLLER:LockUpdates()
+
 	local list = Gather()
-	local shown = 0
+	local category = nil
+	local total = 0
 
-	for i, MAT in ipairs(list) do
-		if i > c_MaxRows then
-			break
+	for _, MAT in ipairs(list) do
+		if MAT.category ~= category then
+			category = MAT.category
+			AddHeader(category)
 		end
-
-		local GROUP = Component.CreateWidget(BP_ROW, LIST)
-		GROUP:SetDims("left:0; right:100%; top:"..((i - 1) * c_RowHeight).."; height:32")
-
-		local ICON = MultiArt.Create(GROUP:GetChild("icon"))
-		ICON:SetIcon(MAT.icon_id and MAT.icon_id ~= 0 and MAT.icon_id or c_FallbackIcon)
-
-		GROUP:GetChild("name"):SetText(tostring(MAT.name))
-		GROUP:GetChild("qty"):SetText(tostring(MAT.quantity))
-
-		table.insert(w_ROWS, {GROUP = GROUP, ICON = ICON})
-		shown = i
+		AddMaterial(MAT)
+		total = total + MAT.quantity
 	end
 
-	log("MatList: drew "..tostring(shown).." of "..tostring(#list).." material(s)")
+	SCROLLER:UnlockUpdates()
+	SCROLLER:UpdateSize()
 
 	TITLE:SetText("MATERIALS")
 	if #list == 0 then
 		SUBTITLE:SetText("nothing held")
-	elseif #list > shown then
-		SUBTITLE:SetText(tostring(shown).." of "..tostring(#list).." shown")
+		FOOTER:SetText("")
 	else
-		SUBTITLE:SetText(tostring(#list).." held")
+		SUBTITLE:SetText(tostring(#list).." material"..(#list == 1 and "" or "s"))
+		FOOTER:SetText(_math.MakeReadable(total, true).." units in total")
 	end
+
+	log("MatList: drew "..tostring(#list).." material(s)")
 end
 
+-- ------------------------------------------
+-- COMPONENT
+-- ------------------------------------------
+
 local function Toggle(open)
-	log("MatList: /mats -> "..(open and "open" or "close"))
 	if not FRAME then
 		log("MatList: no frame; the panel cannot be shown")
 		return
 	end
+
 	g_IsOpen = open
 	FRAME:Show(g_IsOpen)
+
 	if g_IsOpen then
 		Draw()
 		Component.SetInputMode("cursor")
 	else
+		ReleaseRows()
 		Component.SetInputMode(nil)
 	end
 end
@@ -179,6 +334,10 @@ function OnInventoryChanged()
 end
 
 function OnComponentLoad()
+	if not (FRAME and TITLE and SUBTITLE and LIST and FOOTER) then
+		log("MatList: a widget is missing -- check the id= attributes in MatList.xml")
+	end
+
 	LIB_SLASH.BindCallback({
 		slash_list = "mats",
 		description = "Show every material you are holding",
@@ -186,9 +345,5 @@ function OnComponentLoad()
 			Toggle(not g_IsOpen)
 		end,
 	})
-	Require("frame Main", FRAME)
-	Require("widget title", TITLE)
-	Require("widget subtitle", SUBTITLE)
-	Require("widget list", LIST)
 	log("MatList: loaded -- /mats")
 end

@@ -169,19 +169,40 @@ counts as restored: a thumping payout nobody can see is a loop with its middle m
   addressed by `id=`, not `name=`** — with `name=` every `Component.GetWidget` returns nil silently
   and the window renders empty, which is the trap that cost this spike its first run.
 
-- [ ] **UI4** — **A readable materials list.** Every material the character holds, named, with a
+- [x] **UI4** — **A readable materials list.** Every material the character holds, named, with a
   quantity, raw and refined together. This is the thesis's own exit: open it and read what you have.
 
-  UI3's spike is the starting point, not the answer: it caps at 13 rows with no scrolling, sorts by
-  name only, and shows a quantity with no stats. What it already settles is that the list can be
-  complete and that a row can carry an icon.
+  **Met 2026-08-21**, confirmed on screen. [MatList](../../Client/Addons/MatList) `/mats` draws all
+  four materials grouped under headings the client's own category tree supplies — ELECTRONICS, RAW
+  BIOMATERIALS, RAW METALS — each row an icon, a name and a quantity, with a running total. It scrolls
+  (`lib_RowScroller`), it re-draws on `ON_INVENTORY_CHANGED`, and **hovering a row shows the client's
+  own item tooltip** (`LIB_ITEMS.CreateToolTip` + `Tooltip.Show`), rarity-tinted, carrying the
+  category path and description.
 
-## Backlog
+  Three sources are merged by item id, not two: both accessors from UI1, plus a sweep of the items
+  half for anything `Game.IsItemOfType(id, 15)` calls a crafting component. Neither accessor is
+  documented as complete and the third pass is a loop over a list already in hand — a panel that
+  silently omits a stack is the only failure that matters here. Quantities come from
+  `Player.GetItemCount`, the one number UI1 found agreeing with the server on every id.
+
+  Two client facts worth keeping: grouping by the **immediate** category reads better than by the
+  shared parent ("Raw Metals" and "Raw Biomaterials" say more than one "Raw Resource" heading), and
+  `parentResourceTypeId` must be compared through `tonumber` — `lib_Items` does the same, and a raw
+  `==` silently never matches.
 
 - [ ] **UI5** — **A row you can actually read.** Item 81626 draws today with **no name on it**, though
   its text resolves in all six languages; what it lacks is an icon (`web_icon_id` 0, where every
   normally-drawn item carries one). Settle whether an iconless row is the cause, and give PIN a way
-  to ship a row that reads even when 1962's data is thin. needs: UI4
+  to ship a row that reads even when 1962's data is thin.
+
+  UI4 already ships half of it: an iconless material falls back to a default icon rather than drawing
+  blank, and no row can render nameless because the name is looked up again from the item database
+  when the entry carries none. What is untested is **81626 specifically** — whether those two
+  fallbacks are enough to make that row read, or whether an icon of `0` breaks something earlier.
+
+## Backlog
+
+Empty — everything not done is either active or deferred.
 
 ## Deferred
 
