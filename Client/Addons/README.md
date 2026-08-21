@@ -62,6 +62,44 @@ does not reappear, restart.
   the two ways to see the client accept it. The other is the client's own console line,
   `Fabrication Recipe List:`, which needs no addon at all.
 
+- **InvProbe** — read-only. Dumps both return values of `Player.GetInventory()`: the items table and
+  the resources table, entry by entry, with every field. It settles [UI2](../../Docs/streams/client-ui.md) —
+  whether raw resources reach Lua at all, and under what field names — and its counts are what
+  [UI1](../../Docs/streams/client-ui.md) measures against `dbg_inventory`. Output is prefixed
+  `InvProbe:`. Run it with `/invprobe`, or `/invprobe items` to list the items half too.
+
+  **Both answered, 2026-08-21.** The engine hands Lua the raw tier in full — Iron Ore arrived with a
+  name, an icon, a quantity and a description. And the gap turned out not to be a filter at all:
+  `Player.GetInventory()` and `Player.GetInventoryItemsOfType(15)` return **disjoint** halves of the
+  same four materials. Neither is complete; the union is. The shipped `Inventory` panel reads only
+  the first, which is why the melded resources have never appeared.
+
+  Modes:
+
+  ```
+  /invprobe            both return values of Player.GetInventory(), plus per-id counts
+  /invprobe items      the items half listed
+  /invprobe id N...    what the client knows about an id, from its own item database
+  /invprobe cat N...   walk the resource-category tree upward from a subtype
+  /invprobe enum       walk it downward from Crafting Components, listing what is held
+  ```
+
+  `enum` also prints the whole category tree, which is the only list PIN has of what 1962 considers a
+  material. Only node **15** answers `GetInventoryItemsOfType`; all ~50 children return nothing.
+
+- **MatList** — a panel, not a probe. `/mats` opens a window listing every material the character
+  holds, with an icon and a quantity. It is the spike behind
+  [UI3](../../Docs/streams/client-ui.md), and it works: four materials on screen 2026-08-21,
+  including the two melded resources that no shipped surface has ever drawn.
+
+  The whole point is in `Gather()`. There is no single call that returns everything — `GetInventory()`
+  and `GetInventoryItemsOfType(15)` return **disjoint** halves — so it reads both and merges by item
+  id. Any future materials surface has to do the same.
+
+  **Widgets are looked up by `id=`, not `name=`.** A widget declared with `name=` returns nil from
+  `Component.GetWidget` with no error and the panel draws empty. Frames are the opposite: those use
+  `name=`.
+
 ## Reading the output
 
 The client's log is archived per run, newest last:

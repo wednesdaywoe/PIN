@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Component xmlns="http://www.red5studios.com/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.red5studios.com/ ../../schemas/component.xsd">
+	<Info
+		title="MatList"
+		author="PIN"
+		description="Every material the character holds, merged from both accessors"
+		url="https://github.com/"
+		uiVersion="1000"
+	/>
+
+	<Events>
+		<Event name="ON_COMPONENT_LOAD"			bind="OnComponentLoad"/>
+		<Event name="ON_INVENTORY_CHANGED"		bind="OnInventoryChanged"/>
+	</Events>
+
+	<Frames>
+		<PanelFrame name="Main" dimensions="dock:fill" visible="false" depth="1">
+			<Children>
+				<FocusBox dimensions="dock:fill"/>
+				<Group id="window" dimensions="center-x:50%; center-y:50%; width:440; height:540">
+					<Border class="ButtonSolid" dimensions="dock:fill" style="eatsmice:true; tint:#151616; exposure:0"/>
+					<Border class="ButtonBorder" dimensions="dock:fill" style="eatsmice:true; tint:#090a0a; exposure:0"/>
+
+					<Group id="header" dimensions="dock:top; height:40">
+						<Border class="ButtonSolid" dimensions="top:1; bottom:40; left:1; right:100%-1" style="eatsmice:true; tint:#232C30; exposure:0; alpha:1"/>
+						<Text id="title" dimensions="dock:fill" style="font:Demi_13; halign:center; valign:center; color:PanelTitle; padding:0"/>
+					</Group>
+
+					<Text id="subtitle" dimensions="top:44; left:12; right:100%-12; height:18" style="font:UbuntuRegular_9; halign:center; valign:center; color:#8a9498; padding:0"/>
+
+					<Group id="list" dimensions="top:66; left:12; right:100%-12; bottom:100%-12"/>
+				</Group>
+			</Children>
+		</PanelFrame>
+	</Frames>
+
+</Component>
