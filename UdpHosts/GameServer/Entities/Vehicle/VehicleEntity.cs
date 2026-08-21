@@ -414,6 +414,7 @@ public sealed class VehicleEntity : BaseAptitudeEntity, IAptitudeTarget, IDamage
         }
 
         SetCurrentHealth(CurrentHealth > (uint)amount ? CurrentHealth - (uint)amount : 0);
+        CombatLog.RecordHit(this, damage, amount, 0, (int)CurrentHealth, Shard.CurrentTimeLong);
 
         Logger.Debug(
             "Vehicle {Vehicle} took {Amount} damage from {Attacker}, {Health} of {MaxHealth} health left",

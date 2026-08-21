@@ -18,6 +18,12 @@ public class SDBUtils
 
     private static readonly Lazy<Dictionary<(uint Observer, uint Other), sbyte>> _factionStances = new(BuildFactionStances);
 
+    /// <summary>
+    ///     Resolved per-round damage, keyed by item id. <see cref="GetDetailedWeaponTemplateInfo"/> runs on
+    ///     every shot and the attribute lookup behind it scans the whole attribute table, so cache it.
+    /// </summary>
+    private static readonly Dictionary<uint, int> _attributeDamagePerRound = [];
+
     public static Vector3 Vector3FromFauFau(FauFau.Util.CommmonDataTypes.Vector3 input)
     {
         return new Vector3(input.x, input.y, input.z);
@@ -394,6 +400,7 @@ public class SDBUtils
         {
             // Debug
             DebugName = $"{(isUnderbarrel ? "Underbarrel" : "Main")} {weaponSdbId} (Type {weaponTypeId} - {template.Name.TrimEnd('\0')})",
+            WeaponSdbId = weaponSdbId,
 
             // Components
             ScopeId = WeaponTemplateOverrider(template.DefaultScopeId, modifiers?.DefaultScopeId),
@@ -447,7 +454,7 @@ public class SDBUtils
 
             // Damage
             MinDamage = WeaponTemplateModifier(template.MinDamage, modifiers?.MinDamage, modifiers?.MinDamageMult),
-            DamagePerRound = WeaponTemplateModifier(template.DamagePerRound, modifiers?.DamagePerRound, modifiers?.DamagePerRoundMult),
+            DamagePerRound = ItemTunedDamage(weaponSdbId, WeaponTemplateModifier(template.DamagePerRound, modifiers?.DamagePerRound, modifiers?.DamagePerRoundMult)),
             HeadshotMult = WeaponTemplateModifier(template.HeadshotMult, modifiers?.HeadshotMult, modifiers?.HeadshotMultMult),
 
             // Spread
@@ -500,6 +507,37 @@ public class SDBUtils
     private static float Multiplier(float? multiplierValue)
     {
         return multiplierValue is null or 0f ? 1f : multiplierValue.Value;
+    }
+
+    /// <summary>
+    ///     Prefers the item's own <c>WeaponDamage</c> attribute (954) over the weapon template's
+    ///     <c>damage_per_round</c>. A template is shared by a whole class of items, 248 of them for the
+    ///     Fusion Cannon, so its number is a per-type default; the per-item spread on 954 runs 100 to 8882
+    ///     across that one type. Reading the template flattened the entire quality axis and disagreed with
+    ///     the item card, which has always shown 954. DATA-24.
+    ///
+    ///     No attribute means the template still decides, the ordinary case for monsters: 513 of their 596
+    ///     weapons carry no item attributes, including the anchor <see cref="Systems.Combat.MonsterTier"/>
+    ///     is calibrated against. 45 of those also have a template damage of 1, so there's nothing to read
+    ///     anywhere and they still deal 1. That half is DATA-20, unchanged.
+    /// </summary>
+    private static int ItemTunedDamage(uint weaponSdbId, int templateDamage)
+    {
+        if (_attributeDamagePerRound.TryGetValue(weaponSdbId, out var cached))
+        {
+            return cached;
+        }
+
+        var attributes = SDBInterface.GetItemAttributeRange(weaponSdbId);
+        var resolved = templateDamage;
+
+        if (attributes.TryGetValue((ushort)ItemAttributeId.WeaponDamage, out var damage) && damage.Base > 0f)
+        {
+            resolved = (int)damage.Base;
+        }
+
+        _attributeDamagePerRound[weaponSdbId] = resolved;
+        return resolved;
     }
 
     private static uint WeaponTemplateOverrider(uint baseValue, uint? overrideValue)
@@ -645,6 +683,9 @@ public class WeaponTemplateResult
 
     // Debug
     public string DebugName;
+
+    /// <summary>The item this was resolved from, so a hit can say which weapon dealt it.</summary>
+    public uint WeaponSdbId;
 
     // Components
     public uint ScopeId;

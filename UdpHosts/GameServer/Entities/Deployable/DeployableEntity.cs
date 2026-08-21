@@ -207,6 +207,7 @@ public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget, IDam
         }
 
         SetCurrentHealth(CurrentHealth - amount);
+        CombatLog.RecordHit(this, damage, amount, 0, CurrentHealth, Shard.CurrentTimeLong);
 
         Logger.Debug(
             "Deployable {Type} took {Amount} damage from {Attacker}, {Health} of {MaxHealth} health left",

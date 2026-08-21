@@ -36,6 +36,15 @@ public readonly record struct DamageInfo
     public DamageResponseFlags Flags { get; init; }
 
     /// <summary>
+    ///     The weapon this came out of, for <see cref="CombatLog"/>. Zero and null when nothing fired it, so
+    ///     the log can say so instead of inventing an attribution. Nothing but the log reads these.
+    /// </summary>
+    public uint WeaponId { get; init; }
+
+    /// <summary>Human-readable weapon name, already built by the template resolver.</summary>
+    public string WeaponName { get; init; }
+
+    /// <summary>
     ///     <see cref="Amount"/> as whole points. Health pools are integers, so every
     ///     <see cref="IDamageable"/> rounds at the same moment and in the same direction, and a hit that
     ///     rounds away to nothing is one every target agrees to ignore.

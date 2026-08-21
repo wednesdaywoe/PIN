@@ -194,6 +194,7 @@ public sealed class ThumperEntity : BaseAptitudeEntity, IAptitudeTarget, IDamage
         }
 
         SetCurrentHealth(CurrentHealth - amount);
+        CombatLog.RecordHit(this, damage, amount, 0, CurrentHealth, Shard.CurrentTimeLong);
 
         Logger.Debug(
             "Thumper {EntityId} took {Amount} damage from {Attacker}, {Health} of {MaxHealth} health left",

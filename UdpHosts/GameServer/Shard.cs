@@ -71,6 +71,7 @@ public class Shard : IShard
         Hazards = new HazardSim(this);
         Resources = new ResourceMapSim(this);
         CharacterStore = new CharacterStore(Settings.CharacterSavePath, Logger);
+        CombatLog.Init(Settings.CombatLogPath, Logger);
         CharacterSaves = new CharacterSaveSim(this);
         _killRewards = new KillRewardSim(this);
         Chat = new ChatService(this, EventBus);

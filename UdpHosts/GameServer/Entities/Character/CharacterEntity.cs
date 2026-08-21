@@ -1657,6 +1657,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             CurrentShields,
             CurrentHealth);
 
+        CombatLog.RecordHit(this, damage, amount, absorbed, CurrentHealth, Shard.CurrentTimeLong);
+
         var damageData = DamageEvents.Describe(this, damage, amount);
         DamageEvents.SendDealtHit(damage, damageData);
 
@@ -1703,6 +1705,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public void Die(CharacterEntity killer)
     {
         Alive = false;
+
+        CombatLog.RecordDeath(this, killer, MaxHealth.Value, Shard.CurrentTimeLong);
 
         // Retail's death is two stages and the client's own death screen only opens on the first of
         // them: Bleedout.lua goes to MODE_BLEEDING on character state `incapacitated`, and the

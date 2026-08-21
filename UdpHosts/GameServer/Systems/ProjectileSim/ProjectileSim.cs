@@ -64,6 +64,8 @@ public class ProjectileSim
                 Attacker = entity,
                 DamageType = damageType,
                 Flags = ResolveFlags(hit),
+                WeaponId = weapon.WeaponSdbId,
+                WeaponName = weapon.DebugName,
             });
         }
 
@@ -167,6 +169,8 @@ public class ProjectileSim
                 Amount = baseDamage * scale,
                 Attacker = shooter,
                 DamageType = damageType,
+                WeaponId = weapon.WeaponSdbId,
+                WeaponName = weapon.DebugName,
             });
 
             hits++;

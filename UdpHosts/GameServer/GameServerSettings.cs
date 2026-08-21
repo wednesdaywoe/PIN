@@ -54,6 +54,13 @@ public class GameServerSettings
     public string CharacterSavePath { get; set; } = "save";
 
     /// <summary>
+    ///    Directory the combat log CSVs are written to, relative to the working directory unless absolute.
+    ///    Not under <c>logs/</c>: the start script rotates that on every restart, and this series has to
+    ///    accumulate across sittings.
+    /// </summary>
+    public string CombatLogPath { get; set; } = "combat";
+
+    /// <summary>
     ///    Directory path to the "maps" folder of the Firefall installation
     /// </summary>
     public string MapsPath { get; set; } = string.Empty;

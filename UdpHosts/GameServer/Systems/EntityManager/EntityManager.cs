@@ -24,6 +24,7 @@ using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
 using GameServer.StaticDB.Records.customdata;
 using GameServer.Systems.Aptitude;
+using GameServer.Systems.Combat;
 using Serilog;
 using Timer = System.Threading.Timer;
 
@@ -598,6 +599,10 @@ public class EntityManager
             OnRemovedEntity(entity);
             _shard.Entities.Remove(guid);
             _ = _scopedPlayersByEntity.TryRemove(guid, out _);
+
+            // Anything that left without dying has a half-finished tally in the combat log. Drop it, or it
+            // gets attached to whatever reuses the id.
+            CombatLog.Forget(guid);
         }
     }
 

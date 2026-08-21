@@ -27,6 +27,11 @@ public class InflictDamageCommand : Command, ICommand
         byte damageType = Params.DamageType;
         float splashRange = AbilitySystem.RegistryOp(context.Register, Params.Splashrange, (Operand)Params.SplashrangeRegop);
 
+        // Only set when this command reads the equipped weapon. An ability carrying its own damage points
+        // isn't the weapon's doing, so the combat log shouldn't credit one.
+        uint weaponId = 0;
+        string weaponName = null;
+
         if (Params.Weapondamage == 1 || Params.Weapondamagetype == 1 || Params.UseWeaponRadius == 1)
         {
             var weaponDetails = attacker?.GetActiveWeaponDetails();
@@ -36,6 +41,8 @@ public class InflictDamageCommand : Command, ICommand
                 if (Params.Weapondamage == 1)
                 {
                     damage = attacker.GetEffectiveWeaponDamage(weaponDetails.Weapon);
+                    weaponId = weaponDetails.Weapon.WeaponSdbId;
+                    weaponName = weaponDetails.Weapon.DebugName;
                 }
 
                 if (Params.Weapondamagetype == 1 && ammo != null)
@@ -77,7 +84,7 @@ public class InflictDamageCommand : Command, ICommand
 
             if (target is IDamageable damageable)
             {
-                ApplyDamage(damageable, attacker, context, damage, damageType);
+                ApplyDamage(damageable, attacker, context, damage, damageType, weaponId, weaponName);
             }
             else
             {
@@ -117,14 +124,14 @@ public class InflictDamageCommand : Command, ICommand
 
                 var scale = Params.Falloff == 1 ? SplashFalloff.Scale(distance, splashRange, Params.Pointblankrange) : 1f;
 
-                ApplyDamage(splashTarget, attacker, context, damage * scale, damageType);
+                ApplyDamage(splashTarget, attacker, context, damage * scale, damageType, weaponId, weaponName);
             }
         }
 
         return true;
     }
 
-    private void ApplyDamage(IDamageable target, CharacterEntity attacker, Context context, float damage, byte damageType)
+    private void ApplyDamage(IDamageable target, CharacterEntity attacker, Context context, float damage, byte damageType, uint weaponId, string weaponName)
     {
         // Prevent players from killing themselves with their own abilties
         if (ReferenceEquals(target, attacker) || target.EntityId == context.Self?.EntityId)
@@ -142,6 +149,8 @@ public class InflictDamageCommand : Command, ICommand
             Amount = damage,
             Attacker = attacker,
             DamageType = damageType,
+            WeaponId = weaponId,
+            WeaponName = weaponName,
         });
     }
 }
