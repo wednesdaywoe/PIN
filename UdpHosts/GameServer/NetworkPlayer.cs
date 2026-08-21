@@ -107,7 +107,7 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
         else
         {
             CharacterEntity.Load(HardcodedCharacterData.FallbackData);
-            loadoutId = Inventory.GetLoadoutIdForChassis(76331);
+            loadoutId = Inventory.GetLoadoutIdForChassis(76332); // Rhino: login spawns into this frame, so it has to stay in TempCharCreateLoadouts
         }
 
         var loadoutRefData = Inventory.GetLoadoutReferenceData(loadoutId);

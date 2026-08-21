@@ -82,7 +82,7 @@ public static class HardcodedCharacterData
             Gender = (uint)CharacterGender.Male,
             Race = (uint)CharacterRace.Human,
             TitleId = 135,
-            CurrentBattleframeSDBId = 76331,
+            CurrentBattleframeSDBId = 76332,
             ArmyTag = ArmyTag,
             ArmyGuid = ArmyGUID,
             ArmyIsOfficer = true,
@@ -128,7 +128,7 @@ public static class HardcodedCharacterData
             Gender = (uint)CharacterGender.Female,
             Race = (uint)CharacterRace.Human,
             TitleId = 135,
-            CurrentBattleframeSDBId = 76331,
+            CurrentBattleframeSDBId = 76332,
             ArmyTag = ArmyTag,
             ArmyGuid = ArmyGUID,
             ArmyIsOfficer = true,
@@ -158,35 +158,42 @@ public static class HardcodedCharacterData
     /// </summary>
     public static BasicCharacterData FallbackData = FemaleFallbackData;
 
+    /// <summary>
+    ///     The battleframes login builds. Each entry costs its chassis plus every default item in both the
+    ///     PvE and PvP setups, so the full 22-frame table dumped 246 items into the bag at once. Cut to
+    ///     three. The rest are commented out rather than deleted: the ids aren't recoverable from anywhere
+    ///     else in the tree.
+    /// </summary>
     public static Dictionary<uint, uint> TempCharCreateLoadouts = new()
     {
+        { 293, 76332 }, // Rhino
+        { 300, 76132 }, // Tigerclaw
+        { 298, 76336 }, // Recluse
+
         // Accord
-        { 287, 75772 }, // Dreadnaught
-        { 286, 76164 }, // Assault
-        { 288, 75774 }, // Biotech
-        { 289, 75775 }, // Engineer
-        { 290, 75773 }, // Recon
+        // { 287, 75772 }, // Dreadnaught
+        // { 286, 76164 }, // Assault
+        // { 288, 75774 }, // Biotech
+        // { 289, 75775 }, // Engineer
+        // { 290, 75773 }, // Recon
 
         // Advanced
-        { 299, 76133 }, // Firecat
-        { 300, 76132 }, // Tigerclaw
-        { 295, 76337 }, // Electron
-        { 296, 76338 }, // Bastion
-        { 294, 76331 }, // Mammoth
-        { 293, 76332 }, // Rhino
-        { 297, 76335 }, // Dragonfly
-        { 298, 76336 }, // Recluse
-        { 291, 76333 }, // Nighthawk
-        { 292, 76334 }, // Raptor
+        // { 299, 76133 }, // Firecat
+        // { 295, 76337 }, // Electron
+        // { 296, 76338 }, // Bastion
+        // { 294, 76331 }, // Mammoth
+        // { 297, 76335 }, // Dragonfly
+        // { 291, 76333 }, // Nighthawk
+        // { 292, 76334 }, // Raptor
 
         // Advanced 2
-        { 47, 82359 }, // Graviton
-        { 48, 82360 }, // Arsenal
-        { 49, 82394 }, // Archangel
+        // { 47, 82359 }, // Graviton
+        // { 48, 82360 }, // Arsenal
+        // { 49, 82394 }, // Archangel
 
         // Social
-        { 246, 124356 }, // Beach Party
-        { 247, 77733 }, // BattleLab Trainee
+        // { 246, 124356 }, // Beach Party
+        // { 247, 77733 }, // BattleLab Trainee
     };
 
     public static List<LoadoutReferenceData> TempHardcodedLoadouts = 
