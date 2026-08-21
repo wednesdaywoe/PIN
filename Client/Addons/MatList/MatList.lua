@@ -75,6 +75,21 @@ local g_IsOpen = false
 -- gets a heading from the first ancestor that has one, so a material family PIN has never seen lands
 -- somewhere sensible instead of under "Other". Ids are compared through tonumber because the client's
 -- own lib_Items does the same before comparing parentResourceTypeId.
+-- 1962's item names carry trailing content markers -- "Cryogenic Recharger I^Q", the ^Q meaning
+-- pre-1.6 -- which the shipped panels never strip because they never draw these items. It is editor
+-- bookkeeping, not part of the name, so it comes off before a player sees it. Only a caret followed
+-- by one or two letters at the very end is touched; a caret anywhere else stays.
+local function CleanName(name)
+	if type(name) ~= "string" then
+		return name
+	end
+	local stripped = name:match("^(.-)%^%a%a?$")
+	if stripped and stripped ~= "" then
+		return stripped
+	end
+	return name
+end
+
 local function CategoryOf(subTypeId)
 	local id, guard = tonumber(subTypeId), 0
 
@@ -92,6 +107,22 @@ local function CategoryOf(subTypeId)
 	end
 
 	return "Other"
+end
+
+-- A heading has to say something the row does not. Subtype 2259 (Cryogenic Recharger I) resolves to a
+-- node named after the item itself, which would put a one-row group under a heading repeating its own
+-- name. Anything degenerate like that falls back to what the client does know: that the item is a
+-- crafted component.
+local function Heading(subTypeId, name, info)
+	local category = CategoryOf(subTypeId)
+
+	if not category or category == "Other" or category == name then
+		if info and info.type == "crafting_component" then
+			return "Crafted"
+		end
+		return "Other"
+	end
+	return category
 end
 
 -- ------------------------------------------
@@ -120,12 +151,13 @@ local function Gather()
 
 		byId[tostring(id)] = {
 			item_sdb_id = id,
-			name = entry.name or (info and info.name) or ("Item "..tostring(id)),
+			name = CleanName(entry.name or (info and info.name)) or ("Item "..tostring(id)),
+			raw_name = entry.name or (info and info.name),
 			icon_id = entry.icon_id or entry.web_icon_id or (info and info.web_icon_id),
 			-- GetItemCount is the one number that agreed with the server on every id (UI1), so it wins
 			-- over whatever the entry carries.
 			quantity = Player.GetItemCount(id) or entry.total or entry.quantity or 0,
-			category = CategoryOf(subTypeId),
+			category = Heading(subTypeId, entry.name or (info and info.name), info),
 		}
 	end
 
@@ -148,11 +180,23 @@ local function Gather()
 
 	-- Third sweep: anything in the items half that the client itself calls a crafting component. Neither
 	-- call above is documented to be complete, and this one costs a loop over a list already in hand.
+	--
+	-- Two tests, because an item can pass one and fail the other. Cryogenic Recharger I (81626) is
+	-- subtype 2259, which is nowhere under Crafting Components, so IsItemOfType misses it -- but its
+	-- own itemInfo.type reads "crafting_component" and the server files it as one. A crafted output
+	-- that the materials list cannot see is exactly the omission this panel exists to prevent.
 	if ok and type(items) == "table" then
 		for _, ITEM in pairs(items) do
 			local id = ITEM.item_sdb_id
-			local ok3, is_resource = pcall(Game.IsItemOfType, id, c_CraftingComponents)
-			if ok3 and is_resource then
+
+			local ok3, by_subtype = pcall(Game.IsItemOfType, id, c_CraftingComponents)
+			local by_type = false
+			local ok4, info = pcall(Game.GetItemInfoByType, id)
+			if ok4 and type(info) == "table" then
+				by_type = (info.type == "crafting_component")
+			end
+
+			if (ok3 and by_subtype) or by_type then
 				Take(ITEM)
 			end
 		end
@@ -303,6 +347,10 @@ local function Draw()
 	end
 
 	log("MatList: drew "..tostring(#list).." material(s)")
+	for _, MAT in ipairs(list) do
+		log("MatList:   "..tostring(MAT.item_sdb_id).." x"..tostring(MAT.quantity)
+			.." '"..tostring(MAT.raw_name).."' icon "..tostring(MAT.icon_id).." ["..tostring(MAT.category).."]")
+	end
 end
 
 -- ------------------------------------------

@@ -138,6 +138,20 @@ tester did see Iron Bars, Tungsten Bars and Copper Wiring listed, so refined mat
 undrawn. The tester then sharpened the claim to the tier below: **raw resources — Iron Ore,
 Petrochemical and the like — appear to have no display at all.**
 
+> **FALSIFIED 2026-08-21. Iron Ore draws in the ordinary inventory, with its icon and its 24 units,
+> seen on screen by the tester.** Everything below this line about the raw tier having "nowhere to be
+> drawn" is wrong, and it was wrong before it was written — `Inventory.lua:3062` unwraps every
+> resource entry into a `.raw` and a `.refined` side and pushes **both** into the list it draws.
+> Nothing about the raw/refined split was ever the dividing line.
+>
+> What the shipped panel really drops is **whatever `Player.GetInventory()` omits**, which is a
+> different set: the melded biomaterials (77343, 77344), reachable only through
+> `Player.GetInventoryItemsOfType(15)`. See [client-ui UI1](../streams/client-ui.md) for the
+> measurement and [MatList](../../Client/Addons/MatList) for a list that merges both.
+>
+> The CRAFT3 constraint below is void. An economy priced in raw resources hands the player materials
+> that display today.
+
 **The tester then supplied the answer from memory, and the client confirms it: raw resources were
 never shown in the inventory. They were shown in the molecular printer, and the printer is gone.**
 During the thumping work iron arrived as a toast and never appeared as a value anywhere — which is

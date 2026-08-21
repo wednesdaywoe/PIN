@@ -5,9 +5,10 @@ title: "Client UI: materials you can see"
 id-prefix: UI
 status-ext: [gate]
 thesis: >
-  A player can see the materials they hold, raw and refined alike, as named rows
-  with quantities they can read at a glance — through a surface PIN authors and
-  ships, not one that shipped working in 1962.
+  A player can see every material they hold, as named rows with quantities they can
+  read at a glance — including the ones no shipped surface returns. Opened believing
+  the raw tier was undrawable; that was false, and the real gap is an accessor
+  boundary, not a tier boundary.
 satisfied-when: UI1..UI5 all [x]
 relates:
   - ../PROGRESS.md
@@ -39,15 +40,15 @@ counts as restored: a thumping payout nobody can see is a loop with its middle m
   lines of PIN-authored Lua that caught a server event the client never asked for and printed it
   ([CRAFT1b](../../Game%20Testing/Crafting.html), 2026-08-21). The risky question — whether this
   client will load interface we write — is answered yes.
-- **Raw resources have nowhere to be drawn, and it is not a classification bug.** They were shown in
-  the molecular printer; `system/gui/components/MainUI/Panels/FabTest/FabTest.lua` is 528 lines and
-  **zero non-whitespace characters**, and its XML keeps only the `<Info>` block. Red 5 blanked the
-  files rather than deleting them, leaving a registered, empty component slot. The inventory panel
-  filters subtype **15**, "Crafting Components" (`lib_SubTypeIds.lua`), and *both* tiers hang under
-  it — so the data is filed correctly and there is no data-side fix. See
-  [CLIENT-4](../gaps/client.md).
-- **Refined materials do draw.** Iron Bars, Tungsten Bars and Copper Wiring were listed on screen
-  2026-08-21. The split is raw vs refined, not resource vs item.
+- ~~**Raw resources have nowhere to be drawn.**~~ **Wrong, and it invalidated this stream's opening
+  premise.** Iron Ore draws in the ordinary inventory with its icon and its 24 units, seen on screen
+  2026-08-21. It was wrong before it was written: `Inventory.lua:3062` pushes **both** sides of every
+  resource entry into the list it draws. What is true is narrower — `FabTest.lua`, the molecular
+  printer's panel, really is 528 lines of nothing but whitespace with only the `<Info>` block left in
+  its XML, so the *printer* is gone. That is not the same as the materials being undrawable.
+- **The raw/refined split was never the dividing line.** Iron Ore (raw) draws; Copper Wiring
+  (refined) draws. What the shipped panel drops is whatever `Player.GetInventory()` omits — the
+  melded biomaterials — which is an accessor boundary, not a tier boundary. See UI1.
 - [x] **UI2 — The engine hands Lua everything, raw tier included.** `/invprobe` on 2026-08-21 read
   both return values of `Player.GetInventory()`: 73 items and 2 resources, and **Iron Ore was one of
   them**, complete — `name`, `icon_id` 263237, `total` 24, `stack_size`, a full `flags` block, and the
@@ -190,15 +191,29 @@ counts as restored: a thumping payout nobody can see is a loop with its middle m
   `parentResourceTypeId` must be compared through `tonumber` — `lib_Items` does the same, and a raw
   `==` silently never matches.
 
-- [ ] **UI5** — **A row you can actually read.** Item 81626 draws today with **no name on it**, though
+- [x] **UI5** — **A row you can actually read.** Item 81626 draws today with **no name on it**, though
   its text resolves in all six languages; what it lacks is an icon (`web_icon_id` 0, where every
   normally-drawn item carries one). Settle whether an iconless row is the cause, and give PIN a way
   to ship a row that reads even when 1962's data is thin.
 
-  UI4 already ships half of it: an iconless material falls back to a default icon rather than drawing
-  blank, and no row can render nameless because the name is looked up again from the item database
-  when the entry carries none. What is untested is **81626 specifically** — whether those two
-  fallbacks are enough to make that row read, or whether an icon of `0` breaks something earlier.
+  **Met 2026-08-21, and the premise was wrong twice over.** 81626 is **not iconless** — the client
+  reports `web_icon_id` **231706**, and its name resolves fine as "Cryogenic Recharger I^Q". The
+  reason it never reached a materials list is neither: its `subTypeId` is **2259, which sits nowhere
+  under Crafting Components**, so `GetInventoryItemsOfType(15)` and `Game.IsItemOfType(id, 15)` both
+  miss it. Its own `itemInfo.type` reads `crafting_component` and the server files it as one, so
+  MatList now tests **both**, and it draws: five on screen, confirmed.
+
+  Two things PIN needed to ship a readable row, both now in MatList:
+
+  - **Content markers come off the name.** 1962 names carry a trailing `^Q` (pre-1.6 content, the same
+    stratum as the `^CY` materials). Editor bookkeeping, not a name. Stripped for display; only a
+    caret plus one or two letters at the very end, so a caret elsewhere survives.
+  - **A degenerate heading falls back.** Subtype 2259 resolves to a node named after the item, which
+    would head a one-row group with a repeat of its own name. Anything that degenerate becomes
+    **"Crafted"** when the client calls the item a crafting component, otherwise "Other".
+
+  Left as-is: 81626's `description` is **empty**, so its tooltip carries name and category and nothing
+  else. That is the data being thin, not the row failing to read, and PIN will not invent flavour text.
 
 ## Backlog
 
@@ -215,6 +230,20 @@ Empty — everything not done is either active or deferred.
   [CRAFT3](crafting.md) choosing an economy** — a panel priced against an undecided economy would be
   authored twice. `craft` is a server command today and that is sufficient for testing; this is for
   players, and only becomes evaluable once there is a loop to put in front of them.
+
+## Found here, owned elsewhere
+
+**A thumper's non-resource yield is never delivered.** Raised by the tester 2026-08-21 as "a thumper
+doesn't put resources in your inventory". Half of that is not what the code does: `Thumper.cs:308`
+pays every yield flagged `Resource` through `RewardWithResource` into the same resource inventory Iron
+Ore now visibly draws from. The other half is real and worse than a display gap — a yield that is
+**not** flagged `Resource` is not paid at all, only logged (`"extracted item {ItemId} x{Quantity}, not
+paid — item drops are unbuilt"`). Nothing has anywhere to go because nothing is sent.
+
+Not a UI item: no surface can show an award the server never makes. It belongs to
+[m3-resource-payout](m3-resource-payout.md) or [m4](m4-thump-placement.md). **Also untested**: no
+`paying ... of resource` line appears in any current log, so the thumper-to-inventory path is correct
+by reading and unconfirmed by running. The 24 Iron Ore on screen came from `createitem`.
 
 ## Not in this stream
 
