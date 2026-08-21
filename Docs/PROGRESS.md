@@ -595,7 +595,15 @@ Out of scope because the slice closes without them:
   `RequireResourceFromTarget`, both stubs, plus `Blueprint_Resources` which nothing reads;
   gathering is the loop, crafting is a second one (see [Restoration](Restoration.md)).
   **No longer deferred as of 2026-08-19**: this is the next stream,
-  [streams/crafting.md](streams/crafting.md), opened when the vertical slice closed
+  [streams/crafting.md](streams/crafting.md), opened when the vertical slice closed. Both stubs are
+  now real and `Blueprint_Resources` has a reader; CRAFT2 and CRAFT2b passed in game 2026-08-21
+- **Client UI for materials** — raw resources have no display in 1962 and it is not a bug to fix:
+  they were shown in the molecular printer, whose panel ships as a registered but blank component
+  (`FabTest.lua`, 528 lines, zero non-whitespace characters). Refined materials do draw. Opened
+  2026-08-21 as its own stream, [streams/client-ui.md](streams/client-ui.md), because it is client
+  Lua verified on a screen rather than server C# verified in a log. It gates no crafting work —
+  CRAFT3 can price an economy in materials that already display — but the charter needs it before a
+  gathering loop counts as restored
 - **Battleframe mass/power/CPU constraints** — the three-bar budget the beta built loadouts
   against. Scoped 2026-08-14 and not scheduled: the used half is already summed and already on the
   wire, the frame capacities have no source anywhere and must be authored, and retail's own item
