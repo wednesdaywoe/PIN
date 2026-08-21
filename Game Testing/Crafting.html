@@ -581,6 +581,69 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <div class="result"><label for="r-crafting-2b">Result</label><textarea data-k="n-crafting-2b" id="r-crafting-2b" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
+  <section class="block" data-open="true" id="-crafting-5-the-loop-closes-in-game">
+    <button class="block-head" type="button">
+      <span class="block-n">CRAFT5</span>
+      <span class="block-t">The loop closes in game</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT5</span><span class="marker none">[ ]</span><span class="entry-t">The loop closes in game</span></div>
+
+      <p><strong>Moved ahead of CRAFT3 and CRAFT4 on 2026-08-21, at the user's call.</strong> The whole
+      endeavour hinges on one question: can you go out into the world, thump for resources, fight what comes,
+      come back and build something out of what you mined? Deciding an economy before knowing that answer is
+      arranging furniture in a house nobody has walked through.</p>
+
+      <div class="callout"><p><strong>It needs no economy decision and no new recipes, because the ground
+      already pays a material the recipes already want.</strong> Four node types — 235, 237, 238 and 240 —
+      yield <strong>Iron Bars</strong> (item <code>86667</code>). Iron Bars sit in material class
+      <strong>128, "Metals"</strong>, which is the class <strong>263 blueprints</strong> ask for. The cheapest
+      of those, <strong>82081</strong>, wants 50 Metals and nothing else and builds Cryogenic Recharger I.
+      A thump pays 6 to 20 Iron Bars, so the loop is three to eight runs long — a loop rather than a
+      formality. Every piece is shipped data and code that already passed: thumping from M3/M4, crafting from
+      CRAFT2 and CRAFT2b.</p></div>
+
+      <p>Node type 240 is the one to stand on: it pays Crystite <em>and</em> Iron Bars, so a run also shows
+      two materials separating correctly. <code>deposit add</code> authors one where you stand, which makes
+      the whole thing repeatable instead of depending on finding the right ground.</p>
+
+      <div class="steps"><ol>
+      <label class="step"><input data-k="crafting-5-1" type="checkbox"/><span class="step-body"><span class="lede">Note what you are holding before anything else. This is the control — the whole entry is a
+         claim about a number going up and then down.</span>
+      <span class="cmd"><pre><code>dbg_inventory
+craft check 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-2" type="checkbox"/><span class="step-body"><span class="lede">Stand somewhere with room to fight and author a deposit of node type 240 around you, 60 metres
+         across.</span>
+      <span class="cmd"><pre><code>deposit add 240 60</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-3" type="checkbox"/><span class="step-body"><span class="lede">Call down a thumper and <strong>defend it</strong>. The payout scales with how much health it
+         has left, so fighting is not decoration — a thumper left to be chewed on pays less.</span>
+      <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-4" type="checkbox"/><span class="step-body"><span class="lede">Repeat until <code>craft check 82081</code> says you hold 50 across the class. Expect three to
+         eight runs. Watch the held count climb by the amount each thump actually paid.</span>
+      <span class="cmd"><pre><code>craft check 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-5" type="checkbox"/><span class="step-body"><span class="lede">Build it from what you mined. Nothing here was handed to you by
+         <code>createitem</code> — that is the point of the entry.</span>
+      <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-6" type="checkbox"/><span class="step-body"><span class="lede">Confirm it survives a relog: log out, log back in, and check the item is still held and the iron
+         is still spent.</span>
+      <span class="cmd"><pre><code>dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      </ol></div>
+
+      <p>Pass: iron mined out of the ground becomes an item you still own after a relog, with no
+      <code>createitem</code> anywhere in the chain.</p>
+
+      <div class="callout warn"><p><strong>The one thing that would quietly invalidate the run is using
+      <code>createitem</code> to top up.</strong> If a thump pays 14 and you are 3 short, the temptation is to
+      fill the gap. Do not — the entry is about provenance, not arithmetic, and a topped-up craft proves only
+      what CRAFT2b already proved. Take the extra run.</p>
+      <p>Two known rough edges that are <em>not</em> failures here: the crafted item draws as a row with no
+      name (<a href="../Docs/gaps/client.md">CLIENT-4</a>, its icon id is 0), and "return to town" is
+      figurative — <code>craft</code> is a server command, not a station you walk to. Neither affects whether
+      the loop closes.</p></div>
+      <div class="result"><label for="r-crafting-5">Result</label><textarea data-k="n-crafting-5" id="r-crafting-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
   <section class="block" data-open="true" id="-crafting-3-the-economy-decisions">
     <button class="block-head" type="button">
       <span class="block-n">CRAFT3</span>

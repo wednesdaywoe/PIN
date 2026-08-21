@@ -42,27 +42,45 @@ edits before any of it is scheduled.
 
 ## Items
 
-- [ ] **CRAFT1** — **The client surface.** Settle how a panel reaches fabrication: repurpose
-  `Tinkering`, or author a minimal Lua panel against the surviving `GetRecipeIds`/`GetRecipeInfo`.
-  The garage probe already showed the route is open — unknown wire keys survive into Lua, and
-  `system/gui` is loose, readable source. Deliverable is a decision with a working spike behind
-  it, not a finished screen.
-- [ ] **CRAFT2** — **Fabrication server-side.** Handle the surviving Fabrication command set,
-  resolve a recipe's ingredients against inventory, spend them (`RequireResource` /
-  `RequireResourceFromTarget` stop being stubs, `Blueprint_Resources` gets a reader), and place
-  the output item. Not gated on any decision below — the charter's "none of these block starting"
-  still holds.
-- [ ] **CRAFT3** — **The economy decisions**, now decidable because resources exist in the world:
-  which resource economy (five-stat graded materials, or the level-banded veins the node types
-  are written for); where crafted output lands (1962's item system, or a parallel track free of
-  level-45 balance); how resources are carried in inventory. User's call; the data supports
-  either economy and imposes neither.
-- [ ] **CRAFT4** — **A curated recipe set.** The first recipes that consume what a thumper
-  brings up and produce something worth equipping, chosen from the 5,052 resolvable blueprints
-  and priced against the economy CRAFT3 picks.
-- [ ] **CRAFT5** — **The loop closes in game.** One sitting: thump a deposit, craft from the
-  payout, equip the result, relog, still have it. Gets its own run sheet in
-  [In-Game-Tests](../../Game Testing/) when the build lands.
+**Reordered 2026-08-21** (decision 2026-08-21, user-chosen): **CRAFT5 runs next, ahead of CRAFT3 and
+CRAFT4.** The reason in the user's words — the whole endeavour hinges on whether you can go out into
+the world, thump for resources, fight, return and craft an item from what you mined. Deciding an
+economy before knowing that loop closes is arranging furniture in a house nobody has walked through.
+
+**And it turns out no economy decision is needed to run it.** The ground already pays a material that
+recipes already want: node types 235, 237, 238 and 240 yield **Iron Bars** (item 86667), which sit in
+material class **128, "Metals"** — the class **263 blueprints** ask for. The cheapest of them,
+**82081**, wants 50 Metals and nothing else, and builds Cryogenic Recharger I. Thumping pays 6-20 Iron
+Bars a run, so the loop is three to eight thumps long, which is a loop rather than a formality. Every
+piece of that is shipped data and already-built code.
+
+- [x] **CRAFT1** — **The client surface.** Settled 2026-08-20 by reading the binary, not by a spike:
+  748 exported `Game.*` names contain no fabrication sender, so no panel can reach fabrication and
+  the question reverses — the server drives, the client displays. CRAFT1b proved the client still
+  accepts a server-authored recipe list (254 named rows, 2026-08-21).
+- [x] **CRAFT2** — **Fabrication server-side.** Passed in game 2026-08-21. Ingredients are spent and
+  the output arrives; `RequireResource` is real; `Blueprint_Resources` has a reader.
+  **CRAFT2b** followed the same day: raw-material costs are priced in material *classes*, and a class
+  line draws across every member at once. Two premises in the original entry were wrong and are
+  recorded in [DATA-26](../ISSUE-REGISTER.md) and the run sheet.
+- [ ] **CRAFT5** — **The loop closes in game.** One sitting: author a deposit, thump it, fight what
+  it attracts, craft from the payout, equip the result, relog, still have it. **This is the load-
+  bearing entry, and everything below waits on it.** Needs no economy decision and no new recipes —
+  see the note above. Gets its own run sheet in [In-Game-Tests](../../Game%20Testing/).
+
+## Deferred
+
+- [ ] **CRAFT3** — **The economy decisions**: which resource economy (five-stat graded materials, or
+  the level-banded veins the node types are written for); where crafted output lands; how resources
+  are carried. **Gated on CRAFT5** — the loop's shape is the strongest evidence about what the economy
+  should be, and pricing one before walking it means pricing it twice. Two of the three questions are
+  already narrowed: the five-stat system is intact and readable
+  ([DATA-26](../ISSUE-REGISTER.md), and the stat values ride on the item rather than living in static
+  data), and raw resources have no display at all, so an economy priced in them is unplayable until
+  [client-ui.md](client-ui.md) lands. needs: CRAFT5
+- [ ] **CRAFT4** — **A curated recipe set.** The first recipes that consume what a thumper brings up
+  and produce something worth equipping. **Gated on CRAFT3** for a price to meet, and on CRAFT5 for
+  proof there is a loop to price. needs: CRAFT3
 
 ## Deferred
 
