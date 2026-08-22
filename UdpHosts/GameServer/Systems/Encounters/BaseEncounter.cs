@@ -4,6 +4,7 @@ using System.Linq;
 using Aero.Gen;
 using AeroMessages.Common;
 using AeroMessages.GSS.V66.Generic;
+using GameServer.Systems.Loot;
 
 namespace GameServer.Systems.Encounters;
 
@@ -89,6 +90,34 @@ public abstract class BaseEncounter : IEncounter
         foreach (var p in Participants)
         {
             p.Inventory.AddResource(resourceId, quantity);
+        }
+    }
+
+    /// <summary>
+    ///     Pays every participant a non-resource drop, one bag item per copy.
+    /// </summary>
+    /// <remarks>
+    ///     Deliberately the same shape as <see cref="RewardWithResource" />: everyone who took part gets
+    ///     the full amount rather than a share of it, because nothing in PIN divides a haul yet and a
+    ///     defender who got nothing is a worse answer than two defenders each getting one.
+    /// </remarks>
+    protected void RewardWithItem(uint itemId, uint quantity)
+    {
+        var logger = Shard.Logger.ForContext(GetType());
+
+        if (Participants.Count == 0)
+        {
+            logger.Information(
+                "Encounter {EncounterId} extracted item {ItemId} x{Quantity} with nobody to pay",
+                EntityId,
+                itemId,
+                quantity);
+            return;
+        }
+
+        foreach (var p in Participants)
+        {
+            ItemPayout.Pay(p.Inventory, itemId, quantity, logger, $"Encounter {EntityId} paying {p.CharacterEntity.EntityId}");
         }
     }
 }

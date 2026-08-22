@@ -1,9 +1,9 @@
-<title>PIN — Resource Payout (RESOURCE-PAYOUT-1–RESOURCE-PAYOUT-5)</title>
+<title>PIN — Resource Payout (RESOURCE-PAYOUT-1–RESOURCE-PAYOUT-7)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Resource Payout (RESOURCE-PAYOUT-1–RESOURCE-PAYOUT-5)</h1>
+    <h1>Resource Payout (RESOURCE-PAYOUT-1–RESOURCE-PAYOUT-7)</h1>
     <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
   </header>
   <div class="bar">
@@ -378,6 +378,46 @@
       <p><strong>The requests start at the payout and stop after one scope-out:</strong> the first scope-out was lost, and
       NET-24 is <a href="../Docs/gaps/network.md#net-1">NET-1</a> — a reliable channel that acks but never resends — in
       costume. That is the one outcome that closes this entry and reopens a bigger one.</p><div class="result"><label for="r-resource-payout-6">Result</label><textarea data-k="n-resource-payout-6" id="r-resource-payout-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-resource-payout-7-a-thumper-yield-that-isnt-a-resource">
+    <button class="block-head" type="button">
+      <span class="block-n">RESOURCE-PAYOUT-7</span>
+      <span class="block-t">A thumper yield that isn't a resource</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">RESOURCE-PAYOUT-7</span><span class="marker none">[ ]</span><span class="entry-t">A thumper yield that isn't a resource</span></div><p><strong>Built 2026-08-21.</strong> A yield without the <code>Resource</code> flag used to be logged and thrown away; it now
+      goes to every participant as a bag item through <code>BaseEncounter.RewardWithItem</code>, the same shape
+      <code>RewardWithResource</code> has always had. Raised by the tester as "a thumper doesn't put resources in
+      your inventory" — the resource half was already working and is confirmed on screen, and this was
+      the half underneath it that really was missing.</p>
+      <p><strong>Read the data before running this: no shipped node type yields a real item.</strong>
+      <code>dbzonemetadata::ResourceNodeTypeResource</code> is 67 rows naming 15 distinct ids. Twelve resolve to a
+      <code>RootItem</code> row and <strong>all twelve carry the <code>Resource</code> flag</strong>. The other three — <strong>96835, 96836 and
+      96837</strong> — have no <code>RootItem</code> row at all, and they are the only way to reach this branch: node types
+      <strong>203, 204 and 206</strong> each pair one of them with the real resource 78016.</p>
+      <p>So the honest expectation is a warning line, not an item, and the entry exists to prove the branch
+      runs at all and does not take the resource half down with it.</p>
+      <span class="cmd"><pre><code>grep -a "mined node type\|no RootItem row\|paid item\|of resource" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="resource-payout-7-1" type="checkbox"/><span class="step-body"><span class="lede">Stand on thumpable ground in zone 448 and run <code>deposit add 203</code>, then <code>deposit list</code> to confirm
+         the node type.</span></span></label>
+      <label class="step"><input data-k="resource-payout-7-2" type="checkbox"/><span class="step-body"><span class="lede">Scan, call a thumper down inside that deposit, and stand in it so the participant set isn't empty.</span></span></label>
+      <label class="step"><input data-k="resource-payout-7-3" type="checkbox"/><span class="step-body"><span class="lede">Let it run to <code>COMPLETED</code> and collect.</span></span></label>
+      <label class="step"><input data-k="resource-payout-7-4" type="checkbox"/><span class="step-body"><span class="lede">Grep the line above.</span></span></label>
+      <label class="step"><input data-k="resource-payout-7-5" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code>, and <code>/mats</code> for resource 78016.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the log names 96835 with <code>no RootItem row — nothing to give</code>, <strong>and</strong> the same payout still pays
+      78016 into the resource inventory, where <code>/mats</code> can see it.</p></div>
+      <div class="callout fail"><p><strong>Fail, nothing about 96835 at all:</strong> the sampler dropped the row before the payout loop saw it —
+      a quantity that rounded to zero does that legitimately, so check the <code>mined node type</code> line's kind
+      count first.</p></div>
+      <div class="callout fail"><p><strong>Fail, the resource half stops paying too:</strong> that is the failure mode worth the whole entry. The
+      loop pays yields in order, so a throw on the item branch would swallow whatever comes after it.</p></div>
+      <p><strong>If a node type is ever authored with a real item in it</strong>, this becomes a live test rather than a
+      data check: the item lands in every participant's bag, and whether it draws is
+      <a href="../Docs/gaps/data.md#data-25">DATA-25</a>'s question, not this one.</p><div class="result"><label for="r-resource-payout-7">Result</label><textarea data-k="n-resource-payout-7" id="r-resource-payout-7" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
 </div>

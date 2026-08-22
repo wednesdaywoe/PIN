@@ -111,3 +111,26 @@ Cut 3 (filling in the other 144 grant defs) needs the client's ability data to r
 one is supposed to grant, the same way 50329 was recovered — that requires the retail `clientdb.sd2`
 and/or a live capture, neither of which this session has access to. Left for a session with client
 access; [DATA-5](../gaps/data.md#data-5) already tracks the size of this kind of gap.
+
+## The other half of a yield, built 2026-08-21
+
+**A thumper yield that isn't flagged `Resource` used to be logged and dropped.** Raised by the tester
+during the [client-UI stream](client-ui.md) as "a thumper doesn't put resources in your inventory" —
+the resource half was already right and is now confirmed on screen, and this was the half underneath
+that really was missing. It is paid now, to every participant, through
+`BaseEncounter.RewardWithItem`, which is deliberately the same shape as `RewardWithResource`:
+everyone who took part gets the full amount, because nothing in PIN divides a haul yet. Delivery
+itself is [ItemPayout](../../UdpHosts/GameServer/Systems/Loot/ItemPayout.cs), shared with
+[M5](m5-kill-rewards.md)'s kill loot.
+
+**Reading the data first says this branch pays nothing in 1962, and says exactly why.**
+`dbzonemetadata::ResourceNodeTypeResource` is 67 rows naming 15 distinct ids. Twelve resolve to a
+`RootItem` row and **all twelve carry the `Resource` flag**. The remaining three — 96835, 96836,
+96837 — have no `RootItem` row at all, and they are the only ids that can reach the item branch:
+node types **203, 204 and 206** each pair one of them with the real resource 78016. So the ground in
+1962 holds resources and phantom ids, and nothing else.
+
+That makes the code an unbuilt-shaped gap closed rather than a payout added, and
+[RESOURCE-PAYOUT-7](../../Game Testing/Resource-Payout.html) is written to match: force node type 203
+with `deposit add 203`, thump it, and confirm the log names the phantom id **and** the resource half
+still pays. A node type authored later with a real item in it turns the same entry live.

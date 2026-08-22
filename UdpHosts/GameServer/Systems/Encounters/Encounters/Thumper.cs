@@ -241,8 +241,10 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     ///     Quantities are scaled by the progress bar, which answers G4: collecting a thumper early
     ///     pays the fraction it managed, not the full vein. Since M7 they're also scaled by
     ///     <see cref="DefenceMultiplier"/>, so damage the waves got through costs part of the haul.
-    ///     Non-resource rolls are logged and dropped, the same cut M3 and M5 made — delivering an item
-    ///     still means answering the drop protocol.
+    ///     A yield the ground holds that isn't flagged <c>Resource</c> is paid as a bag item now, one
+    ///     guid per copy, to every participant — see <see cref="BaseEncounter.RewardWithItem" />. It used
+    ///     to be logged and dropped, waiting on a drop protocol that turned out to be the ordinary
+    ///     single-item inventory update.
     /// </remarks>
     public override void OnSuccess()
     {
@@ -309,11 +311,7 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
             }
             else
             {
-                Shard.Logger.ForContext<Thumper>().Information(
-                    "Thumper {EncounterId} extracted item {ItemId} x{Quantity}, not paid — item drops are unbuilt",
-                    EntityId,
-                    yield.ItemId,
-                    yield.Quantity);
+                RewardWithItem(yield.ItemId, yield.Quantity);
             }
         }
 

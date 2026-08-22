@@ -243,6 +243,13 @@ paid — item drops are unbuilt"`). Nothing has anywhere to go because nothing i
 Not a UI item: no surface can show an award the server never makes. It belongs to
 [m3-resource-payout](m3-resource-payout.md) or [m4](m4-thump-placement.md).
 
+**Taken and built there on 2026-08-21.** Both halves of the gap — the thumper's and the kill's — now
+deliver through `ItemPayout`, one bag item per copy. The thumper half turns out to pay nothing in
+practice, because every id the shipped node types yield is either flagged `Resource` or has no
+`RootItem` row at all; the kill half pays real equipment. Detail in
+[m3](m3-resource-payout.md#the-other-half-of-a-yield-built-2026-08-21) and
+[m5](m5-kill-rewards.md).
+
 **The resource half is now confirmed end to end, 2026-08-21.** A thumper on node 233 at deposit [2]
 Basin Mouth Iron logged `paying 21 of resource 86668 to 1 participant(s)`, and MatList went from
 `86668 x24` to `86668 x45` on the next redraw — the exact 21, live, without reopening the panel. So
