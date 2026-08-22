@@ -265,38 +265,35 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
         var defence = DefenceMultiplier(_thumper.CurrentHealth, (int)_thumper.MaxHealth);
 
         // The gradient only means something inside the deposit the node type came from. A thumper
-        // on barren ground (or whose deposit vanished mid-cycle) mines its node type's rim values.
-        var distanceFraction = deposit != null && deposit.NodeTypeId == _thumper.NodeType
+        // on barren ground (or whose deposit vanished mid-cycle) mines its node type's rim values,
+        // and no deposit's richness applies to it either.
+        var inDeposit = deposit != null && deposit.NodeTypeId == _thumper.NodeType;
+        var distanceFraction = inDeposit
             ? DepositSampler.DistanceFraction(deposit, _thumper.Position)
             : 1f;
+        var richness = inDeposit && deposit.Richness > 0f ? deposit.Richness : 1f;
 
         var rolled = DepositSampler.Sample(
             SDBInterface.GetResourceNodeTypeResources(_thumper.NodeType),
             distanceFraction,
             Random.Shared);
 
-        var extracted = new List<DepositYield>();
+        var extracted = DepositSampler.Scale(rolled, completion, defence, richness);
         uint total = 0;
-        foreach (var yield in rolled)
+        foreach (var yield in extracted)
         {
-            var quantity = (uint)Math.Round(yield.Quantity * completion * defence);
-            if (quantity == 0)
-            {
-                continue;
-            }
-
-            extracted.Add(yield with { Quantity = quantity });
-            total += quantity;
+            total += yield.Quantity;
         }
 
         Shard.Logger.ForContext<Thumper>().Information(
-            "Thumper {EncounterId} mined node type {NodeType} at distance fraction {DistanceFraction:0.00} of {Deposit}, completion {Completion:0.00}, defence {Defence:0.00} ({Health}/{MaxHealth} health, {Kills} attacker(s) down): {Kinds} resource kind(s), {Total} total",
+            "Thumper {EncounterId} mined node type {NodeType} at distance fraction {DistanceFraction:0.00} of {Deposit}, completion {Completion:0.00}, defence {Defence:0.00}, richness {Richness:0.00} ({Health}/{MaxHealth} health, {Kills} attacker(s) down): {Kinds} resource kind(s), {Total} total",
             EntityId,
             _thumper.NodeType,
             distanceFraction,
             deposit == null ? "no deposit" : $"deposit [{deposit.Id}] {deposit.Name}",
             completion,
             defence,
+            richness,
             _thumper.CurrentHealth,
             _thumper.MaxHealth,
             _kills,

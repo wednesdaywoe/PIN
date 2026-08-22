@@ -717,9 +717,15 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <tr><td>3</td><td>81162</td><td>the Receiver + the Barrel + 200 Crystite</td><td><strong>Burst Rifle
         (85988), a Weapon</strong></td></tr>
       </table>
-      <p>125 Iron Bars total, about thirteen thumps on node 238, plus 200 Crystite that node 240, 241 or 242
-      pays. This is <strong>CRAFT4's answer arriving early</strong> — the curated recipe set has a first entry
-      and it was found by a failed test step rather than by design work.</p></div>
+      <p>125 Iron Bars total, plus 200 Crystite. This is <strong>CRAFT4's answer arriving early</strong> — the
+      curated recipe set has a first entry and it was found by a failed test step rather than by design work.</p>
+      <p><strong>Do not thump thirteen times for it.</strong> Two things shorten the run, both landed
+      2026-08-22. Node type <strong>237</strong> pays Iron Bars 13-26 at its centre against 238's 8-15, so it is
+      close to twice the vein for the same five minutes. And a deposit now carries a <strong>richness
+      multiplier</strong> — <code>deposit add 237 60 4</code> places one paying four times its gradient, which
+      is roughly two thumps for the whole rifle. Richness is PIN's own field, filling the hole where retail's
+      server-side deposit records used to be; see <a href="../Docs/streams/m4-thump-placement.md">m4</a>.
+      Crystite needs no thumping if you are already carrying 200.</p></div>
 
       <div class="callout warn"><p><strong>The one thing that would quietly invalidate the run is using
       <code>createitem</code> to top up.</strong> If a thump pays 14 and you are 3 short, the temptation is to

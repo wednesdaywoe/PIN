@@ -291,6 +291,44 @@ public class DepositSamplerTests
         },
     ];
 
+    [Fact]
+    public void RichnessMultipliesTheHaulAndOneLeavesTheGradientAlone()
+    {
+        var rolled = new List<DepositYield> { new(Crystite, Quality: 100, Quantity: 40) };
+
+        Assert.Equal(40u, Assert.Single(DepositSampler.Scale(rolled, completion: 1f, defence: 1f, richness: 1f)).Quantity);
+        Assert.Equal(120u, Assert.Single(DepositSampler.Scale(rolled, completion: 1f, defence: 1f, richness: 3f)).Quantity);
+        Assert.Equal(20u, Assert.Single(DepositSampler.Scale(rolled, completion: 1f, defence: 1f, richness: 0.5f)).Quantity);
+    }
+
+    [Fact]
+    public void RichnessCompoundsWithCompletionAndDefenceRatherThanReplacingThem()
+    {
+        var rolled = new List<DepositYield> { new(Crystite, Quality: 100, Quantity: 100) };
+
+        // Half the cycle drilled, a battered machine, and a doubly rich vein: 100 * 0.5 * 0.75 * 2.
+        Assert.Equal(75u, Assert.Single(DepositSampler.Scale(rolled, completion: 0.5f, defence: 0.75f, richness: 2f)).Quantity);
+    }
+
+    [Fact]
+    public void ARichnessOfZeroReadsAsOneRatherThanAsPayingNothing()
+    {
+        var rolled = new List<DepositYield> { new(Crystite, Quality: 100, Quantity: 40) };
+
+        // A deposit row written before the field existed deserializes to zero. Paying nothing would
+        // look like the payout code failing; see ResourceDeposit.Richness.
+        Assert.Equal(40u, Assert.Single(DepositSampler.Scale(rolled, completion: 1f, defence: 1f, richness: 0f)).Quantity);
+        Assert.Equal(40u, Assert.Single(DepositSampler.Scale(rolled, completion: 1f, defence: 1f, richness: -2f)).Quantity);
+    }
+
+    [Fact]
+    public void AYieldThatScalesToNothingIsDroppedRatherThanPaidAsZero()
+    {
+        var rolled = new List<DepositYield> { new(Crystite, Quality: 100, Quantity: 1) };
+
+        Assert.Empty(DepositSampler.Scale(rolled, completion: 0.1f, defence: 1f, richness: 1f));
+    }
+
     private static ResourceDeposit Deposit(uint id, float x, float y, float radius, uint nodeTypeId = 242) => new()
     {
         Id = id,

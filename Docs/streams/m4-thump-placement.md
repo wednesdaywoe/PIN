@@ -298,3 +298,24 @@ multiplier cannot be recovered — but `ResourceDeposit` is PIN's own content ty
 multiplier to it invents nothing the charter protects. **No thumper-size multiplier ships either**:
 all 61 `ResourceNodeBeaconCalldownCommandDef` rows carry a tier byte (0-4) and a health value (4000,
 two at 5000) and no yield column of any kind.
+
+### Built the same day: per-deposit richness
+
+`ResourceDeposit.Richness`, a float multiplier applied at payout beside completion and defence —
+1 is the shipped gradient untouched, 2 twice as rich, 0.5 half. `deposit add <nodeTypeId> [radius]
+[richness]` sets it at placement and `deposit richness <depositId> <multiplier>` changes it after,
+both bounded to greater than 0 and at most 100 so neither of the two ways to get it wrong looks like
+the payout code failing.
+
+Three decisions worth keeping. It applies **only inside its own deposit**, on the same condition the
+distance gradient uses — a thumper on barren ground already mines rim values and no vein's multiplier
+should reach it. It does **not** touch the scan overlay, which reports composition as percentages of
+the whole and is unchanged by scaling every share equally. And **zero reads as 1 rather than as
+"pays nothing"**, both at load and in the arithmetic, because the likeliest source of a zero is a row
+written before the field existed; a silent zero haul would read as a broken thumper rather than as a
+data value, so the refusal lives in the command where a person can be told.
+
+The scaling moved out of `Thumper.OnSuccess` into `DepositSampler.Scale` to be testable without a
+shard. Four tests pin it: the multiplier itself, that it compounds with completion and defence rather
+than replacing them, that zero and negative read as 1, and that a yield scaled to nothing is dropped
+rather than paid as zero — the same rule the roll already used.

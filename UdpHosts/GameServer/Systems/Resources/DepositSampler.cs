@@ -96,6 +96,35 @@ public static class DepositSampler
     }
 
     /// <summary>
+    ///     What a rolled vein actually pays, once the three multipliers are applied: how much of the
+    ///     cycle was drilled, how well the machine was defended, and how rich this particular vein is.
+    /// </summary>
+    /// <remarks>
+    ///     Rows that scale to zero are dropped rather than paid as nothing, the same rule the roll
+    ///     itself uses — a resource kind nobody receives has no business being announced. Richness at
+    ///     or below zero reads as 1; see <see cref="ResourceDeposit.Richness"/> for why that is not
+    ///     treated as "pays nothing".
+    /// </remarks>
+    public static List<DepositYield> Scale(IReadOnlyList<DepositYield> yields, float completion, float defence, float richness)
+    {
+        var factor = Math.Clamp(completion, 0f, 1f) * defence * (richness > 0f ? richness : 1f);
+        var scaled = new List<DepositYield>();
+
+        foreach (var yield in yields)
+        {
+            var quantity = (uint)Math.Round(yield.Quantity * factor);
+            if (quantity == 0)
+            {
+                continue;
+            }
+
+            scaled.Add(yield with { Quantity = quantity });
+        }
+
+        return scaled;
+    }
+
+    /// <summary>
     ///     The same yields as percentages of the whole, which is the shape both
     ///     <c>GeographicalReportResponse</c> and <c>ResourceNodeCompletedEvent</c> carry.
     /// </summary>

@@ -912,9 +912,21 @@ public class CustomDBLoader
                .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
     }
 
+    /// <summary>
+    ///     Normalises <see cref="ResourceDeposit.Richness"/> on the way in. A row written before the
+    ///     field existed, or hand-edited to zero, would otherwise multiply every haul to nothing and
+    ///     look like the payout code failing rather than like a data value.
+    /// </summary>
     public Dictionary<uint, Dictionary<uint, ResourceDeposit>> LoadResourceDeposit()
     {
-        return LoadJSON<ResourceDeposit>(ResourceDepositPath)
+        var rows = LoadJSON<ResourceDeposit>(ResourceDepositPath).ToList();
+
+        foreach (var row in rows.Where(row => row.Richness <= 0f))
+        {
+            row.Richness = 1f;
+        }
+
+        return rows
                .GroupBy(row => row.ZoneId)
                .ToDictionary(group => group.Key, group => group.ToDictionary(row => row.Id, row => row));
     }

@@ -33,4 +33,33 @@ public record ResourceDeposit
     ///     deposit does not exist.
     /// </summary>
     public float Radius { get; set; }
+
+    /// <summary>
+    ///     What this particular vein multiplies its yield by. 1 is the shipped gradient untouched,
+    ///     2 is twice as rich, 0.5 half.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///     PIN's own, and it fills a hole rather than inventing a mechanic. The shipped table gives a
+    ///     gradient <em>per node type</em> and nothing per deposit; retail's deposits were server-side
+    ///     records rerolled on a cadence and never shipped, the same category of loss as spawn tables.
+    ///     Whether one of those records carried a richness figure cannot be recovered, so this is the
+    ///     charter's "restore the loop, not the artefact" case: without it every vein of a node type
+    ///     is identical forever, and the only way to make a haul bigger is to move to a different tier
+    ///     of the world.
+    ///     </para>
+    ///     <para>
+    ///     Applied at payout alongside completion and defence, and only when the thumper is standing
+    ///     in this deposit — a thumper on barren ground mines its node type's rim values and no
+    ///     deposit's multiplier applies to it. It does not touch the scan overlay, which reports
+    ///     composition as percentages of the whole and so is unchanged by scaling every share.
+    ///     </para>
+    ///     <para>
+    ///     Zero or negative reads as 1 rather than as "pays nothing", because the likeliest way to get
+    ///     one is a hand-edited or older JSON row that omits the field, and a silent zero would look
+    ///     like the payout code breaking. Refuse the value at the command instead, where a person can
+    ///     be told.
+    ///     </para>
+    /// </summary>
+    public float Richness { get; set; } = 1f;
 }

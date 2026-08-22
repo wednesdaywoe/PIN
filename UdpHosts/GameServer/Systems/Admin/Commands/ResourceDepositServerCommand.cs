@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.customdata;
@@ -15,7 +16,7 @@ namespace GameServer.Systems.Admin.Commands;
 /// </remarks>
 [ServerCommand(
     "Place a resource deposit centered where you are standing",
-    "deposit list | add <nodeTypeId> [radius] | remove <depositId> | radius <depositId> <metres> | reload",
+    "deposit list | add <nodeTypeId> [radius] [richness] | remove <depositId> | radius <depositId> <metres> | richness <depositId> <multiplier> | reload",
     "deposit")]
 public class ResourceDepositServerCommand : ServerCommand
 {
@@ -25,7 +26,7 @@ public class ResourceDepositServerCommand : ServerCommand
     {
         if (parameters.Length == 0)
         {
-            SourceFeedback("deposit list | add <nodeTypeId> [radius] | remove <depositId> | radius <depositId> <metres> | reload", context);
+            SourceFeedback("deposit list | add <nodeTypeId> [radius] [richness] | remove <depositId> | radius <depositId> <metres> | richness <depositId> <multiplier> | reload", context);
             return;
         }
 
@@ -37,6 +38,7 @@ public class ResourceDepositServerCommand : ServerCommand
             case "add": Add(zoneId, parameters, context); break;
             case "remove": Remove(zoneId, parameters, context); break;
             case "radius": Radius(zoneId, parameters, context); break;
+            case "richness": Richness(zoneId, parameters, context); break;
             case "reload": Reload(context); break;
             default: SourceFeedback($"Unknown deposit verb '{parameters[0]}'", context); break;
         }
@@ -70,8 +72,9 @@ public class ResourceDepositServerCommand : ServerCommand
             var distance = context.SourcePlayer?.CharacterEntity != null
                 ? $", {System.Numerics.Vector3.Distance(deposit.Position, context.SourcePlayer.CharacterEntity.Position):0}m away"
                 : string.Empty;
+            var richness = deposit.Richness > 0f && deposit.Richness != 1f ? $", richness x{deposit.Richness:0.##}" : string.Empty;
             SourceFeedback(
-                $"[{deposit.Id}] {deposit.Name}: node type {deposit.NodeTypeId} ({nodeType?.Name ?? "unknown"}), radius {deposit.Radius:0}m at {deposit.Position}{distance}",
+                $"[{deposit.Id}] {deposit.Name}: node type {deposit.NodeTypeId} ({nodeType?.Name ?? "unknown"}), radius {deposit.Radius:0}m{richness} at {deposit.Position}{distance}",
                 context);
         }
     }
@@ -84,9 +87,9 @@ public class ResourceDepositServerCommand : ServerCommand
             return;
         }
 
-        if (parameters.Length is not (2 or 3))
+        if (parameters.Length is < 2 or > 4)
         {
-            SourceFeedback("deposit add <nodeTypeId> [radius]", context);
+            SourceFeedback("deposit add <nodeTypeId> [radius] [richness]", context);
             return;
         }
 
@@ -118,7 +121,13 @@ public class ResourceDepositServerCommand : ServerCommand
             return;
         }
 
-        var radius = parameters.Length == 3 ? ParseUIntParameter(parameters[2]) : DefaultRadius;
+        var radius = parameters.Length >= 3 ? ParseUIntParameter(parameters[2]) : DefaultRadius;
+
+        var richness = 1f;
+        if (parameters.Length == 4 && !TryParseRichness(parameters[3], out richness, context))
+        {
+            return;
+        }
 
         var deposit = new ResourceDeposit
         {
@@ -128,12 +137,13 @@ public class ResourceDepositServerCommand : ServerCommand
             NodeTypeId = nodeTypeId,
             Position = character.Position,
             Radius = radius,
+            Richness = richness,
         };
 
         CustomDBInterface.AddResourceDeposit(deposit);
         CustomDBInterface.SaveResourceDeposits();
 
-        SourceFeedback($"[{deposit.Id}] {deposit.Name}: centered at {deposit.Position}, radius {deposit.Radius:0}m", context);
+        SourceFeedback($"[{deposit.Id}] {deposit.Name}: centered at {deposit.Position}, radius {deposit.Radius:0}m, richness x{deposit.Richness:0.##}", context);
     }
 
     private void Remove(uint zoneId, string[] parameters, ServerCommandContext context)
@@ -174,6 +184,48 @@ public class ResourceDepositServerCommand : ServerCommand
         deposit.Radius = ParseUIntParameter(parameters[2]);
         CustomDBInterface.SaveResourceDeposits();
         SourceFeedback($"[{depositId}] {deposit.Name} now reaches {deposit.Radius:0}m from its center", context);
+    }
+
+    /// <summary>
+    ///     Bounded rather than open, because the two ways to get this wrong both look like the payout
+    ///     code failing: zero pays nothing and reads as a broken thumper, and a figure large enough to
+    ///     overflow the rounding pays a number nobody asked for.
+    /// </summary>
+    private bool TryParseRichness(string parameter, out float richness, ServerCommandContext context)
+    {
+        if (!float.TryParse(parameter, NumberStyles.Float, CultureInfo.InvariantCulture, out richness) || richness is <= 0f or > 100f)
+        {
+            SourceFeedback("Richness is a multiplier greater than 0 and at most 100 — 1 is the shipped gradient untouched", context);
+            richness = 1f;
+            return false;
+        }
+
+        return true;
+    }
+
+    private void Richness(uint zoneId, string[] parameters, ServerCommandContext context)
+    {
+        if (parameters.Length != 3)
+        {
+            SourceFeedback("deposit richness <depositId> <multiplier>", context);
+            return;
+        }
+
+        var deposit = Resolve(zoneId, parameters[1], out var depositId);
+        if (deposit == null)
+        {
+            SourceFeedback($"Zone {zoneId} has no deposit {depositId}", context);
+            return;
+        }
+
+        if (!TryParseRichness(parameters[2], out var richness, context))
+        {
+            return;
+        }
+
+        deposit.Richness = richness;
+        CustomDBInterface.SaveResourceDeposits();
+        SourceFeedback($"[{depositId}] {deposit.Name} now pays x{deposit.Richness:0.##} of its node type's gradient", context);
     }
 
     private void Reload(ServerCommandContext context)
