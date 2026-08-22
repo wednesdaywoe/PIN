@@ -685,7 +685,10 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <label class="step"><input data-k="crafting-5-6" type="checkbox"/><span class="step-body"><span class="lede">Build it from what you mined, and watch the Iron Bars row in <code>/mats</code> fall by 50 as it
          goes. Nothing here was handed to you by <code>createitem</code> — that is the point of the entry.</span>
       <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
-      <label class="step"><input data-k="crafting-5-7" type="checkbox"/><span class="step-body"><span class="lede">Equip the Cryogenic Recharger in the garage and confirm it holds on screen.</span></span></label>
+      <label class="step"><input data-k="crafting-5-7" type="checkbox"/><span class="step-body"><span class="lede"><strong>Corrected 2026-08-22: there is nothing to equip here, and there never was.</strong>
+         81626 is item type <strong>17, CraftingComponent</strong> — a part, not gear. Confirm instead that it is
+         in the bag and that <code>/mats</code> lists it. The equip belongs to the chain below, not to this
+         step.</span></span></label>
       <label class="step"><input data-k="crafting-5-8" type="checkbox"/><span class="step-body"><span class="lede">Confirm it survives a relog: menu logout, log back in, and check the item is still held and the
          iron is still spent. This is <a href="Persistence.html">PERSIST-6</a>'s half of the claim.</span>
       <span class="cmd"><pre><code>dbg_inventory
@@ -694,6 +697,29 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
 
       <p>Pass: iron mined out of the ground becomes an item you still own after a relog, with no
       <code>createitem</code> anywhere in the chain, and every step of it was visible on screen.</p>
+
+      <div class="callout warn"><p><strong>Step 7 as first written was impossible, and finding out why answered
+      CRAFT4's main question.</strong> The entry said "equip the crafted result". <strong>81626 is item type 17,
+      CraftingComponent</strong> — a part that slots into equipment, not equipment. Worse, in shipped data
+      <strong>nothing consumes it at all</strong>: no blueprint names it and no blueprint asks for its class,
+      2259. It is a dead end.</p>
+      <p>That is not specific to this recipe. All <strong>157</strong> blueprints priced only in Metals output
+      components (125) or subcomponents (32), and <strong>not one outputs anything equippable</strong>. Walking
+      the whole graph outward from what the ground pays reaches <strong>210 craftable items</strong>, and the
+      equippable ones are reachable only through a <em>second</em> tier that also costs Crystite — which the
+      ground pays too. <strong>34 equippable items are reachable from thumping alone</strong>: 11 weapons, 21
+      ability modules, 2 frame modules.</p>
+      <p><strong>The shortest one is a Burst Rifle, and every step of it is buildable today:</strong></p>
+      <table>
+      <tr><th>Step</th><th>Blueprint</th><th>Cost</th><th>Makes</th></tr>
+      <tr><td>1</td><td>81160</td><td>50 Metals</td><td>Burst Rifle Receiver I (81694)</td></tr>
+      <tr><td>2</td><td>81161</td><td>75 Metals</td><td>Burst Rifle Barrel I (81690)</td></tr>
+      <tr><td>3</td><td>81162</td><td>the Receiver + the Barrel + 200 Crystite</td><td><strong>Burst Rifle
+        (85988), a Weapon</strong></td></tr>
+      </table>
+      <p>125 Iron Bars total, about thirteen thumps on node 238, plus 200 Crystite that node 240, 241 or 242
+      pays. This is <strong>CRAFT4's answer arriving early</strong> — the curated recipe set has a first entry
+      and it was found by a failed test step rather than by design work.</p></div>
 
       <div class="callout warn"><p><strong>The one thing that would quietly invalidate the run is using
       <code>createitem</code> to top up.</strong> If a thump pays 14 and you are 3 short, the temptation is to

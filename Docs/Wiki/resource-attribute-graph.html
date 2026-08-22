@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PIN — resource attribute graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f13; --panel:#10161c; --line:#1f2b33; --line-strong:#2c3c47;
+    --cyan:#3fd8e6; --cyan-dim:#1c545c;
+    --mineral:#3fd8e6; --gas:#b98cf0; --organic:#5fd898;
+    --amber:#e0a23f; --text:#dfe8ec; --text-dim:#7f939c; --text-mute:#546069;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;padding:28px 20px 40px;}
+  h1{font-family:'Orbitron',sans-serif;font-weight:700;font-size:19px;letter-spacing:.04em;
+     text-transform:uppercase;color:var(--cyan);margin:0 0 4px;}
+  .sub{font-size:13px;color:var(--text-dim);margin:0 0 20px;font-family:'IBM Plex Mono',monospace;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:16px;font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;clip-path:polygon(20% 0,100% 0,80% 100%,0 100%);}
+  .frame{background:var(--panel);border:1px solid var(--line);position:relative;padding:6px;
+    clip-path:polygon(0 12px,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);}
+  svg{display:block;width:100%;height:auto;}
+  text{font-family:'IBM Plex Sans',sans-serif;}
+  .lbl{font-size:12.5px;fill:var(--text);}
+  .lbl-mono{font-family:'IBM Plex Mono',monospace;font-size:10.5px;fill:var(--text-dim);}
+  .col-head{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:.08em;fill:var(--text-mute);text-transform:uppercase;}
+  .node-box{fill:var(--panel);stroke:var(--line-strong);stroke-width:1;cursor:pointer;transition:opacity .15s;}
+  .edge{fill:none;stroke:var(--line-strong);stroke-width:1.1;transition:opacity .15s,stroke-width .15s;}
+  .dim{opacity:.15;}
+  .hint{margin-top:10px;font-size:11.5px;color:var(--text-mute);font-family:'IBM Plex Mono',monospace;}
+</style>
+</head>
+<body>
+  <h1>Resource attribute graph</h1>
+  <p class="sub">group &rarr; family &rarr; resource &rarr; named attribute · beta 0.7 design, build 1962 slot data</p>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--mineral)"></i>Mineral</span>
+    <span><i class="dot" style="background:var(--gas)"></i>Gas</span>
+    <span><i class="dot" style="background:var(--organic)"></i>Organic</span>
+  </div>
+  <div class="frame">
+    <svg id="graph" viewBox="0 0 1000 640"></svg>
+  </div>
+  <p class="hint">hover any node to trace its full path &middot; click resource or attribute nodes to lock the highlight</p>
+
+<script>
+const GROUP_COLOR = { mineral: 'var(--mineral)', gas: 'var(--gas)', organic: 'var(--organic)' };
+
+const groups = [
+  { id:'g_mineral', name:'Mineral', key:'mineral' },
+  { id:'g_gas',      name:'Gas',      key:'gas' },
+  { id:'g_organic',  name:'Organic',  key:'organic' },
+];
+
+const families = [
+  { id:'f_metal',       name:'Metal',       parent:'g_mineral', key:'mineral' },
+  { id:'f_composite',   name:'Composite',   parent:'g_mineral', key:'mineral' },
+  { id:'f_reactive',    name:'Reactive',    parent:'g_gas',      key:'gas' },
+  { id:'f_inert',       name:'Inert',       parent:'g_gas',      key:'gas' },
+  { id:'f_biomaterial', name:'Biomaterial', parent:'g_organic',  key:'organic' },
+  { id:'f_enzyme',      name:'Enzyme',      parent:'g_organic',  key:'organic' },
+];
+
+const resources = [
+  { id:'r_copper',        name:'Copper',        parent:'f_metal',       key:'mineral', slots:[[2,'Conductivity']] },
+  { id:'r_aluminum',      name:'Aluminum',      parent:'f_metal',       key:'mineral', slots:[[3,'Malleability']] },
+  { id:'r_iron',          name:'Iron',          parent:'f_metal',       key:'mineral', slots:[[5,'Toughness']] },
+  { id:'r_silicate',      name:'Silicate',      parent:'f_composite',   key:'mineral', slots:[[4,'Density']] },
+  { id:'r_ceramic',       name:'Ceramic',       parent:'f_composite',   key:'mineral', slots:[[1,'Thermal Resistance']] },
+  { id:'r_carbon',        name:'Carbon',        parent:'f_composite',   key:'mineral', slots:[[5,'Toughness']] },
+  { id:'r_methine',       name:'Methine',       parent:'f_reactive',    key:'gas', slots:[[3,'Volatility']] },
+  { id:'r_octine',        name:'Octine',        parent:'f_reactive',    key:'gas', slots:[[4,'Potential Energy']] },
+  { id:'r_nitrine',       name:'Nitrine',       parent:'f_inert',       key:'gas', slots:[[2,'Compressibility']] },
+  { id:'r_radine',        name:'Radine',        parent:'f_inert',       key:'gas', slots:[[1,'Thermal Resistance']] },
+  { id:'r_petrochemical', name:'Petrochemical', parent:'f_biomaterial', key:'organic', slots:[[4,'Potential Energy']] },
+  { id:'r_biopolymer',    name:'Biopolymer',    parent:'f_biomaterial', key:'organic', slots:[[1,'Thermal Resistance'],[5,'Toughness']] },
+  { id:'r_xenografts',    name:'Xenografts',    parent:'f_biomaterial', key:'organic', slots:[[1,'Thermal Resistance'],[5,'Toughness']] },
+  { id:'r_toxins',        name:'Toxins',        parent:'f_enzyme',      key:'organic', slots:[[2,'Potency']] },
+  { id:'r_regenics',      name:'Regenics',      parent:'f_enzyme',      key:'organic', slots:[[3,'Resilience']] },
+  { id:'r_anabolics',     name:'Anabolics',     parent:'f_enzyme',      key:'organic', slots:[[4,'Potential Energy']] },
+];
+
+const attrMap = new Map();
+const resourceEdges = [];
+resources.forEach(r => {
+  r.slots.forEach(([slotNum, attrName]) => {
+    const aid = 'a_' + r.key + '_' + attrName.replace(/\s+/g,'_');
+    if (!attrMap.has(aid)) attrMap.set(aid, { id:aid, name:attrName, slot:slotNum, key:r.key, sources:[] });
+    attrMap.get(aid).sources.push(r.id);
+    resourceEdges.push([r.id, aid]);
+  });
+});
+const attributes = Array.from(attrMap.values());
+
+const rowH = 35.5, topY = 46;
+resources.forEach((r,i) => r.y = topY + i*rowH);
+
+attributes.forEach(a => {
+  const ys = a.sources.map(rid => resources.find(r=>r.id===rid).y);
+  a.y = ys.reduce((s,v)=>s+v,0)/ys.length;
+});
+const minAttrGap = 26 + 10;
+attributes.slice().sort((p,q)=>p.y-q.y).forEach((a,i,sorted) => {
+  if (i>0 && a.y < sorted[i-1].y + minAttrGap) a.y = sorted[i-1].y + minAttrGap;
+});
+families.forEach(f => {
+  const kids = resources.filter(r=>r.parent===f.id);
+  f.y = kids.reduce((s,r)=>s+r.y,0)/kids.length;
+});
+groups.forEach(g => {
+  const kids = families.filter(f=>f.parent===g.id);
+  g.y = kids.reduce((s,f)=>s+f.y,0)/kids.length;
+});
+
+const X = { group:70, family:260, resource:470, attr:700 };
+const W = { group:120, family:140, resource:135, attr:190 };
+const H = { group:44, family:34, resource:26, attr:26 };
+
+const allNodes = [
+  ...groups.map(n=>({...n, type:'group', x:X.group, w:W.group, h:H.group})),
+  ...families.map(n=>({...n, type:'family', x:X.family, w:W.family, h:H.family})),
+  ...resources.map(n=>({...n, type:'resource', x:X.resource, w:W.resource, h:H.resource})),
+  ...attributes.map(n=>({...n, type:'attr', x:X.attr, w:W.attr, h:H.attr})),
+];
+const byId = Object.fromEntries(allNodes.map(n=>[n.id,n]));
+
+const edges = [];
+families.forEach(f => edges.push([f.parent, f.id]));
+resources.forEach(r => edges.push([r.parent, r.id]));
+resourceEdges.forEach(e => edges.push(e));
+
+function ancestors(id){ let set=new Set([id]); let cur=byId[id]; while(cur && cur.parent){ set.add(cur.parent); cur=byId[cur.parent]; } return set; }
+function descendants(id){
+  let set=new Set([id]); let queue=[id];
+  while(queue.length){
+    const cur=queue.pop();
+    edges.forEach(([a,b])=>{ if(a===cur && !set.has(b)){ set.add(b); queue.push(b);} });
+  }
+  return set;
+}
+function upstreamOfAttr(id){
+  let set=new Set([id]);
+  const a = byId[id];
+  a.sources.forEach(rid => ancestors(rid).forEach(x=>set.add(x)));
+  return set;
+}
+function highlightSet(id){
+  let set = new Set([...ancestors(id), ...descendants(id)]);
+  if (byId[id].type==='attr') upstreamOfAttr(id).forEach(x=>set.add(x));
+  return set;
+}
+
+const svg = document.getElementById('graph');
+let maxY = Math.max(...allNodes.map(n=>n.y+n.h)) + 30;
+svg.setAttribute('viewBox','0 0 1000 ' + Math.round(maxY));
+
+let html = '';
+html += `<text class="col-head" x="${X.group}" y="24">Group</text>`;
+html += `<text class="col-head" x="${X.family}" y="24">Family</text>`;
+html += `<text class="col-head" x="${X.resource}" y="24">Resource</text>`;
+html += `<text class="col-head" x="${X.attr}" y="24">Named attribute</text>`;
+
+edges.forEach(([a,b]) => {
+  const A=byId[a], B=byId[b];
+  const x1=A.x+A.w, y1=A.y+A.h/2, x2=B.x, y2=B.y+B.h/2;
+  const mx=(x1+x2)/2;
+  const color = GROUP_COLOR[B.key] || 'var(--line-strong)';
+  html += `<path class="edge" data-a="${a}" data-b="${b}" d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" stroke="${color}" stroke-opacity="0.35"/>`;
+});
+
+allNodes.forEach(n => {
+  const stroke = GROUP_COLOR[n.key] || 'var(--line-strong)';
+  const textY = n.y + n.h/2 + 4;
+  const label = n.name.length*7 > n.w-16 && n.type==='attr' ? n.name : n.name;
+  html += `<g class="node" data-id="${n.id}">
+    <rect class="node-box" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="3"
+      stroke="${stroke}" stroke-width="${n.type==='group'?1.6:1}"/>
+    <text class="lbl" x="${n.x+10}" y="${textY}">${label}</text>
+  </g>`;
+});
+
+svg.innerHTML = html;
+
+let locked = null;
+function applyHighlight(id){
+  const hs = id ? highlightSet(id) : null;
+  svg.querySelectorAll('.node').forEach(g => {
+    const nid = g.dataset.id;
+    g.classList.toggle('dim', hs ? !hs.has(nid) : false);
+  });
+  svg.querySelectorAll('.edge').forEach(p => {
+    const a=p.dataset.a, b=p.dataset.b;
+    const on = hs && hs.has(a) && hs.has(b);
+    p.classList.toggle('dim', hs ? !on : false);
+    p.setAttribute('stroke-width', on ? '1.8' : '1.1');
+  });
+}
+svg.querySelectorAll('.node').forEach(g => {
+  g.addEventListener('mouseenter', () => { if(!locked) applyHighlight(g.dataset.id); });
+  g.addEventListener('mouseleave', () => { if(!locked) applyHighlight(null); });
+  g.addEventListener('click', () => {
+    locked = (locked === g.dataset.id) ? null : g.dataset.id;
+    applyHighlight(locked);
+  });
+});
+</script>
+</body>
+</html>

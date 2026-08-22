@@ -102,9 +102,23 @@ verifiable by a maintainer.
   data), and the display objection is gone — `/mats` draws every material a character holds, raw tier
   included ([client-ui.md](client-ui.md), UI4 met 2026-08-21), so an economy priced in raw resources
   is no longer unplayable on those grounds. needs: CRAFT5
-- [ ] **CRAFT4** — **A curated recipe set.** The first recipes that consume what a thumper brings up
-  and produce something worth equipping. **Gated on CRAFT3** for a price to meet, and on CRAFT5 for
-  proof there is a loop to price. needs: CRAFT3
+- [~] **CRAFT4** — **A curated recipe set. Its main question is answered, 2026-08-22, by a CRAFT5 step
+  that turned out to be impossible.** The run sheet said "equip the crafted result"; 81626 is item type
+  **17, CraftingComponent** — a part, not gear — and in shipped data **nothing consumes it at all**,
+  neither by name nor by its class 2259. That is not one bad recipe: all **157** blueprints priced only
+  in Metals output components or subcomponents, and **none outputs anything equippable**.
+
+  Walking the graph outward from every id the ground pays reaches **210 craftable items**, of which
+  **34 are equippable** — 11 weapons, 21 ability modules, 2 frame modules. They sit one tier further
+  out and every one of them also costs Crystite, which the ground pays. **The shortest is a Burst
+  Rifle:** blueprint 81160 turns 50 Metals into a Burst Rifle Receiver I, 81161 turns 75 Metals into a
+  Burst Rifle Barrel I, and 81162 takes both plus 200 Crystite and produces **Burst Rifle (85988), a
+  Weapon**. 125 Iron Bars and 200 Crystite — about thirteen thumps on node 238 plus a Crystite node.
+
+  So the curation approach has its first entry and it was found by a failed test step rather than by
+  design work. What remains is running it, and choosing the rest. **No longer gated on CRAFT3**: this
+  chain is priced entirely in what the shipped tables already say, and needs no economy decision.
+  needs: CRAFT5
 
 ## Deferred — further out
 
