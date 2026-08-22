@@ -17,6 +17,7 @@ using GameServer.Systems.ProjectileSim;
 using GameServer.Systems.Resources;
 using GameServer.Systems.Spawning;
 using GameServer.Systems.SystemEvents;
+using GameServer.Systems.Loot;
 using GameServer.Systems.WeaponSim;
 using Serilog;
 using Shared.Udp;
@@ -42,6 +43,7 @@ public interface IShard : IPacketSender
     WeaponSim WeaponSim { get; }
     HazardSim Hazards { get; }
     ResourceMapSim Resources { get; }
+    WorldLoot Loot { get; }
     ChatService Chat { get; }
     AdminService Admin { get; }
     CharacterStore CharacterStore { get; }

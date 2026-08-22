@@ -243,6 +243,26 @@ public class BaseController : Base
         abilities.HandleResourceNodeBeaconCalldownRequest(character.EntityId, thumperCalldownRequest);
     }
 
+    [MessageID((byte)Commands.CollectLoot)]
+    public void CollectLoot(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
+    {
+        var request = packet.Unpack<CollectLoot>();
+        if (request == null)
+        {
+            return;
+        }
+
+        // The client names the board, the slot and what it believes is in it. All three are checked
+        // there — this hands over what arrived and nothing else.
+        // Id << 8 rather than Backing: the client packs the controller into the low byte and PIN's own
+        // entity ids carry a zero there. ClientQueryInteractionStatus does the same conversion.
+        client.AssignedShard.Loot.Collect(
+            (INetworkPlayer)player,
+            request.LootObjectView.Id << 8,
+            request.LootObjectIndex,
+            request.ItemSdbId);
+    }
+
     [MessageID((byte)Commands.SetEffectsFlag)]
     public void SetEffectsFlag(INetworkClient client, IPlayer player, ulong entityId, GamePacket packet)
     {

@@ -25,6 +25,7 @@ using GameServer.Systems.Hazards;
 using GameServer.Systems.MovementRelay;
 using GameServer.Systems.Persistence;
 using GameServer.Systems.ProjectileSim;
+using GameServer.Systems.Loot;
 using GameServer.Systems.Resources;
 using GameServer.Systems.Spawning;
 using GameServer.Systems.SystemEvents;
@@ -116,6 +117,8 @@ public class ItemArrivalFlagTests
         public WeaponSim WeaponSim => throw new NotImplementedException();
         public HazardSim Hazards => throw new NotImplementedException();
         public ResourceMapSim Resources => throw new NotImplementedException();
+
+        public WorldLoot Loot => throw new NotImplementedException();
         public ChatService Chat => throw new NotImplementedException();
         public AdminService Admin => throw new NotImplementedException();
         public CharacterStore CharacterStore => throw new NotImplementedException();

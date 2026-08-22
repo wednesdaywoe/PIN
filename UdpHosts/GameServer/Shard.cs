@@ -73,6 +73,7 @@ public class Shard : IShard
         CharacterStore = new CharacterStore(Settings.CharacterSavePath, Logger);
         CombatLog.Init(Settings.CombatLogPath, Logger);
         CharacterSaves = new CharacterSaveSim(this);
+        Loot = new WorldLoot(this);
         _killRewards = new KillRewardSim(this);
         Chat = new ChatService(this, EventBus);
         Admin = new AdminService(this);
@@ -93,6 +94,8 @@ public class Shard : IShard
     public SpawnGroupSim Spawns { get; }
     public AbilitySystem Abilities { get; }
     public ProjectileSim ProjectileSim { get; }
+    public WorldLoot Loot { get; }
+
     public WeaponSim WeaponSim { get; }
     public HazardSim Hazards { get; }
     public ResourceMapSim Resources { get; }
@@ -138,6 +141,7 @@ public class Shard : IShard
         EncounterMan.Tick(deltaTime, currentTime, ct);
         Abilities.Tick(deltaTime, currentTime, ct);
         WeaponSim.Tick(deltaTime, currentTime, ct);
+        Loot.Tick(deltaTime, currentTime, ct);
         _shieldSim.Tick(deltaTime, currentTime, ct);
         _bleedout.Tick(deltaTime, currentTime, ct);
         Hazards.Tick(deltaTime, currentTime, ct);

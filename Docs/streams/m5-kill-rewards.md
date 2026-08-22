@@ -64,15 +64,62 @@ carry the `Resource` flag, so a kill can pay something even when the crystite ro
 
 ## What is deliberately not built
 
-**Item drops.** The same tables roll powerups and equipment on the same kill, and both are items
-rather than resources. Delivering one means answering how the client wants a drop represented, which
-nothing in the codebase establishes — `AddLootTable`, `SpawnLoot` and `RequireLootStore` have def
-JSONs sitting unused in `CustomData/Todo/` and that is still the place to start. `KillRewardSim`
-rolls them, logs each one, and drops it. Same cut M3 made: pay the resource directly, leave the item
-route to the milestone that can afford it.
+~~**Item drops.**~~ **Built 2026-08-21**, out of [the client-UI stream](client-ui.md)'s finding that a
+thumper's non-resource yield was never delivered either. The question the cut was waiting on — how
+the client wants a drop represented — had already been answered by
+[NET-18](../gaps/network.md#net-18): a single-item `InventoryUpdate` carrying the `0x02` arrival flag
+lists itself, confirmed on screen 2026-08-20, and crafting has handed items back that way since
+CRAFT2. So there is no drop protocol to build. `KillRewardSim` passes anything without the
+`Resource` flag to [ItemPayout](../../UdpHosts/GameServer/Systems/Loot/ItemPayout.cs), which creates
+one bag item per copy. [KILL-REWARDS-6](../../Game Testing/Kill-Rewards.html) is the check.
 
-**The pickup.** Retail spawned something the killer walked over. This credits the killer's inventory
-directly, with no object in the world.
+**What the tester will mostly see is nothing, and the log says why.** The two items a small creature
+drops often are powerups 33815 and 33816, and their `flags` are `0x2000` — no listing bits, so the
+inventory panel never draws them ([DATA-25](../gaps/data.md#data-25)). Across every loot table in
+the file: 23,457 distinct drop ids, 5,605 resources, 17,808 items, 44 naming an item that no longer
+exists. Of the items **12,858 carry the listing bits and 4,950 do not**, and the undrawable set is
+every Blueprint (3,168) and every Powerup (120). A drawable drop off a zone 448 kill means reaching
+"Creature Kill - Small Equipment Drop", whose rows are 5/4/3/2/1 out of 100.
+
+~~**The pickup.**~~ **Built 2026-08-21, and the capture wrote the specification.** The 2016 recording
+carries **62 `LootObjectView` messages and 41 `CollectLoot` commands** — the whole loop live. The
+server publishes a 24-slot table of drops on an `AreaVisualData` entity; the client answers with the
+entity, the slot index and the item id it believes it is taking; the item only reaches an inventory
+after that. [WorldLoot](../../UdpHosts/GameServer/Systems/Loot/WorldLoot.cs) is that, and
+[KILL-REWARDS-6](../../Game Testing/Kill-Rewards.html) is the check — **passed the same evening, first
+attempt, with nothing in the log to argue about.** A dropped weapon was picked up into the bag, kills
+dropped powerups where the creature fell, boards were reused for drops 7m apart, and three health
+pickups restored 187, 189 and 132. The ammo powerup is the one piece still uncollected.
+
+Four things the capture settled that no amount of reading could:
+
+- **A board is per-place.** Its 62 messages name about forty entities, and one pickup run took slots
+  1, 2, 3, 7, 16, 18 and 23 off a single one. So a board is a table that fills with whatever falls
+  near it, not one per drop and not one for the world. PIN reuses a board within 50m that still has a
+  free slot and closes one that has stood empty for a minute.
+- **Ownership is a field, and the split is exact.** A powerup carries no owning entity and sets
+  `Unk3 = {1,0}`; crystite and equipment name an owner and omit `Unk3`. So `Unk3.Unk1 = 1` reads as
+  "anyone may take this". PIN writes both shapes: a powerup is free, a weapon is the killer's.
+- **A loot entity carries no `ObserverView`.** None of the forty ever sent one, so PIN drops the one
+  its constructor builds rather than announcing a board as an object in its own right.
+- **Retail dropped crystite on the ground too**, in stacks of 2 to 58. PIN does not yet — resources
+  still pay straight into the ledger, because that path is verified and this one is new. It is the
+  obvious next step, not an oversight.
+
+**What the powerups do is PIN's invention, and it has to be.** 33815 "Health Powerup" and 33816 "Ammo
+Powerup" (names resolved from the client's own text table) had their effects in aptitude chains whose
+parameters were server-side, so 1962 ships the item and nothing about what it grants. Health restores
+25% of maximum. Ammo refills both magazines to the starting figure — and **nothing in PIN spends
+ammo**, so that write is correct and its visible effect is unproven. Detail on both in
+[Powerups.cs](../../UdpHosts/GameServer/Systems/Loot/Powerups.cs).
+
+Two more numbers with nothing behind them: a drop lies there for **two minutes**, and `Unk4` — three
+halves running about -3.5 to 3 in the capture — is sent as zero, because nothing in the loop reads it
+back and a guess would be worse than a blank.
+
+The one thing that could not be checked by reading either side is whether an emptied slot travels as
+an emptied slot; a pickup that stays drawn on everyone else's ground is what it would cost.
+[LootObjectViewTests](../../Tests/GameServer.Tests/Loot/LootObjectViewTests.cs) pins it at the wire.
 
 **Squad credit.** One killer, one payment. Sharing belongs with M7.
 

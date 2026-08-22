@@ -39,6 +39,14 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public const byte MaxMapMarkerCount = 64;
 
     /// <summary>
+    ///     The magazine a character starts with, and the one an ammo pickup restores it to. Both numbers
+    ///     were already hardcoded here; naming them is what let <see cref="RestockAmmo" /> refill to the
+    ///     same figure instead of inventing a second one. Nothing shipped says what a real maximum is.
+    /// </summary>
+    private const ushort StartingAmmo = 88;
+    private const ushort StartingAltAmmo = 52;
+
+    /// <summary>
     ///     How long a downed player waits before the give-up prompt appears, and how long before
     ///     <see cref="Systems.Combat.BleedoutSim"/> stops waiting. Both invented: nothing shipped
     ///     carries either number, and the client draws whatever it is told.
@@ -1610,6 +1618,51 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         Character_BaseController?.CurrentHealthProp = CurrentHealth;
     }
 
+    /// <summary>
+    ///     Puts health back. Clamped by <see cref="SetCurrentHealth" />, so a full character is not a
+    ///     failure — it just gains nothing.
+    /// </summary>
+    /// <returns>How much health was actually restored.</returns>
+    public int Heal(int amount)
+    {
+        if (amount <= 0 || !IsAlive)
+        {
+            return 0;
+        }
+
+        var before = CurrentHealth;
+        SetCurrentHealth(CurrentHealth + amount);
+        return CurrentHealth - before;
+    }
+
+    /// <summary>
+    ///     Fills both weapons' magazines, on the view the world sees and the controller the owner reads.
+    /// </summary>
+    /// <remarks>
+    ///     This is what <c>RestockAmmoCommand</c> was left as a comment for. What it cannot be tested
+    ///     against is a server that spends ammo: nothing in PIN decrements these, the client counts its
+    ///     own rounds, and the starting values here are the ones the character is built with. So the
+    ///     write is right and its visible effect is unproven.
+    /// </remarks>
+    public void RestockAmmo()
+    {
+        if (Character_CombatView != null)
+        {
+            Character_CombatView.Ammo_0Prop = StartingAmmo;
+            Character_CombatView.Ammo_1Prop = StartingAmmo;
+            Character_CombatView.AltAmmo_0Prop = StartingAltAmmo;
+            Character_CombatView.AltAmmo_1Prop = StartingAltAmmo;
+        }
+
+        if (Character_CombatController != null)
+        {
+            Character_CombatController.Ammo_0Prop = StartingAmmo;
+            Character_CombatController.Ammo_1Prop = StartingAmmo;
+            Character_CombatController.AltAmmo_0Prop = StartingAltAmmo;
+            Character_CombatController.AltAmmo_1Prop = StartingAltAmmo;
+        }
+    }
+
     public void SetCurrentShields(int newValue)
     {
         CurrentShields = Math.Min(Math.Max(0, newValue), MaxShields.Value);
@@ -2163,10 +2216,10 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             AbilityCooldownEndMs_2Prop = Shard.CurrentTime,
             AbilityCooldownEndMs_3Prop = Shard.CurrentTime,
             EquipmentLoadTimeProp = Shard.CurrentTime,
-            Ammo_0Prop = 88,
-            Ammo_1Prop = 88,
-            AltAmmo_0Prop = 52,
-            AltAmmo_1Prop = 52,
+            Ammo_0Prop = StartingAmmo,
+            Ammo_1Prop = StartingAmmo,
+            AltAmmo_0Prop = StartingAltAmmo,
+            AltAmmo_1Prop = StartingAltAmmo,
         };
         Character_MovementView = new MovementView
         {

@@ -15,11 +15,10 @@ namespace GameServer.Systems.Loot;
 ///     to nobody since M2 landed.
 ///     </para>
 ///     <para>
-///     Only resources are paid, and in practice that means crystite. The same tables also roll powerups
-///     and equipment, and both are items rather than resources — putting one in a player's hands means
-///     answering how the client wants a drop represented, which nothing in the codebase establishes.
-///     So items are counted in the log and dropped on the floor, figuratively. That is the same cut M3
-///     made: pay the resource directly, leave the item route to the milestone that can afford it.
+///     Both halves of a roll are paid now, and they take different routes. Resources go straight to the
+///     resource inventory, which is the path K1 verified. Items are put on the ground where the creature
+///     fell, through <see cref="WorldLoot" />, and only reach an inventory when somebody walks over and
+///     takes them — which is what retail did, read off the 2016 capture's 41 pickups.
 ///     </para>
 ///     <para>
 ///     Paying the killer directly is also a shortcut. Retail spawned a pickup the killer walked over,
@@ -31,9 +30,11 @@ public class KillRewardSim
     private readonly ILogger _logger;
     private readonly LootRoller _roller;
     private readonly IDisposable _subscription;
+    private readonly Shard _shard;
 
     public KillRewardSim(Shard shard)
     {
+        _shard = shard;
         _logger = shard.Logger.ForContext<KillRewardSim>();
         _roller = new LootRoller(SdbLootTableSource.Instance, new Random());
         _subscription = shard.EventBus.Subscribe<CharacterDiedEvent>(OnCharacterDied);
@@ -94,12 +95,19 @@ public class KillRewardSim
             }
             else
             {
+                // Counted on the roll rather than on the delivery, so "rolled nothing" below keeps
+                // meaning the tables came up dry rather than the item failing to resolve.
                 itemKinds++;
-                _logger.Information(
-                    "Kill of monster type {TypeId} rolled item {ItemId} x{Quantity}, not paid — item drops are unbuilt",
-                    typeId,
+
+                // On the ground where it died, not into the bag. A powerup belongs to nobody — that is
+                // how retail wrote it on the wire, and it is the only kind of drop a squadmate can
+                // reasonably take. Everything else is the killer's until it expires.
+                _shard.Loot.Drop(
+                    victim.Position,
                     itemId,
-                    quantity);
+                    quantity,
+                    Powerups.IsPowerup(itemId) ? null : killer,
+                    $"Kill of monster type {typeId} by {killer.EntityId}");
             }
         }
 

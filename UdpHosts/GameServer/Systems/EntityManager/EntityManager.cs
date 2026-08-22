@@ -1874,7 +1874,9 @@ public class EntityManager
             FlushViewChangesToScoped(avd.AreaVisualData_ParticleEffectsView, avd.EntityId);
             FlushViewChangesToScoped(avd.AreaVisualData_MapMarkerView, avd.EntityId);
             FlushViewChangesToScoped(avd.AreaVisualData_TinyObjectView, avd.EntityId);
-            FlushViewChangesToScoped(avd.AreaVisualData_LootObjectView, avd.EntityId);
+            // Reliable, unlike its neighbours: a lost loot update is a pickup drawn on the ground that
+            // isn't there, or one lying there that nobody can see. The capture sends it reliably too.
+            FlushViewChangesToScoped(avd.AreaVisualData_LootObjectView, avd.EntityId, ChannelType.ReliableGss);
             FlushViewChangesToScoped(avd.AreaVisualData_ForceShieldView, avd.EntityId);
         }
     }

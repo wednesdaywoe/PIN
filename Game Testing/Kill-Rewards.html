@@ -1,9 +1,9 @@
-<title>PIN — Kill Rewards (KILL-REWARDS-1–KILL-REWARDS-5)</title>
+<title>PIN — Kill Rewards (KILL-REWARDS-1–KILL-REWARDS-8)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Kill Rewards (KILL-REWARDS-1–KILL-REWARDS-5)</h1>
+    <h1>Kill Rewards (KILL-REWARDS-1–KILL-REWARDS-8)</h1>
     <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the type-id tables: Session Setup .</p>
   </header>
   <div class="bar">
@@ -87,9 +87,11 @@
     small creature and it is the single most important thing to know before running any of this: a dry
     kill is the expected case, not a failure, and no entry below can be judged on one kill.</p>
     <p>Both monsters also carry a second table (<code>loot_table2_id</code> 5458 and 5368, the Melded and Chosen
-    sub-loot) and both roll equipment and resource-item tiers. <strong>The equipment and powerups are not
-    paid</strong> — they are items rather than resources, and putting an item in a player's hands is
-    <a href="Inventory.html">INVENTORY-1</a>'s unsolved problem, so <code>KillRewardSim</code> logs each one it rolled and drops it.</p>
+    sub-loot) and both roll equipment and resource-item tiers. <strong>The equipment and powerups are paid as of
+    2026-08-21</strong> — <code>KillRewardSim</code> puts anything without the <code>Resource</code> flag on the ground where the
+    creature fell, and it reaches a bag only when somebody picks it up. Whether the player can <em>see</em> one is a separate question and belongs to
+    <a href="../Docs/gaps/data.md#data-25">DATA-25</a>: the two powerups this table drops carry no listing bits.
+    <a href="#-kill-rewards-6-a-rolled-item-lands-on-the-ground">KILL-REWARDS-6</a> is the check.</p>
     <p><strong>The melded resources off that second table are paid, and KILL-REWARDS-1 is where that turned up.</strong> 77343,
     77344 and 77345 carry the <code>Resource</code> flag, so they take the same route crystite does and land in the
     resource pane. That means a kill can pay you something even when the crystite roll misses, and it
@@ -283,7 +285,10 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-3</span><span class="marker pass">[x]</span><span class="entry-t">Equipment and powerups are rolled and visibly not paid</span></div><div class="callout pass"><p><strong>Passed 2026-08-15.</strong> Both halves, including the one KILL-REWARDS-1 left open. Two rolls of powerup 33816 —
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-3</span><span class="marker pass">[x]</span><span class="entry-t">Equipment and powerups are rolled and visibly not paid</span></div><p><strong>History as of 2026-08-21: the behaviour this entry passed on is gone.</strong> Rolled items are paid into
+      the bag now, so a re-run of its steps finds an item arriving rather than a log line saying one did
+      not. The record stays because it is what proved the gap was honest rather than silent, which is the
+      property <a href="#-kill-rewards-6-a-rolled-item-lands-on-the-ground">KILL-REWARDS-6</a> inherits. Do not re-run it.</p><div class="callout pass"><p><strong>Passed 2026-08-15.</strong> Both halves, including the one KILL-REWARDS-1 left open. Two rolls of powerup 33816 —
       22:36:11 off a 528 and 22:37:43 off a 1189 — each logged
       <code>rolled item 33816 x1, not paid — item drops are unbuilt</code>. The bag was counted either side:
       <code>249 item(s) [Gear 249], 2 resource(s), 20 loadout(s)</code> at 22:34:51 and the identical line at
@@ -372,6 +377,132 @@
       <code>CharacterEntity.Die</code>'s own <code>killer</code> parameter before blaming the reward code.</p></div>
       <p><strong>Not runnable is a valid outcome</strong> — mark it <code>[-]</code> and say so. Retail also shared credit across a
       squad and PIN does not; that gap belongs to M7, not here.</p><div class="result"><label for="r-kill-rewards-5">Result</label><textarea data-k="n-kill-rewards-5" id="r-kill-rewards-5" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-6-a-rolled-item-lands-on-the-ground">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-6</span>
+      <span class="block-t">A rolled item lands on the ground, and reaches the bag through it</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-6</span><span class="marker pass">[x]</span><span class="entry-t">A rolled item lands on the ground, and reaches the bag through it</span></div><div class="callout pass"><p><strong>Passed 2026-08-21, first attempt, every stage of it.</strong> <code>droploot 85968</code> opened board
+      <code>1f273ee200025f00</code> at 22:13:47 and the Heavy Machine Gun was on the ground; collecting it at 22:13:55
+      logged <code>collecting a drop paid item 85968 (Weapon) x1 into the bag</code>. Kills then dropped on their own —
+      monster 1196 dropped 33816 at 22:14:41 and monster 528 dropped 33815 at 22:15:03, each opening a board
+      at the spot the creature fell. <strong>Board reuse works</strong>: a second drop 7m from the first took slot 1 of
+      the same board, and a collected slot 0 was handed straight to the next drop. No warning in the whole
+      session — no refusal, no out-of-range, no unresolved item.</p></div>
+      <p>One line worth keeping: <code>CollectLoot from ... named empty slot 0</code> at 22:15:05, a second request for a
+      drop that was already gone. That is the path written for two players reaching the same pickup, and it
+      did what it was written to do — refused quietly at Debug rather than paying twice.</p><p><strong>KILL-REWARDS-3 inverted, and then inverted again the same day.</strong> Item drops were built on 2026-08-21
+      straight into the bag; hours later the 2016 capture was read and the bag turned out to be the wrong
+      destination. Retail put the item on the ground and waited for somebody to walk over it, and PIN
+      does that now — <code>WorldLoot</code> publishes a 24-slot table of drops on an <code>AreaVisualData</code> entity, the
+      client answers with <code>CollectLoot</code>, and only then does <code>ItemPayout</code> put anything in a bag.</p>
+      <p><strong>The capture is the specification.</strong> 62 <code>LootObjectView</code> messages, 41 <code>CollectLoot</code> commands, about
+      forty separate loot entities — one of which handed a single player slots 1, 2, 3, 7, 16, 18 and 23.
+      Powerups on the wire carry <strong>no owning entity</strong> and set <code>Unk3 = {1,0}</code>; crystite and equipment name
+      an owner and omit <code>Unk3</code>. PIN writes both shapes the same way, so a powerup is free to anyone and a
+      weapon is the killer's.</p>
+      <p><strong>Use <code>droploot</code> first.</strong> It puts any item at your feet with no farming, and separates "the drop
+      loop is broken" from "the loot table missed".</p>
+      <span class="cmd"><pre><code>droploot 33815</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>grep -a "dropped item\|collected\|paid item" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="kill-rewards-6-1" type="checkbox"/><span class="step-body"><span class="lede">Log in to zone 448. <code>dbg_inventory</code> and write down the item count.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-6-2" type="checkbox"/><span class="step-body"><span class="lede"><code>droploot 85968</code> — the Heavy Machine Gun, the one item INVENTORY-1 proved the panel will
+         draw. Look at the ground where you are standing.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-6-3" type="checkbox"/><span class="step-body"><span class="lede">Walk over it, or interact with it if the client asks you to.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-6-4" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> again, and open the inventory panel.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-6-5" type="checkbox"/><span class="step-body"><span class="lede">Now kill monsters until the log prints a <code>dropped item</code> line — a third of kills roll a powerup.
+         Go to where the creature died and collect what is there.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-6-6" type="checkbox"/><span class="step-body"><span class="lede">Grep the line above and read the three stages: dropped, collected, paid.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: something is visibly on the ground at step 2, it is gone after step 3, the item count is up by
+      one at step 4, and step 6 shows the same item id through all three log lines.</p></div>
+      <div class="callout fail"><p><strong>Fail, nothing is drawn on the ground:</strong> the view reached the client and the client did nothing with
+      it, or it never reached the client. <code>grep -a "Loot board .* opened"</code> says the server built one.
+      The three slot fields most likely to be wrong are the ones the capture could not explain —
+      <code>Unk4</code> is sent as zero where retail sent three halves, and <code>Unk5</code>/<code>Unk6</code> as zero throughout.</p></div>
+      <div class="callout fail"><p><strong>Fail, it draws but walking over it does nothing:</strong> the client never sent <code>CollectLoot</code>, or the
+      server refused it. Every refusal logs its reason — wrong slot, wrong item, wrong owner, or
+      <code>beyond 15m</code>, which would mean the position PIN wrote is not the position the client drew.</p></div>
+      <div class="callout fail"><p><strong>Fail, it is collected but the pickup stays on screen:</strong> that contradicts
+      <code>LootObjectViewTests</code>, which pins an emptied slot travelling as an emptied slot. Check whether
+      another player still sees it — one client keeping a stale card is a client-side redraw, not a
+      server one.</p></div><div class="result"><label for="r-kill-rewards-6">Result</label><textarea data-k="n-kill-rewards-6" id="r-kill-rewards-6" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-7-a-health-powerup-heals-and-an-ammo-powerup-restocks">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-7</span>
+      <span class="block-t">A health powerup heals, and an ammo powerup restocks</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-7</span><span class="marker warn">[~]</span><span class="entry-t">A health powerup heals, and an ammo powerup restocks</span></div><div class="callout pass"><p><strong>The health half passed 2026-08-21, three times, with figures.</strong> <code>187</code>, <code>189</code> and <code>132</code> health
+      restored on three separate pickups, each ending <code>now 1000/1000</code> — the quarter-bar grant capped at
+      full, which is the clamp behaving. Two of the three came off creature kills rather than
+      <code>droploot</code>, so the whole chain ran unattended: creature dies, powerup lands where it fell, player
+      walks over it, health goes up.</p></div>
+      <div class="callout warn"><p><strong>The ammo half has still never been collected.</strong> A kill dropped 33816 at 22:14:41 and the session
+      ended with it lying there. Nothing is known against it and nothing for it.</p></div>
+      <p><strong>The two items the kill tables actually drop, doing something.</strong> 33815 "Health Powerup" and 33816
+      "Ammo Powerup" — the names are the client's own, resolved out of its text table. Neither reaches a
+      bag: they are consumed where they are picked up.</p>
+      <p><strong>Both numbers are PIN's, because retail's are gone.</strong> A powerup's effect lived in an aptitude chain
+      whose parameters were server-side, so the shipped db carries the item and nothing about what it
+      grants. Health restores <strong>25% of the maximum</strong>. Ammo refills both magazines to the figure a
+      character starts with (88 and 52).</p>
+      <div class="callout warn"><p><strong>The ammo half may be invisible and that is not a failure of this entry.</strong> Nothing in PIN spends
+      ammo — the server never decrements it, the client counts its own rounds — so the write is
+      correct and unproven. If the counter on screen does not move, record it and say so; the log line
+      is the evidence that the pickup ran.</p></div>
+      <span class="cmd"><pre><code>grep -a "powerup" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="kill-rewards-7-1" type="checkbox"/><span class="step-body"><span class="lede">Take damage until your health bar is visibly down. Do not die.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-7-2" type="checkbox"/><span class="step-body"><span class="lede"><code>droploot 33815</code> and walk over it while watching the health bar.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-7-3" type="checkbox"/><span class="step-body"><span class="lede">Fire off most of a magazine, then <code>droploot 33816</code> and collect it while watching the ammo count.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-7-4" type="checkbox"/><span class="step-body"><span class="lede">Grep the line above.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-7-5" type="checkbox"/><span class="step-body"><span class="lede"><code>dbg_inventory</code> — neither powerup should have landed in anything.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the health bar jumps by about a quarter and the log names the exact figure restored; the ammo
+      pickup logs "magazines refilled"; and step 5 shows no new items.</p></div>
+      <div class="callout fail"><p><strong>Fail, health does not move on screen but the log restored some:</strong> the server healed and the client
+      did not hear about it. <code>SetCurrentHealth</code> writes both the observer view and the owner's own
+      controller, so this would be the same class of defect as NET-26 rather than anything about loot.</p></div>
+      <div class="callout fail"><p><strong>Fail, a powerup lands in the bag:</strong> <code>Powerups.Apply</code> did not recognise the id and
+      <code>ItemPayout</code> took it. Only 33815/33816 and their 30286/30294 twins are handled by id — anything
+      else of type Powerup is an XP boost or a title unlock and belongs in a bag.</p></div><div class="result"><label for="r-kill-rewards-7">Result</label><textarea data-k="n-kill-rewards-7" id="r-kill-rewards-7" placeholder="What happened"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="-kill-rewards-8-a-drop-nobody-takes-goes-away">
+    <button class="block-head" type="button">
+      <span class="block-n">KILL-REWARDS-8</span>
+      <span class="block-t">A drop nobody takes goes away, and an owned drop is not everyone's</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-8</span><span class="marker none">[ ]</span><span class="entry-t">A drop nobody takes goes away, and an owned drop is not everyone's</span></div><p>The two rules around a drop rather than the drop itself. <strong>Two minutes</strong> is how long one lies there,
+      and a board that has been empty for <strong>a minute</strong> is removed from the world. Both are PIN's numbers —
+      a drop nobody collected is a drop the capture never recorded the end of.</p>
+      <p>The ownership half needs a second client and will usually go unrun. It is written down because the
+      rule is already in the code: a powerup belongs to nobody, everything else belongs to the killer
+      until it expires.</p>
+      <span class="cmd"><pre><code>grep -a "expired holding\|board .* closed\|belongs to" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="kill-rewards-8-1" type="checkbox"/><span class="step-body"><span class="lede"><code>droploot 85968</code>, then walk away and leave it. Watch the clock.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-8-2" type="checkbox"/><span class="step-body"><span class="lede">After two minutes, come back and look at the spot.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-8-3" type="checkbox"/><span class="step-body"><span class="lede">Wait another minute and grep for the board closing.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-8-4" type="checkbox"/><span class="step-body"><span class="lede">Two clients: one drops <code>droploot 85968 1 mine</code>, the other tries to take it.</span></span></label>
+      <label class="step"><input data-k="kill-rewards-8-5" type="checkbox"/><span class="step-body"><span class="lede">Same again with <code>droploot 33815</code>, which belongs to nobody.</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: the pickup is gone from the ground at step 2 and the log says the slot expired; the board
+      closes at step 3; the wrong player is refused at step 4 with a <code>belongs to</code> line; and anyone may
+      take the powerup at step 5.</p></div>
+      <div class="callout fail"><p><strong>Fail, it expires in the log and stays on screen:</strong> same defect as KILL-REWARDS-6's third failure, and the
+      same test contradicts it. Expiry and collection clear a slot through exactly the same call.</p></div>
+      <p><strong>Not runnable is a valid outcome</strong> for steps 4 and 5 — mark them <code>[-]</code> and say so.</p><div class="result"><label for="r-kill-rewards-8">Result</label><textarea data-k="n-kill-rewards-8" id="r-kill-rewards-8" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
 </div>
