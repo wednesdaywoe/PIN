@@ -192,7 +192,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 4 of 22 closed
+[Full detail](gaps/data.md) — 4 of 23 closed
 
 - [x] **DATA-1** — Battleframe shield pool was kept at 3000 instead of build 1962's real 0 as a
   deliberate observability trade-off. **The trade was backwards and it is 0 now** (2026-08-15,
@@ -644,9 +644,25 @@ has no entries in that category, which reflects nothing having run rather than n
   [CRAFT2b](../Game Testing/Crafting.html): three different splits across two sittings (30+20, 40+10,
   and a refusal at 10 of 50), plus 81986 refused for classes 3299 and 3298
 
+- [ ] **DATA-27** — **The ore the ground mostly pays is an ingredient in nothing.** Found 2026-08-21
+  while re-checking CRAFT5's premise against `dbzonemetadata::ResourceNodeTypeResource`. Of the 42
+  node types the game ships, **34 pay ores in class 3288 "Raw Metals"** — Iron, Tungsten, Titanium
+  and Uranium Ore — and **no blueprint asks for class 3288 at all**. What the 263 metal recipes want
+  is class **128 "Metals"**: Iron Bars (86667) and Tungsten Bars (86669), the refined tier. Exactly
+  **four node types pay a Bar** (235, 237, 238 and 240) and nothing else on the ground does.
+  So a thumper on any of the other 34 fills the bag with a material that cannot be spent.
+
+  This is the shape of the 1.6 cull rather than a coding defect: refining raw into refined was the
+  molecular printer's job, and `FabTest.lua` — the printer's panel — ships as 528 lines of
+  whitespace ([client-ui](streams/client-ui.md)). The ore is the input to a step that was deleted.
+
+  Consequences, both live: **CRAFT5 must stand on 235/237/238/240**, not on the node 233 the earlier
+  end-to-end thumping run used; and **CRAFT3 inherits the real question** — whether PIN restores a
+  refining step, reprices recipes onto the raw tier, or leaves 34 node types paying a souvenir
+
 ## Client & Environment — CLIENT
 
-[Full detail](gaps/client.md) — 2 of 4 closed
+[Full detail](gaps/client.md) — 3 of 4 closed
 
 - [~] **CLIENT-1** — World-entry freeze traced to a lost wakeup in Wine's fsync path; closed via
   `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over 4 sessions, not yet proven un-recurring
@@ -663,10 +679,19 @@ has no entries in that category, which reflects nothing having run rather than n
   Aranha attack head-on, and the watchtower thumper's own wave sappers face the machine correctly,
   which checks the convention against a non-character objective too
 
-- [ ] **CLIENT-4** — The inventory panel draws only Crystite and Red Bean tokens; every other
-  resource is held, spent and delivered invisibly. Found on the CRAFT2 pass 2026-08-21, where the
-  deduction toasts fired for all three ingredients but only Crystite had a row. Blocks nothing yet;
-  blocks CRAFT4, since a player cannot manage materials they cannot see
+- [x] **CLIENT-4** — **The premise was wrong, and the real gap is now closed by a panel PIN wrote.**
+  Recorded 2026-08-21 off the CRAFT2 pass as "the inventory draws only Crystite and Red Bean
+  tokens". It does not: Iron Ore and Copper Wiring both draw in the shipped panel, seen on screen
+  the same day, and the raw/refined tier was never the dividing line. What is true is narrower and
+  was found by [UI1](streams/client-ui.md): the shipped panel is built on `Player.GetInventory()`,
+  which silently drops the melded biomaterials, and **no shipped accessor returns every material at
+  once** — `GetInventory()` and `GetInventoryItemsOfType(15)` return disjoint sets, and an item the
+  server files as a crafting component can sit under neither. That is engine code PIN cannot edit,
+  so it is answered rather than fixed: [MatList](../Client/Addons/MatList), `/mats`, merges all
+  three sources by item id and draws every material the character holds — iconed, counted, grouped,
+  live on `ON_INVENTORY_CHANGED`, with the client's own tooltip on hover. Verified on screen
+  2026-08-21, including a thumper payout of 21 Iron Ore appearing without reopening the window.
+  **The first time in PIN that the melded resources have been visible to a player at all**
 
 ---
 

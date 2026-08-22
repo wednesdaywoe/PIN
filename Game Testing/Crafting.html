@@ -595,52 +595,88 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       come back and build something out of what you mined? Deciding an economy before knowing that answer is
       arranging furniture in a house nobody has walked through.</p>
 
-      <div class="callout"><p><strong>It needs no economy decision and no new recipes, because the ground
-      already pays a material the recipes already want.</strong> Four node types — 235, 237, 238 and 240 —
-      yield <strong>Iron Bars</strong> (item <code>86667</code>). Iron Bars sit in material class
-      <strong>128, "Metals"</strong>, which is the class <strong>263 blueprints</strong> ask for. The cheapest
-      of those, <strong>82081</strong>, wants 50 Metals and nothing else and builds Cryogenic Recharger I.
-      A thump pays 6 to 20 Iron Bars, so the loop is three to eight runs long — a loop rather than a
-      formality. Every piece is shipped data and code that already passed: thumping from M3/M4, crafting from
-      CRAFT2 and CRAFT2b.</p></div>
+      <p><strong>Rewritten later the same day, because the work done in between changed what this run can
+      show.</strong> When the entry was first written the loop would have had to be read out of a log. It no
+      longer does:</p>
+      <ul>
+      <li><strong>Materials are on screen.</strong> <code>/mats</code> — <a href="../Client/Addons/MatList">MatList</a>,
+        PIN's own panel — lists every material the character holds, iconed and counted, and redraws itself the
+        moment a payout lands. A thumper on node 233 was already watched paying 21 Iron Ore into it live.
+        Nothing in this run needs <code>dbg_inventory</code> to be believed.</li>
+      <li><strong>The fight has a floor under it.</strong> Kills now drop health and ammo powerups on the
+        ground where the creature fell, and you walk over them to take them
+        (<a href="Kill-Rewards.html">KILL-REWARDS-6</a>, passed 2026-08-21). Defending a thumper is a fight you
+        can survive by fighting well rather than by arriving with full health.</li>
+      <li><strong>Kills can pay equipment.</strong> A weapon dropped by a creature reaches the bag through the
+        same ground-loot board. So a thumper defence can now pay twice — the machine's ore, and whatever dies
+        around it.</li>
+      </ul>
 
-      <p>Node type 240 is the one to stand on: it pays Crystite <em>and</em> Iron Bars, so a run also shows
-      two materials separating correctly. <code>deposit add</code> authors one where you stand, which makes
-      the whole thing repeatable instead of depending on finding the right ground.</p>
+      <div class="callout warn"><p><strong>The node type is the one thing that will silently ruin this run.</strong>
+      Checked against <code>dbzonemetadata::ResourceNodeTypeResource</code> on 2026-08-21 and recorded as
+      <a href="../Docs/ISSUE-REGISTER.md">DATA-27</a>. The game ships 42 node types. <strong>Thirty-four of them
+      pay ore in class 3288 "Raw Metals"</strong> — Iron, Tungsten, Titanium, Uranium Ore — and
+      <strong>no blueprint in the game asks for class 3288.</strong> What the metal recipes want is class
+      <strong>128 "Metals"</strong>: <strong>Iron Bars</strong> (86667) and Tungsten Bars, the refined tier.
+      <strong>Exactly four node types pay a Bar: 235, 237, 238 and 240.</strong> Thumping any of the other 34
+      fills the bag with a material that cannot be spent — which is what the node 233 run did.</p>
+      <p>That is the 1.6 cull showing, not a bug. Refining ore into bars was the molecular printer's job, and
+      the printer's panel ships as 528 lines of whitespace. The ore is the input to a step that was deleted.
+      CRAFT3 inherits the question of what to do about it.</p></div>
+
+      <div class="callout"><p><strong>Given the right node, it needs no economy decision and no new recipes.</strong>
+      Iron Bars sit in class 128, which <strong>263 blueprints</strong> ask for. <strong>157 of those are priced
+      in class 128 and nothing else</strong>, so they need no second ingredient. The run uses
+      <strong>82081</strong>: 50 Metals, no item ingredients, one output — Cryogenic Recharger I. A thump pays
+      6 to 20, so the loop is three to eight runs long, which is a loop rather than a formality.</p></div>
+
+      <p><strong>Stand on node type 238.</strong> It is the only one that pays <em>both</em> Iron Bars and Iron
+      Ore, so a single thump puts a spendable material and an unspendable one side by side in
+      <code>/mats</code> — the clearest possible picture of what DATA-27 means. Prefer 235 or 237 for a run with
+      only Bars in it, or 240 if you also want Crystite separating into the wallet.</p>
 
       <div class="steps"><ol>
-      <label class="step"><input data-k="crafting-5-1" type="checkbox"/><span class="step-body"><span class="lede">Note what you are holding before anything else. This is the control — the whole entry is a
-         claim about a number going up and then down.</span>
-      <span class="cmd"><pre><code>dbg_inventory
+      <label class="step"><input data-k="crafting-5-1" type="checkbox"/><span class="step-body"><span class="lede">Note what you are holding before anything else. The whole entry is a claim about a number going
+         up and then down, so it needs a starting figure. Open <code>/mats</code> and leave it open.</span>
+      <span class="cmd"><pre><code>/mats
+dbg_inventory
 craft check 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
-      <label class="step"><input data-k="crafting-5-2" type="checkbox"/><span class="step-body"><span class="lede">Stand somewhere with room to fight and author a deposit of node type 240 around you, 60 metres
-         across.</span>
-      <span class="cmd"><pre><code>deposit add 240 60</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-2" type="checkbox"/><span class="step-body"><span class="lede">Stand somewhere with room to fight and author a deposit of node type 238 around you, 60 metres
+         across. <strong>Not 233</strong> — see the warning above.</span>
+      <span class="cmd"><pre><code>deposit add 238 60</code></pre><button class="copy" type="button">Copy</button></span></span></label>
       <label class="step"><input data-k="crafting-5-3" type="checkbox"/><span class="step-body"><span class="lede">Call down a thumper and <strong>defend it</strong>. The payout scales with how much health it
-         has left, so fighting is not decoration — a thumper left to be chewed on pays less.</span>
+         has left, so fighting is not decoration — a thumper left to be chewed on pays less. Take the health
+         and ammo the kills drop rather than backing off; that is what they are there for.</span>
       <span class="cmd"><pre><code>thumper</code></pre><button class="copy" type="button">Copy</button></span></span></label>
-      <label class="step"><input data-k="crafting-5-4" type="checkbox"/><span class="step-body"><span class="lede">Repeat until <code>craft check 82081</code> says you hold 50 across the class. Expect three to
-         eight runs. Watch the held count climb by the amount each thump actually paid.</span>
+      <label class="step"><input data-k="crafting-5-4" type="checkbox"/><span class="step-body"><span class="lede">Watch <code>/mats</code> at the moment the cycle pays. Two rows should move: <strong>Iron Bars</strong>
+         under Metals, and <strong>Iron Ore</strong> under Raw Metals. Note both figures — only the first one
+         is going to buy anything.</span></span></label>
+      <label class="step"><input data-k="crafting-5-5" type="checkbox"/><span class="step-body"><span class="lede">Repeat until <code>craft check 82081</code> says you hold 50 across the class. Expect three to
+         eight runs, and note anything the kills drop on the ground along the way — a dropped weapon reaching
+         the bag is the second payout path doing its job.</span>
       <span class="cmd"><pre><code>craft check 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
-      <label class="step"><input data-k="crafting-5-5" type="checkbox"/><span class="step-body"><span class="lede">Build it from what you mined. Nothing here was handed to you by
-         <code>createitem</code> — that is the point of the entry.</span>
+      <label class="step"><input data-k="crafting-5-6" type="checkbox"/><span class="step-body"><span class="lede">Build it from what you mined, and watch the Iron Bars row in <code>/mats</code> fall by 50 as it
+         goes. Nothing here was handed to you by <code>createitem</code> — that is the point of the entry.</span>
       <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
-      <label class="step"><input data-k="crafting-5-6" type="checkbox"/><span class="step-body"><span class="lede">Confirm it survives a relog: log out, log back in, and check the item is still held and the iron
-         is still spent.</span>
-      <span class="cmd"><pre><code>dbg_inventory</code></pre><button class="copy" type="button">Copy</button></span></span></label>
+      <label class="step"><input data-k="crafting-5-7" type="checkbox"/><span class="step-body"><span class="lede">Equip the Cryogenic Recharger in the garage and confirm it holds on screen.</span></span></label>
+      <label class="step"><input data-k="crafting-5-8" type="checkbox"/><span class="step-body"><span class="lede">Confirm it survives a relog: menu logout, log back in, and check the item is still held and the
+         iron is still spent. This is <a href="Persistence.html">PERSIST-6</a>'s half of the claim.</span>
+      <span class="cmd"><pre><code>dbg_inventory
+/mats</code></pre><button class="copy" type="button">Copy</button></span></span></label>
       </ol></div>
 
       <p>Pass: iron mined out of the ground becomes an item you still own after a relog, with no
-      <code>createitem</code> anywhere in the chain.</p>
+      <code>createitem</code> anywhere in the chain, and every step of it was visible on screen.</p>
 
       <div class="callout warn"><p><strong>The one thing that would quietly invalidate the run is using
       <code>createitem</code> to top up.</strong> If a thump pays 14 and you are 3 short, the temptation is to
       fill the gap. Do not — the entry is about provenance, not arithmetic, and a topped-up craft proves only
-      what CRAFT2b already proved. Take the extra run.</p>
-      <p>Two known rough edges that are <em>not</em> failures here: the crafted item draws as a row with no
-      name (<a href="../Docs/gaps/client.md">CLIENT-4</a>, its icon id is 0), and "return to town" is
-      figurative — <code>craft</code> is a server command, not a station you walk to. Neither affects whether
-      the loop closes.</p></div>
+      what CRAFT2b already proved. Take the extra run. <strong>Iron Ore is not a substitute either</strong>,
+      however much of it the same thumps piled up; it is a different class and the recipe will refuse it.</p>
+      <p>Two known rough edges that are <em>not</em> failures here: the crafted item's name carries a trailing
+      <code>^Q</code> and its description is empty (1962 data being thin — <code>/mats</code> strips the marker,
+      the shipped panel does not), and "return to town" is figurative — <code>craft</code> is a server command,
+      not a station you walk to. Neither affects whether the loop closes.</p></div>
       <div class="result"><label for="r-crafting-5">Result</label><textarea data-k="n-crafting-5" id="r-crafting-5" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
@@ -692,32 +728,6 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <p>Pass: a recipe consumes a real thumper payout, spends its ingredients, and produces an equippable item that
       arrives on its own.</p>
       <div class="result"><label for="r-crafting-4">Result</label><textarea data-k="n-crafting-4" id="r-crafting-4" placeholder="What happened"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="-crafting-5-the-loop-closes-in-game">
-    <button class="block-head" type="button">
-      <span class="block-n">CRAFT5</span>
-      <span class="block-t">The loop closes in game</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT5</span><span class="marker none">[ ]</span><span class="entry-t">The loop closes in game</span></div><p>The exit condition. One sitting: thump a deposit, craft from the payout, equip the result,
-      relog, still have it. This is the whole stream end to end — resource gathering (already built and verified),
-      fabrication, equip, and persistence — and it cannot pass until every entry before it has. Requires CRAFT0
-      (delivery), CRAFT2 (fabrication), CRAFT4 (a recipe that consumes a thumper payout), and
-      <a href="Persistence.html">Persistence</a> (the item survives a relog).</p>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="crafting-5-1" type="checkbox"/><span class="step-body"><span class="lede">Thump a deposit and run its cycle to a payout (see <a href="Thump-Placement.html">Thump Placement</a> for
-         the payout table). Collect the resources.</span></span></label>
-      <label class="step"><input data-k="crafting-5-2" type="checkbox"/><span class="step-body"><span class="lede">Craft an item from that payout (CRAFT4's recipe) and confirm it arrives without a resend.</span></span></label>
-      <label class="step"><input data-k="crafting-5-3" type="checkbox"/><span class="step-body"><span class="lede">Equip the crafted result in the garage and confirm it holds on screen.</span></span></label>
-      <label class="step"><input data-k="crafting-5-4" type="checkbox"/><span class="step-body"><span class="lede">Menu logout, relog, and confirm the crafted item is still equipped and usable. This is <a
-         href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s persistence half and <a href="Persistence.html">PERSIST-6</a>'s
-         — a created item surviving a relog.</span></span></label>
-      </ol></div>
-      <p>Pass: the item you crafted from a thumper payout is equipped and still there after a relog. The loop is
-      closed.</p>
-      <div class="result"><label for="r-crafting-5">Result</label><textarea data-k="n-crafting-5" id="r-crafting-5" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
 </div>

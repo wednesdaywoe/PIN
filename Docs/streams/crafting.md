@@ -49,10 +49,26 @@ economy before knowing that loop closes is arranging furniture in a house nobody
 
 **And it turns out no economy decision is needed to run it.** The ground already pays a material that
 recipes already want: node types 235, 237, 238 and 240 yield **Iron Bars** (item 86667), which sit in
-material class **128, "Metals"** — the class **263 blueprints** ask for. The cheapest of them,
-**82081**, wants 50 Metals and nothing else, and builds Cryogenic Recharger I. Thumping pays 6-20 Iron
-Bars a run, so the loop is three to eight thumps long, which is a loop rather than a formality. Every
-piece of that is shipped data and already-built code.
+material class **128, "Metals"** — the class **263 blueprints** ask for, **157 of them priced in that
+class and nothing else**. The run uses **82081**: 50 Metals, no item ingredients, one output, Cryogenic
+Recharger I. Thumping pays 6-20 Iron Bars a run, so the loop is three to eight thumps long, which is a
+loop rather than a formality. Every piece of that is shipped data and already-built code.
+
+**Those four node types are the whole list, and that is a finding rather than a detail**
+([DATA-27](../ISSUE-REGISTER.md), 2026-08-21). The other **34 node types pay ore in class 3288 "Raw
+Metals"** — Iron, Tungsten, Titanium, Uranium Ore — and **no blueprint asks for class 3288 at all**.
+Refining ore into bars was the molecular printer's job and the printer's panel ships empty, so the
+raw tier is the input to a deleted step. The earlier end-to-end thumping run stood on node 233 and
+filled the bag with a material nothing can spend. CRAFT5 must stand on 235/237/238/240, and CRAFT3
+inherits the question of what PIN does about the other 34.
+
+**What changed under it on 2026-08-21, after the entry was first written.** The loop no longer has to
+be read out of a log. `/mats` ([MatList](../../Client/Addons/MatList), PIN's own panel) lists every
+material held, iconed and counted, and redraws the moment a payout lands — a thumper paying 21 Iron
+Ore was watched arriving live. Kills drop health and ammo on the ground to be walked over
+([m5](m5-kill-rewards.md)), so defending the machine is a fight with a floor under it, and a kill can
+drop equipment into the bag as well. The run is now watchable end to end by a player rather than
+verifiable by a maintainer.
 
 - [x] **CRAFT1** — **The client surface.** Settled 2026-08-20 by reading the binary, not by a spike:
   748 exported `Game.*` names contain no fabrication sender, so no panel can reach fabrication and
@@ -63,26 +79,31 @@ piece of that is shipped data and already-built code.
   **CRAFT2b** followed the same day: raw-material costs are priced in material *classes*, and a class
   line draws across every member at once. Two premises in the original entry were wrong and are
   recorded in [DATA-26](../ISSUE-REGISTER.md) and the run sheet.
-- [ ] **CRAFT5** — **The loop closes in game.** One sitting: author a deposit, thump it, fight what
-  it attracts, craft from the payout, equip the result, relog, still have it. **This is the load-
-  bearing entry, and everything below waits on it.** Needs no economy decision and no new recipes —
-  see the note above. Gets its own run sheet in [In-Game-Tests](../../Game%20Testing/).
+- [ ] **CRAFT5** — **The loop closes in game.** One sitting: author a deposit on node type **238**,
+  thump it, fight what it attracts, craft 82081 from the payout, equip the result, relog, still have
+  it. **This is the load-bearing entry, and everything below waits on it.** Needs no economy decision
+  and no new recipes — see the note above. Run sheet:
+  [Crafting.html](../../Game%20Testing/Crafting.html), eight steps, rewritten 2026-08-21 to watch
+  `/mats` rather than a log.
 
 ## Deferred
 
 - [ ] **CRAFT3** — **The economy decisions**: which resource economy (five-stat graded materials, or
   the level-banded veins the node types are written for); where crafted output lands; how resources
-  are carried. **Gated on CRAFT5** — the loop's shape is the strongest evidence about what the economy
-  should be, and pricing one before walking it means pricing it twice. Two of the three questions are
-  already narrowed: the five-stat system is intact and readable
+  are carried; **and now what happens to the raw tier** — 34 of the 42 node types pay an ore no recipe
+  wants ([DATA-27](../ISSUE-REGISTER.md)), so the choice is restore a refining step, reprice recipes
+  onto the raw tier, or leave those nodes paying a souvenir. **Gated on CRAFT5** — the loop's shape is
+  the strongest evidence about what the economy should be, and pricing one before walking it means
+  pricing it twice. Two questions are already narrowed: the five-stat system is intact and readable
   ([DATA-26](../ISSUE-REGISTER.md), and the stat values ride on the item rather than living in static
-  data), and raw resources have no display at all, so an economy priced in them is unplayable until
-  [client-ui.md](client-ui.md) lands. needs: CRAFT5
+  data), and the display objection is gone — `/mats` draws every material a character holds, raw tier
+  included ([client-ui.md](client-ui.md), UI4 met 2026-08-21), so an economy priced in raw resources
+  is no longer unplayable on those grounds. needs: CRAFT5
 - [ ] **CRAFT4** — **A curated recipe set.** The first recipes that consume what a thumper brings up
   and produce something worth equipping. **Gated on CRAFT3** for a price to meet, and on CRAFT5 for
   proof there is a loop to price. needs: CRAFT3
 
-## Deferred
+## Deferred — further out
 
 - **The research chain** (`research_blueprint_id` / `head_blueprint_id`, resolving at 100%) — a
   discovery layer on top of crafting. Gate: whether the core loop (CRAFT1–CRAFT5) is fun without
