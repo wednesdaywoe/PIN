@@ -58,5 +58,17 @@
       "z": 401.66394
     },
     "radius": 35
+  },
+  {
+    "id": 6,
+    "zone_id": 448,
+    "name": "Tier 1 - Rare - Refined Iron and Raw Iron - Combo",
+    "node_type_id": 238,
+    "position": {
+      "x": -87.256714,
+      "y": 504.3445,
+      "z": 403.01907
+    },
+    "radius": 60
   }
 ]

@@ -112,6 +112,7 @@ WriteWeaponTemplates();
 WriteWeapons();
 WriteAbilities();
 WriteRecipes();
+WriteCraftingChain();
 WriteIndex();
 
 Console.WriteLine("Done.");
@@ -659,6 +660,334 @@ void WriteRecipes()
     counts.Add(("Recipes.md", $"{rows.Count} recipes", "The crafting graph v1.6 switched off, with outputs, ingredients and build times."));
 }
 
+// The graded crafting chain: a resource's per-instance stats become a component's stats become a
+// crafted item's attributes. Six tables the server never loads, so they are read raw. None of it is
+// reachable in 1962 -- v1.6 replaced it with the fixed ingredient lists on Recipes.md -- but every
+// link still has data, which is the whole reason to render it.
+void WriteCraftingChain()
+{
+    var (resourceTypeRows, resourceTypeCol) = RawTable("dbitems::Resource_Types");
+    var (statNameRows, statNameCol) = RawTable("dbitems::Resource_Stat_Names");
+    var (resourceStatRows, resourceStatCol) = RawTable("dbitems::ResourceStat");
+    var (refineRows, refineCol) = RawTable("dbitems::ResourceItem");
+    var (slotMapRows, slotMapCol) = RawTable("dbitems::Blueprint_Attribute_Map");
+    var (blueprintResourceRows, blueprintResourceCol) = RawTable("dbitems::Blueprint_Resources");
+    var (modifierRows, modifierCol) = RawTable("dbitems::ItemTypeAttributeModifier");
+
+    if (resourceTypeRows.Count == 0 || blueprintResourceRows.Count == 0)
+    {
+        Console.Error.WriteLine("  Crafting-Chain.md skipped: dbitems::Resource_Types or Blueprint_Resources absent.");
+        return;
+    }
+
+    // Resource_Types is the whole taxonomy, not just materials: material classes, component classes
+    // and equipment families are all rows in it, linked by parent_id. Naming the ids is what makes
+    // any of the rest legible -- "component_type 2887" is unreadable, "Armor Plates" is the answer.
+    int typeIdCol = resourceTypeCol("id");
+    int typeNameCol = resourceTypeCol("localized_name_id");
+    int typeParentCol = resourceTypeCol("parent_id");
+    var typeName = new Dictionary<uint, string>();
+    var typeParent = new Dictionary<uint, uint>();
+
+    foreach (var row in resourceTypeRows)
+    {
+        var id = Id(row[typeIdCol]);
+        typeName[id] = Loc(Id(row[typeNameCol]));
+        typeParent[id] = Id(row[typeParentCol]);
+    }
+
+    string TypeName(uint id)
+    {
+        var name = typeName.GetValueOrDefault(id, string.Empty);
+        return name.Length > 0 ? $"{name} ({id})" : $"type {id}";
+    }
+
+    bool DescendsFrom(uint id, uint ancestor)
+    {
+        var cursor = id;
+
+        for (int depth = 0; cursor != 0 && depth < 8; depth++)
+        {
+            if (cursor == ancestor)
+            {
+                return true;
+            }
+
+            cursor = typeParent.GetValueOrDefault(cursor);
+        }
+
+        return false;
+    }
+
+    var sb = new StringBuilder();
+    sb.AppendLine("# Crafting Chain");
+    sb.AppendLine();
+    sb.AppendLine(stamp);
+    sb.AppendLine();
+    var gradedIds = blueprintResourceRows.Select(r => Id(r[blueprintResourceCol("blueprint_id")])).ToList();
+
+    sb.AppendLine("Two crafting systems ship in build 1962 and they share tables. Blueprint id tells them apart:");
+    sb.AppendLine($"`dbitems::Blueprint_Resources` carries ids {gradedIds.Min()} to {gradedIds.Max()} and nothing else, and that block is");
+    sb.AppendLine("the graded system below. Everything outside it is the v1.6 rework, a fixed ingredient list with no");
+    sb.AppendLine("stats read, and that is what [Recipes](Recipes.md) lists.");
+    sb.AppendLine();
+    sb.AppendLine("The graded system turns a resource's per-instance stats into a crafted item's attributes in five");
+    sb.AppendLine("steps. Each step below is a surviving table. The one thing that did not survive is the per-instance");
+    sb.AppendLine("stat values themselves: they were never static data. The client parses them off the item, out of a");
+    sb.AppendLine("base-36 string `{Version}-{SDB id}-{Quality}-{Stat1..Stat5}` (`lib_Items.lua`,");
+    sb.AppendLine("`LIB_ITEMS.GetResourceStats`), and the 2016 capture shows retail had stopped filling that slot.");
+    sb.AppendLine("Any server reviving this has to generate those numbers. The rest is lookup.");
+    sb.AppendLine();
+
+    // 1. Stat names.
+    sb.AppendLine("## 1. What a resource carries");
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::ResourceStat` is the abstract index, {resourceStatRows.Count} rows. Stat 5 has a localization key one past");
+    sb.AppendLine("CPU's with no row behind it, so it was authored and dropped.");
+    sb.AppendLine();
+
+    int resourceStatIdCol = resourceStatCol("id");
+    int resourceStatNameCol = resourceStatCol("localized_name");
+
+    string StatName(uint index)
+    {
+        var row = resourceStatRows.FirstOrDefault(r => Id(r[resourceStatIdCol]) == index);
+        var name = row != null ? Loc(Id(row[resourceStatNameCol])) : string.Empty;
+        return name.Length > 0 ? name : $"stat {index}";
+    }
+
+    WriteTable(
+        sb,
+        ["Stat", "Name"],
+        resourceStatRows.OrderBy(r => Id(r[resourceStatIdCol])).Select(r =>
+        {
+            var name = Loc(Id(r[resourceStatNameCol]));
+            return new[] { Id(r[resourceStatIdCol]).ToString(CultureInfo.InvariantCulture), name.Length > 0 ? name : "(never shipped)" };
+        }));
+
+    sb.AppendLine();
+    sb.AppendLine($"`dbitems::Resource_Stat_Names` gives those indices a player-facing name per material family, {statNameRows.Count} rows.");
+    sb.AppendLine("Gas has four stats where mineral and organic have five.");
+    sb.AppendLine();
+
+    int statFamilyCol = statNameCol("resource_type");
+    int statIndexCol = statNameCol("stat_index");
+    int statLocCol = statNameCol("localized_name_id");
+
+    WriteTable(
+        sb,
+        ["Family", "1", "2", "3", "4", "5"],
+        statNameRows.GroupBy(r => Id(r[statFamilyCol])).OrderBy(g => TypeName(g.Key), StringComparer.OrdinalIgnoreCase).Select(g =>
+        {
+            var cells = new string[6];
+            cells[0] = TypeName(g.Key);
+
+            foreach (var row in g)
+            {
+                var index = Id(row[statIndexCol]);
+
+                if (index is >= 1 and <= 5)
+                {
+                    cells[(int)index] = Loc(Id(row[statLocCol]));
+                }
+            }
+
+            return cells.Select(c => c ?? string.Empty).ToArray();
+        }));
+
+    // 2. Refining.
+    sb.AppendLine();
+    sb.AppendLine("## 2. Refining");
+    sb.AppendLine();
+
+    int refineIdCol = refineCol("id");
+    int refineIntoCol = refineCol("refines_into");
+    var refinePairs = refineRows.Where(r => Id(r[refineIntoCol]) != 0).ToList();
+
+    sb.AppendLine($"`dbitems::ResourceItem.refines_into`, {refinePairs.Count} live pairs out of {refineRows.Count} rows. Refining is the step");
+    sb.AppendLine("the molecular printer did, and the printer's panel ships as blank Lua, so these are the input to a");
+    sb.AppendLine("screen v1.6 emptied. Note these are the pre-1.6 material items, not the bars a 1962 thumper pays.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Raw", "Class", "Refines into", "Class"],
+        refinePairs.Select(r =>
+        {
+            var raw = Id(r[refineIdCol]);
+            var refined = Id(r[refineIntoCol]);
+            return new[]
+            {
+                $"{Clean(ItemName(raw))} ({raw})",
+                TypeName(rootItems.GetValueOrDefault(raw)?.ItemSubtype ?? 0),
+                $"{Clean(ItemName(refined))} ({refined})",
+                TypeName(rootItems.GetValueOrDefault(refined)?.ItemSubtype ?? 0),
+            };
+        }));
+
+    // 3 and 4 both read Blueprint_Resources; index it once.
+    int resourceBlueprintCol = blueprintResourceCol("blueprint_id");
+    int resourceTypeRefCol = blueprintResourceCol("item_type");
+    int resourceAttributeCol = blueprintResourceCol("item_attribute");
+    int resourceQuantityCol = blueprintResourceCol("rsrc_quantity");
+    int resourceStatRefCol = blueprintResourceCol("resource_stat");
+    var byBlueprint = blueprintResourceRows.GroupBy(r => Id(r[resourceBlueprintCol])).ToDictionary(g => g.Key, g => g.ToList());
+
+    sb.AppendLine();
+    sb.AppendLine("## 3. Component recipes");
+    sb.AppendLine();
+    sb.AppendLine("A graded recipe does not name an ingredient item. It names a material *class* and which of the five");
+    sb.AppendLine("stats it reads off whatever you supply, so the same recipe run on better ore makes a better part.");
+    sb.AppendLine("`resource_stat` is that index; a row carrying `resource_stat = 0` is a slot instead, and those are");
+    sb.AppendLine("section 4.");
+    sb.AppendLine();
+
+    var componentTypes = typeName.Keys.Where(id => DescendsFrom(id, 1926u)).ToHashSet();
+    var componentItems = rootItems.Values.Where(i => componentTypes.Contains(i.ItemSubtype)).ToList();
+    var gradedByBlueprint = byBlueprint
+        .Where(g => g.Value.Any(r => Id(r[resourceStatRefCol]) != 0))
+        .ToDictionary(g => g.Key, g => g.Value);
+
+    var componentRecipes = blueprints.Values
+        .Where(b => gradedByBlueprint.ContainsKey(b.Id) && componentTypes.Contains(rootItems.GetValueOrDefault(b.MainOutputItemId)?.ItemSubtype ?? 0))
+        .OrderBy(b => ItemName(b.MainOutputItemId), StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    sb.AppendLine($"The output is a component: {componentItems.Count} items across {componentTypes.Count} subtypes filed under `Battleframe");
+    sb.AppendLine($"Components (1926)`. {componentRecipes.Count} recipes make one and read a stat while doing it.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Output", "Cost, and the stat each line reads"],
+        componentRecipes.Select(b => new[]
+        {
+            b.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(ItemName(b.MainOutputItemId)),
+            string.Join(", ", gradedByBlueprint[b.Id]
+                .Where(r => Id(r[resourceStatRefCol]) != 0)
+                .Select(r => $"{Id(r[resourceQuantityCol])}x {TypeName(Id(r[resourceTypeRefCol]))} [{StatName(Id(r[resourceStatRefCol]))}]")),
+        }));
+
+    // 4. Slots, by type and by recipe.
+    sb.AppendLine();
+    sb.AppendLine("## 4. Component slots");
+    sb.AppendLine();
+    sb.AppendLine("`dbitems::Blueprint_Attribute_Map` states the rule per equipment family: which component slot the");
+    sb.AppendLine("family has, and which attribute the part in it decides. `blueprint_type` and `component_type` are");
+    sb.AppendLine("both `Resource_Types` ids. Slots mapping to no attribute are the two that appear on every family,");
+    sb.AppendLine("`Stabilization Subroutines` and `Structural Reinforcement`.");
+    sb.AppendLine();
+
+    int mapAttributeCol = slotMapCol("item_attribute");
+    int mapBlueprintTypeCol = slotMapCol("blueprint_type");
+    int mapComponentTypeCol = slotMapCol("component_type");
+
+    WriteTable(
+        sb,
+        ["Equipment family", "Slot", "Decides"],
+        slotMapRows
+            .OrderBy(r => TypeName(Id(r[mapBlueprintTypeCol])), StringComparer.OrdinalIgnoreCase)
+            .Select(r => new[]
+            {
+                TypeName(Id(r[mapBlueprintTypeCol])),
+                TypeName(Id(r[mapComponentTypeCol])),
+                Id(r[mapAttributeCol]) != 0 ? AttributeName(Id(r[mapAttributeCol])) : string.Empty,
+            }));
+
+    var slotRecipes = blueprints.Values
+        .Where(b => byBlueprint.GetValueOrDefault(b.Id)?.Any(r => Id(r[resourceAttributeCol]) != 0 && componentTypes.Contains(Id(r[resourceTypeRefCol]))) == true)
+        .Where(b => !string.IsNullOrEmpty(ItemName(b.MainOutputItemId)))
+        .OrderBy(b => ItemName(b.MainOutputItemId), StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    sb.AppendLine();
+    sb.AppendLine($"The same thing per recipe, {slotRecipes.Count} of them. Each row is one craftable item and the parts it takes;");
+    sb.AppendLine("`Optional Component` slots accept anything and decide nothing.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Id", "Output", "Slots"],
+        slotRecipes.Select(b => new[]
+        {
+            b.Id.ToString(CultureInfo.InvariantCulture),
+            Clean(ItemName(b.MainOutputItemId)),
+            string.Join(", ", byBlueprint[b.Id]
+                .Where(r => Id(r[resourceStatRefCol]) == 0)
+                .Select(r => Id(r[resourceAttributeCol]) != 0
+                    ? $"{TypeName(Id(r[resourceTypeRefCol]))} -> {AttributeName(Id(r[resourceAttributeCol]))}"
+                    : TypeName(Id(r[resourceTypeRefCol])))),
+        }));
+
+    // 5. The arithmetic.
+    sb.AppendLine();
+    sb.AppendLine("## 5. Stats to numbers");
+    sb.AppendLine();
+    sb.AppendLine("`dbitems::ItemTypeAttributeModifier` is where a component's carried stats become the number on the");
+    sb.AppendLine("item card. It is keyed by `RootItem.crafting_type_id` and gives, per attribute, a coefficient on");
+    sb.AppendLine("each of mass, power and CPU plus the range the result is held inside. `Stage` is which upgrade");
+    sb.AppendLine("stage may move it. Attributes 950 to 953 (Repair Pool, Mass, Power, CPU) appear as passthrough rows");
+    sb.AppendLine("carrying the item's own budget rather than a derived stat.");
+    sb.AppendLine();
+
+    int modAttributeCol = modifierCol("attribute_id");
+    int modWeightCol = modifierCol("weight_coefficient");
+    int modPowerCol = modifierCol("power_coefficient");
+    int modCpuCol = modifierCol("cpu_coefficient");
+    int modMinCol = modifierCol("min_float");
+    int modMaxCol = modifierCol("max_float");
+    int modStageCol = modifierCol("stage_modifiable");
+    int modCraftingCol = modifierCol("crafting_type_id");
+
+    // Two thirds of the table is untuned: a row exists for the attribute and every number on it is
+    // zero. Those say nothing, so only rows carrying at least one live figure are listed.
+    bool Tuned(object[] row) =>
+        Convert.ToDouble(row[modWeightCol] ?? 0, CultureInfo.InvariantCulture) != 0
+        || Convert.ToDouble(row[modPowerCol] ?? 0, CultureInfo.InvariantCulture) != 0
+        || Convert.ToDouble(row[modCpuCol] ?? 0, CultureInfo.InvariantCulture) != 0
+        || Convert.ToDouble(row[modMinCol] ?? 0, CultureInfo.InvariantCulture) != 0
+        || Convert.ToDouble(row[modMaxCol] ?? 0, CultureInfo.InvariantCulture) != 0;
+
+    var listed = modifierRows.Where(Tuned).ToList();
+
+    sb.AppendLine($"{modifierRows.Count} rows cover {modifierRows.Select(r => Id(r[modCraftingCol])).Distinct().Count()} crafting types. Listed here are the {listed.Count} with at least one number on them,");
+    sb.AppendLine($"across {listed.Select(r => Id(r[modCraftingCol])).Distinct().Count()} crafting types; the rest carry an attribute id and nothing else, which is a row that was never");
+    sb.AppendLine("tuned rather than one that means zero.");
+    sb.AppendLine();
+    sb.AppendLine("Two shapes are visible here and they belong to different eras. Weapon rows carry fractional");
+    sb.AppendLine("coefficients that split one attribute across the three stats, and the crafting types they sit on");
+    sb.AppendLine("(Ionic, Covalent, Basalt) have no surviving items. Frame equipment rows use whole numbers in the");
+    sb.AppendLine("hundreds with a real min and max, and those crafting types do still have items.");
+    sb.AppendLine();
+
+    WriteTable(
+        sb,
+        ["Crafting type", "Attribute", "Mass", "Power", "CPU", "Min", "Max", "Stage"],
+        listed
+            .OrderBy(r => TypeName(Id(r[modCraftingCol])), StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => Id(r[modAttributeCol]))
+            .Select(r => new[]
+            {
+                TypeName(Id(r[modCraftingCol])),
+                AttributeName(Id(r[modAttributeCol])),
+                Coefficient(r[modWeightCol]),
+                Coefficient(r[modPowerCol]),
+                Coefficient(r[modCpuCol]),
+                Coefficient(r[modMinCol]),
+                Coefficient(r[modMaxCol]),
+                Id(r[modStageCol]) != 0 ? Id(r[modStageCol]).ToString(CultureInfo.InvariantCulture) : string.Empty,
+            }));
+
+    sb.AppendLine();
+
+    Save("Crafting-Chain.md", sb);
+    counts.Add((
+        "Crafting-Chain.md",
+        $"{componentRecipes.Count} component recipes, {slotRecipes.Count} item recipes",
+        "The graded crafting system v1.6 replaced: resource stats to component to item attribute."));
+}
+
 void WriteIndex()
 {
     var sb = new StringBuilder();
@@ -710,6 +1039,38 @@ void WriteIndex()
     sb.AppendLine();
 
     Save("README.md", sb);
+}
+
+// Six of the crafting tables have no server-side loader, because the server has no use for a
+// taxonomy of part names. Same escape hatch as ReadLocalizedText: read the columns off the raw db.
+// Returns an empty reader rather than throwing, so a pruned db drops one page instead of the run.
+(List<object[]> Rows, Func<string, int> Column) RawTable(string tableName)
+{
+    int index = sdb.GetIndexByName(tableName);
+
+    if (index == -1)
+    {
+        Console.Error.WriteLine($"  {tableName} absent.");
+        return ([], _ => -1);
+    }
+
+    var table = sdb.Tables[index];
+    return (table.Rows.Select(r => r.ToArray()).ToList(), table.GetColumnIndexByName);
+}
+
+static uint Id(object value) => value == null ? 0u : Convert.ToUInt32(value, CultureInfo.InvariantCulture);
+
+// Coefficients run from 0.025 to 900 in the same column, so a fixed precision either rounds the
+// small ones to zero or pads the large ones with noise.
+static string Coefficient(object value)
+{
+    if (value == null)
+    {
+        return string.Empty;
+    }
+
+    var number = Convert.ToDouble(value, CultureInfo.InvariantCulture);
+    return number == 0 ? string.Empty : number.ToString("0.#####", CultureInfo.InvariantCulture);
 }
 
 Dictionary<uint, string> ReadLocalizedText(StaticDB db)

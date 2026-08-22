@@ -79,12 +79,15 @@ verifiable by a maintainer.
   **CRAFT2b** followed the same day: raw-material costs are priced in material *classes*, and a class
   line draws across every member at once. Two premises in the original entry were wrong and are
   recorded in [DATA-26](../ISSUE-REGISTER.md) and the run sheet.
-- [ ] **CRAFT5** — **The loop closes in game.** One sitting: author a deposit on node type **238**,
-  thump it, fight what it attracts, craft 82081 from the payout, equip the result, relog, still have
-  it. **This is the load-bearing entry, and everything below waits on it.** Needs no economy decision
-  and no new recipes — see the note above. Run sheet:
-  [Crafting.html](../../Game%20Testing/Crafting.html), eight steps, rewritten 2026-08-21 to watch
-  `/mats` rather than a log.
+- [~] **CRAFT5** — **The loop closes in game. Steps 1-6 passed first attempt, 2026-08-22.** Five
+  thumps on a node-238 deposit authored in game paid **53 Iron Bars** (14, 12, 8, 12, 7), every cycle
+  at `completion 1.00` with nine attackers down and the machine held at 0.89-0.92 defence. `craft
+  82081` spent 50 of them and paid item 81626. **Iron mined out of the ground became an item, with no
+  `createitem` anywhere in the chain** — which is the sentence this whole stream was arranged around.
+  The same thumps piled up **147 Iron Ore that buys nothing**, demonstrating
+  [DATA-27](../ISSUE-REGISTER.md) rather than arguing it. **Outstanding: the equip and the relog**
+  (steps 7 and 8), so the entry is not yet `[x]`. Run sheet:
+  [Crafting.html](../../Game%20Testing/Crafting.html).
 
 ## Deferred
 

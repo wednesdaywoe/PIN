@@ -588,7 +588,34 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT5</span><span class="marker none">[ ]</span><span class="entry-t">The loop closes in game</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">CRAFT5</span><span class="marker warn">[~]</span><span class="entry-t">The loop closes in game</span></div>
+
+      <div class="callout pass"><p><strong>Steps 1&#8211;6 passed on the first attempt, 2026-08-22. Iron mined out
+      of the ground became an item, with no <code>createitem</code> anywhere in the chain.</strong> Five thumps
+      on deposit [6], node type 238, authored in game at (-87.3, 504.3, 403.0) and now permanent in
+      <code>resource_deposit.json</code>. Every cycle reached <code>completion 1.00</code> with nine attackers
+      down and the machine on 3,118&#8211;3,363 of 4,000 health, so the defence multiplier held between
+      <strong>0.89 and 0.92</strong> across all five &#8212; the fight was real and it was won each time.</p>
+      <table>
+      <tr><th>Thump</th><th>Iron Bars (86667)</th><th>Iron Ore (86668)</th></tr>
+      <tr><td>1</td><td>14</td><td>19</td></tr>
+      <tr><td>2</td><td>12</td><td>17</td></tr>
+      <tr><td>3</td><td>8</td><td>21</td></tr>
+      <tr><td>4</td><td>12</td><td>27</td></tr>
+      <tr><td>5</td><td>7</td><td>18</td></tr>
+      <tr><td><strong>total</strong></td><td><strong>53</strong></td><td><strong>102</strong></td></tr>
+      </table>
+      <p><code>craft check 82081</code> read <code>holding 53 across 4 member(s)</code>, and the build spent
+      <code>item 86667 (ResourceItem) x50 toward class 128</code> and paid <code>81626 x1</code>. Three Bars
+      left over, confirmed by <code>dbg_inventory</code> a minute later: <code>86667 x3</code>. Per-thump yield
+      of Bars ran <strong>7 to 14</strong>, so the predicted three-to-eight-run loop was five.</p>
+      <p><strong>DATA-27 was demonstrated live rather than argued.</strong> The same five thumps piled up
+      <strong>147 Iron Ore</strong> &#8212; nearly three times the Bars &#8212; and not one unit of it can be
+      spent on anything. Standing on node 238 put both rows in <code>/mats</code> at once, which is exactly the
+      picture the entry was re-pointed at 238 to get.</p>
+      <p><strong>Outstanding: steps 7 and 8.</strong> The equip and the relog have not run, so the entry stays
+      <code>[~]</code>. Nothing in the log suggests they will fail &#8212; the item is in the bag and CRAFT2's
+      output survived a relog &#8212; but the claim is not proven until they do.</p></div>
 
       <p><strong>Moved ahead of CRAFT3 and CRAFT4 on 2026-08-21, at the user's call.</strong> The whole
       endeavour hinges on one question: can you go out into the world, thump for resources, fight what comes,

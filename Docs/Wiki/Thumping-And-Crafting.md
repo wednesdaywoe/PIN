@@ -161,6 +161,26 @@ is rare.
 
 Five thousand working recipes is not a foundation problem.
 
+## The graded system underneath
+
+Those 5,763 recipes are the v1.6 shape: a fixed ingredient list, no stats read. An older system
+ships alongside them in the same tables, and it is the one that made a resource's quality matter.
+Blueprint id separates them. `dbitems::Blueprint_Resources` carries ids 75430 to 85611 and nothing
+else, and inside that block a recipe costs a material *class* plus the index of the stat it reads
+off whatever you supply.
+
+That block still resolves end to end. 817 recipes turn graded material into a component, 442 turn
+components into equipment with each slot deciding one named attribute, and
+`dbitems::ItemTypeAttributeModifier` holds the arithmetic that turns a component's mass, power and
+CPU into the number on the item card. Full tables in
+[Reference/Crafting-Chain](Reference/Crafting-Chain.md).
+
+One link is genuinely gone, and only one. A resource's quality and five stat values were never
+static data: they rode on the individual item as a base-36 string the client unpacks
+(`lib_Items.lua`, `LIB_ITEMS.GetResourceStats`), and the 2016 capture shows retail had already
+stopped sending them. A server reviving this generates those numbers itself. Everything downstream
+is a lookup.
+
 ## Open questions
 
 - What is `dbfabrication::Recipe` for, and how does it relate to `Blueprints`? Two separate recipe
