@@ -252,3 +252,49 @@ you cut short — two different departures depending on when you press E.
 
 Neither is a payout problem, and neither was visible from the code alone. Both came out of somebody
 standing in the world watching a rig leave.
+
+## Asked and answered: is a haul supposed to be this small? (2026-08-22)
+
+Raised by the tester after CRAFT5 — five thumps paying 7 to 14 Iron Bars felt an order of magnitude
+below what retail is remembered as paying. The question matters beyond the feel: PIN samples the
+shipped gradient **once, at completion**, and if retail drew it per drilling pulse instead, every
+economy number is wrong by whatever the tick count was. Four sources were checked.
+
+**1. The capture has no thumper in it.** `2016-11-15 - Gameplay.pcapng` decodes to 406,890 GSS
+messages across **168 distinct (controller, message) pairs, and not one is `ResourceNode` (47) or
+`ResourceNode_ObserverView` (48)**. The session never called one down. The only resource traffic is a
+single `ResourceLocationInfosRequest`/`Response` pair, and the response is empty — `Data = [0]`, a
+scan over ground with no deposit. **The capture cannot answer this, and now provably so** rather than
+by nobody having looked.
+
+**2. The protocol says a haul is one number, delivered once.** `ResourceNodeCompletedEvent` (2:137)
+carries a single `uint Quantity` and an array of `ResourceCompositionData` **percentages** — no
+absolute per-material figure, no running total, no repetition. There is no per-tick payment message
+anywhere in the 487-pair AeroMessages registry. So sampling at completion is the shape the wire was
+built for; the alternative would have needed a message that does not exist.
+
+**3. The client never displays an absolute quantity at all.** `Thumper.lua` shows `CAPACITY` as
+`%02d` of `100 * status.progress` — a percentage, capped at two digits — and the scan and heatmap
+paths (`ResourceScans.lua`, `Heatmap.lua`) read `composition[i].percent`. Nothing in the interface
+could have calibrated a player's memory against a number, which is worth knowing before trusting any
+recollection of one.
+
+**4. The shipped table has no time dimension.** `ResourceNodeTypeResource` is eight columns:
+centre low/high, edge low/high, quality low/high, item, node type. No tick count, no rate, no
+duration. There is nothing per-tick to read even if the protocol allowed it.
+
+**Conclusion: the once-per-cycle reading stands, and the small numbers are the starting zone.** The
+node table bands itself by player level in its own names — Tier 1 (levels 1-19) through Tier 4 (level
+40), with `RICH` variants at 229-232. Tier 1 iron pays 8-26; **node 209 pays 60-75, node 216 pays
+40-50 of two metals at once, and the Crystite-only nodes 242-244 pay 40-100**. The richest single
+node type in the game totals 140 at its centre. So retail hauls of "around a hundred" are in the
+shipped data and PIN can reach them today — just not in Iron Bars, because **every bar-paying node
+type is Tier 1** ([DATA-27](../ISSUE-REGISTER.md)).
+
+**What is genuinely missing is per-deposit richness, and that is PIN's to decide.** The shipped table
+gives a gradient *per node type*; retail's deposits were server-side records rerolled on a cadence
+and never shipped, exactly like spawn tables. Whether one of those records carried a richness
+multiplier cannot be recovered — but `ResourceDeposit` is PIN's own content type, and adding a
+multiplier to it invents nothing the charter protects. **No thumper-size multiplier ships either**:
+all 61 `ResourceNodeBeaconCalldownCommandDef` rows carry a tier byte (0-4) and a health value (4000,
+two at 5000) and no yield column of any kind.
