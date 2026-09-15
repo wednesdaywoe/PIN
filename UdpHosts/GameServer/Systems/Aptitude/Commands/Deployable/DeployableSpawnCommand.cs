@@ -15,8 +15,7 @@ public class DeployableSpawnCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        var target = context.Self;
-        var position = target.Position;
+        var position = context.InitPosition;
         var orientation = Quaternion.Identity;
 
         if (Params.DeployableTypeId != null && Params.DeployableTypeId != 0)
