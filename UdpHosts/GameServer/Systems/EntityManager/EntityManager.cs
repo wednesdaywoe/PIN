@@ -54,6 +54,8 @@ public class EntityManager
     private readonly ConcurrentDictionary<ulong, HashSet<INetworkPlayer>> _scopedPlayersByEntity = new();
     private readonly ConcurrentQueue<ScopeInRequest> _queuedScopeIn = new();
     private readonly ConcurrentDictionary<ulong, Lifetime> _lifetimeByEntity = new();
+    private readonly ConcurrentQueue<(ulong DueTime, System.Action Action)> _incomingDelayedActions = new();
+    private readonly List<(ulong DueTime, System.Action Action)> _delayedActions = new();
     private uint _counter;
     private ulong _lastUpdateFlush;
     private ulong _lastScopeIn;
@@ -233,13 +235,7 @@ public class EntityManager
 
         if (deployableInfo.ConstructedAbilityid != 0)
         {
-            var timer = new Timer(state =>
-                 {
-                     _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, deployableInfo.ConstructedAbilityid);
-
-                     ((Timer)state)?.Dispose();
-                 });
-            timer.Change(deployableInfo.BuildTimeMs, Timeout.Infinite);
+            RunDelayed(deployableInfo.BuildTimeMs, () => _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, deployableInfo.ConstructedAbilityid));
         }
 
         if (deployableInfo.TurretType != 0)
@@ -261,14 +257,11 @@ public class EntityManager
                 }
             }
 
-            var timer = new Timer(state =>
-                 {
-                     _logger.ForContext<AbilitySystem>().Information("Deployable: Executing powered on ability {PoweredOnAbility}", poweredOnAbility);
-                     _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, poweredOnAbility);
-
-                     ((Timer)state)?.Dispose();
-                 });
-            timer.Change(deployableInfo.BuildTimeMs, Timeout.Infinite);
+            RunDelayed(deployableInfo.BuildTimeMs, () =>
+            {
+                _logger.ForContext<AbilitySystem>().Information("Deployable: Executing powered on ability {PoweredOnAbility}", poweredOnAbility);
+                _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, poweredOnAbility);
+            });
         }
 
         if (deployableInfo.PoweredOffAbility != 0)
@@ -452,6 +445,8 @@ public class EntityManager
                 SpawnZoneEntities(_shard.ZoneId);
             }
         }
+
+        ProcessDelayedActions(currentTime);
 
         // Process queued scope-ins
         if (!_queuedScopeIn.IsEmpty && currentTime > _lastScopeIn + _scopeInIntervalMs)
@@ -1968,6 +1963,34 @@ public class EntityManager
         if (_shard.Physics.HasBody(entity))
         {
             _shard.Physics.RemoveEntity(entity);
+        }
+    }
+
+    private void RunDelayed(ulong delayMs, System.Action action)
+    {
+        var dueTime = (ulong)System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + delayMs;
+        _incomingDelayedActions.Enqueue((dueTime, action));
+    }
+
+    private void ProcessDelayedActions(ulong currentTime)
+    {
+        while (_incomingDelayedActions.TryDequeue(out var delayed))
+        {
+            _delayedActions.Add(delayed);
+        }
+
+        for (var i = 0; i < _delayedActions.Count; i++)
+        {
+            if (_delayedActions[i].DueTime > currentTime)
+            {
+                continue;
+            }
+
+            var action = _delayedActions[i].Action;
+            _delayedActions.RemoveAt(i);
+            i--;
+
+            action();
         }
     }
 
