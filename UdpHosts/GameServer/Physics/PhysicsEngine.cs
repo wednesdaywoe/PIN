@@ -204,7 +204,7 @@ public partial class PhysicsEngine
 
         var bodyHandle = _entityIdToBody[entity.EntityId];
         var body = Simulation.Bodies[bodyHandle];
-        ref var currentPose = ref body.Pose;
+        var currentPose = body.Pose;
         var currentShape = body.Collidable.Shape;
         AssetCompoundKey key = GetCharacterPoseAsset(entity);
         var shape = GetAssetShape(key);
@@ -215,8 +215,10 @@ public partial class PhysicsEngine
             _entityIdToAssetKey[entity.EntityId] = key;
             body.Awake = true;
             body.SetShape(shape);
-            currentPose.Position = entity.Position;
-            currentPose.Orientation = orientation;
+
+            ref var pose = ref body.Pose;
+            pose.Position = entity.Position;
+            pose.Orientation = orientation;
         }
     }
 
@@ -228,15 +230,17 @@ public partial class PhysicsEngine
         }
 
         var bodyHandle = _entityIdToBody[entity.EntityId];
-        ref var currentPose = ref Simulation.Bodies[bodyHandle].Pose;
+        var body = Simulation.Bodies[bodyHandle];
+        var currentPose = body.Pose;
 
         var orientation = Quaternion.Inverse(entity.Orientation);
         if (currentPose.Position != entity.Position || currentPose.Orientation != orientation)
         {
-            var body = Simulation.Bodies[bodyHandle];
             body.Awake = true;
-            currentPose.Position = entity.Position;
-            currentPose.Orientation = orientation;
+
+            ref var pose = ref body.Pose;
+            pose.Position = entity.Position;
+            pose.Orientation = orientation;
         }
     }
 
