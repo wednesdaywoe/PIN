@@ -1,41 +1,35 @@
 using GameServer.StaticDB.Records.apt;
+using GameServer.Systems.Aptitude.Commands.Cooldown;
 
 namespace GameServer.Systems.Aptitude.Commands.Activation;
 
 public class InstantActivationCommand : Command, ICommand
 {
-    private InstantActivationCommandDef Params;
+    private readonly InflictCooldownCommand _inflictCooldown;
 
     public InstantActivationCommand(InstantActivationCommandDef par)
 : base(par)
     {
-        Params = par;
+        // As the client (apt::InstantActivationCommand), which holds an InflictCooldownCommand built from the same fields.
+        // Not done: the client skips it and succeeds when an object on its context says so; that object isn't mapped yet.
+        _inflictCooldown = new InflictCooldownCommand(new InflictCooldownCommandDef
+        {
+            Id = par.Id,
+            LocalCooldown = par.LocalCooldown,
+            LocalCooldownPrecoolCount = par.LocalCooldownPrecoolCount,
+            GlobalCooldown = par.GlobalCooldown,
+            CategoryCooldown = par.CategoryCooldown,
+            CategoryCooldownPrecoolCount = par.CategoryCooldownPrecoolCount,
+            Category = par.Category,
+            DurationRegop = par.DurationRegop,
+            PrecoolRegop = par.PrecoolRegop,
+            CategoryPrecoolRegop = par.CategoryPrecoolRegop,
+            PreventReset = par.PreventReset,
+        });
     }
 
     public bool Execute(Context context)
     {
-        /*
-        if (context.Self is CharacterEntity { IsPlayerControlled: true } character)
-        {
-            var player = character.Player;
-            var message = new AbilityActivated
-            {
-                ActivatedAbilityId = context.AbilityId,
-                ActivatedTime = context.InitTime,
-                AbilityCooldownsData = new AbilityCooldownsData
-                {
-                    ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                    ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                    Unk = 0,
-                    GlobalCooldown_Activated_Time = context.InitTime,
-                    GlobalCooldown_ReadyAgain_Time = context.InitTime + Params.GlobalCooldown,
-                }
-            };
-            Logger.Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
-            player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
-        }
-        */
-
-        return true;
+        return _inflictCooldown.Execute(context);
     }
 }

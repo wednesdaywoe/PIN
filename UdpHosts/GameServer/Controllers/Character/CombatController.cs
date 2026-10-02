@@ -138,30 +138,13 @@ public class CombatController : Base
         {
             var character = player.CharacterEntity;
             var activationTime = query.Time;
-            if (character.IsPlayerControlled)
-            {
-                var message = new AbilityActivated
-                {
-                    ActivatedAbilityId = abilityId,
-                    ActivatedTime = activationTime,
-                    AbilityCooldownsData = new AbilityCooldownsData
-                    {
-                        ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                        ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                        Unk = 0,
-                        GlobalCooldown_Activated_Time = activationTime,
-                        GlobalCooldown_ReadyAgain_Time = activationTime + 300,
-                    }
-                };
-                _logger.ForContext<AbilitySystem>()
-                       .Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
-                character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
-            }
-
             var initiator = character as IAptitudeTarget;
             var shard = player.CharacterEntity.Shard;
             var targets = new AptitudeTargets();
-            shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, targets);
+            if (shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, targets))
+            {
+                SendAbilityActivated(character, abilityId, activationTime);
+            }
         }
     }
 
@@ -253,26 +236,6 @@ public class CombatController : Base
         if (abilityId != 0)
         {
             var activationTime = activateAbility.Time;
-            if (character.IsPlayerControlled)
-            {
-                var message = new AbilityActivated
-                {
-                    ActivatedAbilityId = abilityId,
-                    ActivatedTime = activationTime,
-                    AbilityCooldownsData = new AbilityCooldownsData
-                    {
-                        ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                        ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                        Unk = 0,
-                        GlobalCooldown_Activated_Time = activationTime,
-                        GlobalCooldown_ReadyAgain_Time = activationTime + 300,
-                    }
-                };
-                _logger.ForContext<AbilitySystem>()
-                       .Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
-                character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
-            }
-
             var initiator = character as IAptitudeTarget;
             var shard = player.CharacterEntity.Shard;
             var targets = activateAbility.Targets
@@ -290,7 +253,29 @@ public class CombatController : Base
             .Select(entityId => (IAptitudeTarget)shard.Entities[entityId.Backing & 0xffffffffffffff00])
             .ToArray();
 
-            shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, new AptitudeTargets(targets));
+            if (shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, new AptitudeTargets(targets)))
+            {
+                SendAbilityActivated(character, abilityId, activationTime);
+            }
         }
+    }
+
+    // Sent after the chain, so the client gets the cooldowns the chain inflicted
+    private void SendAbilityActivated(CharacterEntity character, uint abilityId, uint activationTime)
+    {
+        if (!character.IsPlayerControlled)
+        {
+            return;
+        }
+
+        var message = new AbilityActivated
+        {
+            ActivatedAbilityId = abilityId,
+            ActivatedTime = activationTime,
+            AbilityCooldownsData = character.Cooldowns.ToData(activationTime),
+        };
+        _logger.ForContext<AbilitySystem>()
+               .Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
+        character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
     }
 }

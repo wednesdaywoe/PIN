@@ -32,6 +32,7 @@ internal class FakeTarget(string name, byte factionId = 0) : IAptitudeTarget
     public Vector3 Position { get; set; }
     public HostilityInfoData HostilityInfo { get; } = new() { Flags = HostilityInfoData.HostilityFlags.Faction, FactionId = factionId };
     public CharacterEntity Owner => null;
+    public CooldownSet Cooldowns { get; } = new();
 
     public List<EffectState> GetActiveEffects() => [];
     public EffectState AddEffect(Effect effect, Context context) => throw new NotSupportedException();

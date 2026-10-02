@@ -1,6 +1,7 @@
 using GameServer.StaticDB;
 using GameServer.Systems.Aptitude.Commands.Activation;
 using GameServer.Systems.Aptitude.Commands.Calldown;
+using GameServer.Systems.Aptitude.Commands.Cooldown;
 using GameServer.Systems.Aptitude.Commands.Custom;
 using GameServer.Systems.Aptitude.Commands.Deployable;
 using GameServer.Systems.Aptitude.Commands.Duration;
@@ -129,8 +130,8 @@ public class Factory
                 return new TargetSelfCommand(SDBInterface.GetTargetSelfCommandDef(commandId));
             // case CommandType.TargetSingle:
             //     return new TargetSingleCommand(SDBInterface.GetTargetSingleCommandDef(commandId));
-            // case CommandType.TimeCooldown:
-            //     return new TimeCooldownCommand(SDBInterface.GetTimeCooldownCommandDef(commandId));
+            case CommandType.TimeCooldown:
+                return new TimeCooldownCommand(SDBInterface.GetTimeCooldownCommandDef(commandId));
             // case CommandType.ImpactAura:
             //     Zero instances in BaseCommandDef
             case CommandType.ImpactRemoveEffect:
@@ -389,8 +390,8 @@ public class Factory
             //     return new BombardmentCommand(SDBInterface.GetBombardmentCommandDef(commandId));
             // case CommandType.RequireResource:
             //     return new RequireResourceCommand(SDBInterface.GetRequireResourceCommandDef(commandId));
-            // case CommandType.InflictCooldown:
-            //     return new InflictCooldownCommand(SDBInterface.GetInflictCooldownCommandDef(commandId));
+            case CommandType.InflictCooldown:
+                return new InflictCooldownCommand(SDBInterface.GetInflictCooldownCommandDef(commandId));
             case CommandType.RequireMovestate:
                 return new RequireMovestateCommand(SDBInterface.GetRequireMovestateCommandDef(commandId));
             // case CommandType.GrantOwnerItem:

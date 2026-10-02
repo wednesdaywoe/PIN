@@ -14,6 +14,7 @@ public interface IAptitudeTarget
     public Vector3 Position { get; } // From BaseEntity
     public HostilityInfoData HostilityInfo { get; } // From BaseEntity
     public CharacterEntity Owner { get; }
+    public CooldownSet Cooldowns { get; }
 
     public List<EffectState> GetActiveEffects();
     public EffectState AddEffect(Effect effect, Context context);

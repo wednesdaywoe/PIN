@@ -263,20 +263,20 @@ public class AbilitySystem
         }
     }
 
-    public void HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, uint activationTime, AptitudeTargets targets, Guid? executionId = null)
+    public bool HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, uint activationTime, AptitudeTargets targets, Guid? executionId = null)
     {
         var execId = executionId ?? Guid.NewGuid();
         using var logContext = Serilog.Context.LogContext.PushProperty("ExecutionId", execId);
         var chainId = SDBInterface.GetAbilityData(abilityId).Chain;
         if (chainId == 0)
         {
-            return;
+            return false;
         }
 
         _logger.Information("HandleActivateAbility: Ability {AbilityId} starting Chain {ChainId}", abilityId, chainId);
 
         var chain = Factory.LoadChain(chainId);
-        chain.Execute(new Context(shard, initiator)
+        return chain.Execute(new Context(shard, initiator)
         {
             ExecutionId = execId,
             ChainId = chainId,
