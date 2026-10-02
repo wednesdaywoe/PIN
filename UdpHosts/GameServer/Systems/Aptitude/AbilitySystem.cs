@@ -16,12 +16,14 @@ public class AbilitySystem
     private readonly Dictionary<ulong, VehicleCalldownRequest> _playerVehicleCalldownRequests;
     private readonly Dictionary<ulong, DeployableCalldownRequest> _playerDeployableCalldownRequests;
     private readonly Dictionary<ulong, ResourceNodeBeaconCalldownRequest> _playerThumperCalldownRequests;
+    private readonly Lazy<FactionStances> _factions;
     private ulong _lastUpdate;
 
     public AbilitySystem(Shard shard)
     {
         _shard = shard;
         Factory = new Factory(shard);
+        _factions = new Lazy<FactionStances>(FactionStances.FromSDB);
         _playerVehicleCalldownRequests = [];
         _playerDeployableCalldownRequests = [];
         _playerThumperCalldownRequests = [];
@@ -30,15 +32,17 @@ public class AbilitySystem
     /// <summary>
     ///     For tests that supply their own <see cref="Factory" />
     /// </summary>
-    internal AbilitySystem(Factory factory)
+    internal AbilitySystem(Factory factory, FactionStances factions = null)
     {
         Factory = factory;
+        _factions = new Lazy<FactionStances>(() => factions);
         _playerVehicleCalldownRequests = [];
         _playerDeployableCalldownRequests = [];
         _playerThumperCalldownRequests = [];
     }
 
     public Factory Factory { get; }
+    public FactionStances Factions => _factions.Value;
 
     public static float RegistryOp(float first, float second, Operand op)
     {

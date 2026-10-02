@@ -12,11 +12,11 @@ namespace GameServer.Tests.Systems.Aptitude;
 
 internal static class AptitudeTestHelpers
 {
-    public static Context NewContext(TestFactory factory = null)
+    public static Context NewContext(TestFactory factory = null, FactionStances factions = null, IAptitudeTarget self = null)
     {
         var shard = Substitute.For<IShard>();
-        shard.Abilities.Returns(new AbilitySystem(factory ?? new TestFactory()));
-        return new Context(shard, new FakeTarget("self"));
+        shard.Abilities.Returns(new AbilitySystem(factory ?? new TestFactory(), factions));
+        return new Context(shard, self ?? new FakeTarget("self"));
     }
 
     public static Chain NewChain(params ICommand[] commands) => new() { Id = 1, Commands = [.. commands] };
@@ -24,12 +24,13 @@ internal static class AptitudeTestHelpers
     public static FakeCommand Returns(bool result) => new(_ => result);
 }
 
-internal class FakeTarget(string name) : IAptitudeTarget
+internal class FakeTarget(string name, byte factionId = 0) : IAptitudeTarget
 {
     public ulong EntityId => 0;
     public EntityId AeroEntityId => default;
     public IShard Shard => throw new NotSupportedException();
     public Vector3 Position => Vector3.Zero;
+    public HostilityInfoData HostilityInfo { get; } = new() { Flags = HostilityInfoData.HostilityFlags.Faction, FactionId = factionId };
     public CharacterEntity Owner => null;
 
     public List<EffectState> GetActiveEffects() => [];

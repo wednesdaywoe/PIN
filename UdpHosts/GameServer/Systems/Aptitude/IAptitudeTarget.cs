@@ -12,6 +12,7 @@ public interface IAptitudeTarget
     public EntityId AeroEntityId { get; } // From BaseEntity
     public IShard Shard { get; } // From BaseEntity
     public Vector3 Position { get; } // From BaseEntity
+    public HostilityInfoData HostilityInfo { get; } // From BaseEntity
     public CharacterEntity Owner { get; }
 
     public List<EffectState> GetActiveEffects();

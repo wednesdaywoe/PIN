@@ -119,10 +119,10 @@ public class Factory
                 return new ImpactApplyEffectCommand(SDBInterface.GetImpactApplyEffectCommandDef(commandId));
             case CommandType.InstantActivation:
                 return new InstantActivationCommand(SDBInterface.GetInstantActivationCommandDef(commandId));
-            // case CommandType.TargetFriendlies:
-            //     return new TargetFriendliesCommand(SDBInterface.GetTargetFriendliesCommandDef(commandId));
-            // case CommandType.TargetHostiles:
-            //     return new TargetHostilesCommand(SDBInterface.GetTargetHostilesCommandDef(commandId));
+            case CommandType.TargetFriendlies:
+                return new TargetFriendliesCommand(SDBInterface.GetTargetFriendliesCommandDef(commandId));
+            case CommandType.TargetHostiles:
+                return new TargetHostilesCommand(SDBInterface.GetTargetHostilesCommandDef(commandId));
             case CommandType.TargetPBAE:
                 return new TargetPBAECommand(SDBInterface.GetTargetPBAECommandDef(commandId));
             case CommandType.TargetSelf:
