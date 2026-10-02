@@ -9,7 +9,8 @@
       "y": 315.67,
       "z": 401.29
     },
-    "radius": 30
+    "radius": 30,
+    "richness": 1
   },
   {
     "id": 2,
@@ -21,7 +22,8 @@
       "y": 181.3,
       "z": 401
     },
-    "radius": 45
+    "radius": 45,
+    "richness": 1
   },
   {
     "id": 3,
@@ -33,7 +35,8 @@
       "y": 226.8,
       "z": 400.9
     },
-    "radius": 35
+    "radius": 35,
+    "richness": 1
   },
   {
     "id": 4,
@@ -45,7 +48,8 @@
       "y": 268.9,
       "z": 401
     },
-    "radius": 35
+    "radius": 35,
+    "richness": 1
   },
   {
     "id": 5,
@@ -57,7 +61,8 @@
       "y": 141.07364,
       "z": 401.66394
     },
-    "radius": 35
+    "radius": 35,
+    "richness": 1
   },
   {
     "id": 6,
@@ -69,6 +74,20 @@
       "y": 504.3445,
       "z": 403.01907
     },
-    "radius": 60
+    "radius": 60,
+    "richness": 1
+  },
+  {
+    "id": 7,
+    "zone_id": 448,
+    "name": "Copper Vein",
+    "node_type_id": 700,
+    "position": {
+      "x": -343.26196,
+      "y": 806.9434,
+      "z": 401.04626
+    },
+    "radius": 35,
+    "richness": 1
   }
 ]
