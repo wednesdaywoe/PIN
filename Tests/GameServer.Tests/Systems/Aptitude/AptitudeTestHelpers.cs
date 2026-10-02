@@ -10,6 +10,20 @@ using Serilog.Core;
 
 namespace GameServer.Tests.Systems.Aptitude;
 
+internal static class AptitudeTestHelpers
+{
+    public static Context NewContext(TestFactory factory = null)
+    {
+        var shard = Substitute.For<IShard>();
+        shard.Abilities.Returns(new AbilitySystem(factory ?? new TestFactory()));
+        return new Context(shard, new FakeTarget("self"));
+    }
+
+    public static Chain NewChain(params ICommand[] commands) => new() { Id = 1, Commands = [.. commands] };
+
+    public static FakeCommand Returns(bool result) => new(_ => result);
+}
+
 internal class FakeTarget(string name) : IAptitudeTarget
 {
     public ulong EntityId => 0;
@@ -53,18 +67,4 @@ internal class TestFactory() : Factory(Logger.None)
     public override Chain LoadChain(uint chainId) => Chains[chainId];
 
     public void Add(uint chainId, params ICommand[] commands) => Chains[chainId] = new Chain { Id = chainId, Commands = [.. commands] };
-}
-
-internal static class AptitudeTestHelpers
-{
-    public static Context NewContext(TestFactory factory = null)
-    {
-        var shard = Substitute.For<IShard>();
-        shard.Abilities.Returns(new AbilitySystem(factory ?? new TestFactory()));
-        return new Context(shard, new FakeTarget("self"));
-    }
-
-    public static Chain NewChain(params ICommand[] commands) => new() { Id = 1, Commands = [.. commands] };
-
-    public static FakeCommand Returns(bool result) => new(_ => result);
 }

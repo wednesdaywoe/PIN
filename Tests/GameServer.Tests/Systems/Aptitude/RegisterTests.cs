@@ -9,8 +9,9 @@ namespace GameServer.Tests.Systems.Aptitude;
 
 public class RegisterTests
 {
-    // Current behaviour with the register as first and the param as second. The order for the
-    // non-commutative ops (subtract, divide, exponentiate) has not been confirmed against the client.
+    // Current behaviour with the register as first and the param as second, so subtract and divide compute param - register
+    // and param / register. The SDB backs this up for divide: chain 1147243 loads a charge rate into the register, divides
+    // 400000 by it and uses the result as a duration. Subtract and exponentiate have not been confirmed against the client.
     [Theory]
     [InlineData(Operand.ASSIGN, 8f)]
     [InlineData(Operand.ADD, 10f)]

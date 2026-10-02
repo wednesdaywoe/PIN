@@ -2,6 +2,7 @@ using System.Linq;
 using GameServer.Enums;
 using GameServer.StaticDB.Records.apt;
 using GameServer.Systems.Aptitude;
+using GameServer.Systems.Aptitude.Commands.Logic;
 using GameServer.Systems.Aptitude.Commands.Target;
 using Xunit;
 using static GameServer.Tests.Systems.Aptitude.AptitudeTestHelpers;
@@ -101,8 +102,38 @@ public class TargetTests
         Assert.Equal([_a], _context.Targets);
     }
 
-    private void Trim(uint trimSize, byte fromFront)
+    [Theory]
+    [InlineData(0, 1u, new[] { "a", "b" })]
+    [InlineData(1, 1u, new[] { "b", "c" })]
+    [InlineData(1, 5u, new string[0])]
+    public void Chomp_RemovesTrimSizeTargets(byte fromFront, uint trimSize, string[] expected)
     {
-        new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = trimSize, TrimsizeRegop = (byte)Operand.ASSIGN, Current = 1, FromFront = fromFront }).Execute(_context);
+        _context.Targets = new AptitudeTargets(_a, _b, _c);
+
+        Trim(trimSize, fromFront, chomp: 1);
+
+        Assert.Equal(expected, _context.Targets.Select(t => t.ToString()));
+    }
+
+    [Fact]
+    public void Chomp_InWhileLoop_RunsOnceThroughTheTargets()
+    {
+        // Pattern from 1543482: while (targets not empty) { act on target; chomp one }
+        var factory = new TestFactory();
+        var context = NewContext(factory);
+        context.Targets = new AptitudeTargets(_a, _b, _c);
+        var body = new FakeCommand(_ => true);
+        factory.Add(1, new TargetStackEmptyCommand(new TargetStackEmptyCommandDef { NotEmpty = 1 }));
+        factory.Add(2, body, new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = 1, Chomp = 1, Current = 1, FromFront = 1 }));
+
+        new WhileLoopCommand(new WhileLoopCommandDef { ConditionChain = 1, BodyChain = 2 }).Execute(context);
+
+        Assert.Equal(3, body.Executions);
+        Assert.Equal(0, context.Targets.Count);
+    }
+
+    private void Trim(uint trimSize, byte fromFront, byte chomp = 0)
+    {
+        new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = trimSize, TrimsizeRegop = (byte)Operand.ASSIGN, Current = 1, FromFront = fromFront, Chomp = chomp }).Execute(_context);
     }
 }
