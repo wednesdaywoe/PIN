@@ -123,7 +123,7 @@ public class WeaponSim
         _weaponSimState[entity.EntityId] = weaponSimState;
     }
 
-    private float GetCurrentSpreadPct(CharacterEntity entity, WeaponTemplateResult weapon, WeaponSimState weaponSimState, float weaponSpreadFactor, uint time)
+    internal static float GetCurrentSpreadPct(CharacterEntity entity, WeaponTemplateResult weapon, WeaponSimState weaponSimState, float weaponSpreadFactor, uint time)
     {
         // NOTE: Consider this whole thing a sham, needs further RE.
         float spreadValue = 0;

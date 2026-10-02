@@ -34,6 +34,9 @@
     <ProjectReference Include="..\..\Lib\Shared.Debug\Shared.Debug.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="GameServer.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ContentWithTargetPath Include="StaticDB\CustomData\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>StaticDB\CustomData\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>

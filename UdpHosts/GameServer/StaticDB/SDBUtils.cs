@@ -454,6 +454,36 @@ public class SDBUtils
         return result;
     }
 
+    internal static sbyte WeaponTemplateModifier(sbyte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
+    {
+        return (sbyte)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
+    internal static byte WeaponTemplateModifier(byte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
+    {
+        return (byte)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
+    internal static uint WeaponTemplateModifier(uint baseValue, int? modifierValue, float? multiplierValue = 1)
+    {
+        return (uint)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
+    internal static int WeaponTemplateModifier(int baseValue, int? modifierValue, float? multiplierValue = 1)
+    {
+        return (int)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
+    internal static ushort WeaponTemplateModifier(ushort baseValue, short? modifierValue, float? multiplierValue = 1)
+    {
+        return (ushort)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
+    internal static float WeaponTemplateModifier(float baseValue, float? modifierValue, float? multiplierValue = 1)
+    {
+        return (float)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
+    }
+
     private static uint WeaponTemplateOverrider(uint baseValue, uint? overrideValue)
     {
         if (overrideValue != null)
@@ -488,36 +518,6 @@ public class SDBUtils
         {
             return baseValue;
         }
-    }
-
-    private static sbyte WeaponTemplateModifier(sbyte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
-    {
-        return (sbyte)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
-    }
-
-    private static byte WeaponTemplateModifier(byte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
-    {
-        return (byte)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
-    }
-
-    private static uint WeaponTemplateModifier(uint baseValue, int? modifierValue, float? multiplierValue = 1)
-    {
-        return (uint)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
-    }
-
-    private static int WeaponTemplateModifier(int baseValue, int? modifierValue, float? multiplierValue = 1)
-    {
-        return (int)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
-    }
-
-    private static ushort WeaponTemplateModifier(ushort baseValue, short? modifierValue, float? multiplierValue = 1)
-    {
-        return (ushort)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
-    }
-
-    private static float WeaponTemplateModifier(float baseValue, float? modifierValue, float? multiplierValue = 1)
-    {
-        return (float)((baseValue + (modifierValue ?? 0)) * (multiplierValue ?? 1));
     }
 }
 
