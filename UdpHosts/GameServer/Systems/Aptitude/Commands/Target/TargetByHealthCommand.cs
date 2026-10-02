@@ -16,33 +16,20 @@ public class TargetByHealthCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
-
+        // As the client (tfTargetByHealthCommand): filters in place, Negate keeps the targets below the threshold
         var healthPct = AbilitySystem.RegistryOp(context.Register, Params.HealthPct, (Operand)Params.HealthRegop);
+        context.Targets.SwapRemoveAll(target => AtLeast(target, healthPct) == (Params.Negate == 1));
 
-        foreach (IAptitudeTarget target in previousTargets)
-        {
-            if (target is CharacterEntity character)
-            {
-                var currentHealthPct = (character.Character_BaseController.CurrentHealthProp /
-                                        character.Character_BaseController.MaxHealthProp.Value) * 100;
+        return Params.FailNoTargets == 0 || context.Targets.Count > 0;
+    }
 
-                if (currentHealthPct >= healthPct)
-                {
-                    newTargets.Push(target);
-                }
-            }
-        }
-
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
-
-        if (Params.FailNoTargets == 1 && context.Targets.Count == 0)
+    private static bool AtLeast(IAptitudeTarget target, float healthPct)
+    {
+        if (target is not CharacterEntity character || character.MaxHealth.Value <= 0)
         {
             return false;
         }
 
-        return true;
+        return character.CurrentHealth * 100f / character.MaxHealth.Value >= healthPct;
     }
 }

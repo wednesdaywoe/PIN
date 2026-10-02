@@ -21,8 +21,6 @@ public class TargetOwnedDeployablesCommand : Command, ICommand
             return false;
         }
 
-        context.FormerTargets = new AptitudeTargets(context.Targets);
-
         foreach (var d in character.OwnedDeployables)
         {
             context.Targets.Push(d);

@@ -14,12 +14,10 @@ public class TargetOwnerCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        context.FormerTargets = new AptitudeTargets(context.Targets);
-        var target = context.Self;
-
-        if (target.Owner != null)
+        // As the client (tfTargetOwnerCommand): adds the owner, leaving the former targets alone
+        if (context.Self.Owner != null)
         {
-            context.Targets.Push(target.Owner);
+            context.Targets.Push(context.Self.Owner);
         }
         else if (Params.FailNone == 1)
         {

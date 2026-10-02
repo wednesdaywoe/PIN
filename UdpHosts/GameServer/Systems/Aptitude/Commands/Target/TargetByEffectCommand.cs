@@ -1,4 +1,5 @@
-﻿using GameServer.StaticDB.Records.aptfs;
+﻿using System.Linq;
+using GameServer.StaticDB.Records.aptfs;
 
 namespace GameServer.Systems.Aptitude.Commands.Target;
 
@@ -14,56 +15,46 @@ public class TargetByEffectCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        // todo Params.FilterList, equal to 1 in 1086 instances, 0 in 6 instances
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
-
-        Logger.Debug("prev: {Count}", previousTargets.Count);
-        foreach (IAptitudeTarget target in previousTargets)
+        // As the client (tfTargetByEffectCommand): with FilterList the targets are filtered in place,
+        // without it this only checks whether any target matches
+        if (Params.FilterList == 1)
         {
-            foreach (EffectState active in target.GetActiveEffects())
+            context.Targets.RemoveAll(target => !Matches(context, target));
+
+            return Params.FailNoTargets == 0 || context.Targets.Count > 0;
+        }
+
+        return Params.FailNoTargets == 0 || context.Targets.Any(target => Matches(context, target));
+    }
+
+    private bool Matches(Context context, IAptitudeTarget target)
+    {
+        foreach (EffectState active in target.GetActiveEffects())
+        {
+            if (active == null)
             {
-                if (active == null)
+                continue;
+            }
+
+            var condition = Params.EffectId == active.Effect.Id && active.Stacks >= Params.StackCount;
+            if (Params.Negate == 1)
+            {
+                condition = !condition;
+            }
+
+            if (condition)
+            {
+                if (Params.SameInitiator == 1)
                 {
-                    continue;
+                    return Params.Negate == 1
+                               ? context.Initiator == active.Context.Initiator
+                               : context.Initiator != active.Context.Initiator;
                 }
 
-                var condition = Params.EffectId == active.Effect.Id && active.Stacks >= Params.StackCount;
-                if (Params.Negate == 1)
-                {
-                    condition = !condition;
-                }
-
-                if (condition)
-                {
-                    if (Params.SameInitiator == 1)
-                    {
-                        var condition2 = Params.Negate == 1
-                                             ? context.Initiator == active.Context.Initiator
-                                             : context.Initiator != active.Context.Initiator;
-                        if (condition2)
-                        {
-                            newTargets.Push(target);
-                        }
-                    }
-                    else
-                    {
-                        newTargets.Push(target);
-                    }
-
-                    break;
-                }
+                return true;
             }
         }
 
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
-
-        if (Params.FailNoTargets == 1 && context.Targets.Count == 0)
-        {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 }

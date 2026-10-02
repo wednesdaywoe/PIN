@@ -1,4 +1,6 @@
-﻿using GameServer.StaticDB;
+﻿using System.Collections.Generic;
+using System.Linq;
+using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
 
 namespace GameServer.Systems.Aptitude.Commands.Target;
@@ -15,45 +17,16 @@ public class TargetByEffectTagCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        var result = false;
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
-        var effectTagEffectIds = SDBInterface.GetStatusEffectTag(Params.TagId);
+        // As the client (tfTargetByEffectTagCommand): counts the target's effects with the tag against StackCount,
+        // filters in place, and Negate keeps the targets below the count
+        var effectTagEffectIds = SDBInterface.GetStatusEffectTag(Params.TagId) ?? [];
+        context.Targets.SwapRemoveAll(target => (TaggedEffects(target, effectTagEffectIds) >= Params.StackCount) == (Params.Negate == 1));
 
-        foreach (IAptitudeTarget target in previousTargets)
-        {
-            foreach (EffectState active in target.GetActiveEffects())
-            {
-                if (active == null)
-                {
-                    continue;
-                }
+        return Params.FailNoTargets == 0 || context.Targets.Count > 0;
+    }
 
-                if (effectTagEffectIds.Contains(active.Effect.Id) && active.Stacks >= Params.StackCount)
-                {
-                    newTargets.Push(target);
-                    break;
-                }
-            }
-        }
-
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
-
-        if (Params.FailNoTargets == 1 && context.Targets.Count == 0)
-        {
-            result = false;
-        }
-        else
-        {
-            result = true;
-        }
-
-        if (Params.Negate == 1)
-        {
-            result = !result;
-        }
-
-        return result;
+    private static int TaggedEffects(IAptitudeTarget target, HashSet<uint> effectIds)
+    {
+        return target.GetActiveEffects().Count(active => active != null && effectIds.Contains(active.Effect.Id));
     }
 }

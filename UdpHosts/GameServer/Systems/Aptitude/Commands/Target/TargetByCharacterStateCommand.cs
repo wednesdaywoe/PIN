@@ -16,53 +16,20 @@ public class TargetByCharacterStateCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
-        foreach (IAptitudeTarget target in previousTargets)
-        {
-            if (target is CharacterEntity character)
-            {
-                var characterState = character.CharacterState.State;
+        // As the client (tfTargetByCharacterStateCommand): filters in place and keeps targets that are not characters
+        context.Targets.RemoveAll(target => target is CharacterEntity character && !Matches(character.CharacterState.State));
 
-                if (Params.Respawning == 1 && characterState == CharacterStatus.Respawning)
-                {
-                    newTargets.Push(character);
-                }
-                else if (Params.Incapacitated == 1 && characterState == CharacterStatus.Incapacitated)
-                {
-                    newTargets.Push(character);
-                }
-                else if (Params.Traumatized == 1 && characterState == CharacterStatus.Traumatized)
-                {
-                    newTargets.Push(character);
-                }
-                else if (Params.Ghost == 1 && characterState == CharacterStatus.Ghost)
-                {
-                    newTargets.Push(character);
-                }
-                else if (Params.Living == 1 && characterState == CharacterStatus.Living)
-                {
-                    newTargets.Push(character);
-                }
-                else if (Params.Dead == 1 && characterState == CharacterStatus.Dead)
-                {
-                    newTargets.Push(character);
-                }
-                else if (Params.Spawning == 1 && characterState == CharacterStatus.Spawning)
-                {
-                    newTargets.Push(character);
-                }
-            }
-        }
+        return Params.FailNoTargets == 0 || context.Targets.Count > 0;
+    }
 
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
-
-        if (Params.FailNoTargets == 1 && context.Targets.Count == 0)
-        {
-            return false;
-        }
-
-        return true;
+    private bool Matches(CharacterStatus state)
+    {
+        return (Params.Respawning == 1 && state == CharacterStatus.Respawning)
+               || (Params.Incapacitated == 1 && state == CharacterStatus.Incapacitated)
+               || (Params.Traumatized == 1 && state == CharacterStatus.Traumatized)
+               || (Params.Ghost == 1 && state == CharacterStatus.Ghost)
+               || (Params.Living == 1 && state == CharacterStatus.Living)
+               || (Params.Dead == 1 && state == CharacterStatus.Dead)
+               || (Params.Spawning == 1 && state == CharacterStatus.Spawning);
     }
 }

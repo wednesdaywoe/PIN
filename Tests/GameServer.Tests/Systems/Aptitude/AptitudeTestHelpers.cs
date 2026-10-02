@@ -29,7 +29,7 @@ internal class FakeTarget(string name, byte factionId = 0) : IAptitudeTarget
     public ulong EntityId => 0;
     public EntityId AeroEntityId => default;
     public IShard Shard => throw new NotSupportedException();
-    public Vector3 Position => Vector3.Zero;
+    public Vector3 Position { get; set; }
     public HostilityInfoData HostilityInfo { get; } = new() { Flags = HostilityInfoData.HostilityFlags.Faction, FactionId = factionId };
     public CharacterEntity Owner => null;
 

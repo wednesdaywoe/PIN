@@ -17,32 +17,11 @@ public class TargetFilterByRangeCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        context.FormerTargets = context.Targets;
-        context.Targets = new AptitudeTargets();
-
+        // As the client (tfTargetFilterByRangeCommand): filters in place, Negate keeps the targets out of range
         var range = AbilitySystem.RegistryOp(context.Register, Params.Range, (Operand)Params.RangeRegop);
         var sourcePosition = context.Self.Position;
+        context.Targets.SwapRemoveAll(target => (Vector3.Distance(sourcePosition, target.Position) > range) != (Params.Negate == 1));
 
-        foreach (IAptitudeTarget target in context.FormerTargets)
-        {
-            if (target is CharacterEntity character)
-            {
-                if (Vector3.Distance(sourcePosition, target.Position) <= range)
-                {
-                    context.Targets.Push(character);
-                }
-            }
-            else
-            {
-                Logger.Debug("[TargetFilterByRange] Target is not CharacterEntity: {target}", target);
-            }
-        }
-
-        if (Params.FailNoTargets == 1 && context.Targets.Count == 0)
-        {
-            return false;
-        }
-
-        return true;
+        return Params.FailNoTargets == 0 || context.Targets.Count > 0;
     }
 }
