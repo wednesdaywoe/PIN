@@ -14,9 +14,11 @@ public class TargetSelfCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        context.FormerTargets = new AptitudeTargets(context.Targets);
-
-        context.Targets.Push(context.Self);
+        // As the client (apt::TargetSelfCommand): adds self if it is not a target yet
+        if (!context.Targets.Contains(context.Self))
+        {
+            context.Targets.Push(context.Self);
+        }
 
         return true;
     }

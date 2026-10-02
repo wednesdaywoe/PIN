@@ -14,7 +14,8 @@ public class TargetPreviousCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        context.Targets = new AptitudeTargets(context.FormerTargets);
+        // As the client (apt::TargetPreviousCommand): adds the former targets to the current ones
+        context.Targets.AddRange(context.FormerTargets);
 
         if (Params.Clearformer == 1)
         {

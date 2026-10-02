@@ -14,8 +14,11 @@ public class TargetInitiatorCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        context.FormerTargets = new AptitudeTargets(context.Targets);
-        context.Targets.Push(context.Initiator);
+        // As the client (apt::TargetInitiatorCommand): adds initiator if it is not a target yet
+        if (!context.Targets.Contains(context.Initiator))
+        {
+            context.Targets.Push(context.Initiator);
+        }
 
         return true;
     }

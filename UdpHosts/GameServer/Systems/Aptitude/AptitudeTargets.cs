@@ -125,6 +125,21 @@ public class AptitudeTargets : IEnumerable<IAptitudeTarget>
         _targets.RemoveRange(_targets.Count - Math.Min(number, _targets.Count), Math.Min(number, _targets.Count));
     }
 
+    public bool Contains(IAptitudeTarget target)
+    {
+        return _targets.Contains(target);
+    }
+
+    public void RemoveAll(Predicate<IAptitudeTarget> match)
+    {
+        _targets.RemoveAll(match);
+    }
+
+    public void AddRange(AptitudeTargets targets)
+    {
+        _targets.AddRange(targets._targets);
+    }
+
     public void Clear()
     {
         _targets.Clear();

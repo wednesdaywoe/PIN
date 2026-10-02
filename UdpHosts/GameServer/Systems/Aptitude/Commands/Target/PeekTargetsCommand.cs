@@ -14,20 +14,26 @@ public class PeekTargetsCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        /* Former = 1 appears once in SDB, Current = 1 appears 107 times, they are mutually exclusive */
-
+        // As the client (apt::PeekTargetsCommand): copies the top of the target stack without popping it,
+        // failing when the stack is empty
         if (Params.Former == 1)
         {
-            var ok = context.FormerTargets.TryPeek(out _);
+            if (!context.TargetStack.TryPeek(out var former))
+            {
+                return false;
+            }
 
-            return ok;
+            context.FormerTargets = new AptitudeTargets(former);
         }
 
         if (Params.Current == 1)
         {
-            var ok = context.Targets.TryPeek(out _);
+            if (!context.TargetStack.TryPeek(out var current))
+            {
+                return false;
+            }
 
-            return ok;
+            context.Targets = new AptitudeTargets(current);
         }
 
         return true;

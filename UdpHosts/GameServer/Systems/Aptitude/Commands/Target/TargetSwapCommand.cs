@@ -14,6 +14,9 @@ public class TargetSwapCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
+        // As the client (apt::TargetSwapCommand): swaps first, then clears
+        (context.Targets, context.FormerTargets) = (context.FormerTargets, context.Targets);
+
         if (Params.ClearCurrent == 1)
         {
             context.Targets.Clear();
@@ -23,8 +26,6 @@ public class TargetSwapCommand : Command, ICommand
         {
             context.FormerTargets.Clear();
         }
-
-        (context.Targets, context.FormerTargets) = (context.FormerTargets, context.Targets);
 
         return true;
     }

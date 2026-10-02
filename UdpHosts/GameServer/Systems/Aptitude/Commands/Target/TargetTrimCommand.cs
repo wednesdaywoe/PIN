@@ -18,8 +18,8 @@ public class TargetTrimCommand : Command, ICommand
         // Keeps <trimSize> targets on the stack, from ability 30187. Guardian Angel - II ; Protect 2 closest allies
         // With Chomp it removes <trimSize> targets instead. While loops use that to work through the stack one target
         // per lap until it is empty (e.g. 501195, 1543482).
-        // FromFront picks the end that is kept or chomped, with the front being the top of the stack. Loops keep one
-        // from an end, act on it and then chomp that same end (570262), or act on the top and chomp the front (501195).
+        // As the client (apt::TargetTrimCommand): FromFront removes from the start of the list (the oldest targets),
+        // otherwise from the end, whether keeping or chomping.
         var trimSize = (int)AbilitySystem.RegistryOp(context.Register, Params.Trimsize, (Enums.Operand)Params.TrimsizeRegop);
 
         if (Params.Former == 1)
@@ -54,8 +54,7 @@ public class TargetTrimCommand : Command, ICommand
 
         targetsToRemove = Math.Clamp(targetsToRemove, 0, targets.Count);
 
-        // Keeping the front means removing from the bottom, chomping the front means removing from the top
-        if ((Params.FromFront == 1) != (Params.Chomp == 1))
+        if (Params.FromFront == 1)
         {
             targets.RemoveBottomN(targetsToRemove);
         }

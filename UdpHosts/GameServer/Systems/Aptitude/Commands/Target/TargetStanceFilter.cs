@@ -9,21 +9,15 @@ internal static class TargetStanceFilter
 {
     public static bool Apply(Context context, byte includeSelf, byte includeInitiator, byte includeOwner, byte failNoTargets, Func<IAptitudeTarget, bool> matchesStance)
     {
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
-
-        foreach (var target in previousTargets)
+        // As the client (apt::TargetHostilesCommand): filters the targets in place and leaves the former targets alone
+        if (failNoTargets == 1 && context.Targets.Count == 0)
         {
-            if (Keep(target))
-            {
-                newTargets.Push(target);
-            }
+            return false;
         }
 
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
+        context.Targets.RemoveAll(target => !Keep(target));
 
-        return failNoTargets == 0 || newTargets.Count > 0;
+        return failNoTargets == 0 || context.Targets.Count > 0;
 
         // Self, initiator and owner only make it through when asked for, whatever their stance.
         // The SDB sets IncludeSelf on 222 TargetHostiles, which only means something if it forces self in.

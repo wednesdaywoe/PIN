@@ -68,7 +68,7 @@ public class HostilityTests
         Assert.True(new TargetHostilesCommand(new TargetHostilesCommandDef()).Execute(context));
 
         Assert.Equal([_chosen, _monster], context.Targets);
-        Assert.Equal(5, context.FormerTargets.Count);
+        Assert.Equal(0, context.FormerTargets.Count);
     }
 
     [Fact]
