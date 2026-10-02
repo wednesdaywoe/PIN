@@ -9,9 +9,8 @@ namespace GameServer.Tests.Systems.Aptitude;
 
 public class RegisterTests
 {
-    // Current behaviour with the register as first and the param as second, so subtract and divide compute param - register
-    // and param / register. The SDB backs this up for divide: chain 1147243 loads a charge rate into the register, divides
-    // 400000 by it and uses the result as a duration. Subtract and exponentiate have not been confirmed against the client.
+    // Register as first and the param as second, so subtract and divide compute param - register and param / register.
+    // Matches the client's FUN_00bc1130 in FirefallClient.exe. Which side is the exponent has not been confirmed.
     [Theory]
     [InlineData(Operand.ASSIGN, 8f)]
     [InlineData(Operand.ADD, 10f)]

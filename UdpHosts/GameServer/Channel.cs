@@ -104,6 +104,8 @@ public class Channel
                 continue;
             }
 
+            // Same as the client (FUN_00fd64e0 in FirefallClient.exe): resent packets have everything after the
+            // sequence number XORed with 0xFF, 0xAA or 0xCC for a resend count of 1, 2 or 3
             if (packet.Header.ResendCount > 0)
             {
                 var xorIndex = packet.Header.ResendCount - 1;
