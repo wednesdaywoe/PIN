@@ -426,7 +426,11 @@ public partial class PhysicsEngine
 
             // Same race from the other side: whatever the ray struck can be gone by the time it is named.
             // Zero reads as "hit something that is not an entity", which every caller already handles.
-            outEnt = _bodyToEntityId.GetValueOrDefault(hitHandler.HitCollidable.BodyHandle);
+            // Terrain is a static with no body handle; reading one anyway reinterprets its static index as
+            // a body handle and can name whichever entity owns that number (upstream 39aac77).
+            outEnt = hitHandler.HitCollidable.Mobility != CollidableMobility.Static
+                ? _bodyToEntityId.GetValueOrDefault(hitHandler.HitCollidable.BodyHandle)
+                : 0;
         }
 
         return (outHit, outPos, outEnt);
