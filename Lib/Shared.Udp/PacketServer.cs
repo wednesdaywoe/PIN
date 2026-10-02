@@ -51,6 +51,13 @@ public abstract class PacketServer : IPacketSender
         {
             // TODO: Handle Command
             var line = Console.ReadLine();
+            if (line == null)
+            {
+                // stdin is closed when running detached, so there are no commands to read; run until cancelled
+                ct.WaitHandle.WaitOne();
+                break;
+            }
+
             HandleCommand(line);
         }
 
