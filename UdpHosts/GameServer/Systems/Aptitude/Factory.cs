@@ -32,6 +32,14 @@ public class Factory
         _logger = shard.Logger.ForContext<AbilitySystem>();
     }
 
+    /// <summary>
+    ///     For tests that override <see cref="LoadChain" /> instead of loading from the SDB
+    /// </summary>
+    internal Factory(ILogger logger)
+    {
+        _logger = logger;
+    }
+
     public Effect LoadEffect(uint effectId)
     {
         var statusEffectData = SDBInterface.GetStatusEffectData(effectId);
@@ -63,7 +71,7 @@ public class Factory
         return effect;
     }
 
-    public Chain LoadChain(uint chainId)
+    public virtual Chain LoadChain(uint chainId)
     {
         var chain = new Chain
         {

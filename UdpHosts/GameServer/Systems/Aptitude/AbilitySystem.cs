@@ -27,6 +27,17 @@ public class AbilitySystem
         _playerThumperCalldownRequests = [];
     }
 
+    /// <summary>
+    ///     For tests that supply their own <see cref="Factory" />
+    /// </summary>
+    internal AbilitySystem(Factory factory)
+    {
+        Factory = factory;
+        _playerVehicleCalldownRequests = [];
+        _playerDeployableCalldownRequests = [];
+        _playerThumperCalldownRequests = [];
+    }
+
     public Factory Factory { get; }
 
     public static float RegistryOp(float first, float second, Operand op)

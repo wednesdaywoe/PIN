@@ -1,4 +1,3 @@
-using System;
 using GameServer.StaticDB.Records.apt;
 
 namespace GameServer.Systems.Aptitude.Commands.Target;
@@ -25,7 +24,7 @@ public class TargetTrimCommand : Command, ICommand
             if (targetsToRemove < 0)
             {
                 Logger.Debug("{Command} {CommandId} Not enough FormerTargets for TargetTrimCommand, investigate if this is expected", nameof(TargetTrimCommand), Params.Id);
-                targetsToRemove = Math.Abs(targetsToRemove);
+                targetsToRemove = 0;
             }
 
             if (Params.FromFront == 1)
@@ -45,7 +44,7 @@ public class TargetTrimCommand : Command, ICommand
             {
                 // 39360 Heavy Turret
                 Logger.Debug("{Command} {CommandId} Not enough Targets for TargetTrimCommand, investigate if this is expected", nameof(TargetTrimCommand), Params.Id);
-                targetsToRemove = Math.Abs(targetsToRemove);
+                targetsToRemove = 0;
             }
 
             if (Params.FromFront == 1)
