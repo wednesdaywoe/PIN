@@ -165,6 +165,11 @@ servers up, the log being watched, and the type ids to hand.</p>
     <td>places a resource deposit centered where you stand and saves it immediately, same footing guards as <code>spawngroup</code>; see <a href="Thump-Placement.html">Thump Placement</a>. <strong>Richness</strong> is a per-deposit multiplier on the haul, 1 being the shipped gradient untouched — PIN's own field, filling the hole where retail's server-side deposit records used to be, and the only way to make a vein pay more without moving to a different tier of the world</td>
     </tr>
     <tr>
+    <td><code>veintype list \| show &lt;nodeTypeId&gt; \| reload</code></td>
+    <td>—</td>
+    <td>reads the vein types PIN defines itself, in <a href="../UdpHosts/GameServer/StaticDB/CustomData/resource_node_type.json">resource_node_type.json</a>, and re-reads them without a restart. <code>show</code> answers for shipped types too, so it is also how you check what any <code>deposit add &lt;nodeTypeId&gt;</code> would pay. The client shipped 46 vein types and none of them pays the sixteen materials the graded crafting block is built on; ids <strong>700–715</strong> are PIN's, one per material, in the order Copper, Iron, Aluminum, Carbon, Silicate, Ceramic, Methine, Octine, Nitrine, Petrochemical, Biopolymer, Xenografts, Toxins, Regenics, Anabolics, Radine</td>
+    </tr>
+    <tr>
     <td><code>target [entityId/name]</code></td>
     <td>—</td>
     <td>no argument ray-casts from your aim; <code>target me</code> or <code>target self</code> targets you; prints the distance, so it doubles as a rangefinder</td>

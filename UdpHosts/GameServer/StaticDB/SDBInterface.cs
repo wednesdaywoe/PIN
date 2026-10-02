@@ -13,6 +13,7 @@ using Records.dbphysicsmaterials;
 using Records.dbvisualrecords;
 using Records.dbzonemetadata;
 using Records.vcs;
+using ResourceNodeTypeOverride = Records.customdata.ResourceNodeTypeOverride;
 
 public class SDBInterface
 {
@@ -69,6 +70,14 @@ public class SDBInterface
     private static Dictionary<uint, ResourceNodeBeacon> _resourceNodeBeacon;
     private static Dictionary<uint, ResourceNodeType> _resourceNodeType;
     private static Dictionary<uint, List<ResourceNodeTypeResource>> _resourceNodeTypeResource;
+
+    /// <summary>
+    ///     What the client shipped for every vein type a custom one has stood in for, so re-applying
+    ///     the file puts back the types it no longer names instead of leaving a stale override behind.
+    ///     A null value means the client shipped nothing under that id.
+    /// </summary>
+    private static Dictionary<uint, ResourceNodeType> _shippedResourceNodeType = new();
+    private static Dictionary<uint, List<ResourceNodeTypeResource>> _shippedResourceNodeTypeResource = new();
     private static Dictionary<KeyValuePair<uint, uint>, LevelCategoryScalars> _levelCategoryScalars;
     private static Dictionary<uint, FrameProgressionLevel> _frameProgressionLevel;
     private static Dictionary<uint, Blueprints> _blueprints;
@@ -653,6 +662,92 @@ public class SDBInterface
     public static Ammo GetAmmo(uint id) => _ammo.GetValueOrDefault(id);
     public static LevelBand GetLevelBand(uint id) => _levelBand.GetValueOrDefault(id);
     public static ResourceNodeBeacon GetResourceNodeBeacon(uint id) => _resourceNodeBeacon.GetValueOrDefault(id);
+
+    /// <summary>
+    ///     Lays PIN's own vein types over the shipped table, replacing an id the client shipped or
+    ///     adding one it did not. Returns how many were applied.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///     Merging here rather than at every call site is deliberate: the sampler, the geo scan, the
+    ///     outpost radar and the thumper payout all read through <see cref="GetResourceNodeType" /> and
+    ///     <see cref="GetResourceNodeTypeResources" />, and none of them has any business knowing where
+    ///     a vein type came from. See <see cref="ResourceNodeTypeOverride" /> for why the shipped table
+    ///     needs standing in for at all.
+    ///     </para>
+    ///     <para>
+    ///     Safe to call more than once. Each pass first restores every id a previous pass replaced, so
+    ///     a vein type dropped from the file goes back to being whatever the client said it was — and
+    ///     an id the client never had disappears again rather than lingering.
+    ///     </para>
+    /// </remarks>
+    public static int ApplyResourceNodeTypeOverrides(IEnumerable<ResourceNodeTypeOverride> overrides)
+    {
+        // Tolerates never having read an SDB, so the merge can be tested on its own.
+        _resourceNodeType ??= new Dictionary<uint, ResourceNodeType>();
+        _resourceNodeTypeResource ??= new Dictionary<uint, List<ResourceNodeTypeResource>>();
+
+        foreach (var (id, shipped) in _shippedResourceNodeType)
+        {
+            if (shipped == null)
+            {
+                _resourceNodeType.Remove(id);
+            }
+            else
+            {
+                _resourceNodeType[id] = shipped;
+            }
+        }
+
+        foreach (var (id, shipped) in _shippedResourceNodeTypeResource)
+        {
+            if (shipped == null)
+            {
+                _resourceNodeTypeResource.Remove(id);
+            }
+            else
+            {
+                _resourceNodeTypeResource[id] = shipped;
+            }
+        }
+
+        _shippedResourceNodeType.Clear();
+        _shippedResourceNodeTypeResource.Clear();
+
+        var applied = 0;
+
+        foreach (var row in overrides)
+        {
+            _shippedResourceNodeType[row.Id] = _resourceNodeType.GetValueOrDefault(row.Id);
+            _shippedResourceNodeTypeResource[row.Id] = _resourceNodeTypeResource.GetValueOrDefault(row.Id);
+
+            _resourceNodeType[row.Id] = new ResourceNodeType
+            {
+                Id = row.Id,
+                Name = row.Name,
+                ResourceTypeId = 0,
+            };
+
+            _resourceNodeTypeResource[row.Id] = row.Resources
+                                                   .Select(resource => new ResourceNodeTypeResource
+                                                   {
+                                                       NodeTypeId = row.Id,
+                                                       ItemId = resource.ItemId,
+                                                       CenterLow = resource.CenterLow,
+                                                       CenterHigh = resource.CenterHigh,
+                                                       EdgeLow = resource.EdgeLow,
+                                                       EdgeHigh = resource.EdgeHigh,
+                                                       ItemQualityLow = resource.QualityLow,
+                                                       ItemQualityHigh = resource.QualityHigh,
+                                                   })
+                                                   .ToList();
+
+            applied++;
+        }
+
+        return applied;
+    }
+
     public static ResourceNodeType GetResourceNodeType(uint id) => _resourceNodeType.GetValueOrDefault(id);
     public static List<ResourceNodeTypeResource> GetResourceNodeTypeResources(uint nodeTypeId) => _resourceNodeTypeResource.GetValueOrDefault(nodeTypeId) ?? [];
     public static LevelCategoryScalars GetLevelCategoryScalar(uint attributeCategory, uint level) => _levelCategoryScalars.GetValueOrDefault(new KeyValuePair<uint, uint>(attributeCategory, level));

@@ -56,6 +56,10 @@ internal class GameServer : PacketServer
         Logger.ForContext<SDBInterface>().Information("Reading custom data");
         CustomDBInterface.Init();
 
+        // After both, because it lays custom vein types over the shipped ones and needs each side read.
+        var veinTypes = SDBInterface.ApplyResourceNodeTypeOverrides(CustomDBInterface.GetResourceNodeTypeOverrides().Values);
+        Logger.ForContext<SDBInterface>().Information("Applied {Count} custom resource node type(s)", veinTypes);
+
         Logger.ForContext(typeof(GRPCService)).Information("Initializing GRPC");
         GRPCService.Init(serverSettings.GrpcChannelAddress);
     }

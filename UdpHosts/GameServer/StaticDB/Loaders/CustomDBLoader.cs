@@ -10,6 +10,7 @@ public class CustomDBLoader
 {
     public const string SpawnGroupPath = "./StaticDB/CustomData/spawn_group.json";
     public const string ResourceDepositPath = "./StaticDB/CustomData/resource_deposit.json";
+    public const string ResourceNodeTypePath = "./StaticDB/CustomData/resource_node_type.json";
 
     private static readonly SnakeCasePropertyNamingPolicy _policy = new SnakeCasePropertyNamingPolicy();
     private readonly JsonSerializerOptions _serializerOptions = new()
@@ -958,6 +959,18 @@ public class CustomDBLoader
     {
         var options = new JsonSerializerOptions(_serializerOptions) { WriteIndented = true };
         File.WriteAllText(SpawnGroupPath, JsonSerializer.Serialize(groups.OrderBy(g => g.ZoneId).ThenBy(g => g.Id), options));
+    }
+
+    /// <summary>
+    ///     PIN's own vein types, keyed by the <c>ResourceNodeType</c> id each one stands in for.
+    ///     A duplicate id in the file would silently drop one of the two, so the last wins and the
+    ///     count reported at startup is the only place a typo shows up.
+    /// </summary>
+    public Dictionary<uint, ResourceNodeTypeOverride> LoadResourceNodeTypeOverride()
+    {
+        return LoadJSON<ResourceNodeTypeOverride>(ResourceNodeTypePath)
+               .GroupBy(row => row.Id)
+               .ToDictionary(group => group.Key, group => group.Last());
     }
 
     public Dictionary<uint, Dictionary<uint, LgvRaceDef>> LoadLgvRace()

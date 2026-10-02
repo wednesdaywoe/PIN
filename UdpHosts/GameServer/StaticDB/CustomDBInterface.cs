@@ -161,6 +161,7 @@ public class CustomDBInterface
     private static Dictionary<uint, Dictionary<uint, LgvRaceDef>> _lgvRace;
     private static Dictionary<uint, Dictionary<uint, SpawnGroup>> _spawnGroup;
     private static Dictionary<uint, Dictionary<uint, ResourceDeposit>> _resourceDeposit;
+    private static Dictionary<uint, ResourceNodeTypeOverride> _resourceNodeTypeOverride;
 
     public static void Init()
     {
@@ -319,6 +320,7 @@ public class CustomDBInterface
         _lgvRace = loader.LoadLgvRace();
         _spawnGroup = loader.LoadSpawnGroup();
         _resourceDeposit = loader.LoadResourceDeposit();
+        _resourceNodeTypeOverride = loader.LoadResourceNodeTypeOverride();
     }
 
     // aptgss
@@ -474,6 +476,7 @@ public class CustomDBInterface
     public static Dictionary<uint, LgvRaceDef> GetZoneLgvRaces(uint zoneId) => _lgvRace.GetValueOrDefault(zoneId) ?? [];
     public static Dictionary<uint, SpawnGroup> GetZoneSpawnGroups(uint zoneId) => _spawnGroup.GetValueOrDefault(zoneId) ?? [];
     public static Dictionary<uint, ResourceDeposit> GetZoneResourceDeposits(uint zoneId) => _resourceDeposit.GetValueOrDefault(zoneId) ?? [];
+    public static IReadOnlyDictionary<uint, ResourceNodeTypeOverride> GetResourceNodeTypeOverrides() => _resourceNodeTypeOverride;
 
     /// <summary>
     ///     Writes the current spawn groups to disk and re-reads them, so what the server holds and what
@@ -528,6 +531,16 @@ public class CustomDBInterface
     public static void ReloadResourceDeposits()
     {
         _resourceDeposit = new CustomDBLoader().LoadResourceDeposit();
+    }
+
+    /// <summary>
+    ///     Re-reads the custom vein types from disk and pushes them back over the shipped table, so a
+    ///     hand-edited payout can be tried without a restart. Returns how many types the file defines.
+    /// </summary>
+    public static int ReloadResourceNodeTypeOverrides()
+    {
+        _resourceNodeTypeOverride = new CustomDBLoader().LoadResourceNodeTypeOverride();
+        return SDBInterface.ApplyResourceNodeTypeOverrides(_resourceNodeTypeOverride.Values);
     }
 
     /// <summary>Adds a deposit to the in-memory set. Call <see cref="SaveResourceDeposits"/> to persist it.</summary>

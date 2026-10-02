@@ -1,0 +1,242 @@
+[
+  {
+    "id": 700,
+    "name": "Copper Vein",
+    "resources": [
+      {
+        "item_id": 77703,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 701,
+    "name": "Iron Vein",
+    "resources": [
+      {
+        "item_id": 77704,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 702,
+    "name": "Aluminum Vein",
+    "resources": [
+      {
+        "item_id": 77705,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 703,
+    "name": "Carbon Vein",
+    "resources": [
+      {
+        "item_id": 77706,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 704,
+    "name": "Silicate Vein",
+    "resources": [
+      {
+        "item_id": 77707,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 705,
+    "name": "Ceramic Vein",
+    "resources": [
+      {
+        "item_id": 77708,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 706,
+    "name": "Methine Vein",
+    "resources": [
+      {
+        "item_id": 77709,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 707,
+    "name": "Octine Vein",
+    "resources": [
+      {
+        "item_id": 77710,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 708,
+    "name": "Nitrine Vein",
+    "resources": [
+      {
+        "item_id": 77711,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 709,
+    "name": "Petrochemical Vein",
+    "resources": [
+      {
+        "item_id": 77713,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 710,
+    "name": "Biopolymer Vein",
+    "resources": [
+      {
+        "item_id": 77714,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 711,
+    "name": "Xenografts Vein",
+    "resources": [
+      {
+        "item_id": 77715,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 712,
+    "name": "Toxins Vein",
+    "resources": [
+      {
+        "item_id": 77716,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 713,
+    "name": "Regenics Vein",
+    "resources": [
+      {
+        "item_id": 77736,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 714,
+    "name": "Anabolics Vein",
+    "resources": [
+      {
+        "item_id": 77737,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  },
+  {
+    "id": 715,
+    "name": "Radine Vein",
+    "resources": [
+      {
+        "item_id": 82419,
+        "center_low": 25,
+        "center_high": 35,
+        "edge_low": 0,
+        "edge_high": 5,
+        "quality_low": 0,
+        "quality_high": 400
+      }
+    ]
+  }
+]

@@ -660,6 +660,18 @@ has no entries in that category, which reflects nothing having run rather than n
   end-to-end thumping run used; and **CRAFT3 inherits the real question** — whether PIN restores a
   refining step, reprices recipes onto the raw tier, or leaves 34 node types paying a souvenir
 
+  **Answered on the third option's opposite, 2026-08-22: the ground pays what recipes want.** The
+  vein types were the half of the deposit system still coming out of the client file, and now they
+  are not — `StaticDB/CustomData/resource_node_type.json` defines them and
+  `SDBInterface.ApplyResourceNodeTypeOverrides` lays them over the shipped table, so ids 700–715 pay
+  the sixteen refined materials the graded block is costed in, one vein each. The shipped 46 are
+  untouched and CRAFT5 still stands on 235/237/238/240. This closes the mechanism, not the economy.
+
+  **Verified in game 2026-10-02.** A deposit on vein 700 thumped to completion and paid 25 Copper
+  (77703), which shows in inventory as a Metals crafting component; the client drew the node and
+  stayed connected, so an id it never shipped is safe in `ObserverView`. No shipped deposit uses a
+  custom vein yet, and the Copper has not been spent on a recipe
+
 ## Client & Environment — CLIENT
 
 [Full detail](gaps/client.md) — 3 of 4 closed

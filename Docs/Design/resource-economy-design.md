@@ -97,6 +97,32 @@ patch had them competing against each other on both stats. The two-slot
 resources aren't an edge case to design around. They're proof the format was
 built for it and the beta only exercised it twice.
 
+### Where the sixteen come from in game
+
+Implemented 2026-08-22. The shipped `dbzonemetadata::ResourceNodeType` table
+holds 46 vein types and not one of them pays any of the sixteen; 42 pay ore in
+the Raw Metals class, which by 1962 exactly one blueprint consumes. So the vein
+types are PIN's own content now, the same way deposit positions already were:
+`UdpHosts/GameServer/StaticDB/CustomData/resource_node_type.json` defines a vein
+by id, name and payout rows, `SDBInterface.ApplyResourceNodeTypeOverrides` lays
+them over the shipped table at startup, and everything downstream — sampler,
+geo scan, outpost radar, thumper payout — reads through the ordinary accessors
+and cannot tell the difference.
+
+Ids 700 to 715 are the sixteen, one vein per material, each paying its refined
+item directly because refining is cut. All sixteen start on the shipped tier-1
+gradient, 25–35 at the centre falling to 0–5 at the rim, which is deliberately
+flat: tiering is the deposit roll's job, not the vein type's, and per-deposit
+`richness` already exists to vary a single vein. `veintype list | show | reload`
+reads and re-reads them in game.
+
+An id the client never shipped turned out not to matter. `ObserverView` carries
+the vein type id to the client and no surviving Lua reads it; on 2026-10-02 a
+thumper on a `deposit add 700` vein ran a full defended cycle, paid 25 Copper
+(77703), and the client drew the node and kept the session with no error. The
+Copper landed in inventory named and described as a Mineral - Metal crafting
+component, with the `^CY` suffix printed literally as "[CY]".
+
 ### Refining, before it was cut
 
 The pre-1637 chain is recoverable: `ResourceItem.refines_into` still lists
