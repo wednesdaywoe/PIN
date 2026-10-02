@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using GameServer.Enums;
 using GameServer.StaticDB.Records.apt;
@@ -22,7 +23,7 @@ public class TargetTests
         _context.Targets = new AptitudeTargets(_a, _b);
 
         new PushTargetsCommand(new PushTargetsCommandDef { Current = 1 }).Execute(_context);
-        Assert.Equal(0, _context.Targets.Count);
+        Assert.Equal([_a, _b], _context.Targets);
 
         _context.Targets.Push(_c);
         new PopTargetsCommand(new PopTargetsCommandDef { Current = 1 }).Execute(_context);
@@ -103,8 +104,8 @@ public class TargetTests
     }
 
     [Theory]
-    [InlineData(0, 1u, new[] { "a", "b" })]
-    [InlineData(1, 1u, new[] { "b", "c" })]
+    [InlineData(0, 1u, new[] { "b", "c" })]
+    [InlineData(1, 1u, new[] { "a", "b" })]
     [InlineData(1, 5u, new string[0])]
     public void Chomp_RemovesTrimSizeTargets(byte fromFront, uint trimSize, string[] expected)
     {
@@ -116,19 +117,50 @@ public class TargetTests
     }
 
     [Fact]
-    public void Chomp_InWhileLoop_RunsOnceThroughTheTargets()
+    public void Chomp_InWhileLoop_ActsOnEachTargetOnce()
     {
-        // Pattern from 1543482: while (targets not empty) { act on target; chomp one }
+        // Pattern from 501195: while (targets not empty) { act on the top target; chomp the front }
+        var acted = new List<IAptitudeTarget>();
+        RunLoop(
+            new FakeCommand(c =>
+            {
+                acted.Add(c.Targets.Peek());
+                return true;
+            }),
+            new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = 1, Chomp = 1, Current = 1, FromFront = 1 }));
+
+        Assert.Equal([_c, _b, _a], acted);
+    }
+
+    [Fact]
+    public void PushKeepPopChomp_InWhileLoop_ActsOnEachTargetOnce()
+    {
+        // Pattern from 570262: while (has targets) { push; keep 1 from the back; act; pop; chomp 1 from the back }
+        var acted = new List<IAptitudeTarget>();
+        RunLoop(
+            new PushTargetsCommand(new PushTargetsCommandDef { Current = 1 }),
+            new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = 1, Current = 1, FromFront = 0 }),
+            new FakeCommand(c =>
+            {
+                acted.AddRange(c.Targets);
+                return true;
+            }),
+            new PopTargetsCommand(new PopTargetsCommandDef { Current = 1 }),
+            new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = 1, Chomp = 1, Current = 1, FromFront = 0 }));
+
+        Assert.Equal([_a, _b, _c], acted);
+    }
+
+    private void RunLoop(params ICommand[] body)
+    {
         var factory = new TestFactory();
         var context = NewContext(factory);
         context.Targets = new AptitudeTargets(_a, _b, _c);
-        var body = new FakeCommand(_ => true);
         factory.Add(1, new TargetStackEmptyCommand(new TargetStackEmptyCommandDef { NotEmpty = 1 }));
-        factory.Add(2, body, new TargetTrimCommand(new TargetTrimCommandDef { Trimsize = 1, Chomp = 1, Current = 1, FromFront = 1 }));
+        factory.Add(2, body);
 
         new WhileLoopCommand(new WhileLoopCommandDef { ConditionChain = 1, BodyChain = 2 }).Execute(context);
 
-        Assert.Equal(3, body.Executions);
         Assert.Equal(0, context.Targets.Count);
     }
 
