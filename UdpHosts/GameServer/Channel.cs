@@ -20,6 +20,8 @@ public class Channel
     private const int _totalHeaderSize = _protocolHeaderSize + _gameSocketHeaderSize;
     private const int _maxPacketSize = PacketServer.MTU - _totalHeaderSize;
 
+    private const int _duplicateWindowSize = 1024;
+
     private static readonly byte[] _xorByte = [0xFF, 0xAA, 0xCC];
 
     private readonly ILogger _logger;
@@ -28,6 +30,8 @@ public class Channel
     private readonly ConcurrentQueue<GamePacket> _incomingPackets;
     private readonly ConcurrentQueue<Memory<byte>> _outgoingPackets;
     private readonly SortedDictionary<ushort, GamePacket> _incomingSplitMessagePackets;
+    private readonly HashSet<ushort> _recentSequenceNumbers;
+    private readonly Queue<ushort> _recentSequenceNumberOrder;
 
     private Channel(ChannelType channelType, bool isSequenced, bool isReliable,  bool isGSS, INetworkClient networkClient, ILogger logger)
     {
@@ -43,6 +47,8 @@ public class Channel
         _incomingPackets = new ConcurrentQueue<GamePacket>();
         _outgoingPackets = new ConcurrentQueue<Memory<byte>>();
         _incomingSplitMessagePackets = [];
+        _recentSequenceNumbers = [];
+        _recentSequenceNumberOrder = new Queue<ushort>();
     }
 
     public delegate void PacketAvailableDelegate(GamePacket packet);
@@ -57,6 +63,7 @@ public class Channel
     private DateTime LastActivity { get; set; }
     private ushort LastAck { get; set; }
     private bool InSplitMode { get; set; }
+    private ushort SplitStartSequenceNumber { get; set; }
 
     public static Dictionary<ChannelType, Channel> GetChannels(INetworkClient client, ILogger logger)
     {
@@ -90,7 +97,13 @@ public class Channel
                 sequenceNumber = Utils.SimpleFixEndianness(packet.Read<ushort>());
             }
 
-            // TODO: Verify if resent message handling works and resolve any issues
+            // The client resends when it misses our ack, so a duplicate gets acked again but is not handled twice
+            if (IsReliable && !MarkReceived(sequenceNumber))
+            {
+                _client.SendAck(Type, sequenceNumber, packet.Received);
+                continue;
+            }
+
             if (packet.Header.ResendCount > 0)
             {
                 var xorIndex = packet.Header.ResendCount - 1;
@@ -106,7 +119,8 @@ public class Channel
 
             if (InSplitMode)
             {
-                _incomingSplitMessagePackets.Add(sequenceNumber, packet);
+                // Key by offset from the first fragment so a split spanning the sequence wraparound stays in order
+                _incomingSplitMessagePackets[(ushort)(sequenceNumber - SplitStartSequenceNumber)] = packet;
                 if (!packet.Header.IsSplit)
                 {
                     // Finish split mode
@@ -128,7 +142,8 @@ public class Channel
             {
                 // Enter split mode
                 InSplitMode = true;
-                _incomingSplitMessagePackets.Add(sequenceNumber, packet);
+                SplitStartSequenceNumber = sequenceNumber;
+                _incomingSplitMessagePackets[0] = packet;
                 _client.SendAck(Type, sequenceNumber, packet.Received);
                 LastAck = sequenceNumber;
             }
@@ -392,6 +407,60 @@ public class Channel
     }
 
     /// <summary>
+    ///     Send data to the client
+    /// </summary>
+    /// <param name="packetData">Memory buffer</param>
+    /// <returns>true if the operation succeeded, false in all other cases</returns>
+    internal bool Send(Memory<byte> packetData)
+    {
+        var headerLength = 2;
+        if (IsSequenced)
+        {
+            headerLength += 2;
+        }
+
+        // TODO: Send UGSS messages that are split over RGSS
+        while (packetData.Length > 0)
+        {
+            var length = Math.Min(packetData.Length + headerLength, _maxPacketSize);
+
+            var t = new Memory<byte>(new byte[length]);
+            packetData[..(length - headerLength)].CopyTo(t[headerLength..]);
+
+            if (IsSequenced)
+            {
+                if (IsReliable)
+                {
+                    _logger.Verbose("<- {Channel} SeqNum =  {SeqNum}", Type, CurrentSequenceNumber);
+                }
+
+                Serializer.WritePrimitive(Utils.SimpleFixEndianness(CurrentSequenceNumber)).CopyTo(t.Slice(2, 2));
+                unchecked
+                {
+                    CurrentSequenceNumber++;
+                }
+            }
+
+            var header = new GamePacketHeader(Type, 0, packetData.Length + headerLength > _maxPacketSize, (ushort)t.Length);
+            var headerData = Serializer.WritePrimitive(Utils.SimpleFixEndianness(header.PacketHeader));
+            headerData.CopyTo(t);
+
+            if (IsGSS)
+            {
+                _client.SequencedMessages.Enqueue(t);
+            }
+            else
+            {
+                _outgoingPackets.Enqueue(t);
+            }
+
+            packetData = packetData[(length - headerLength)..];
+        }
+
+        return true;
+    }
+
+    /// <summary>
     ///     Send serialized data of a gss channel packet to the client
     /// </summary>
     /// <param name="entityId">Id of the entity the packet is for</param>
@@ -457,54 +526,20 @@ public class Channel
     }
 
     /// <summary>
-    ///     Send data to the client
+    ///     Remember a received sequence number
     /// </summary>
-    /// <param name="packetData">Memory buffer</param>
-    /// <returns>true if the operation succeeded, false in all other cases</returns>
-    private bool Send(Memory<byte> packetData)
+    /// <returns>false if it was already received recently</returns>
+    private bool MarkReceived(ushort sequenceNumber)
     {
-        var headerLength = 2;
-        if (IsSequenced)
+        if (!_recentSequenceNumbers.Add(sequenceNumber))
         {
-            headerLength += 2;
+            return false;
         }
 
-        // TODO: Send UGSS messages that are split over RGSS
-        while (packetData.Length > 0)
+        _recentSequenceNumberOrder.Enqueue(sequenceNumber);
+        if (_recentSequenceNumberOrder.Count > _duplicateWindowSize)
         {
-            var length = Math.Min(packetData.Length + headerLength, _maxPacketSize);
-
-            var t = new Memory<byte>(new byte[length]);
-            packetData[..(length - headerLength)].CopyTo(t[headerLength..]);
-
-            if (IsSequenced)
-            {
-                if (IsReliable)
-                {
-                    _logger.Verbose("<- {Channel} SeqNum =  {SeqNum}", Type, CurrentSequenceNumber);
-                }
-
-                Serializer.WritePrimitive(Utils.SimpleFixEndianness(CurrentSequenceNumber)).CopyTo(t.Slice(2, 2));
-                unchecked
-                {
-                    CurrentSequenceNumber++;
-                }
-            }
-
-            var header = new GamePacketHeader(Type, 0, packetData.Length + headerLength > _maxPacketSize, (ushort)t.Length);
-            var headerData = Serializer.WritePrimitive(Utils.SimpleFixEndianness(header.PacketHeader));
-            headerData.CopyTo(t);
-
-            if (IsGSS)
-            {
-                _client.SequencedMessages.Enqueue(t);
-            }
-            else
-            {
-                _outgoingPackets.Enqueue(t);
-            }
-
-            packetData = packetData[(length - headerLength)..];
+            _recentSequenceNumbers.Remove(_recentSequenceNumberOrder.Dequeue());
         }
 
         return true;
