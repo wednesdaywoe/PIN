@@ -15,25 +15,9 @@ public class TargetInteractivesCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
+        // As the client (tfTargetInteractivesCommand): filters in place
+        context.Targets.RemoveAll(target => target is not BaseEntity { Interaction: not null });
 
-        foreach (var target in context.Targets)
-        {
-            if (target is BaseEntity { Interaction: not null })
-            {
-                newTargets.Push(target);
-            }
-        }
-
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
-
-        if (Params.FailNoTargets == 1 && newTargets.Count == 0)
-        {
-            return false;
-        }
-
-        return true;
+        return Params.FailNoTargets == 0 || context.Targets.Count > 0;
     }
 }

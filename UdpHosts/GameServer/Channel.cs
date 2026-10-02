@@ -68,6 +68,7 @@ public class Channel
     private DateTime LastActivity { get; set; }
     private ushort LastAck { get; set; }
     private bool InSplitMode { get; set; }
+    private ushort SplitStartSequenceNumber { get; set; }
 
     public static Dictionary<ChannelType, Channel> GetChannels(INetworkClient client, ILogger logger)
     {
@@ -118,7 +119,8 @@ public class Channel
 
             // Confirmed against the 2016 capture rather than reasoned about: it holds 24 resent
             // packets, and the 15 whose original also survives decode to byte-identical payloads
-            // once this XOR is undone. All 24 carry a resend count of 3, in both directions.
+            // once this XOR is undone. All 24 carry a resend count of 3, in both directions. The client
+            // does the same in FUN_00fd64e0: 0xFF, 0xAA or 0xCC for a resend count of 1, 2 or 3.
             if (packet.Header.ResendCount > 0)
             {
                 var xorIndex = packet.Header.ResendCount - 1;
@@ -155,8 +157,9 @@ public class Channel
             {
                 // Assigned rather than added, because a resent fragment arriving mid-run carries a
                 // sequence number already in the buffer and Add throws on one. An exception here
-                // takes the shard thread with it, which is how NET-21 played out.
-                _incomingSplitMessagePackets[sequenceNumber] = packet;
+                // takes the shard thread with it, which is how NET-21 played out. Keyed by offset from
+                // the first fragment so a split spanning the sequence wraparound stays in order.
+                _incomingSplitMessagePackets[(ushort)(sequenceNumber - SplitStartSequenceNumber)] = packet;
                 if (!packet.Header.IsSplit)
                 {
                     // Finish split mode
@@ -178,7 +181,8 @@ public class Channel
             {
                 // Enter split mode
                 InSplitMode = true;
-                _incomingSplitMessagePackets[sequenceNumber] = packet;
+                SplitStartSequenceNumber = sequenceNumber;
+                _incomingSplitMessagePackets[0] = packet;
                 _client.SendAck(Type, sequenceNumber, packet.Received);
                 LastAck = sequenceNumber;
             }
@@ -554,7 +558,7 @@ public class Channel
     /// </summary>
     /// <param name="packetData">Memory buffer</param>
     /// <returns>true if the operation succeeded, false in all other cases</returns>
-    private bool Send(Memory<byte> packetData)
+    internal bool Send(Memory<byte> packetData)
     {
         var headerLength = 2;
         if (IsSequenced)

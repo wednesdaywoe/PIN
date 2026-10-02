@@ -184,7 +184,7 @@ public class EntityManager
 
         // Set faction
         var hostilityInfo = deployableEntity.HostilityInfo;
-        hostilityInfo.FactionId = deployableInfo.DefaultFaction;
+        hostilityInfo.FactionId = factionId;
         deployableEntity.SetHostilityInfo(hostilityInfo);
 
         if (deployableInfo.InteractionType != 0)

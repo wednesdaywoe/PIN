@@ -125,6 +125,38 @@ public class AptitudeTargets : IEnumerable<IAptitudeTarget>
         _targets.RemoveRange(_targets.Count - Math.Min(number, _targets.Count), Math.Min(number, _targets.Count));
     }
 
+    public bool Contains(IAptitudeTarget target)
+    {
+        return _targets.Contains(target);
+    }
+
+    public void RemoveAll(Predicate<IAptitudeTarget> match)
+    {
+        _targets.RemoveAll(match);
+    }
+
+    /// <summary>
+    ///     Removes matching targets by moving the last target into their place, which changes the order.
+    ///     The client's health, range, movestate and effect tag filters remove targets this way.
+    /// </summary>
+    public void SwapRemoveAll(Predicate<IAptitudeTarget> match)
+    {
+        for (var i = 0; i < _targets.Count; i++)
+        {
+            if (match(_targets[i]))
+            {
+                _targets[i] = _targets[^1];
+                _targets.RemoveAt(_targets.Count - 1);
+                i--;
+            }
+        }
+    }
+
+    public void AddRange(AptitudeTargets targets)
+    {
+        _targets.AddRange(targets._targets);
+    }
+
     public void Clear()
     {
         _targets.Clear();

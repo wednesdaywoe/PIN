@@ -14,15 +14,14 @@ public class TargetClearCommand : Command, ICommand
 
     public bool Execute(Context context)
     {
+        if (Params.Current == 1)
+        {
+            context.Targets.Clear();
+        }
+
         if (Params.Former == 1)
         {
             context.FormerTargets.Clear();
-        }
-
-        if (Params.Current == 1)
-        {
-            context.FormerTargets = new AptitudeTargets(context.Targets);
-            context.Targets.Clear();
         }
 
         return true;

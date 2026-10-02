@@ -15,6 +15,7 @@ public class RootController : ControllerBase
     }
 
     [Route("{*url}", Order = 999)]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult CatchAll()
     {
         return Ok();

@@ -26,6 +26,8 @@ public abstract class BaseAptitudeEntity : BaseEntity, IAptitudeTarget
 
     public CharacterEntity Owner { get; }
 
+    public CooldownSet Cooldowns { get; } = new();
+
     public List<EffectState> GetActiveEffects() => [.. ActiveEffects];
 
     public override string ToString()

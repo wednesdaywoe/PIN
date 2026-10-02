@@ -144,10 +144,10 @@ public class CombatController : Base
             var initiator = character as IAptitudeTarget;
             var shard = player.CharacterEntity.Shard;
             var targets = new AptitudeTargets();
-            shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, targets);
-
-            // Same ordering as ActivateAbility: confirm after the chain, not before it.
-            SendAbilityActivated(character, abilityId, activationTime);
+            if (shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, targets))
+            {
+                SendAbilityActivated(character, abilityId, activationTime);
+            }
         }
     }
 
@@ -274,9 +274,10 @@ public class CombatController : Base
             .Select(entityId => (IAptitudeTarget)shard.Entities[entityId.Backing & 0xffffffffffffff00])
             .ToArray();
 
-            shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, new AptitudeTargets(targets));
-
-            SendAbilityActivated(character, abilityId, activationTime);
+            if (shard.Abilities.HandleActivateAbility(shard, initiator, abilityId, activationTime, new AptitudeTargets(targets)))
+            {
+                SendAbilityActivated(character, abilityId, activationTime);
+            }
         }
     }
 
@@ -321,15 +322,11 @@ public class CombatController : Base
         }
     }
 
-    // Sent after the chain runs, because the chain's InstantActivation command sits last in SDB and
-    // that's where the confirmation belongs. We used to send it the moment the packet arrived, ahead
-    // of every effect netfield the chain applies.
+    // Sent after the chain runs, and only when it succeeds, because the chain's InstantActivation command
+    // sits last in SDB and the cooldowns it inflicts have to be in the message.
     //
-    // This did NOT fix Charge's stuck camera (D5b in Docs/In-Game-Tests/Charge-Camera.html), so don't
-    // read it as a cure for anything. It's kept only because it matches the order SDB describes.
-    //
-    // Belongs in InstantActivationCommand once the cooldown groups are worked out; that command has
-    // the original send commented out and reads GlobalCooldown from its def, where this hardcodes it.
+    // The ordering did NOT fix Charge's stuck camera (D5b in Docs/In-Game-Tests/Charge-Camera.html), so
+    // don't read it as a cure for anything.
     private void SendAbilityActivated(CharacterEntity character, uint abilityId, uint activationTime)
     {
         if (!character.IsPlayerControlled)
@@ -341,14 +338,7 @@ public class CombatController : Base
         {
             ActivatedAbilityId = abilityId,
             ActivatedTime = activationTime,
-            AbilityCooldownsData = new AbilityCooldownsData
-            {
-                ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                Unk = 0,
-                GlobalCooldown_Activated_Time = activationTime,
-                GlobalCooldown_ReadyAgain_Time = activationTime + 300,
-            }
+            AbilityCooldownsData = character.Cooldowns.ToData(activationTime),
         };
 
         _logger.ForContext<AbilitySystem>()

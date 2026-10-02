@@ -27,6 +27,11 @@ public class Context
     public IAptitudeTarget Initiator { get; set; }
     public AptitudeTargets Targets { get; set; }
     public AptitudeTargets FormerTargets { get; set; }
+
+    /// <summary>
+    ///     Saved copies of target lists for PushTargets, PopTargets and PeekTargets, separate from <see cref="FormerTargets" />
+    /// </summary>
+    public Stack<AptitudeTargets> TargetStack { get; } = new();
     public float Register { get; set; }
     public float FormerRegister { get; set; }
     public int Bonus { get; set; }

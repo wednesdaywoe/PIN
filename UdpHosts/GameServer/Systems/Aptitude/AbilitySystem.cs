@@ -16,18 +16,33 @@ public class AbilitySystem
     private readonly Dictionary<ulong, VehicleCalldownRequest> _playerVehicleCalldownRequests;
     private readonly Dictionary<ulong, DeployableCalldownRequest> _playerDeployableCalldownRequests;
     private readonly Dictionary<ulong, ResourceNodeBeaconCalldownRequest> _playerThumperCalldownRequests;
+    private readonly Lazy<FactionStances> _factions;
     private ulong _lastUpdate;
 
     public AbilitySystem(Shard shard)
     {
         _shard = shard;
         Factory = new Factory(shard);
+        _factions = new Lazy<FactionStances>(FactionStances.FromSDB);
+        _playerVehicleCalldownRequests = [];
+        _playerDeployableCalldownRequests = [];
+        _playerThumperCalldownRequests = [];
+    }
+
+    /// <summary>
+    ///     For tests that supply their own <see cref="Factory" />
+    /// </summary>
+    internal AbilitySystem(Factory factory, FactionStances factions = null)
+    {
+        Factory = factory;
+        _factions = new Lazy<FactionStances>(() => factions);
         _playerVehicleCalldownRequests = [];
         _playerDeployableCalldownRequests = [];
         _playerThumperCalldownRequests = [];
     }
 
     public Factory Factory { get; }
+    public FactionStances Factions => _factions.Value;
 
     public static float RegistryOp(float first, float second, Operand op)
     {
@@ -250,20 +265,20 @@ public class AbilitySystem
         }
     }
 
-    public void HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, uint activationTime, AptitudeTargets targets, Guid? executionId = null)
+    public bool HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, uint activationTime, AptitudeTargets targets, Guid? executionId = null)
     {
         var execId = executionId ?? Guid.NewGuid();
         using var logContext = Serilog.Context.LogContext.PushProperty("ExecutionId", execId);
         var chainId = SDBInterface.GetAbilityData(abilityId).Chain;
         if (chainId == 0)
         {
-            return;
+            return false;
         }
 
         _logger.Information("HandleActivateAbility: Ability {AbilityId} starting Chain {ChainId}", abilityId, chainId);
 
         var chain = Factory.LoadChain(chainId);
-        chain.Execute(new Context(shard, initiator)
+        return chain.Execute(new Context(shard, initiator)
         {
             ExecutionId = execId,
             ChainId = chainId,

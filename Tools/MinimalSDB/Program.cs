@@ -519,7 +519,7 @@ static string Format(object value) => value switch
     _ => value.ToString(),
 };
 
-partial class Program
+internal partial class Program
 {
     [GeneratedRegex(@">\(""([^""]+)""\)")]
     private static partial Regex TableNameRegex();

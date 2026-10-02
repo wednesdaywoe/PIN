@@ -101,13 +101,15 @@ public class ImpactApplyEffectCommand : Command, ICommand
         {
             if (Params.RemoveOnRollback == 1)
             {
+                // Copy so a rollback removes the effect from the targets it was applied to
                 context.Actives.Add(this, new RemoveOnRollbackCommandActiveContext()
                 {
-                    Targets = context.Targets
+                    Targets = new AptitudeTargets(context.Targets)
                 });
             }
 
-            foreach (IAptitudeTarget target in context.Targets)
+            // With PassTargets the effect shares this target list, and its apply chain may change it
+            foreach (IAptitudeTarget target in context.Targets.ToArray())
             {
                 context.Abilities.DoApplyEffect(Params.EffectId, target, effectContext);
             }

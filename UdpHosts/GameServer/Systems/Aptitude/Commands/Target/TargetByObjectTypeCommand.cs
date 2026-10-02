@@ -19,34 +19,16 @@ public class TargetByObjectTypeCommand : Command, ICommand
     // TODO: Handle Params.Tinyobject
     public bool Execute(Context context)
     {
-        var previousTargets = context.Targets;
-        var newTargets = new AptitudeTargets();
-        foreach (IAptitudeTarget target in previousTargets)
-        {
-            if (Params.Character == 1 && target is CharacterEntity)
-            {
-                newTargets.Push(target);
-            }
-            else if (Params.Deployable == 1 && target is DeployableEntity)
-            {
-                newTargets.Push(target);
-            }
-            else if (Params.Vehicle == 1 && target is VehicleEntity)
-            {
-                newTargets.Push(target);
-            }
-        }
+        // As the client (tfTargetByObjectTypeCommand): filters in place
+        context.Targets.RemoveAll(target => !Matches(target));
 
-        context.FormerTargets = previousTargets;
-        context.Targets = newTargets;
+        return Params.FailNoTargets == 0 || context.Targets.Count > 0;
+    }
 
-        if (Params.FailNoTargets == 1 && context.Targets.Count == 0)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
+    private bool Matches(IAptitudeTarget target)
+    {
+        return (Params.Character == 1 && target is CharacterEntity)
+               || (Params.Deployable == 1 && target is DeployableEntity)
+               || (Params.Vehicle == 1 && target is VehicleEntity);
     }
 }

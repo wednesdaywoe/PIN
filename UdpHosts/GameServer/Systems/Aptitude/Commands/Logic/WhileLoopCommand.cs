@@ -30,24 +30,19 @@ public class WhileLoopCommand : Command, ICommand
         uint lap = 0;
         while (lap < MaximumLaps)
         {
-            var conditionResult = conditionChain.Execute(context);
-
+            // A do-while runs the body before checking the condition
             if (Params.DoWhile != 0)
             {
                 bodyChain.Execute(context);
-
-                if (!conditionResult)
-                {
-                    break;
-                }
             }
-            else
-            {
-                if (!conditionResult)
-                {
-                    break;
-                }
 
+            if (!conditionChain.Execute(context))
+            {
+                break;
+            }
+
+            if (Params.DoWhile == 0)
+            {
                 bodyChain.Execute(context);
             }
 

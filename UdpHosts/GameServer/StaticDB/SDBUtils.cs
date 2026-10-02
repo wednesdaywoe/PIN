@@ -576,27 +576,27 @@ public class SDBUtils
         }
     }
 
-    private static sbyte WeaponTemplateModifier(sbyte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
+    internal static sbyte WeaponTemplateModifier(sbyte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
     {
         return (sbyte)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
-    private static byte WeaponTemplateModifier(byte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
+    internal static byte WeaponTemplateModifier(byte baseValue, sbyte? modifierValue, float? multiplierValue = 1)
     {
         return (byte)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
-    private static uint WeaponTemplateModifier(uint baseValue, int? modifierValue, float? multiplierValue = 1)
+    internal static uint WeaponTemplateModifier(uint baseValue, int? modifierValue, float? multiplierValue = 1)
     {
         return (uint)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
-    private static int WeaponTemplateModifier(int baseValue, int? modifierValue, float? multiplierValue = 1)
+    internal static int WeaponTemplateModifier(int baseValue, int? modifierValue, float? multiplierValue = 1)
     {
         return (int)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }
 
-    private static ushort WeaponTemplateModifier(ushort baseValue, short? modifierValue, float? multiplierValue = 1)
+    internal static ushort WeaponTemplateModifier(ushort baseValue, short? modifierValue, float? multiplierValue = 1)
     {
         return (ushort)((baseValue + (modifierValue ?? 0)) * Multiplier(multiplierValue));
     }

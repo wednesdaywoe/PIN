@@ -1,6 +1,7 @@
 using GameServer.StaticDB;
 using GameServer.Systems.Aptitude.Commands.Activation;
 using GameServer.Systems.Aptitude.Commands.Calldown;
+using GameServer.Systems.Aptitude.Commands.Cooldown;
 using GameServer.Systems.Aptitude.Commands.Custom;
 using GameServer.Systems.Aptitude.Commands.Damage;
 using GameServer.Systems.Aptitude.Commands.Deployable;
@@ -34,6 +35,14 @@ public class Factory
         _logger = shard.Logger.ForContext<AbilitySystem>();
     }
 
+    /// <summary>
+    ///     For tests that override <see cref="LoadChain" /> instead of loading from the SDB
+    /// </summary>
+    internal Factory(ILogger logger)
+    {
+        _logger = logger;
+    }
+
     public Effect LoadEffect(uint effectId)
     {
         var statusEffectData = SDBInterface.GetStatusEffectData(effectId);
@@ -65,7 +74,7 @@ public class Factory
         return effect;
     }
 
-    public Chain LoadChain(uint chainId)
+    public virtual Chain LoadChain(uint chainId)
     {
         var chain = new Chain
         {
@@ -113,18 +122,18 @@ public class Factory
                 return new ImpactApplyEffectCommand(SDBInterface.GetImpactApplyEffectCommandDef(commandId));
             case CommandType.InstantActivation:
                 return new InstantActivationCommand(SDBInterface.GetInstantActivationCommandDef(commandId));
-            // case CommandType.TargetFriendlies:
-            //     return new TargetFriendliesCommand(SDBInterface.GetTargetFriendliesCommandDef(commandId));
-            // case CommandType.TargetHostiles:
-            //     return new TargetHostilesCommand(SDBInterface.GetTargetHostilesCommandDef(commandId));
+            case CommandType.TargetFriendlies:
+                return new TargetFriendliesCommand(SDBInterface.GetTargetFriendliesCommandDef(commandId));
+            case CommandType.TargetHostiles:
+                return new TargetHostilesCommand(SDBInterface.GetTargetHostilesCommandDef(commandId));
             case CommandType.TargetPBAE:
                 return new TargetPBAECommand(SDBInterface.GetTargetPBAECommandDef(commandId));
             case CommandType.TargetSelf:
                 return new TargetSelfCommand(SDBInterface.GetTargetSelfCommandDef(commandId));
             // case CommandType.TargetSingle:
             //     return new TargetSingleCommand(SDBInterface.GetTargetSingleCommandDef(commandId));
-            // case CommandType.TimeCooldown:
-            //     return new TimeCooldownCommand(SDBInterface.GetTimeCooldownCommandDef(commandId));
+            case CommandType.TimeCooldown:
+                return new TimeCooldownCommand(SDBInterface.GetTimeCooldownCommandDef(commandId));
             // case CommandType.ImpactAura:
             //     Zero instances in BaseCommandDef
             case CommandType.ImpactRemoveEffect:
@@ -383,8 +392,8 @@ public class Factory
             //     return new BombardmentCommand(SDBInterface.GetBombardmentCommandDef(commandId));
             case CommandType.RequireResource:
                 return new RequireResourceCommand(SDBInterface.GetRequireResourceCommandDef(commandId));
-            // case CommandType.InflictCooldown:
-            //     return new InflictCooldownCommand(SDBInterface.GetInflictCooldownCommandDef(commandId));
+            case CommandType.InflictCooldown:
+                return new InflictCooldownCommand(SDBInterface.GetInflictCooldownCommandDef(commandId));
             case CommandType.RequireMovestate:
                 return new RequireMovestateCommand(SDBInterface.GetRequireMovestateCommandDef(commandId));
             // case CommandType.GrantOwnerItem:
