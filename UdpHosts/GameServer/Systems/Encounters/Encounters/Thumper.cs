@@ -76,12 +76,17 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     ///     tension the event is for.
     ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     Doubled on 2026-10-02 at the tester's request (was 1/0, 2/0, 2/1, 2/1), to try area abilities on
+    ///     bigger groups. That breaks the "never more than two sappers" rule above on purpose: expect the
+    ///     machine to take far more damage and possibly die, and halve these back if thumping itself is under test.
+    /// </remarks>
     private static readonly Wave[] _waves =
     {
-        new(0.20f, Sappers: 1, Escorts: 0),
-        new(0.45f, Sappers: 2, Escorts: 0),
-        new(0.70f, Sappers: 2, Escorts: 1),
-        new(0.90f, Sappers: 2, Escorts: 1),
+        new(0.20f, Sappers: 2, Escorts: 0),
+        new(0.45f, Sappers: 4, Escorts: 0),
+        new(0.70f, Sappers: 4, Escorts: 2),
+        new(0.90f, Sappers: 4, Escorts: 2),
     };
 
     private static readonly uint _updateFrequency = ThumperState.THUMPING.CountdownTime() / 100;
