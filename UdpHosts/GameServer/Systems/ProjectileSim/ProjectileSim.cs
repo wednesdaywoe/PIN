@@ -155,13 +155,7 @@ public class ProjectileSim
 
         foreach (var flight in burst)
         {
-            var position = flight.PositionAt((now - flight.FiredAt) / 1000f);
-            var abilityId = flight.Ammo.AirburstAbilityId != 0 ? flight.Ammo.AirburstAbilityId : flight.Ammo.AbilityId;
-            _logger.Debug("Ability projectile {Ammo} detonated in the air at {Position}, running {AbilityId}", flight.Ammo.Name, position, abilityId);
-            if (abilityId != 0)
-            {
-                _shard.Abilities.HandleActivateAbility(_shard, flight.Shooter, abilityId, _shard.CurrentTime, new AptitudeTargets(), initPosition: position);
-            }
+            Burst(flight, flight.PositionAt((now - flight.FiredAt) / 1000f), "detonated");
         }
 
         return burst.Count;
@@ -184,15 +178,28 @@ public class ProjectileSim
         // Outside the lock: an impact ability can fire another projectile
         foreach (var flight in due)
         {
+            // Reading of the data, not confirmed: a projectile that outlives ConstLifetime bursts where it is. Poison
+            // Ball puts its cooldown in the burst, so one that simply vanished let a shot into the sky be repeated
+            // with no cooldown at all.
             if (flight.Hit == null)
             {
-                _logger.Debug("Ability projectile {Ammo} ran out of flight without landing", flight.Ammo.Name);
+                Burst(flight, flight.PositionAt((flight.EndsAt - flight.FiredAt) / 1000f), "ran out of flight");
                 continue;
             }
 
             // The struck target was chosen at launch. It may have died since; the blast still lands where it was.
             var target = flight.Target is { IsAlive: true } ? flight.Target : null;
             Land(flight.Shooter, flight.Ammo, flight.Damage, flight.Hit, target);
+        }
+    }
+
+    private void Burst(InFlight flight, Vector3 position, string why)
+    {
+        var abilityId = flight.Ammo.AirburstAbilityId != 0 ? flight.Ammo.AirburstAbilityId : flight.Ammo.AbilityId;
+        _logger.Debug("Ability projectile {Ammo} {Why} in the air at {Position}, running {AbilityId}", flight.Ammo.Name, why, position, abilityId);
+        if (abilityId != 0)
+        {
+            _shard.Abilities.HandleActivateAbility(_shard, flight.Shooter, abilityId, _shard.CurrentTime, new AptitudeTargets(), initPosition: position);
         }
     }
 
@@ -223,7 +230,7 @@ public class ProjectileSim
     /// <summary>
     ///     Walks the flight in short straight segments, falling under the ammo's Gravity, and stops at the first
     ///     thing a segment meets. Flight ends at ConstLifetime, or at the hitscan range when the ammo has none.
-    ///     Returns false when nothing was met; <paramref name="seconds"/> is then the whole flight.
+    ///     Returns false when nothing was met; <paramref name="seconds"/> is then the whole flight, and Tick bursts it.
     /// </summary>
     private bool TraceFlight(InFlight flight, out float seconds)
     {

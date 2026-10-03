@@ -1,9 +1,9 @@
-<title>PIN — Throw, then press again (DET-1–DET-3)</title>
+<title>PIN — Throw, then press again (DET-1–DET-4)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Throw, then press again (DET-1–DET-3)</h1>
+    <h1>Throw, then press again (DET-1–DET-4)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -41,7 +41,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">DET-1</span><span class="marker">[ ]</span><span class="entry-t">A plain thrown Poison Ball still lands and poisons</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">DET-1</span><span class="marker pass">[x]</span><span class="entry-t">A plain thrown Poison Ball still lands and poisons</span></div>
       <p>Checks the new flight on the throw that already worked: it should still land where you aimed and poison
       what it lands near, just a fraction of a second later than before.</p>
       <div class="steps"><ol>
@@ -62,7 +62,7 @@
       <li>Fail, <code>lands nowhere</code>: the arc missed the ground under the Fiend. Note where you were standing;
         there are holes in the server's copy of the terrain.</li>
       <li>Fail, an <code>in flight</code> line but no <code>landed</code> line: the landing never ran.</li>
-      </ul><div class="result"><label for="r-det-1">Result</label><textarea data-k="n-det-1" id="r-det-1" placeholder="Poisoned? Flight time and landed lines?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Landed 2026-10-03.</strong> Both plain throws flew (0.70 s and 1.97 s) and ran impact ability 39482 where they landed. Poisoning was not reported. This ball has no second press at all: its 45-second cooldown starts at the throw, as the game data says.</p></div><div class="result"><label for="r-det-1">Result</label><textarea data-k="n-det-1" id="r-det-1" placeholder="Poisoned? Flight time and landed lines?"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="det-2">
@@ -72,7 +72,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">DET-2</span><span class="marker">[ ]</span><span class="entry-t">A second press bursts the ball in mid-air</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">DET-2</span><span class="marker pass">[x]</span><span class="entry-t">A second press bursts the ball in mid-air</span></div>
       <div class="steps"><ol>
       <label class="step"><input data-k="det-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">createitem 86057</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86057 Ability1</code>. The two-press Poison Ball is now on key 1</span></span></label>
       <label class="step"><input data-k="det-2-2" type="checkbox"/><span class="step-body"><span class="lede">Aim well above the horizon, so the ball has a long way to fly, and press 1 twice in quick succession (a double tap). Watch whether the ball bursts in the air</span></span></label>
@@ -92,7 +92,7 @@
         Note the two flight times; the ball may have landed before the second press arrived.</li>
       <li>No <code>DetonateProjectilesCommand</code> line, but two <code>in flight</code> lines: the second press
         came after the half-second window and threw a second ball. Try a faster double tap.</li>
-      </ul><div class="result"><label for="r-det-2">Result</label><textarea data-k="n-det-2" id="r-det-2" placeholder="Burst in the air on screen? Detonated lines?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Server side passed 2026-10-03.</strong> A fast second press burst every ball in the air (3, then 4) and started the 13-second cooldown, and the burst was visible. But balls fired into the sky that were never set off just vanished after 5 seconds without a cooldown, so the key could be spammed forever. Fixed for DET-4.</p></div><div class="result"><label for="r-det-2">Result</label><textarea data-k="n-det-2" id="r-det-2" placeholder="Burst in the air on screen? Detonated lines?"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="det-3">
@@ -122,6 +122,34 @@
       </ul><div class="result"><label for="r-det-3">Result</label><textarea data-k="n-det-3" id="r-det-3" placeholder="Poisoned by a burst? How many Fiends?"></textarea></div></div>
     </div>
   </section>
+  <section class="block" data-open="true" id="det-4">
+    <button class="block-head" type="button">
+      <span class="block-n">DET-4</span>
+      <span class="block-t">A ball that never hits anything bursts at the end of its flight</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DET-4</span><span class="marker">[ ]</span><span class="entry-t">A ball that never hits anything bursts at the end of its flight</span></div>
+      <p>The two-press Poison Ball only starts its cooldown when it explodes. A ball that never hit anything used to
+      vanish without exploding, so no cooldown. Now it bursts in the air when its 5-second flight ends. The game
+      data suggests this but doesn't say it outright.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="det-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers, then <code class="run">~/Games/PIN/start-pin.sh</code>. Log in; Poison Ball 86057 should still be on key 1 (if not: <code class="run">equipitem 86057 Ability1</code>)</span></span></label>
+      <label class="step"><input data-k="det-4-2" type="checkbox"/><span class="step-body"><span class="lede">Aim straight up into the sky and press 1 once. Wait 5 seconds, then try pressing 1 again a few times</span></span></label>
+      <label class="step"><input data-k="det-4-3" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "Ability projectile|DetonateProjectilesCommand|inflicts cooldowns" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: about 5 seconds after the throw the log has <code>[CST] Poison Ball ran out of flight in the air at
+        ...</code> and <code>Ability 41869 inflicts cooldowns: ... category 74 13000 ms</code>. The presses after
+        that are refused until the 13 seconds are up, and the icon shows the cooldown.</li>
+      <li>Note whether the client draws a burst in the sky at the 5-second mark. If it doesn't, the client may
+        expect a ball to fizzle rather than burst.</li>
+      <li>Fail: you can keep throwing balls into the sky with no cooldown, as before.</li>
+      </ul><div class="result"><label for="r-det-4">Result</label><textarea data-k="n-det-4" id="r-det-4" placeholder="Burst in the sky? Cooldown started?"></textarea></div></div>
+    </div>
+  </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-detonate"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-detonate-2"></script>
