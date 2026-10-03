@@ -59,8 +59,10 @@ public class Context
             Abilities = original.Abilities,
             Self = original.Self,
             Initiator = original.Initiator,
-            Targets = original.Targets,
-            FormerTargets = original.FormerTargets,
+            // Copies, not the same lists: each effect applied from one context runs TargetClear/TargetSelf on its own
+            // targets, and sharing them left every effect aimed at whichever target was set up last.
+            Targets = new AptitudeTargets(original.Targets),
+            FormerTargets = new AptitudeTargets(original.FormerTargets),
             Register = original.Register,
             Bonus = original.Bonus,
             InitTime = original.InitTime,

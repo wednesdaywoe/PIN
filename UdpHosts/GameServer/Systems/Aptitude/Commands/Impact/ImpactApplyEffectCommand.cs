@@ -29,14 +29,8 @@ public class ImpactApplyEffectCommand : Command, ICommand
         // Ability 40133. Teleportal Beacon Interact Ability ; player targeted. Add the other beacon to target list, then apply status effect to player, passing the target.
         if (Params.PassTargets == 1)
         {
-            if (Params.UseFormer == 1)
-            {
-                effectContext.Targets = context.FormerTargets;
-            }
-            else
-            {
-                effectContext.Targets = context.Targets;
-            }
+            // A copy, so the rest of this chain changing its targets doesn't change the effect's
+            effectContext.Targets = new AptitudeTargets(Params.UseFormer == 1 ? context.FormerTargets : context.Targets);
         }
 
         if (Params.PassRegister == 1)

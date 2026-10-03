@@ -52,3 +52,22 @@ public class ReplenishableDurationTests
         return _command.Execute(_context);
     }
 }
+
+public class CopyContextTests
+{
+    [Fact]
+    public void Copies_DoNotShareTargetLists()
+    {
+        var original = NewContext();
+        original.Targets.Push(new FakeTarget("a"));
+
+        var first = Context.CopyContext(original);
+        var second = Context.CopyContext(original);
+        first.Targets.Clear();
+        first.Targets.Push(new FakeTarget("b"));
+
+        Assert.Equal("a", Assert.Single(original.Targets).ToString());
+        Assert.Equal("a", Assert.Single(second.Targets).ToString());
+        Assert.Equal("b", Assert.Single(first.Targets).ToString());
+    }
+}
