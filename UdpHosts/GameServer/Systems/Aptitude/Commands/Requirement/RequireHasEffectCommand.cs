@@ -61,10 +61,10 @@ public class RequireHasEffectCommand : Command, ICommand
                 result = true;
             }
         }
-
-        /*
         else
         {
+            // No targets: check Self. The client's check (tfRequireHasEffectCommand) always looks at one entity off the
+            // context, and without this Poison Trail's "not already trailing" check passed every time.
             var target = context.Self;
             foreach (EffectState active in target.GetActiveEffects())
             {
@@ -86,7 +86,6 @@ public class RequireHasEffectCommand : Command, ICommand
                 }
             }
         }
-        */
 
         if (Params.Negate == 1)
         {

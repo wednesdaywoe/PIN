@@ -28,7 +28,9 @@ public class InflictCooldownCommand : Command, ICommand
             return false;
         }
 
-        var now = context.InitTime;
+        // An ability's chain counts from its activation. An effect's chains run later, so a cooldown from one (Poison
+        // Trail's, when its trail ends) counts from now; InitTime there is still the activation.
+        var now = context.ExecutionHint == ExecutionHint.Ability ? context.InitTime : context.Shard.CurrentTime;
         var localDuration = Duration(context, Params.LocalCooldown);
         var categoryDuration = Duration(context, Params.CategoryCooldown);
         var flags = (byte)((Params.PreventReset != 0 ? CooldownSet.PreventResetFlag : 0) | (Params.MainSlot != 0 ? CooldownSet.MainSlotFlag : 0));

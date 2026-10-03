@@ -17,6 +17,9 @@ public class ImpactApplyEffectCommand : Command, ICommand
         Context effectContext = new Context(context.Shard, context.Initiator)
         {
             ExecutionId = context.ExecutionId,
+            // Kept so a cooldown the effect inflicts (Poison Trail's starts when its trail ends) is filed under the
+            // ability; without it the cooldown went to ability 0 and the client never showed it
+            AbilityId = context.AbilityId,
             InitTime = context.InitTime,
             ExecutionHint = ExecutionHint.ApplyEffect
         };
