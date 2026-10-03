@@ -23,6 +23,18 @@ public static class NpcKnockback
     /// <summary>Longest a flight can last, so one that never finds the ground still ends.</summary>
     public const float MaxFlightSeconds = 3f;
 
+    /// <summary>
+    ///     How far above the NPC the ground probe starts. Enough for a slope rising under a moving body; small enough
+    ///     that beside a wall the probe starts below its top, which a 30 m probe did not (a Fiend thrown at a cliff
+    ///     landed on the clifftop).
+    /// </summary>
+    public const float GroundHeadroom = 1f;
+
+    /// <summary>Half a body's width, kept between the NPC's middle and a wall.</summary>
+    public const float BodyRadius = 0.5f;
+
+    private static readonly float[] WallProbeHeights = [0.5f, 1.2f];
+
     public static void Start(CharacterEntity npc, AIState state, Vector3 velocity)
     {
         state.KnockbackVelocity = velocity;
@@ -40,33 +52,73 @@ public static class NpcKnockback
             return false;
         }
 
-        var next = Step(npc.Position, state, elapsedSeconds, shard.Physics.TryGetGroundHeight);
+        var physics = shard.Physics;
+        var next = Step(
+            npc.Position,
+            state,
+            elapsedSeconds,
+            (Vector3 at, out float groundZ) => physics.TryGetGroundBelow(at, GroundHeadroom, out groundZ),
+            physics.TryHitWorld);
         npc.SetPosition(next);
         shard.Physics.UpdateEntity(npc);
         return true;
     }
 
     /// <summary>
-    ///     Where the NPC is after one tick of flight. Ends the flight on landing: on the ground when it is known, and
-    ///     otherwise back at the height it was launched from.
+    ///     Where the NPC is after one tick of flight. It stops short of a wall and drops from there, and lands on the
+    ///     ground under its feet.
     /// </summary>
-    internal static Vector3 Step(Vector3 position, AIState state, float elapsedSeconds, GroundProbe ground)
+    internal static Vector3 Step(Vector3 position, AIState state, float elapsedSeconds, GroundProbe ground, WallProbe wall)
     {
         var velocity = state.KnockbackVelocity;
-        var next = position + (velocity * elapsedSeconds);
+        var move = new Vector3(velocity.X, velocity.Y, 0f) * elapsedSeconds;
+        var moveLength = move.Length();
+
+        if (moveLength > 1e-5f)
+        {
+            // Rays at knee and chest height, reaching a body's width past the step, so it stops with its side
+            // against the wall rather than its middle inside it
+            var heading = move / moveLength;
+            var allowed = moveLength;
+            foreach (var height in WallProbeHeights)
+            {
+                if (wall(position + new Vector3(0f, 0f, height), heading, moveLength + BodyRadius, out var distance))
+                {
+                    allowed = MathF.Min(allowed, MathF.Max(0f, distance - BodyRadius));
+                }
+            }
+
+            if (allowed < moveLength)
+            {
+                move = heading * allowed;
+                velocity.X = 0f;
+                velocity.Y = 0f;
+            }
+        }
+
+        var next = position + move + new Vector3(0f, 0f, velocity.Z * elapsedSeconds);
         velocity.Z -= Gravity * elapsedSeconds;
         state.KnockbackVelocity = velocity;
         state.KnockbackSecondsLeft = MathF.Max(0f, state.KnockbackSecondsLeft - elapsedSeconds);
 
-        var floor = ground(next, out var groundZ) ? groundZ : state.KnockbackLaunchZ;
-        if (velocity.Z < 0f && next.Z <= floor)
+        // Probed from the NPC's own height, not the destination's: a fast drop would otherwise start below a ledge
+        var probeFrom = new Vector3(next.X, next.Y, MathF.Max(next.Z, position.Z));
+        // With no ground found (a hole in the zone's collision) it comes down at its launch height, but never lifted up to it
+        var floor = ground(probeFrom, out var groundZ) ? groundZ : MathF.Min(state.KnockbackLaunchZ, position.Z);
+        if (next.Z <= floor)
         {
+            // Never below the surface, and the flight is over once it comes down onto it
             next.Z = floor;
-            state.KnockbackSecondsLeft = 0f;
+            if (velocity.Z < 0f)
+            {
+                state.KnockbackSecondsLeft = 0f;
+            }
         }
 
         return next;
     }
 
     public delegate bool GroundProbe(Vector3 at, out float groundZ);
+
+    public delegate bool WallProbe(Vector3 origin, Vector3 direction, float maxDistance, out float distance);
 }

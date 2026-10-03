@@ -380,9 +380,19 @@ public partial class PhysicsEngine
     /// </summary>
     public bool TryGetGroundHeight(Vector3 at, out float groundZ)
     {
+        return TryGetGroundBelow(at, GroundProbeHeadroom, out groundZ);
+    }
+
+    /// <summary>
+    ///     <see cref="TryGetGroundHeight"/> with a chosen headroom. Something whose height is known, like a
+    ///     knocked-back NPC, wants the surface under its feet; from 30m up beside a cliff the first surface
+    ///     down is the clifftop.
+    /// </summary>
+    public bool TryGetGroundBelow(Vector3 at, float headroom, out float groundZ)
+    {
         groundZ = at.Z;
 
-        var origin = new Vector3(at.X, at.Y, at.Z + GroundProbeHeadroom);
+        var origin = new Vector3(at.X, at.Y, at.Z + headroom);
         var hitHandler = default(RayHitHandler);
         hitHandler.T = GroundProbeReach;
         hitHandler.StaticsOnly = true;
@@ -396,6 +406,22 @@ public partial class PhysicsEngine
 
         groundZ = origin.Z - hitHandler.T;
         return true;
+    }
+
+    /// <summary>
+    ///     How far along <paramref name="direction"/> (normalised) the world's geometry is, within
+    ///     <paramref name="maxDistance"/>. Characters and other bodies are not in the way.
+    /// </summary>
+    public bool TryHitWorld(Vector3 origin, Vector3 direction, float maxDistance, out float distance)
+    {
+        var hitHandler = default(RayHitHandler);
+        hitHandler.T = maxDistance;
+        hitHandler.StaticsOnly = true;
+
+        Simulation.RayCast(origin, direction, maxDistance, BufferPool, ref hitHandler);
+
+        distance = hitHandler.T;
+        return hitHandler.T < maxDistance;
     }
 
     public (bool, Vector3, ulong) TargetRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, float maxRange = 500f)
