@@ -141,6 +141,7 @@ public class Shard : IShard
         EncounterMan.Tick(deltaTime, currentTime, ct);
         Abilities.Tick(deltaTime, currentTime, ct);
         WeaponSim.Tick(deltaTime, currentTime, ct);
+        ProjectileSim.Tick(deltaTime, currentTime, ct);
         Loot.Tick(deltaTime, currentTime, ct);
         _shieldSim.Tick(deltaTime, currentTime, ct);
         _bleedout.Tick(deltaTime, currentTime, ct);

@@ -276,10 +276,9 @@ public partial class PhysicsEngine
         });
     }
 
-    public ProjectileHitResult? ProjectileRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, uint trace)
+    public ProjectileHitResult? ProjectileRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, uint trace, float maxRange = 500f)
     {
         var speed = 500f;
-        var maxRange = 500f;
 
         // Same guard as TargetRayCast: a shooter whose body has already been removed has no shot to fire.
         if (!_entityIdToBody.TryGetValue(source.EntityId, out var sourceBody))

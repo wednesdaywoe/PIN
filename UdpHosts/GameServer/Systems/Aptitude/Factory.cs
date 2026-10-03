@@ -539,8 +539,8 @@ public class Factory
                 return new LoadRegisterFromItemStatCommand(SDBInterface.GetLoadRegisterFromItemStatCommandDef(commandId));
             // case CommandType.HostilityHack:
             //     return new HostilityHackCommand(CustomDBInterface.GetHostilityHackCommandDef(commandId));
-            // case CommandType.DetonateProjectiles:
-            //     return new DetonateProjectilesCommand(SDBInterface.GetDetonateProjectilesCommandDef(commandId));
+            case CommandType.DetonateProjectiles:
+                return new DetonateProjectilesCommand(SDBInterface.GetDetonateProjectilesCommandDef(commandId));
             // case CommandType.RequireBulletHit:
             //     return new RequireBulletHitCommand(SDBInterface.GetRequireBulletHitCommandDef(commandId));
             // case CommandType.LoadRegisterFromDamage:

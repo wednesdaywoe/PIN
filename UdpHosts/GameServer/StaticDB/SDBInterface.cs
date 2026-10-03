@@ -257,7 +257,7 @@ public class SDBInterface
     private static Dictionary<uint, ForcedMovementDurationCommandDef> _fforcedMovementDurationCommandDef;
     private static Dictionary<uint, FireUiEventCommandDef> _ffireUiEventCommandDef;
     private static Dictionary<uint, UiNamedVariableCommandDef> _uiNamedVariableCommandDef;
-    private static Dictionary<uint, DetonateProjectilesCommandDef> _ddetonateProjectilesCommandDef;
+    private static Dictionary<uint, DetonateProjectilesCommandDef> _detonateProjectilesCommandDef;
     private static Dictionary<uint, SetWeaponDamageTypeCommandDef> _setWeaponDamageTypeCommandDef;
     private static Dictionary<uint, TargetFilterMovestateCommandDef> _targetFilterMovestateCommandDef;
     private static Dictionary<uint, TargetByHostilityCommandDef> _ttargetByHostilityCommandDef;
@@ -529,7 +529,7 @@ public class SDBInterface
         _fforcedMovementDurationCommandDef = loader.LoadForcedMovementDurationCommandDef();
         _ffireUiEventCommandDef = loader.LoadFireUiEventCommandDef();
         _uiNamedVariableCommandDef = loader.LoadUiNamedVariableCommandDef();
-        _ddetonateProjectilesCommandDef = loader.LoadDetonateProjectilesCommandDef();
+        _detonateProjectilesCommandDef = loader.LoadDetonateProjectilesCommandDef();
         _setWeaponDamageTypeCommandDef = loader.LoadSetWeaponDamageTypeCommandDef();
         _targetFilterMovestateCommandDef = loader.LoadTargetFilterMovestateCommandDef();
         _ttargetByHostilityCommandDef = loader.LoadTargetByHostilityCommandDef();
@@ -957,7 +957,7 @@ public class SDBInterface
     public static ForcedMovementDurationCommandDef GetForcedMovementDurationCommandDef(uint id) => _fforcedMovementDurationCommandDef.GetValueOrDefault(id);
     public static FireUiEventCommandDef GetFireUiEventCommandDef(uint id) => _ffireUiEventCommandDef.GetValueOrDefault(id);
     public static UiNamedVariableCommandDef GetUiNamedVariableCommandDef(uint id) => _uiNamedVariableCommandDef.GetValueOrDefault(id);
-    public static DetonateProjectilesCommandDef GetDetonateProjectilesCommandDef(uint id) => _ddetonateProjectilesCommandDef.GetValueOrDefault(id);
+    public static DetonateProjectilesCommandDef GetDetonateProjectilesCommandDef(uint id) => _detonateProjectilesCommandDef.GetValueOrDefault(id);
     public static SetWeaponDamageTypeCommandDef GetSetWeaponDamageTypeCommandDef(uint id) => _setWeaponDamageTypeCommandDef.GetValueOrDefault(id);
     public static TargetFilterMovestateCommandDef GetTargetFilterMovestateCommandDef(uint id) => _targetFilterMovestateCommandDef.GetValueOrDefault(id);
     public static TargetByHostilityCommandDef GetTargetByHostilityCommandDef(uint id) => _ttargetByHostilityCommandDef.GetValueOrDefault(id);
