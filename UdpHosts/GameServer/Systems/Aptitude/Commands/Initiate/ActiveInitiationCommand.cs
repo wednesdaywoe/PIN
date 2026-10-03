@@ -1,46 +1,30 @@
-using System;
-using AeroMessages.GSS.V66.Character;
-using AeroMessages.GSS.V66.Character.Event;
-using GameServer.Entities.Character;
 using GameServer.StaticDB.Records.apt;
 
 namespace GameServer.Systems.Aptitude.Commands.Initiate;
 
-public class ActiveInitiationCommmand : Command, ICommand
+public class ActiveInitiationCommand : Command, ICommand
 {
-    private ActiveInitiationCommandDef Params;
-
-    public ActiveInitiationCommmand(ActiveInitiationCommandDef par)
+    public ActiveInitiationCommand(ActiveInitiationCommandDef par)
     : base(par)
     {
-        Params = par;
     }
 
     public bool Execute(Context context)
     {
-        if (context.Self is CharacterEntity character)
+        // As the client (apt::ActiveInitiationCommand, FUN_00bc0ec0): the first pass marks the context initiated, sets the
+        // activation time to the init time and snapshots the initiator; later passes succeed without touching it.
+        // Not done: the client first asks the context's tfInputState and, while it is unset, returns its third result
+        // (neither success nor failure), which holds a staged or calldown activation until the input arrives. The server
+        // only runs a chain after the client has sent ActivateAbility, by which point that wait is over.
+        // Also not done: the client snapshots aim and velocity alongside the position; nothing here reads them yet.
+        if (context.Initiated)
         {
-            if (character.IsPlayerControlled)
-            {
-                var player = character.Player;
-                var message = new AbilityActivated
-                {
-                    ActivatedAbilityId = context.AbilityId,
-                    ActivatedTime = context.InitTime,
-                    AbilityCooldownsData = new AbilityCooldownsData
-                    {
-                        ActiveCooldowns_Group1 = Array.Empty<ActiveCooldown>(),
-                        ActiveCooldowns_Group2 = Array.Empty<ActiveCooldown>(),
-                        Unk = 0,
-                        GlobalCooldown_Activated_Time = context.InitTime,
-                        GlobalCooldown_ReadyAgain_Time = context.InitTime + 300,
-                    }
-                };
-                Logger.Information("ActivateAbility {ActivatedAbilityId} at {ActivatedTime}", message.ActivatedAbilityId, message.ActivatedTime);
-                player.NetChannels[ChannelType.ReliableGss].SendMessage(message, character.EntityId);
-            }
+            return true;
         }
 
+        context.Initiated = true;
+        context.ActivationTime = context.InitTime;
+        context.InitPosition = context.Initiator.Position;
         return true;
     }
 }

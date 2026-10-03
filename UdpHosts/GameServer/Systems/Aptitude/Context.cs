@@ -36,6 +36,12 @@ public class Context
     public float FormerRegister { get; set; }
     public int Bonus { get; set; }
     public uint InitTime { get; set; }
+
+    /// <summary>
+    ///     Set by the chain's ActiveInitiation, which only initiates once, with the time it did so
+    /// </summary>
+    public bool Initiated { get; set; }
+    public uint ActivationTime { get; set; }
     public Vector3 InitPosition { get; set; }
     public ExecutionHint ExecutionHint { get; set; }
     public Guid ExecutionId { get; set; }
@@ -58,6 +64,8 @@ public class Context
             Register = original.Register,
             Bonus = original.Bonus,
             InitTime = original.InitTime,
+            Initiated = original.Initiated,
+            ActivationTime = original.ActivationTime,
             InitPosition = original.InitPosition,
             ExecutionHint = original.ExecutionHint,
             ExecutionId = original.ExecutionId,

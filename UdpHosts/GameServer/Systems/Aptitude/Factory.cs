@@ -9,6 +9,7 @@ using GameServer.Systems.Aptitude.Commands.Duration;
 using GameServer.Systems.Aptitude.Commands.Effect;
 using GameServer.Systems.Aptitude.Commands.Encounter;
 using GameServer.Systems.Aptitude.Commands.Impact;
+using GameServer.Systems.Aptitude.Commands.Initiate;
 using GameServer.Systems.Aptitude.Commands.Interaction;
 using GameServer.Systems.Aptitude.Commands.Logic;
 using GameServer.Systems.Aptitude.Commands.Modifier;
@@ -116,8 +117,8 @@ public class Factory
         // or have zero instances in SDB (for environment `both`) or BaseCommandDef (for environment `server`)
         switch ((CommandType)commandTypeRec.Id)
         {
-            // case CommandType.ActiveInitiation:
-            //     return new ActiveInitiationCommand();
+            case CommandType.ActiveInitiation:
+                return new ActiveInitiationCommand(SDBInterface.GetActiveInitiationCommandDef(commandId));
             case CommandType.ImpactApplyEffect:
                 return new ImpactApplyEffectCommand(SDBInterface.GetImpactApplyEffectCommandDef(commandId));
             case CommandType.InstantActivation:
