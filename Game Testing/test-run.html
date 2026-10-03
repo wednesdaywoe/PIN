@@ -1,9 +1,9 @@
-<title>PIN — Stuns and roots (STUN-1–STUN-4)</title>
+<title>PIN — Throw, then press again (DET-1–DET-3)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Stuns and roots (STUN-1–STUN-4)</h1>
+    <h1>Throw, then press again (DET-1–DET-3)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -16,96 +16,112 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run finished the cone attacks and knockback; every check passed. The knockback landing fix passed too
-    (CONE-5).</p>
-    <p>This run is stuns and roots. About 1,000 abilities put an effect on a character that forbids things while it
-    lasts: moving, shooting, abilities, melee, or a full knockdown. The server step that does this was empty, so a
-    "stunned" monster carried on walking and shooting. Now the server tracks what each character is forbidden, ends
-    it when the effect ends, and tells clients, which may play the knocked-down animation. A monster that can't move
-    stands still; one that can't shoot holds fire and picks up again afterwards.</p>
-    <p>One deliberate gap: effects your own abilities put on you are left to your client, which already handles them.
-    Some of them never end on the server yet, so applying them there could leave you stuck.</p>
-    <p>The tests use <code>applyeffect</code>, which puts an effect on whatever you have targeted, with two effects
-    straight from the game data:</p>
+    <p>Last run finished stuns and roots; every check passed. The knockdown animation plays, roughly (recorded as
+    CLIENT-5 and left for now).</p>
+    <p>This run is abilities you throw and then press again to set off in mid-air: Poison Ball's two-press version,
+    Shield Wall, Electrical Storm and a few others. The server used to treat anything an ability fired as landing
+    the instant it was thrown, so there was never anything in the air to set off. Now a thrown thing flies: the
+    server works out its arc (including the drop) and holds the landing until the flight time has passed. A second
+    press inside that time bursts it where it is.</p>
+    <p>Every entry uses Poison Ball, because its mid-air burst makes the same poison cloud as its landing. Shield
+    Wall's burst would make a wall, and the server can't spawn that wall yet.</p>
+    <p>One thing from the game data: the second press has to come <strong>within half a second</strong> of the
+    throw. After that, pressing again throws a new ball instead. A ball travels about 40 m in that half second.</p>
+    <p>Two Poison Ball modules are used:</p>
     <ul>
-    <li><strong>2967</strong>: a 3-second knockdown (no moving, shooting or abilities), then half a second getting up.</li>
-    <li><strong>3475</strong>: a 4-second root (no moving, but it can still shoot).</li>
+    <li><strong>86057</strong>: the throw-then-trigger version (ability 41865).</li>
+    <li><strong>77108</strong>: the plain one-press version used in the last poison tests (ability 34943). It doesn't
+    have a second press, but its throw now takes time to land too, so it's the check that nothing broke.</li>
     </ul>
   </section>
-  <section class="block" data-open="true" id="stun-1">
+  <section class="block" data-open="true" id="det-1">
     <button class="block-head" type="button">
-      <span class="block-n">STUN-1</span>
-      <span class="block-t">A knocked-down monster stops moving and shooting, then recovers</span>
+      <span class="block-n">DET-1</span>
+      <span class="block-t">A plain thrown Poison Ball still lands and poisons</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-1</span><span class="marker pass">[x]</span><span class="entry-t">A knocked-down monster stops moving and shooting, then recovers</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="stun-1-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in, and turn on <code class="run">invuln</code> so the fight doesn't end early</span></span></label>
-      <label class="step"><input data-k="stun-1-2" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code> (a Fiend). Back off about 15 m and let it come at you and attack</span></span></label>
-      <label class="step"><input data-k="stun-1-3" type="checkbox"/><span class="step-body"><span class="lede">While it's chasing you: aim at it, <code class="run">target</code>, then <code class="run">applyeffect 2967</code>. Keep moving away. Note whether it stops, whether it stops attacking, whether it plays a knocked-down animation, and roughly how long until it comes after you again</span></span></label>
-      <label class="step"><input data-k="stun-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">DET-1</span><span class="marker">[ ]</span><span class="entry-t">A plain thrown Poison Ball still lands and poisons</span></div>
+      <p>Checks the new flight on the throw that already worked: it should still land where you aimed and poison
+      what it lands near, just a fraction of a second later than before.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="det-1-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in on a Biotech frame (the Recluse), and turn on <code class="run">invuln</code></span></span></label>
+      <label class="step"><input data-k="det-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 77108</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 77108 Ability1</code>. Poison Ball is now on key 1</span></span></label>
+      <label class="step"><input data-k="det-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code> (a Fiend). Back off to about 20 m and throw (press 1 once) so the ball lands at its feet. This ball is slow and drops about 5 m over 20 m, so aim well above the Fiend, the way you would in the real game. Note where the client draws the ball landing</span></span></label>
+      <label class="step"><input data-k="det-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "CombatFlagsCommand|applyeffect" ~/Games/PIN/logs/GameServer.log | tail -20
+      <span class="cmd"><pre><code>grep -aE "Ability projectile|DetonateProjectilesCommand" ~/Games/PIN/logs/GameServer.log | tail -20
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: it stops where it stands and stops attacking for about 3.5 seconds, then chases and attacks again.
-        The log has <code>CombatFlagsCommand 293919 on ... knock_down</code>, then a <code>lifted</code> line about 3
-        seconds later.</li>
-      <li>Whether the knocked-down animation plays is worth noting either way: the server now sends the knockdown
-        bit, but nothing has confirmed the client draws it for a monster.</li>
-      </ul><div class="callout pass"><p><strong>Passed 2026-10-03, except the animation.</strong> The Fiend stopped moving and attacking and recovered. Log: knock_down set 18:37:28, lifted 18:37:31. No knocked-down animation: carried on as STUN-4.</p></div><div class="result"><label for="r-stun-1">Result</label><textarea data-k="n-stun-1" id="r-stun-1" placeholder="Did it stop moving; stop attacking; animation; how long"></textarea></div></div>
+      <li>Pass: the Fiend is poisoned (health ticking down for about 8 seconds). The log has <code>Ability
+        projectile Poison Ball in flight for 0.70s, lands at ...</code> (about 0.7 s at 20 m), then
+        <code>landed at ... running impact ability 39482</code>.</li>
+      <li>The server now drops the ball the way the client draws it. If the ball lands at the Fiend's feet on screen
+        but the Fiend isn't poisoned, the server's arc disagrees with the client's: note it, with the
+        <code>lands at</code> position.</li>
+      <li>Fail, <code>lands nowhere</code>: the arc missed the ground under the Fiend. Note where you were standing;
+        there are holes in the server's copy of the terrain.</li>
+      <li>Fail, an <code>in flight</code> line but no <code>landed</code> line: the landing never ran.</li>
+      </ul><div class="result"><label for="r-det-1">Result</label><textarea data-k="n-det-1" id="r-det-1" placeholder="Poisoned? Flight time and landed lines?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="stun-2">
+  <section class="block" data-open="true" id="det-2">
     <button class="block-head" type="button">
-      <span class="block-n">STUN-2</span>
-      <span class="block-t">A rooted monster stands still but keeps attacking</span>
+      <span class="block-n">DET-2</span>
+      <span class="block-t">A second press bursts the ball in mid-air</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-2</span><span class="marker pass">[x]</span><span class="entry-t">A rooted monster stands still but keeps attacking</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="stun-2-1" type="checkbox"/><span class="step-body"><span class="lede">With the Fiend still targeted and chasing you: <code class="run">applyeffect 3475</code>. Note whether it stops moving but still attacks if you're in reach, and when it moves again</span></span></label>
-      </ol></div>
-      <div class="callout pass"><p>Pass: it holds its ground for about 4 seconds without stopping its attacks, then
-      comes after you. A Fiend's attack is short range, so step into reach to see it still attacking.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Held still about 4 seconds and kept attacking. Log: root 345142 set 18:38:00, lifted 18:38:04.</p></div><div class="result"><label for="r-stun-2">Result</label><textarea data-k="n-stun-2" id="r-stun-2" placeholder="Did it stand still; did it still attack"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="stun-3">
-    <button class="block-head" type="button">
-      <span class="block-n">STUN-3</span>
-      <span class="block-t">Your own abilities still work and never leave you stuck</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-3</span><span class="marker pass">[x]</span><span class="entry-t">Your own abilities still work and never leave you stuck</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="stun-3-1" type="checkbox"/><span class="step-body"><span class="lede">Use your frame's abilities, melee, Healing Wave (key 3, <code class="run">equipitem 79018 Ability3</code> if it's gone) and the use key on something. After each, check you can move, shoot and use abilities as normal</span></span></label>
-      </ol></div>
-      <div class="callout pass"><p>Pass: nothing feels different from before. If you ever get stuck unable to move or
-      shoot, note which ability you'd just used.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Nothing got stuck; the log shows the player's own effects left to the client.</p></div><div class="result"><label for="r-stun-3">Result</label><textarea data-k="n-stun-3" id="r-stun-3" placeholder="Anything that got stuck"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="stun-4">
-    <button class="block-head" type="button">
-      <span class="block-n">STUN-4</span>
-      <span class="block-t">A knocked-down monster is drawn knocked over</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-4</span><span class="marker pass">[x]</span><span class="entry-t">A knocked-down monster is drawn knocked over</span></div><p>The server sent the
-      "knocked down" switch, but the client didn't draw it. Each monster position update also carries a movement
-      state, and until now the server only ever sent "standing" or "running". The list of states includes
-      "Knockdown", so a knocked-down monster now reports that state instead.</p>
+      <div class="entry"><div class="entry-head"><span class="id">DET-2</span><span class="marker">[ ]</span><span class="entry-t">A second press bursts the ball in mid-air</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="stun-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers, then <code class="run">~/Games/PIN/start-pin.sh</code>. <code class="run">invuln</code>, <code class="run">npc 1196</code>, let it chase you, then <code class="run">target</code> it and <code class="run">applyeffect 2967</code>. Watch how it's drawn for the 3 seconds, and as it gets up</span></span></label>
+      <label class="step"><input data-k="det-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">createitem 86057</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86057 Ability1</code>. The two-press Poison Ball is now on key 1</span></span></label>
+      <label class="step"><input data-k="det-2-2" type="checkbox"/><span class="step-body"><span class="lede">Aim well above the horizon, so the ball has a long way to fly, and press 1 twice in quick succession (a double tap). Watch whether the ball bursts in the air</span></span></label>
+      <label class="step"><input data-k="det-2-3" type="checkbox"/><span class="step-body"><span class="lede">Wait for the cooldown, then press 1 once only, aimed the same way, and let it land. This is the comparison</span></span></label>
+      <label class="step"><input data-k="det-2-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
+      <span class="cmd"><pre><code>grep -aE "Ability projectile|DetonateProjectilesCommand" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: it falls or lies down for about 3 seconds, then gets up and chases you.</li>
-      <li>Something odd instead (sliding, a frozen pose, a T-pose, snapping): describe it. It means the client reads
-        the state but this monster has no knockdown animation, or the state needs pairing with something else.</li>
-      <li>No change from last time: the state isn't what the client animates from either.</li>
-      </ul><div class="callout pass"><p><strong>Passed 2026-10-03, rough.</strong> The Fiend falls into the knockdown, gets up after about 3 seconds and chases again. On the way down it flips upside down and its head and torso sink into the ground for a moment, then it snaps into the get-up animation. The knockdown appears to use the client's ragdoll physics, so the roughness is on the client side; one guess is that the reported feet position pins the ragdoll's hips to the ground. Not pursued yet.</p></div><div class="result"><label for="r-stun-4">Result</label><textarea data-k="n-stun-4" id="r-stun-4" placeholder="How it was drawn while knocked down"></textarea></div></div>
+      <li>Pass: after the double tap, the log has <code>DetonateProjectilesCommand 1618825 detonated 1
+        projectile(s) of ammo 1418</code> and <code>Ability projectile [CST] Poison Ball detonated in the air at
+        ...</code>, and that throw has no <code>landed</code> line. The single press afterwards has a
+        <code>landed</code> line and no <code>detonated</code> line.</li>
+      <li>Whether the client draws the burst in mid-air is worth noting either way. The client runs this step itself
+        too, so it may.</li>
+      <li><code>detonated 0 projectile(s)</code>: the second press reached the server but found nothing in flight.
+        Note the two flight times; the ball may have landed before the second press arrived.</li>
+      <li>No <code>DetonateProjectilesCommand</code> line, but two <code>in flight</code> lines: the second press
+        came after the half-second window and threw a second ball. Try a faster double tap.</li>
+      </ul><div class="result"><label for="r-det-2">Result</label><textarea data-k="n-det-2" id="r-det-2" placeholder="Burst in the air on screen? Detonated lines?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="det-3">
+    <button class="block-head" type="button">
+      <span class="block-n">DET-3</span>
+      <span class="block-t">A mid-air burst poisons monsters near it</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DET-3</span><span class="marker">[ ]</span><span class="entry-t">A mid-air burst poisons monsters near it</span></div>
+      <p>This one depends on timing, so it may take a few tries. The burst's poison reaches 4 m, and the ball needs to
+      be close to a Fiend at the moment you press again.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="det-3-1" type="checkbox"/><span class="step-body"><span class="lede">Without moving, run <code class="run">npc 1196</code> three times, so the Fiends stand together. Back off to about 25 m</span></span></label>
+      <label class="step"><input data-k="det-3-2" type="checkbox"/><span class="step-body"><span class="lede">Aim just over their heads, so the ball would fly past them, and double tap 1. The ball reaches 25 m about 0.3 s after the throw. Repeat after each cooldown until one burst lands among them, or after five tries</span></span></label>
+      <label class="step"><input data-k="det-3-3" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "Ability projectile|DetonateProjectilesCommand|10924" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: at least one Fiend is poisoned by a ball that the log shows as <code>detonated in the air</code>,
+        not <code>landed</code>. Effect 10924 is the poison.</li>
+      <li>Every burst too far away to tell: note the burst positions from the log and where the Fiends were. That
+        still shows the burst works; only the aim is unproven.</li>
+      <li>This also rechecks group poisoning, which the last poison run couldn't prove: note how many of the three
+        Fiends one ball poisoned.</li>
+      </ul><div class="result"><label for="r-det-3">Result</label><textarea data-k="n-det-3" id="r-det-3" placeholder="Poisoned by a burst? How many Fiends?"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-knockdown-anim"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-detonate"></script>
