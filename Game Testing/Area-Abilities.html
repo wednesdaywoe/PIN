@@ -1,0 +1,91 @@
+<title>PIN — Area Abilities (AREA-1–AREA-3)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Area Abilities (AREA-1–AREA-3)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>Tests commit <code>205266b</code>, after a report that area abilities only did impact damage. Poison Ball,
+    the chemical grenade and most other fired area abilities keep their area effect in the ammo's
+    <em>impact ability</em>, which the server never ran — the shot only dealt its own direct damage. Now it runs
+    where the shot lands, the area search centres there, the poison damages what it poisoned, and the poison's
+    duration ends instead of lasting for ever.</p>
+    <p><strong>Not fixed, don't test:</strong> Creeping Death (34734) and Poison Trail (40592). Their cloud is a
+    server-only step whose settings never shipped, so the server has nothing to build it from. That needs a
+    design decision, not a fix.</p>
+    <p>Every entry uses Poison Ball, module <code>77108</code> (ability 34943), on a Biotech frame such as the Recluse.
+    The ability reads its radius, damage and duration off the equipped module, so it must be slotted, not run
+    with the admin <code>ability</code> command.</p>
+  </section>
+  <section class="block" data-open="true" id="area-1">
+    <button class="block-head" type="button">
+      <span class="block-n">AREA-1</span>
+      <span class="block-t">Poison Ball poisons every monster in its radius</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">AREA-1</span><span class="marker">[ ]</span><span class="entry-t">Poison Ball poisons every monster in its radius</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="area-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code>~/Games/PIN/start-pin.sh --no-build</code> (already built and installed), and log in on a Biotech frame</span></span></label>
+      <label class="step"><input data-k="area-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code>createitem 77108</code>, then <code>dbg_inventory resend</code>, then <code>equipitem 77108 Ability1</code> — Poison Ball on key <code>1</code></span></span></label>
+      <label class="step"><input data-k="area-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code>, take two steps sideways, <code>npc 1196</code>, two more steps, <code>npc 1196</code> — three Chosen Fiends within a few metres of each other</span></span></label>
+      <label class="step"><input data-k="area-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, aim at the middle Fiend and press <code>1</code>. Watch their health bars for 10 seconds</span></span></label>
+      <label class="step"><input data-k="area-1-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "landed at|LoadRegisterFromItemStatCommand 1083506|SetStatusEffect.*Id 10924|ReplenishableDuration|took [0-9.]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -60
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: one <code>Ability projectile ... landed at ... running impact ability 39482</code>, effect 10924 set on all three
+        Fiends, and each of them taking damage once a second.</li>
+      <li>Fail, a <code>landed</code> line but no 10924: the area search found no one. The <code>LoadRegisterFromItemStatCommand 1083506</code>
+        line shows the radius stat it read; record it. A 0 there means the module's stats didn't reach the loadout.</li>
+      <li>Fail, no <code>landed</code> line: the shot missed everything, or the key isn't Poison Ball. Check the log for
+        <code>Ability 34943 starting</code>.</li>
+      </ul><div class="result"><label for="r-area-1">Result</label><textarea data-k="n-area-1" id="r-area-1" placeholder="Which Fiends were poisoned; damage per tick"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="area-2">
+    <button class="block-head" type="button">
+      <span class="block-n">AREA-2</span>
+      <span class="block-t">The poison ends</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">AREA-2</span><span class="marker">[ ]</span><span class="entry-t">The poison ends</span></div><p>Read off the same run as AREA-1. The duration
+      step was rebuilt from a guess, so this is the entry that checks the guess.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="area-2-1" type="checkbox"/><span class="step-body"><span class="lede">In the AREA-1 grep output, find the <code>ReplenishableDurationCommand ... ended its effect after</code> lines</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: one per poisoned Fiend, each reading 8 to 10 seconds with the same register value, and no damage lines for
+      them after it. A reading of exactly 10 with a register of 0 or NaN means the fallback was used — record it; the
+      poison ended, but not for the data's reason.</p></div><div class="result"><label for="r-area-2">Result</label><textarea data-k="n-area-2" id="r-area-2" placeholder="The ended lines"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="area-3">
+    <button class="block-head" type="button">
+      <span class="block-n">AREA-3</span>
+      <span class="block-t">A shot into the ground still poisons</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">AREA-3</span><span class="marker">[ ]</span><span class="entry-t">A shot into the ground still poisons</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="area-3-1" type="checkbox"/><span class="step-body"><span class="lede">Once the AREA-1 poison has ended and Poison Ball's cooldown is over, aim at the ground about 2 m in front of the Fiends and press <code>1</code></span></span></label>
+      <label class="step"><input data-k="area-3-2" type="checkbox"/><span class="step-body"><span class="lede">Rerun the AREA-1 grep</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: a new <code>landed at</code> line with a position on the ground, and 10924 set on the Fiends within the radius
+      of it. Before this fix a ground hit did nothing at all.</p></div><div class="result"><label for="r-area-3">Result</label><textarea data-k="n-area-3" id="r-area-3" placeholder="Landed position; who was poisoned"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-area-abilities-v1"></script>
