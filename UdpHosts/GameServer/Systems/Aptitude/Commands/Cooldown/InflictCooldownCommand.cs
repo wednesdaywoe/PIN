@@ -50,6 +50,14 @@ public class InflictCooldownCommand : Command, ICommand
             cooldowns.InflictCategory(Params.Category, now, categoryDuration, precool, flags);
         }
 
+        Logger.Information(
+            "Ability {AbilityId} inflicts cooldowns: global {Global} ms, local {Local} ms, category {Category} {CategoryDuration} ms",
+            context.AbilityId,
+            Params.GlobalCooldown,
+            Params.LocalCooldown != 0 ? localDuration : 0,
+            Params.Category,
+            Params.CategoryCooldown != 0 && Params.Category != 0 ? categoryDuration : 0);
+
         if (context.Initiator is CharacterEntity { IsPlayerControlled: true } character)
         {
             character.Player.NetChannels[ChannelType.ReliableGss].SendMessage(new AbilityCooldowns { Data = cooldowns.ToData(now) }, character.EntityId);

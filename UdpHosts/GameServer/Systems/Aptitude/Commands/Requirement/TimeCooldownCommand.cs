@@ -23,8 +23,27 @@ public class TimeCooldownCommand : Command, ICommand
         }
 
         var now = context.InitTime;
-        return (Params.CheckLocal == 0 || cooldowns.IsLocalReady(context.AbilityId, now))
-               && (Params.CheckGlobal == 0 || cooldowns.IsGlobalReady(now))
-               && (Params.CheckCategory == 0 || Params.Category == 0 || cooldowns.IsCategoryReady(Params.Category, now));
+        string blocking = null;
+        uint readyAgain = 0;
+        if (Params.CheckLocal != 0 && !cooldowns.IsLocalReady(context.AbilityId, now))
+        {
+            (blocking, readyAgain) = ("local", cooldowns.Local[context.AbilityId].ReadyAgainTime);
+        }
+        else if (Params.CheckGlobal != 0 && !cooldowns.IsGlobalReady(now))
+        {
+            (blocking, readyAgain) = ("global", cooldowns.GlobalReadyAgainTime);
+        }
+        else if (Params.CheckCategory != 0 && Params.Category != 0 && !cooldowns.IsCategoryReady(Params.Category, now))
+        {
+            (blocking, readyAgain) = ($"category {Params.Category}", cooldowns.Category[Params.Category].ReadyAgainTime);
+        }
+
+        if (blocking == null)
+        {
+            return true;
+        }
+
+        Logger.Information("Ability {AbilityId} refused: {Cooldown} cooldown has {Remaining} ms left", context.AbilityId, blocking, (int)(readyAgain - now));
+        return false;
     }
 }

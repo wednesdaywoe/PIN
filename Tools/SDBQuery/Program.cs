@@ -25,6 +25,7 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
     Console.Error.WriteLine("""
         Usage: SDBQuery [--sdb <clientdb.sd2>] <query> [args]   (or set PIN_SDB)
           chain <chainId>                       Print a chain and the chains it calls
+          ability <abilityId>                   Print an ability's chain and the chains it calls
           ctx <commandId>                       Print the chain a command belongs to
           find <Type> <Property> <value> [text] List <Type>CommandDefs where Property == value, optionally containing text
           after <Type> [depth]                  Most common server-side commands following <Type>
@@ -45,6 +46,11 @@ switch (argList[0])
 {
     case "chain":
         query.DumpChain(uint.Parse(rest[0]), 0, []);
+        break;
+    case "ability":
+        var chainId = SDBInterface.GetAbilityData(uint.Parse(rest[0])).Chain;
+        Console.WriteLine($"Ability {rest[0]}: chain {chainId}");
+        query.DumpChain(chainId, 0, []);
         break;
     case "ctx":
         query.ChainOf(uint.Parse(rest[0]));

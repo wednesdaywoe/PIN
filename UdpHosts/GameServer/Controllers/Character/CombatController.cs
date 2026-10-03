@@ -278,6 +278,10 @@ public class CombatController : Base
             {
                 SendAbilityActivated(character, abilityId, activationTime);
             }
+            else
+            {
+                _logger.Information("Ability {AbilityId} failed its chain, so no AbilityActivated was sent", abilityId);
+            }
         }
     }
 
