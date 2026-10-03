@@ -97,7 +97,11 @@ public class AIEngine
             }
 
             // A stun, root or knockdown from an effect (CombatFlags): rooted holds still, disarmed holds fire
-            if (npc.MovementRestricted)
+            if (npc.KnockedDown)
+            {
+                NpcMovement.KnockDown(npc);
+            }
+            else if (npc.MovementRestricted)
             {
                 NpcMovement.Halt(npc);
             }

@@ -131,6 +131,8 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
     public bool MovementRestricted => (ActiveCombatFlags & (CombatFlagsData.CharacterCombatFlags.restrict_movement | CombatFlagsData.CharacterCombatFlags.knock_down)) != 0;
 
+    public bool KnockedDown => (ActiveCombatFlags & CombatFlagsData.CharacterCombatFlags.knock_down) != 0;
+
     public bool WeaponRestricted => (ActiveCombatFlags & (CombatFlagsData.CharacterCombatFlags.restrict_weapon | CombatFlagsData.CharacterCombatFlags.knock_down)) != 0;
 
     private readonly Dictionary<object, (CombatFlagsData.CharacterCombatFlags Flags, bool ImmuneDeath, bool ImmunePhysics)> _combatFlagSets = new();

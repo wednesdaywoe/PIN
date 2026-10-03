@@ -74,6 +74,12 @@ public static class NpcMovement
     /// <summary>What every character in the server has sat in until now, and still the resting state.</summary>
     private const short StandingState = 0x1000;
 
+    /// <summary>
+    ///     <see cref="Movestate.Knockdown"/> in the high byte. The knock_down combat flag alone didn't draw a monster
+    ///     knocked over; the movement state is what the client animates a character it doesn't control from.
+    /// </summary>
+    private const short KnockdownState = unchecked((short)0xA000);
+
     public static void Tick(IShard shard, CharacterEntity npc, AIState state, float elapsedSeconds, ILogger logger)
     {
         if (!state.HasHome)
@@ -150,6 +156,15 @@ public static class NpcMovement
         if (npc.MovementState != StandingState)
         {
             npc.SetMovementState(StandingState);
+        }
+    }
+
+    /// <summary>Lays an NPC on the ground for as long as an effect knocks it down (CombatFlags KnockDown).</summary>
+    public static void KnockDown(CharacterEntity npc)
+    {
+        if (npc.MovementState != KnockdownState)
+        {
+            npc.SetMovementState(KnockdownState);
         }
     }
 
