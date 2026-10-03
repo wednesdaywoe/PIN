@@ -34,7 +34,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">TRAIL-2</span><span class="marker">[ ]</span><span class="entry-t">The cooldown starts when the trail ends</span></div><div class="steps"><ol>
+      <div class="entry"><div class="entry-head"><span class="id">TRAIL-2</span><span class="marker pass">[x]</span><span class="entry-t">The cooldown starts when the trail ends</span></div><div class="steps"><ol>
       <label class="step"><input data-k="trail-2-0" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in on the Recluse; if Poison Trail isn't on key 2, <code class="run">equipitem 102707 Ability2</code></span></span></label>
       <label class="step"><input data-k="trail-2-1" type="checkbox"/><span class="step-body"><span class="lede">Fire Poison Trail and run. Partway through the 6 seconds, press it again. It should do nothing</span></span></label>
       <label class="step"><input data-k="trail-2-2" type="checkbox"/><span class="step-body"><span class="lede">After the trail ends, watch the ability icon. Note whether it shows a cooldown, and press it again within 15 seconds</span></span></label>
@@ -45,7 +45,7 @@
       <code>ActivateAbility 227</code> per trail and <code>Ability 227 inflicts cooldowns: global 0 ms, local 15000 ms</code>
       about 6 seconds after it, and no <code>Ability 0</code> line. A second trail doesn't start until 15 seconds after that.
       If the icon shows no cooldown but the server refuses, record that: the client may not be told about a
-      cooldown that starts late.</p></div><div class="result"><label for="r-trail-2">Result</label><textarea data-k="n-trail-2" id="r-trail-2" placeholder="Icon behaviour; when the second trail worked"></textarea></div></div>
+      cooldown that starts late.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Icon showed the cooldown. Log: <code>ActivateAbility 227</code> at 12:24:25, <code>local 15000 ms</code> at 12:24:31 as the trail ended, next trail 12:24:46, with no press accepted mid-trail and no <code>Ability 0</code> line.</p></div><div class="result"><label for="r-trail-2">Result</label><textarea data-k="n-trail-2" id="r-trail-2" placeholder="Icon behaviour; when the second trail worked"></textarea></div></div>
     </div>
   </section>
 </div>
