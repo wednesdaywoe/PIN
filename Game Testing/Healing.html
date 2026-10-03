@@ -21,8 +21,9 @@
     was never created, so every heal in the game did nothing on the server. The client only shows a heal as
     combat text; health is the server's to change.</p>
     <p>Every entry uses ability 31217 (<code>SDBQuery ability 31217</code>). It finds everyone within 10 m of you,
-    keeps the friendly ones other than you, and heals each by 300. It also puts a 60-second cooldown on
-    itself, which the server enforces, so wait a minute between uses.</p>
+    keeps the friendly ones other than you, and heals each by 300. It also puts a cooldown on itself,
+    which the server enforces: 60 seconds in the data, scaled by a bonus value the server reads as 0.833, so 50
+    seconds in practice. Whether the client agrees on 50 is unchecked, since the admin path isn't predicted.</p>
     <p>A friendly character can't be shot, so <code>sethealth</code> was added to wound one:
     <code>sethealth 100</code> sets the current target's health (yours with no target), and <code>sethealth</code>
     on its own reports it.</p>
@@ -34,26 +35,28 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">HEAL-1</span><span class="marker">[ ]</span><span class="entry-t">A wounded friendly NPC is healed by 300</span></div><p>The main check.</p>
+      <div class="entry"><div class="entry-head"><span class="id">HEAL-1</span><span class="marker pass">[x]</span><span class="entry-t">A wounded friendly NPC is healed by 300</span></div><p>The main check.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="heal-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code>~/Games/PIN/start-pin.sh --no-build</code> (already built and installed)</span></span></label>
-      <label class="step"><input data-k="heal-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code>npc 290</code> — spawns an Accord Assault, faction 1, friendly to you</span></span></label>
-      <label class="step"><input data-k="heal-1-3" type="checkbox"/><span class="step-body"><span class="lede">Aim at it and <code>target</code>, then <code>sethealth 100</code>. Note the max in the reply, <code>health 100 of &lt;max&gt;</code></span></span></label>
-      <label class="step"><input data-k="heal-1-4" type="checkbox"/><span class="step-body"><span class="lede">Standing within 10 m of it: <code>ability 31217</code></span></span></label>
-      <label class="step"><input data-k="heal-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>sethealth</code> — with the NPC still targeted, reports its health</span></span></label>
-      <label class="step"><input data-k="heal-1-6" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      <label class="step"><input checked data-k="heal-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code>~/Games/PIN/start-pin.sh --no-build</code> (already built and installed)</span></span></label>
+      <label class="step"><input checked data-k="heal-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code>npc 290</code> — spawns an Accord Assault, faction 1, friendly to you</span></span></label>
+      <label class="step"><input checked data-k="heal-1-3" type="checkbox"/><span class="step-body"><span class="lede">Aim at it and <code>target</code>, then <code>sethealth 100</code>. Note the max in the reply, <code>health 100 of &lt;max&gt;</code></span></span></label>
+      <label class="step"><input checked data-k="heal-1-4" type="checkbox"/><span class="step-body"><span class="lede">Standing within 10 m of it: <code>ability 31217</code></span></span></label>
+      <label class="step"><input checked data-k="heal-1-5" type="checkbox"/><span class="step-body"><span class="lede"><code>sethealth</code> — with the NPC still targeted, reports its health</span></span></label>
+      <label class="step"><input checked data-k="heal-1-6" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
       <span class="cmd"><pre><code>grep -aE "HealDamageCommand|31217 (inflicts|refused|failed)|Chain 1356(16|08) Command" ~/Games/PIN/logs/GameServer.log | tail -20
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: step 5 reads <code>health 400 of &lt;max&gt;</code> (or the max, if that's under 400), the NPC's health bar
-        rises, and the log has <code>HealDamageCommand 135607 healed CharacterEntity (...) for 300 of 300</code>.</li>
+      <li>Pass: the log has <code>HealDamageCommand 135607 healed CharacterEntity (...) for 300 of 300</code>, then
+        <code>HealDamageCommand 1365339 ... for 40 of 40</code> repeating for 5 seconds, and step 5 reads 1200 (100 + 300
+        + 20 ticks of 40), or the max if lower. The ability also puts effect 445 on whoever it heals, a 5-second heal
+        over time; this page first expected 400 because it missed that.</li>
       <li>Fail, no <code>healed</code> line and the chain log stops at <code>TargetFriendlies</code>: nobody friendly was
         found within 10 m. Stand closer and repeat after the 60-second cooldown. If it still stops there, the
         NPC isn't being read as friendly; run <code>hostility</code> on it and record the reply.</li>
       <li>Fail, a <code>healed</code> line but the health didn't move: the heal reached the server's health and
         not the NPC's views. Record both.</li>
-      </ul><div class="result"><label for="r-heal-1">Result</label><textarea data-k="n-heal-1" id="r-heal-1" placeholder="sethealth before and after; the healed line"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-02.</strong> NPC 290 spawned with max health 1224, set to 100. <code>ability 31217</code> at 22:56:10 logged <code>healed ... for 300 of 300</code>, effect 445 ran 22:56:10–22:56:15 with 20 ticks of <code>for 40 of 40</code>, and <code>sethealth</code> read <code>1200 of 1224</code>.</p></div><div class="result"><label for="r-heal-1">Result</label><textarea data-k="n-heal-1" id="r-heal-1" placeholder="sethealth before and after; the healed line"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="heal-2">
@@ -63,13 +66,13 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">HEAL-2</span><span class="marker">[ ]</span><span class="entry-t">A heal stops at max health</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="heal-2-1" type="checkbox"/><span class="step-body"><span class="lede">With the NPC targeted: <code>sethealth &lt;max − 100&gt;</code>, using the max from HEAL-1 step 3 (for a max of 2000, <code>sethealth 1900</code>)</span></span></label>
-      <label class="step"><input data-k="heal-2-2" type="checkbox"/><span class="step-body"><span class="lede">At least 60 seconds after HEAL-1: <code>ability 31217</code></span></span></label>
-      <label class="step"><input data-k="heal-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>sethealth</code></span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">HEAL-2</span><span class="marker pass">[x]</span><span class="entry-t">A heal stops at max health</span></div><div class="steps"><ol>
+      <label class="step"><input checked data-k="heal-2-1" type="checkbox"/><span class="step-body"><span class="lede">With the NPC targeted: <code>sethealth &lt;max − 100&gt;</code>, using the max from HEAL-1 step 3 (for a max of 2000, <code>sethealth 1900</code>)</span></span></label>
+      <label class="step"><input checked data-k="heal-2-2" type="checkbox"/><span class="step-body"><span class="lede">At least 60 seconds after HEAL-1: <code>ability 31217</code></span></span></label>
+      <label class="step"><input checked data-k="heal-2-3" type="checkbox"/><span class="step-body"><span class="lede"><code>sethealth</code></span></span></label>
       </ol></div>
       <div class="callout pass"><p>Pass: <code>health &lt;max&gt; of &lt;max&gt;</code>, and the log line reads <code>healed ... for 100 of 300</code>.
-      If the ability seems to do nothing, check the log for <code>31217 refused</code> — the 60-second cooldown hadn't ended.</p></div><div class="result"><label for="r-heal-2">Result</label><textarea data-k="n-heal-2" id="r-heal-2" placeholder="sethealth reply; the healed line"></textarea></div></div>
+      If the ability seems to do nothing, check the log for <code>31217 refused</code> — the 60-second cooldown hadn't ended.</p></div><div class="callout pass"><p><strong>Passed 2026-10-02.</strong> Set to 1000 of 1224; the heal logged <code>for 224 of 300</code> and health read <code>1224 of 1224</code>. A use at full health logged <code>for 0 of 300</code>.</p></div><div class="result"><label for="r-heal-2">Result</label><textarea data-k="n-heal-2" id="r-heal-2" placeholder="sethealth reply; the healed line"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="heal-3">
@@ -79,14 +82,14 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">HEAL-3</span><span class="marker">[ ]</span><span class="entry-t">The ability doesn't heal you</span></div><p>Ability 31217 picks friendlies with
+      <div class="entry"><div class="entry-head"><span class="id">HEAL-3</span><span class="marker pass">[x]</span><span class="entry-t">The ability doesn't heal you</span></div><p>Ability 31217 picks friendlies with
       <code>IncludeSelf=0</code>. Checks that the heal goes only where the targeting says.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="heal-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>clear</code>, then <code>sethealth 500</code> — sets your own health</span></span></label>
-      <label class="step"><input data-k="heal-3-2" type="checkbox"/><span class="step-body"><span class="lede">With the NPC still within 10 m, at least 60 seconds after HEAL-2: <code>ability 31217</code></span></span></label>
-      <label class="step"><input data-k="heal-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>sethealth</code> with no target, then <code>target</code> the NPC and <code>sethealth</code> again</span></span></label>
+      <label class="step"><input checked data-k="heal-3-1" type="checkbox"/><span class="step-body"><span class="lede"><code>clear</code>, then <code>sethealth 500</code> — sets your own health</span></span></label>
+      <label class="step"><input checked data-k="heal-3-2" type="checkbox"/><span class="step-body"><span class="lede">With the NPC still within 10 m, at least 60 seconds after HEAL-2: <code>ability 31217</code></span></span></label>
+      <label class="step"><input checked data-k="heal-3-3" type="checkbox"/><span class="step-body"><span class="lede"><code>sethealth</code> with no target, then <code>target</code> the NPC and <code>sethealth</code> again</span></span></label>
       </ol></div>
-      <div class="callout pass"><p>Pass: your health still reads about 500 (natural regeneration may have added a little, but not 300), and this use logged one <code>healed</code> line, naming the NPC and not you.</p></div><div class="result"><label for="r-heal-3">Result</label><textarea data-k="n-heal-3" id="r-heal-3" placeholder="Your health after; the healed lines"></textarea></div></div>
+      <div class="callout pass"><p>Pass: your health still reads about 500 (natural regeneration may have added a little, but not 300), and this use logged one <code>healed</code> line, naming the NPC and not you.</p></div><div class="callout pass"><p><strong>Passed 2026-10-02.</strong> Your health stayed <code>500 of 1000</code> across the 23:02:42 use, and every <code>healed</code> line named the NPC.</p></div><div class="result"><label for="r-heal-3">Result</label><textarea data-k="n-heal-3" id="r-heal-3" placeholder="Your health after; the healed lines"></textarea></div></div>
     </div>
   </section>
 </div>
