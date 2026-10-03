@@ -49,6 +49,41 @@
     });
   }
 
+  /* ---- inline commands: <code class="run"> copies itself on one click ---- */
+  /* Steps are <label>s around a checkbox, so the click is stopped here or it would also tick the step. */
+
+  function copyRun(el) {
+    copyText(el.textContent).then(function () {
+      el.setAttribute("data-done", "1");
+      toast("Copied: " + el.textContent);
+      setTimeout(function () { el.removeAttribute("data-done"); }, 1100);
+    }).catch(function () {
+      toast("Copy blocked — select the text instead");
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll("code.run"), function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    el.setAttribute("title", "Click to copy");
+  });
+
+  document.addEventListener("click", function (ev) {
+    var el = ev.target.closest("code.run");
+    if (!el) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    copyRun(el);
+  }, true);
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter" && ev.key !== " ") { return; }
+    var el = ev.target.closest && ev.target.closest("code.run");
+    if (!el) { return; }
+    ev.preventDefault();
+    copyRun(el);
+  });
+
   document.addEventListener("click", function (ev) {
     var btn = ev.target.closest(".copy");
     if (!btn) { return; }
