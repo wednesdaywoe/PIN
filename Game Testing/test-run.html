@@ -1,9 +1,9 @@
-<title>PIN — Stuns and roots (STUN-1–STUN-3)</title>
+<title>PIN — Stuns and roots (STUN-1–STUN-4)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Stuns and roots (STUN-1–STUN-3)</h1>
+    <h1>Stuns and roots (STUN-1–STUN-4)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -39,7 +39,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-1</span><span class="marker">[ ]</span><span class="entry-t">A knocked-down monster stops moving and shooting, then recovers</span></div><div class="steps"><ol>
+      <div class="entry"><div class="entry-head"><span class="id">STUN-1</span><span class="marker pass">[x]</span><span class="entry-t">A knocked-down monster stops moving and shooting, then recovers</span></div><div class="steps"><ol>
       <label class="step"><input data-k="stun-1-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in, and turn on <code class="run">invuln</code> so the fight doesn't end early</span></span></label>
       <label class="step"><input data-k="stun-1-2" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code> (a Fiend). Back off about 15 m and let it come at you and attack</span></span></label>
       <label class="step"><input data-k="stun-1-3" type="checkbox"/><span class="step-body"><span class="lede">While it's chasing you: aim at it, <code class="run">target</code>, then <code class="run">applyeffect 2967</code>. Keep moving away. Note whether it stops, whether it stops attacking, whether it plays a knocked-down animation, and roughly how long until it comes after you again</span></span></label>
@@ -53,7 +53,7 @@
         seconds later.</li>
       <li>Whether the knocked-down animation plays is worth noting either way: the server now sends the knockdown
         bit, but nothing has confirmed the client draws it for a monster.</li>
-      </ul><div class="result"><label for="r-stun-1">Result</label><textarea data-k="n-stun-1" id="r-stun-1" placeholder="Did it stop moving; stop attacking; animation; how long"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03, except the animation.</strong> The Fiend stopped moving and attacking and recovered. Log: knock_down set 18:37:28, lifted 18:37:31. No knocked-down animation: carried on as STUN-4.</p></div><div class="result"><label for="r-stun-1">Result</label><textarea data-k="n-stun-1" id="r-stun-1" placeholder="Did it stop moving; stop attacking; animation; how long"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="stun-2">
@@ -63,11 +63,11 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-2</span><span class="marker">[ ]</span><span class="entry-t">A rooted monster stands still but keeps attacking</span></div><div class="steps"><ol>
+      <div class="entry"><div class="entry-head"><span class="id">STUN-2</span><span class="marker pass">[x]</span><span class="entry-t">A rooted monster stands still but keeps attacking</span></div><div class="steps"><ol>
       <label class="step"><input data-k="stun-2-1" type="checkbox"/><span class="step-body"><span class="lede">With the Fiend still targeted and chasing you: <code class="run">applyeffect 3475</code>. Note whether it stops moving but still attacks if you're in reach, and when it moves again</span></span></label>
       </ol></div>
       <div class="callout pass"><p>Pass: it holds its ground for about 4 seconds without stopping its attacks, then
-      comes after you. A Fiend's attack is short range, so step into reach to see it still attacking.</p></div><div class="result"><label for="r-stun-2">Result</label><textarea data-k="n-stun-2" id="r-stun-2" placeholder="Did it stand still; did it still attack"></textarea></div></div>
+      comes after you. A Fiend's attack is short range, so step into reach to see it still attacking.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Held still about 4 seconds and kept attacking. Log: root 345142 set 18:38:00, lifted 18:38:04.</p></div><div class="result"><label for="r-stun-2">Result</label><textarea data-k="n-stun-2" id="r-stun-2" placeholder="Did it stand still; did it still attack"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="stun-3">
@@ -77,13 +77,35 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">STUN-3</span><span class="marker">[ ]</span><span class="entry-t">Your own abilities still work and never leave you stuck</span></div><div class="steps"><ol>
+      <div class="entry"><div class="entry-head"><span class="id">STUN-3</span><span class="marker pass">[x]</span><span class="entry-t">Your own abilities still work and never leave you stuck</span></div><div class="steps"><ol>
       <label class="step"><input data-k="stun-3-1" type="checkbox"/><span class="step-body"><span class="lede">Use your frame's abilities, melee, Healing Wave (key 3, <code class="run">equipitem 79018 Ability3</code> if it's gone) and the use key on something. After each, check you can move, shoot and use abilities as normal</span></span></label>
       </ol></div>
       <div class="callout pass"><p>Pass: nothing feels different from before. If you ever get stuck unable to move or
-      shoot, note which ability you'd just used.</p></div><div class="result"><label for="r-stun-3">Result</label><textarea data-k="n-stun-3" id="r-stun-3" placeholder="Anything that got stuck"></textarea></div></div>
+      shoot, note which ability you'd just used.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Nothing got stuck; the log shows the player's own effects left to the client.</p></div><div class="result"><label for="r-stun-3">Result</label><textarea data-k="n-stun-3" id="r-stun-3" placeholder="Anything that got stuck"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="stun-4">
+    <button class="block-head" type="button">
+      <span class="block-n">STUN-4</span>
+      <span class="block-t">A knocked-down monster is drawn knocked over</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">STUN-4</span><span class="marker">[ ]</span><span class="entry-t">A knocked-down monster is drawn knocked over</span></div><p>The server sent the
+      "knocked down" switch, but the client didn't draw it. Each monster position update also carries a movement
+      state, and until now the server only ever sent "standing" or "running". The list of states includes
+      "Knockdown", so a knocked-down monster now reports that state instead.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="stun-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers, then <code class="run">~/Games/PIN/start-pin.sh</code>. <code class="run">invuln</code>, <code class="run">npc 1196</code>, let it chase you, then <code class="run">target</code> it and <code class="run">applyeffect 2967</code>. Watch how it's drawn for the 3 seconds, and as it gets up</span></span></label>
+      </ol></div>
+      <ul>
+      <li>Pass: it falls or lies down for about 3 seconds, then gets up and chases you.</li>
+      <li>Something odd instead (sliding, a frozen pose, a T-pose, snapping): describe it. It means the client reads
+        the state but this monster has no knockdown animation, or the state needs pairing with something else.</li>
+      <li>No change from last time: the state isn't what the client animates from either.</li>
+      </ul><div class="result"><label for="r-stun-4">Result</label><textarea data-k="n-stun-4" id="r-stun-4" placeholder="How it was drawn while knocked down"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-stuns"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-knockdown-anim"></script>
