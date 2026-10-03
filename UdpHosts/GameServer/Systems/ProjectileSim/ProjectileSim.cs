@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using AeroMessages.GSS.V66;
 using GameServer.Entities.Character;
@@ -87,7 +88,15 @@ public class ProjectileSim
         // No ammo-radius splash here, unlike the weapon path above. An ability's area damage comes from the
         // ammo's impact ability (below) or InflictDamageCommand's own radius, so reading the ammo radius as well
         // would apply a second blast. DATA-21 is about weapons.
-        if (!TryResolveHit(shooter, origin, direction, 0, out var hit, out var target))
+        var resolved = TryResolveHit(shooter, origin, direction, 0, out var hit, out var target);
+
+        // Poison Trail and its kind act while in flight, not on impact
+        if (ammo.PeriodAbilityId != 0 && ammo.PeriodAbilityMs > 0 && ammo.ProjectileSpeed > 0)
+        {
+            RunPeriodAbility(shooter, origin, direction, ammo, resolved ? hit.Position : null);
+        }
+
+        if (!resolved)
         {
             return;
         }
@@ -119,6 +128,36 @@ public class ProjectileSim
     {
     }
     */
+
+    /// <summary>
+    ///     Runs the ammo's period ability where the projectile would have been every PeriodAbilityMs. Projectiles here
+    ///     resolve instantly, so the flight is laid out along the aim line instead: ProjectileSpeed for ConstLifetime,
+    ///     cut short where the shot hit something, each point dropped onto the ground under it. Poison Trail's ammo
+    ///     (1197) does 20 m/s for 1 s every 100 ms, ten clouds 2 m apart. Gravity is ignored; the trail lies flat.
+    /// </summary>
+    private void RunPeriodAbility(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, Vector3? hitPosition)
+    {
+        const float DefaultFlightSeconds = 1f;
+        const int MaxPoints = 30;
+
+        var flight = ammo.ProjectileSpeed * (ammo.ConstLifetime > 0 ? ammo.ConstLifetime / 1000f : DefaultFlightSeconds);
+        var length = hitPosition is { } end ? MathF.Min(Vector3.Distance(origin, end), flight) : flight;
+        var step = ammo.ProjectileSpeed * ammo.PeriodAbilityMs / 1000f;
+
+        var points = 0;
+        for (var distance = step; distance <= length + 0.01f && points < MaxPoints; distance += step, points++)
+        {
+            var point = origin + (direction * distance);
+            if (_shard.Physics.TryGetGroundHeight(point, out var groundZ))
+            {
+                point.Z = groundZ;
+            }
+
+            _shard.Abilities.HandleActivateAbility(_shard, shooter, ammo.PeriodAbilityId, _shard.CurrentTime, new AptitudeTargets(), initPosition: point);
+        }
+
+        _logger.Debug("Ability projectile {Ammo} ran period ability {AbilityId} at {Points} point(s) over {Length:0.0}m", ammo.Name, ammo.PeriodAbilityId, points, length);
+    }
 
     private static DamageResponseFlags ResolveFlags(ProjectileHitResult hit)
     {

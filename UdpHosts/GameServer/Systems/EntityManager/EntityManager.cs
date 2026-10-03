@@ -4,12 +4,14 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using Aero.Gen;
+using AeroMessages.GSS.V66.AreaVisualData;
 using AeroMessages.GSS.V66.Character;
 using AeroMessages.GSS.V66.Character.Event;
 using AeroMessages.GSS.V66.Melding.View;
 using GameServer.Data;
 using GameServer.Entities;
 using GameServer.Entities.AreaVisualData;
+using GameServer.Entities.TinyObject;
 using GameServer.Entities.Carryable;
 using GameServer.Entities.Character;
 using GameServer.Entities.Deployable;
@@ -307,6 +309,70 @@ public class EntityManager
             };
         Add(areaVisualData.EntityId, areaVisualData);
         return areaVisualData;
+    }
+
+    /// <summary>
+    ///     Leaves a tiny object (a poison cloud and the like) at <paramref name="position" /> and starts the status
+    ///     effect its row names. The object itself never reaches clients; its particle effect goes out as an area visual.
+    /// </summary>
+    public TinyObjectEntity SpawnTinyObject(uint typeId, Vector3 position, CharacterEntity owner, uint abilityId)
+    {
+        var row = SDBInterface.GetTinyObject(typeId);
+        if (row == null)
+        {
+            _logger.Warning("No tiny object type {TypeId}", typeId);
+            return null;
+        }
+
+        var tiny = new TinyObjectEntity(_shard, _shard.GetNextGuid(), typeId, owner) { Position = position };
+
+        // Straight into the world without a scope set: the scope pass skips anything it has no set for
+        _shard.Entities.Add(tiny.EntityId, tiny);
+
+        if (row.PfxId != 0)
+        {
+            tiny.Visual = SpawnAreaVisualData(position, new ScopingComponent { Range = 150 });
+            tiny.Visual.AreaVisualData_ParticleEffectsView.ParticleEffects_0Prop = new ParticleEffect
+            {
+                PfxEntityId = tiny.Visual.AeroEntityId,
+                PfxAssetId = row.PfxId,
+                Position = position,
+                Rotation = Quaternion.Identity,
+                Unk9 = 1,
+                Unk10 = 1,
+                Scale = row.Size > 0 ? row.Size : 1f,
+                HaveUnk4 = 0,
+                HaveUnk12 = 0,
+            };
+        }
+
+        _logger.Debug("Spawned tiny object {TypeId} as {EntityId} at {Position}, effect {EffectId}, pfx {PfxId}", typeId, tiny.EntityId, position, row.SpawnStatusfxId, row.PfxId);
+
+        if (row.SpawnStatusfxId != 0)
+        {
+            IAptitudeTarget initiator = (IAptitudeTarget)owner ?? tiny;
+            _shard.Abilities.DoApplyEffect(row.SpawnStatusfxId, tiny, new Context(_shard, initiator)
+            {
+                Self = tiny,
+                AbilityId = abilityId,
+                InitPosition = position,
+                InitTime = _shard.CurrentTime,
+            });
+        }
+
+        return tiny;
+    }
+
+    public void RemoveTinyObject(TinyObjectEntity tiny)
+    {
+        if (tiny.Visual != null)
+        {
+            Remove(tiny.Visual.EntityId);
+            tiny.Visual = null;
+        }
+
+        _shard.Entities.Remove(tiny.EntityId);
+        _logger.Debug("Removed tiny object {TypeId} ({EntityId})", tiny.TypeId, tiny.EntityId);
     }
 
     public OutpostEntity SpawnOutpost(Outpost outpost)

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using GameServer.Entities.Character;
+using GameServer.Entities.TinyObject;
 using GameServer.Enums;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.aptfs;
@@ -31,6 +32,15 @@ public class InflictDamageCommand : Command, ICommand
         // isn't the weapon's doing, so the combat log shouldn't credit one.
         uint weaponId = 0;
         string weaponName = null;
+
+        // A tiny object (a poison cloud) has no weapon. Read as the owner's gun, Creeping Death's cloud would hit
+        // everyone inside for the gun's damage twice a second on top of its own; its real damage is the effect it
+        // applies to each target.
+        if (Params.Weapondamage == 1 && context.Self is TinyObjectEntity)
+        {
+            Logger.Debug("{Command} {CommandId} wants weapon damage from tiny object {Self}, which has no weapon: no damage", nameof(InflictDamageCommand), Params.Id, context.Self);
+            return true;
+        }
 
         if (Params.Weapondamage == 1 || Params.Weapondamagetype == 1 || Params.UseWeaponRadius == 1)
         {
@@ -96,7 +106,10 @@ public class InflictDamageCommand : Command, ICommand
         // carries Splashrange 5, and with splash every poisoned creature also hit each poisoned neighbour, so three
         // stacked Fiends each took three ticks a second. Only the original server knew what that splash was for; its
         // description promises damage over time to the poisoned, nothing more.
-        if (splashRange > 0 && context.ExecutionHint == ExecutionHint.UpdateEffect)
+        // The same goes for damage an effect aims at whoever carries it (TargetSelf, then InflictDamage), which is how
+        // Creeping Death's cloud deals its damage: a 1 m splash there let bunched-up targets hit each other.
+        var effectOnHolder = context.ExecutionHint == ExecutionHint.ApplyEffect && context.Targets.Count == 1 && context.Targets.Contains(context.Self);
+        if (splashRange > 0 && (context.ExecutionHint == ExecutionHint.UpdateEffect || effectOnHolder))
         {
             Logger.Debug("{Command} {CommandId} is an effect tick, ignoring its {Splash}m splash", nameof(InflictDamageCommand), Params.Id, splashRange);
         }

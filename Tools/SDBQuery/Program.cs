@@ -32,8 +32,13 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
           ops                                   Uses of the non-commutative register operands (exponentiate, subtract, divide)
           unimpl                                Command types used by abilities that the Factory does not create, by ability count
           attr <attributeId>...                 Print attribute definitions
+          attrs <text>                          Attribute definitions whose name contains <text>, ignoring case
           using <Type>                          Abilities whose chain (or a chain it calls) runs <Type>, with the steps in order
           ammo <ammoId>                         Print an ammo type and the ability chains it runs
+          item <itemId>...                      Print an item's attribute ranges with their names
+          table <field>                         Print every row of an SDBInterface table, by its field name (e.g. _tinyObject)
+          tinyfor <statId>...                   Tiny objects whose spawn status effect's chains read any of these item stats
+          effect <effectId>                     Print a status effect's chains
           refs <id>                             Every SDB record with a numeric field equal to <id>, other than its own key
         """);
     return 1;
@@ -87,8 +92,42 @@ switch (argList[0])
         }
 
         break;
+    case "item":
+        foreach (var id in rest)
+        {
+            Console.WriteLine($"== item {id}");
+            foreach (var (attributeId, range) in SDBInterface.GetItemAttributeRange(uint.Parse(id)).OrderBy(pair => pair.Key))
+            {
+                var name = SDBInterface.GetAttributeDefinition(attributeId)?.Name?.Trim();
+                Console.WriteLine($"  {attributeId,5} {name,-40} base {range.Base} module {range.ModuleMin}..{range.ModuleMax} per level {range.PerLevel}");
+            }
+        }
+
+        break;
+    case "table":
+        query.DumpTable(rest[0]);
+        break;
+    case "tinyfor":
+        query.TinyFor(rest.Select(uint.Parse).ToHashSet());
+        break;
+    case "effect":
+        var effectData = SDBInterface.GetStatusEffectData(uint.Parse(rest[0]));
+        Console.WriteLine(Query.Describe(effectData));
+        foreach (var (name, effectChain) in new[] { ("Apply", effectData.ApplyChain), ("Update", effectData.UpdateChain), ("Duration", effectData.DurationChain), ("Remove", effectData.RemoveChain) })
+        {
+            if (effectChain != 0)
+            {
+                Console.WriteLine($"-- {name} chain {effectChain}");
+                query.DumpChain(effectChain, 1, []);
+            }
+        }
+
+        break;
     case "refs":
         query.Refs(uint.Parse(rest[0]));
+        break;
+    case "attrs":
+        query.Attrs(string.Join(" ", rest));
         break;
     case "attr":
         foreach (var id in rest)
@@ -242,6 +281,87 @@ internal partial class Query
             foreach (var (_, chain) in NestedChains(def).Concat(EffectChains(def)))
             {
                 Collect(chain, steps, seen, depth + 1);
+            }
+        }
+    }
+
+    public void Attrs(string text)
+    {
+        foreach (var field in _fields.Where(f => f.Key.Contains("attributedefinition", StringComparison.OrdinalIgnoreCase)).Select(f => f.Value))
+        {
+            if (field.GetValue(null) is not IDictionary table)
+            {
+                continue;
+            }
+
+            foreach (var def in table.Values.Cast<object>())
+            {
+                var name = def.GetType().GetProperty("Name")?.GetValue(def) as string;
+                if (name != null && name.Contains(text, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine(Describe(def));
+                }
+            }
+        }
+    }
+
+    public void DumpTable(string field)
+    {
+        var match = _fields.FirstOrDefault(f => f.Key.Equals(field, StringComparison.OrdinalIgnoreCase)).Value;
+        if (match?.GetValue(null) is not IDictionary table)
+        {
+            Console.Error.WriteLine($"No table {field}");
+            return;
+        }
+
+        foreach (var row in table.Values.Cast<object>())
+        {
+            Console.WriteLine(Describe(row));
+        }
+    }
+
+    public void TinyFor(HashSet<uint> stats)
+    {
+        foreach (var tiny in Table<GameServer.StaticDB.Records.dbcharacter.TinyObject>("_tinyobject").OrderBy(t => t.Id))
+        {
+            var effect = SDBInterface.GetStatusEffectData(tiny.SpawnStatusfxId);
+            if (effect == null)
+            {
+                continue;
+            }
+
+            var seen = new HashSet<uint>();
+            var read = new List<uint>();
+            foreach (var chain in new[] { effect.ApplyChain, effect.UpdateChain, effect.DurationChain, effect.RemoveChain })
+            {
+                CollectStats(chain, seen, read, 0);
+            }
+
+            if (read.Any(stats.Contains))
+            {
+                Console.WriteLine($"tiny {tiny.Id} effect {effect.Id} (update every {effect.UpdateFrequency} ms) reads stats {string.Join(",", read.Distinct())}  {Describe(tiny)}");
+            }
+        }
+    }
+
+    private void CollectStats(uint chainId, HashSet<uint> seen, List<uint> read, int depth)
+    {
+        if (chainId == 0 || !seen.Add(chainId) || depth > 6)
+        {
+            return;
+        }
+
+        foreach (var b in Commands(chainId))
+        {
+            var def = Def(TypeName(b), b.Id);
+            if (def?.GetType().GetProperty("Stat")?.GetValue(def) is { } stat)
+            {
+                read.Add(Convert.ToUInt32(stat));
+            }
+
+            foreach (var (_, chain) in NestedChains(def).Concat(EffectChains(def)))
+            {
+                CollectStats(chain, seen, read, depth + 1);
             }
         }
     }

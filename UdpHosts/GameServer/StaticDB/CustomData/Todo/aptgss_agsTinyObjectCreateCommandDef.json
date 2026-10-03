@@ -1453,7 +1453,8 @@
   },
   {
     "id": 1281349,
-    "comment": ""
+    "comment": "Poison Trail period (ability 40593): tiny object 386, effect 13015 reads stats 112 duration, 1588 AOE, 113 damage. Identified 2026-10-03 with SDBQuery tinyfor.",
+    "tiny_object_id": 386
   },
   {
     "id": 1281704,
@@ -2269,7 +2270,8 @@
   },
   {
     "id": 1631446,
-    "comment": ""
+    "comment": "Creeping Death impact (ability 34735): tiny object 387, effect 13042 reads stats 1416 duration, 1112 AOE, 122 damage. Identified 2026-10-03 with SDBQuery tinyfor.",
+    "tiny_object_id": 387
   },
   {
     "id": 1631803,
