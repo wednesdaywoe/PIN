@@ -1,9 +1,9 @@
-<title>PIN — Poison Trail, original form (TRAIL-1–TRAIL-2)</title>
+<title>PIN — Poison Trail cooldown (TRAIL-2)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Poison Trail, original form (TRAIL-1–TRAIL-2)</h1>
+    <h1>Poison Trail cooldown (TRAIL-2)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -16,41 +16,16 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run (commit <code>6ef97ae</code>) both poison clouds worked: Creeping Death's cloud grew and hurt, and
-    Poison Trail module 86058 laid its clouds and set its cooldown. But that module is the version that fires a shot
-    and leaves clouds where it lands, not the Poison Trail you remember.</p>
-    <p>The game data has both. About 100 modules, including 102707, run the original: for 6 seconds you drop a poison
-    cloud at your feet as you move, and the cooldown starts when the 6 seconds end. Its "drop a cloud" step shipped
-    with no settings, like the clouds last time. Commit <code>ac569be</code> fills it in with the Poison Trail cloud
-    from last run (2 m wide, 6 seconds, damage and a slow every half second). It also adds one rule of PIN's own: no new
-    cloud within 2 m of one of yours, so standing still doesn't pile up thirty clouds in one spot.</p>
-    <p>Module 102707 hits harder than 86058: 109 a tick, against 20.</p>
-  </section>
-  <section class="block" data-open="true" id="trail-1">
-    <button class="block-head" type="button">
-      <span class="block-n">TRAIL-1</span>
-      <span class="block-t">Running leaves a trail of clouds that hurt and slow</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">TRAIL-1</span><span class="marker">[ ]</span><span class="entry-t">Running leaves a trail of clouds that hurt and slow</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="trail-1-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers if they're running. Then build, install and start in one go, which plain start does: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in on a Biotech frame such as the Recluse</span></span></label>
-      <label class="step"><input data-k="trail-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 102707</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 102707 Ability2</code></span></span></label>
-      <label class="step"><input data-k="trail-1-3" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
-      <label class="step"><input data-k="trail-1-4" type="checkbox"/><span class="step-body"><span class="lede">Fire Poison Trail and immediately run a loop around and through the Fiends for the 6 seconds. Note whether clouds appear behind you, and whether the Fiends slow down in them</span></span></label>
-      <label class="step"><input data-k="trail-1-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Ability 227 (inflicts|refused)|inflicts cooldowns|Spawned tiny object 386|Removed tiny object 386|took [0-9.]+ damage from Fallback|SetStatusEffect.*Id 14599" ~/Games/PIN/logs/GameServer.log | tail -80
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: a run of <code>Spawned tiny object 386</code> lines over about 6 seconds, at positions that follow your
-        path at least 2 m apart. Fiends inside a cloud take 109 every half second and get effect 14599 (the slow). Each
-        cloud is removed about 6 seconds after it appeared.</li>
-      <li>Fail, no <code>Spawned tiny object 386</code>: record the lines mentioning <code>Ability 227</code> and
-        <code>TinyObjectCreate</code>.</li>
-      <li>Fail, the clouds all sit where you fired: the drop isn't following you. Record the positions.</li>
-      </ul><div class="result"><label for="r-trail-1">Result</label><textarea data-k="n-trail-1" id="r-trail-1" placeholder="How many clouds; did they follow you; damage and slow"></textarea></div></div>
-    </div>
+    <p>Last run (commit <code>ac569be</code>) the original Poison Trail worked: running left a trail of clouds that hurt
+    and slowed. Its cooldown didn't show. The log had three faults, fixed in commit <code>af72715</code>:</p>
+    <ul>
+    <li>The cooldown was filed under ability 0 instead of Poison Trail (227), because effects never remembered which
+      ability made them. The client had no button to show it on.</li>
+    <li>It counted from the button press, not from when the trail ended, so it would have run out 6 seconds early.</li>
+    <li>Pressing again mid-trail was accepted every time. The "not already trailing" check looked at an empty target
+      list instead of at you.</li>
+    </ul>
+    <p>Same module as last run, 102707.</p>
   </section>
   <section class="block" data-open="true" id="trail-2">
     <button class="block-head" type="button">
@@ -60,15 +35,19 @@
     </button>
     <div class="block-body">
       <div class="entry"><div class="entry-head"><span class="id">TRAIL-2</span><span class="marker">[ ]</span><span class="entry-t">The cooldown starts when the trail ends</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="trail-2-1" type="checkbox"/><span class="step-body"><span class="lede">During TRAIL-1, partway through the 6 seconds, press Poison Trail again. It should do nothing</span></span></label>
+      <label class="step"><input data-k="trail-2-0" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in on the Recluse; if Poison Trail isn't on key 2, <code class="run">equipitem 102707 Ability2</code></span></span></label>
+      <label class="step"><input data-k="trail-2-1" type="checkbox"/><span class="step-body"><span class="lede">Fire Poison Trail and run. Partway through the 6 seconds, press it again. It should do nothing</span></span></label>
       <label class="step"><input data-k="trail-2-2" type="checkbox"/><span class="step-body"><span class="lede">After the trail ends, watch the ability icon. Note whether it shows a cooldown, and press it again within 15 seconds</span></span></label>
       </ol></div>
-      <div class="callout pass"><p>Pass: the log from TRAIL-1's command shows <code>inflicts cooldowns: ... local 15000 ms</code> about 6
-      seconds after you fired, not at the moment you fired. A second trail doesn't start until 15 seconds after that.
+      <span class="cmd"><pre><code>grep -aE "Ability (227|0) (inflicts|refused)|ActivateAbility 227" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: the icon shows a 15-second cooldown once the trail ends. The log shows one
+      <code>ActivateAbility 227</code> per trail and <code>Ability 227 inflicts cooldowns: global 0 ms, local 15000 ms</code>
+      about 6 seconds after it, and no <code>Ability 0</code> line. A second trail doesn't start until 15 seconds after that.
       If the icon shows no cooldown but the server refuses, record that: the client may not be told about a
       cooldown that starts late.</p></div><div class="result"><label for="r-trail-2">Result</label><textarea data-k="n-trail-2" id="r-trail-2" placeholder="Icon behaviour; when the second trail worked"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-poison-trail-original"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-poison-trail-cooldown"></script>
