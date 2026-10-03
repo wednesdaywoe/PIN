@@ -1,0 +1,150 @@
+<title>PIN — Ability Cooldowns (COOLDOWN-1–COOLDOWN-4)</title>
+<link rel="stylesheet" href="tests.css">
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">PIN · in-game test queue</div>
+    <h1>Ability Cooldowns (COOLDOWN-1–COOLDOWN-4)</h1>
+    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+  </header>
+  <div class="bar">
+    <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
+    <span class="meter"><i id="meter"></i></span>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="report" class="primary">Copy run report</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
+  <section class="doc">
+    <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
+    <a href="Session-Setup.html">Session Setup</a>.</p>
+    <p>Tests commits <code>d4aba6b</code> (cooldowns) and <code>0083602</code>/<code>b76744e</code> (target commands), merged into
+    <code>arclight</code> as <code>6131602</code>. Until then the server sent every ability a fixed 300 ms global
+    cooldown and never checked one. Now
+    <a href="../UdpHosts/GameServer/Systems/Aptitude/CooldownSet.cs">CooldownSet</a> keeps the client's three kinds — per
+    ability, per category, and global — and the activation reply carries the real ones.</p>
+    <p>Every entry uses Charge, ability 35366, on the Dreadnaught, in ability slot 0 (default button 1). Its chain
+    (<code>SDBQuery ability 35366</code>) is:</p>
+    <ul>
+    <li><code>TimeCooldown</code> checks the local, global and category 67 cooldowns, and fails the use if any is running.</li>
+    <li><code>LoadRegisterFromItemStat</code> reads stat 1051, "Charge Recharge", off the loadout.</li>
+    <li><code>InstantActivation</code> inflicts a 300 ms global cooldown and a category 67 cooldown of
+    1000 ms × Charge Recharge — ×0.9 more with item 85809 equipped.</li>
+    </ul>
+    <p>The Charge Recharge value depends on the whole loadout, so the expected length is read off the log
+    rather than written here. Three log lines were added for this page:</p>
+    <ul>
+    <li><code>Ability 35366 inflicts cooldowns: global 300 ms, local 0 ms, category 67 &lt;N&gt; ms</code> — what the server applied.</li>
+    <li><code>Ability 35366 refused: &lt;which&gt; cooldown has &lt;N&gt; ms left</code> — a use the server turned down.</li>
+    <li><code>Ability 35366 failed its chain, so no AbilityActivated was sent</code> — a key press the server rejected.</li>
+    </ul>
+    <p>Before starting, confirm the running server has them (it should print a number above 0):</p>
+    <span class="cmd"><pre><code>python3 -c "print(open('/home/jiiwii/Games/PIN/GameServer/GameServer.dll','rb').read().count('inflicts cooldowns'.encode('utf-16-le')))"
+    </code></pre><button class="copy" type="button">Copy</button></span>
+  </section>
+  <section class="block" data-open="true" id="cooldown-1">
+    <button class="block-head" type="button">
+      <span class="block-n">COOLDOWN-1</span>
+      <span class="block-t">The cooldown on screen is the length the server applied</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">COOLDOWN-1</span><span class="marker pass">[x]</span><span class="entry-t">The cooldown on screen is the length the server applied</span></div><p>The main check. The client draws the cooldown from the
+      reply the server sends, so a wrong number shows up as a timer that's too short, too long, or missing.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="cooldown-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code>~/Games/PIN/start-pin.sh --no-build</code> (already built and installed)</span></span></label>
+      <label class="step"><input checked data-k="cooldown-1-2" type="checkbox"/><span class="step-body"><span class="lede">Log in on the Dreadnaught with Charge in ability slot 0</span></span></label>
+      <label class="step"><input checked data-k="cooldown-1-3" type="checkbox"/><span class="step-body"><span class="lede">Stand on open ground, press <code>1</code> once, and time the cooldown sweep on Charge's icon until it clears</span></span></label>
+      <label class="step"><input checked data-k="cooldown-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "35366 (inflicts|refused|failed)|ActivateAbility 35366" ~/Games/PIN/logs/GameServer.log | tail -10
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: one <code>inflicts cooldowns</code> line with a category 67 value above 0, one <code>ActivateAbility 35366 at</code>
+        line, and the on-screen sweep within about half a second of the category value.</li>
+      <li>Fail, no sweep at all: the client got no cooldown. If the log shows <code>failed its chain</code>, the chain
+        stopped before <code>InstantActivation</code>; record the line.</li>
+      <li>Fail, category 67 reads <code>0 ms</code>: Charge Recharge read as 0. Run
+        <code>grep -a "LoadRegisterFromItemStat" ~/Games/PIN/logs/GameServer.log | tail -3</code> and record it.</li>
+      <li>Fail, the sweep is a different length from the log: record both numbers.</li>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-02.</strong> Every press logged <code>global 300 ms, local 0 ms, category 67 13500 ms</code> — Charge Recharge read as 13.5 on this loadout — and the sweep on screen matched.</p></div><div class="result"><label for="r-cooldown-1">Result</label><textarea data-k="n-cooldown-1" id="r-cooldown-1" placeholder="Sweep length on screen, the inflicts line"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cooldown-2">
+    <button class="block-head" type="button">
+      <span class="block-n">COOLDOWN-2</span>
+      <span class="block-t">The server refuses a use while the cooldown runs</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">COOLDOWN-2</span><span class="marker pass">[x]</span><span class="entry-t">The server refuses a use while the cooldown runs</span></div><p>The client checks cooldowns itself and won't
+      send a press while the icon is sweeping, so a key press can't test the server's check. The admin
+      <code>ability</code> command runs the chain on the server directly, which can.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="cooldown-2-1" type="checkbox"/><span class="step-body"><span class="lede">Wait for Charge's icon to be clear</span></span></label>
+      <label class="step"><input checked data-k="cooldown-2-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code>ability 35366</code></span></span></label>
+      <label class="step"><input checked data-k="cooldown-2-3" type="checkbox"/><span class="step-body"><span class="lede">Straight away, before the cooldown ends: <code>ability 35366</code> again</span></span></label>
+      <label class="step"><input checked data-k="cooldown-2-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "35366 (inflicts|refused)" ~/Games/PIN/logs/GameServer.log | tail -4
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: an <code>inflicts cooldowns</code> line, then <code>refused: category 67 cooldown has &lt;N&gt; ms left</code> with N
+        positive and below the category length. Only the first use charges.</li>
+      <li>Fail: two <code>inflicts</code> lines and no <code>refused</code> — the second command came after the cooldown ended,
+        or the check isn't running. Repeat with the second command typed faster; if it still passes through,
+        record both lines.</li>
+      </ul>
+      <p>Also note whether the icon sweeps after step 2. The admin path sends a cooldown update but no
+      activation reply, so a missing sweep here is worth recording but is not a failure.</p><div class="callout pass"><p><strong>Passed 2026-10-02.</strong> <code>ability 35366</code> at 20:31:13 inflicted the cooldown; the second at 20:31:16 logged <code>refused: category 67 cooldown has 10117 ms left</code>.</p></div><div class="result"><label for="r-cooldown-2">Result</label><textarea data-k="n-cooldown-2" id="r-cooldown-2" placeholder="The two log lines; did the icon sweep after step 2"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cooldown-3">
+    <button class="block-head" type="button">
+      <span class="block-n">COOLDOWN-3</span>
+      <span class="block-t">Charge works again once the cooldown ends</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">COOLDOWN-3</span><span class="marker pass">[x]</span><span class="entry-t">Charge works again once the cooldown ends</span></div><p>Guards against a cooldown that never clears, from a
+      timestamp compared the wrong way. The gaps straddle 65 seconds because a 16-bit clock wraps there.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="cooldown-3-1" type="checkbox"/><span class="step-body"><span class="lede">Press <code>1</code> as soon as the icon clears</span></span></label>
+      <label class="step"><input checked data-k="cooldown-3-2" type="checkbox"/><span class="step-body"><span class="lede">Wait about 70 seconds, press <code>1</code></span></span></label>
+      <label class="step"><input checked data-k="cooldown-3-3" type="checkbox"/><span class="step-body"><span class="lede">Wait about 5 seconds after the icon clears, press <code>1</code></span></span></label>
+      <label class="step"><input checked data-k="cooldown-3-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "35366 (inflicts|refused|failed)" ~/Games/PIN/logs/GameServer.log | tail -6
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: Charge fires all three times, three new <code>inflicts</code> lines, no <code>refused</code> or
+      <code>failed</code> lines from these presses.</p></div><div class="callout pass"><p><strong>Passed 2026-10-02.</strong> Eight presses between 20:29:52 and 20:34:17, at gaps from 14 s to 94 s, each logged a fresh <code>inflicts</code> line and none was refused or failed.</p></div><div class="result"><label for="r-cooldown-3">Result</label><textarea data-k="n-cooldown-3" id="r-cooldown-3" placeholder="Did all three fire"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cooldown-4">
+    <button class="block-head" type="button">
+      <span class="block-n">COOLDOWN-4</span>
+      <span class="block-t">Charge still finds its targets after the target-command rewrite</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">COOLDOWN-4</span><span class="marker pass">[x]</span><span class="entry-t">Charge still finds its targets after the target-command rewrite</span></div><p>The same merge rewrote how abilities pick and
+      filter targets. A smoke check, not a full sweep: Charge's opening effect lands on yourself, and its
+      impact on what it hits.</p>
+      <div class="steps"><ol>
+      <label class="step"><input checked data-k="cooldown-4-1" type="checkbox"/><span class="step-body"><span class="lede"><code>npc 1196</code> — spawns a Chosen Fiend at your feet; back off about 10m</span></span></label>
+      <label class="step"><input checked data-k="cooldown-4-2" type="checkbox"/><span class="step-body"><span class="lede">Face it and press <code>1</code> to charge into it</span></span></label>
+      <label class="step"><input checked data-k="cooldown-4-3" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "Id 15252|Id 15216|Pushing new target" ~/Games/PIN/logs/GameServer.log | tail -12
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: effect 15252 (windup) is applied to you, then effect 15216 (impact) is applied to you and its chain
+        logs <code>Pushing new target</code> with the Fiend's entity id.</li>
+      <li>Fail, 15252 missing: <code>TargetSelf</code> broke. Fail, 15216 lands on you instead of the Fiend, or on
+        nothing: the impact's target list broke. Record the lines either way.</li>
+      </ul>
+      <p>Charge's impact was never confirmed on a monster before this merge, so a miss here may be old. If it
+      fails, rerun on <code>git checkout 4c3f3be</code> before blaming the rewrite.</p><div class="callout pass"><p><strong>Passed 2026-10-02, with the expected lines corrected.</strong> 15252 landed on the player at 20:34:17. 15216 lands on the player too, not the Fiend; its chain then logged <code>Pushing new target: CharacterEntity (2305613035190081536)</code>, the Fiend, at 20:34:18. That is the impact finding its target.</p></div><div class="result"><label for="r-cooldown-4">Result</label><textarea data-k="n-cooldown-4" id="r-cooldown-4" placeholder="Effect lines and who they landed on"></textarea></div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="tests.js" data-ls="pin-cooldowns-v1"></script>
