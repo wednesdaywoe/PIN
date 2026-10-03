@@ -1,9 +1,9 @@
-<title>PIN — Knockback against walls (CONE-4)</title>
+<title>PIN — Knockback landings (CONE-4–CONE-5)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Knockback against walls (CONE-4)</h1>
+    <h1>Knockback landings (CONE-4–CONE-5)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -32,7 +32,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CONE-4</span><span class="marker">[ ]</span><span class="entry-t">A monster thrown at a wall or object stops against it</span></div><div class="steps"><ol>
+      <div class="entry"><div class="entry-head"><span class="id">CONE-4</span><span class="marker pass">[x]</span><span class="entry-t">A monster thrown at a wall or object stops against it</span></div><div class="steps"><ol>
       <label class="step"><input data-k="cone-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in; if Healing Wave isn't on key 3, <code class="run">equipitem 79018 Ability3</code></span></span></label>
       <label class="step"><input data-k="cone-4-2" type="checkbox"/><span class="step-body"><span class="lede">Stand so a steep wall or cliff is a few metres behind a Fiend (<code class="run">npc 1196</code>), and throw it into the wall with Healing Wave. Repeat against an object such as a rock, crate or building, after the 30-second recharge</span></span></label>
       <label class="step"><input data-k="cone-4-3" type="checkbox"/><span class="step-body"><span class="lede">If a Fiend ends up inside anything, aim at that object and run <code class="run">probe</code>. Note what the reply says the ray hit</span></span></label>
@@ -46,9 +46,34 @@
         has no collision on the server. That's the known gap, not this fix.</li>
       <li>Still inside, and <code>probe</code> says it hit the object: the wall check is missing it. Record roughly how
         tall the object is; the checks are at 0.5 m and 1.2 m up.</li>
-      </ul><div class="result"><label for="r-cone-4">Result</label><textarea data-k="n-cone-4" id="r-cone-4" placeholder="Wall: where it ended up. Object: where it ended up; probe reply"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Fiends stopped against walls and rocks; none ended up inside geometry or on a wall top. Against some surfaces one sank into the ground for a moment and popped back up: carried on as CONE-5.</p></div><div class="result"><label for="r-cone-4">Result</label><textarea data-k="n-cone-4" id="r-cone-4" placeholder="Wall: where it ended up. Object: where it ended up; probe reply"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cone-5">
+    <button class="block-head" type="button">
+      <span class="block-n">CONE-5</span>
+      <span class="block-t">A landing monster doesn't sink and pop back up</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CONE-5</span><span class="marker">[ ]</span><span class="entry-t">A landing monster doesn't sink and pop back up</span></div><p>Two possible causes.
+      Your client may keep a falling monster falling past the last position it was sent, until the monster walks
+      again; the landing position is now sent three times so the client sees it stop. Or the server may disagree
+      with itself about the ground: landing looks from 1 m above the monster, walking from 30 m above, so under a
+      leaning rock walking would lift it onto the rock. Each landing now logs both heights.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="cone-5-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers, then <code class="run">~/Games/PIN/start-pin.sh</code>. Throw a Fiend (<code class="run">npc 1196</code>) against the kind of surface where it sank last time, a few times. Note roughly when it sank</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "knocked back|landed at" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: no sinking.</li>
+      <li>Still sinks: the <code>landed at</code> lines decide which cause. If the Z in the position and the
+        <code>walking would stand it at Z</code> figure differ, the server disagrees with itself; if they match,
+        it's the client's smoothing.</li>
+      </ul><div class="result"><label for="r-cone-5">Result</label><textarea data-k="n-cone-5" id="r-cone-5" placeholder="Did it sink; against what"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-knockback-walls"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-knockback-landing"></script>
