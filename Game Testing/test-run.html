@@ -94,18 +94,18 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">AREA-4</span><span class="marker">[ ]</span><span class="entry-t">A group takes one poison tick each, not three</span></div><p>The fix for what AREA-1 found.</p>
+      <div class="entry"><div class="entry-head"><span class="id">AREA-4</span><span class="marker pass">[x]</span><span class="entry-t">A group takes one poison tick each, not three</span></div><p>The fix for what AREA-1 found.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="area-4-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (after the shared-target fix is installed). Log in, Poison Ball still on key <code>1</code></span></span></label>
-      <label class="step"><input data-k="area-4-2" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
-      <label class="step"><input data-k="area-4-3" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, fire Poison Ball at them, and stop shooting. Watch their health for 8 seconds</span></span></label>
-      <label class="step"><input data-k="area-4-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      <label class="step"><input checked data-k="area-4-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (after the shared-target fix is installed). Log in, Poison Ball still on key <code>1</code></span></span></label>
+      <label class="step"><input checked data-k="area-4-2" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
+      <label class="step"><input checked data-k="area-4-3" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, fire Poison Ball at them, and stop shooting. Watch their health for 8 seconds</span></span></label>
+      <label class="step"><input checked data-k="area-4-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
       <span class="cmd"><pre><code>grep -aE "landed at|took 114 damage from|ignoring its|ended its effect" ~/Games/PIN/logs/GameServer.log | tail -40
       </code></pre><button class="copy" type="button">Copy</button></span>
       <div class="callout pass"><p>Pass: each Fiend's health drops by 114 once a second (about 8 lines each, about 1100 health over the 8 seconds, so
       none of them dies from a 2000-health start), with <code>effect tick, ignoring its 5m splash</code> lines alongside.
-      Fail: health still drops 342 a second; record the lines.</p></div><div class="callout"><p><strong>First run 2026-10-03 10:13, failed — and found the real bug.</strong> All three Fiends got the poison, but all three ticks landed on one Fiend (2234378803562665472), 342 a second. Each poison was set up on a copy of the ability's state that <em>shared</em> one target list with the others, so the last Fiend set up was every poison's target. The earlier "tripling" was this plus the splash spreading it back out. Fixed in the next commit (each copy gets its own lists); run this entry again on that build.</p></div><div class="result"><label for="r-area-4">Result</label><textarea data-k="n-area-4" id="r-area-4" placeholder="Health per second per Fiend"></textarea></div></div>
+      Fail: health still drops 342 a second; record the lines.</p></div><div class="callout"><p><strong>First run 2026-10-03 10:13, failed — and found the real bug.</strong> All three Fiends got the poison, but all three ticks landed on one Fiend (2234378803562665472), 342 a second. Each poison was set up on a copy of the ability's state that <em>shared</em> one target list with the others, so the last Fiend set up was every poison's target. The earlier "tripling" was this plus the splash spreading it back out. Fixed in the next commit (each copy gets its own lists); run this entry again on that build.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03 on f58c7cd.</strong> Three Fiends spawned together; three Poison Balls at 10:17:45, 10:17:59 and 10:18:12. Each shot poisoned all three, each Fiend took one 114 tick a second (2011 → 1099 over the first 8 s), and each poison ended at 8 s. The third shot's ticks finished them.</p></div><div class="result"><label for="r-area-4">Result</label><textarea data-k="n-area-4" id="r-area-4" placeholder="Health per second per Fiend"></textarea></div></div>
     </div>
   </section>
 </div>
