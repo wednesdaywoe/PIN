@@ -41,6 +41,12 @@ public class ForcePushCommand : Command, ICommand
                 continue;
             }
 
+            if (character.ImmunePhysics)
+            {
+                Logger.Debug("{Command} {CommandId} doesn't move {Target}, which an effect makes immune to physics", nameof(ForcePushCommand), Params.Id, character);
+                continue;
+            }
+
             var velocity = Launch(source, character.Position, strength, Params.Loft);
 
             if (character.IsPlayerControlled)

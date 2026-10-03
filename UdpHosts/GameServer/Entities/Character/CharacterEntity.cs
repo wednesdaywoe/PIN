@@ -115,6 +115,26 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     ///     but PIN doesn't model damage responses yet, so this sits in front of them all.
     /// </summary>
     public bool Invulnerable { get; set; }
+
+    /// <summary>
+    ///     What the effects on this character currently forbid or protect against, combined from every
+    ///     CombatFlags step still in force (<see cref="AddCombatFlags"/>). The client enforces these for its own
+    ///     character; for an NPC it is the server's AI that has to hold still and cease fire.
+    /// </summary>
+    public CombatFlagsData.CharacterCombatFlags ActiveCombatFlags { get; private set; }
+
+    /// <summary>Lethal damage leaves 1 health while an effect sets ImmuneDeath. Server-only: the wire has no bit for it.</summary>
+    public bool ImmuneDeath { get; private set; }
+
+    /// <summary>Pushes don't move this character while an effect sets ImmunePhysics. Server-only, like <see cref="ImmuneDeath"/>.</summary>
+    public bool ImmunePhysics { get; private set; }
+
+    public bool MovementRestricted => (ActiveCombatFlags & (CombatFlagsData.CharacterCombatFlags.restrict_movement | CombatFlagsData.CharacterCombatFlags.knock_down)) != 0;
+
+    public bool WeaponRestricted => (ActiveCombatFlags & (CombatFlagsData.CharacterCombatFlags.restrict_weapon | CombatFlagsData.CharacterCombatFlags.knock_down)) != 0;
+
+    private readonly Dictionary<object, (CombatFlagsData.CharacterCombatFlags Flags, bool ImmuneDeath, bool ImmunePhysics)> _combatFlagSets = new();
+
     public short TimeSinceLastJump { get; set; }
     public bool IsAirborne { get; set; }
 
@@ -1427,8 +1447,48 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
     public void SetCombatFlags(CombatFlagsData value)
     {
-        Character_CombatController.CombatFlagsProp = value;
+        // An NPC has no controller, only the view everyone sees
+        Character_CombatController?.CombatFlagsProp = value;
         Character_CombatView.CombatFlagsProp = value;
+    }
+
+    /// <summary>
+    ///     Puts one effect's combat flags in force until <see cref="RemoveCombatFlags"/> with the same key. Several
+    ///     effects can hold the same flag; it stays until the last of them ends.
+    /// </summary>
+    public void AddCombatFlags(object key, CombatFlagsData.CharacterCombatFlags flags, bool immuneDeath, bool immunePhysics)
+    {
+        _combatFlagSets[key] = (flags, immuneDeath, immunePhysics);
+        RecomputeCombatFlags();
+    }
+
+    public void RemoveCombatFlags(object key)
+    {
+        if (_combatFlagSets.Remove(key))
+        {
+            RecomputeCombatFlags();
+        }
+    }
+
+    private void RecomputeCombatFlags()
+    {
+        CombatFlagsData.CharacterCombatFlags flags = 0;
+        var immuneDeath = false;
+        var immunePhysics = false;
+        foreach (var set in _combatFlagSets.Values)
+        {
+            flags |= set.Flags;
+            immuneDeath |= set.ImmuneDeath;
+            immunePhysics |= set.ImmunePhysics;
+        }
+
+        ImmuneDeath = immuneDeath;
+        ImmunePhysics = immunePhysics;
+        if (flags != ActiveCombatFlags)
+        {
+            ActiveCombatFlags = flags;
+            SetCombatFlags(new CombatFlagsData { Value = flags, Time = Shard.CurrentTime });
+        }
     }
 
     public void EquipItemByGUID(int loadoutId, LoadoutSlotType slot, ulong guid)
@@ -1696,7 +1756,15 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         if (amount > absorbed)
         {
-            SetCurrentHealth(CurrentHealth - (amount - absorbed));
+            var health = CurrentHealth - (amount - absorbed);
+
+            // ImmuneDeath: a hit that would kill leaves the character on its last point instead
+            if (ImmuneDeath && health < 1)
+            {
+                health = Math.Min(CurrentHealth, 1);
+            }
+
+            SetCurrentHealth(health);
         }
 
         // Landing a hit restarts the recharge wait whether the shield took any of it or not

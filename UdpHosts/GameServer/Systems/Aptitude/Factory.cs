@@ -20,6 +20,7 @@ using GameServer.Systems.Aptitude.Commands.Other;
 using GameServer.Systems.Aptitude.Commands.Register;
 using GameServer.Systems.Aptitude.Commands.Requirement;
 using GameServer.Systems.Aptitude.Commands.Self;
+using GameServer.Systems.Aptitude.Commands.SetFlags;
 using GameServer.Systems.Aptitude.Commands.Target;
 using GameServer.Systems.Aptitude.Commands.TinyObject;
 using Serilog;
@@ -204,8 +205,8 @@ public class Factory
             //     return new UpdateYieldCommand(SDBInterface.GetUpdateYieldCommandDef(commandId));
             case CommandType.AirborneDuration:
                 return new AirborneDurationCommand(SDBInterface.GetAirborneDurationCommandDef(commandId));
-            // case CommandType.CombatFlags:
-            //     return new CombatFlagsCommand(SDBInterface.GetCombatFlagsCommandDef(commandId));
+            case CommandType.CombatFlags:
+                return new CombatFlagsCommand(SDBInterface.GetCombatFlagsCommandDef(commandId));
             // case CommandType.RequestEffect:
             //     Zero instances in BaseCommandDef
             case CommandType.RequireCState:

@@ -96,8 +96,24 @@ public class AIEngine
                 continue;
             }
 
-            NpcMovement.Tick(_shard, npc, state, elapsedSeconds, _logger);
-            NpcCombat.Tick(_shard, npc, state, currentTime, _logger);
+            // A stun, root or knockdown from an effect (CombatFlags): rooted holds still, disarmed holds fire
+            if (npc.MovementRestricted)
+            {
+                NpcMovement.Halt(npc);
+            }
+            else
+            {
+                NpcMovement.Tick(_shard, npc, state, elapsedSeconds, _logger);
+            }
+
+            if (npc.WeaponRestricted)
+            {
+                NpcCombat.CeaseFire(npc, state, currentTime);
+            }
+            else
+            {
+                NpcCombat.Tick(_shard, npc, state, currentTime, _logger);
+            }
 
             // Last, so one pose carries both where the NPC ended up and which way it turned to shoot.
             // Nothing else replicates an NPC's movement: the movement view is not flushed to scoped

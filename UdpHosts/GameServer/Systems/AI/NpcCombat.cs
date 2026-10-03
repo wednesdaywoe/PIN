@@ -72,6 +72,15 @@ public static class NpcCombat
     ///     Drops everything an NPC was doing. Called for one that has died: the tick loop skips the dead,
     ///     so without this a monster killed mid-burst leaves a corpse the client still believes is firing.
     /// </summary>
+    /// <summary>
+    ///     Stops shooting without giving up the target, for an NPC an effect has disarmed or stunned. It picks up
+    ///     where it left off once the effect ends.
+    /// </summary>
+    public static void CeaseFire(CharacterEntity npc, AIState state, ulong now)
+    {
+        StopFiring(npc, state, now);
+    }
+
     public static void Disengage(CharacterEntity npc, AIState state, ulong now)
     {
         StopFiring(npc, state, now);
