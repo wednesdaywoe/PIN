@@ -674,7 +674,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Client & Environment — CLIENT
 
-[Full detail](gaps/client.md) — 3 of 4 closed
+[Full detail](gaps/client.md) — 3 of 5 closed
 
 - [~] **CLIENT-1** — World-entry freeze traced to a lost wakeup in Wine's fsync path; closed via
   `PROTON_NO_FSYNC=1 PROTON_NO_ESYNC=1`, confirmed over 4 sessions, not yet proven un-recurring
@@ -704,6 +704,11 @@ has no entries in that category, which reflects nothing having run rather than n
   live on `ON_INVENTORY_CHANGED`, with the client's own tooltip on hover. Verified on screen
   2026-08-21, including a thumper payout of 21 Iron Ore appearing without reopening the window.
   **The first time in PIN that the melded resources have been visible to a player at all**
+
+- [ ] **CLIENT-5** — A knocked-down monster falls, lies and gets up (movement state `Knockdown`,
+  2026-10-03), but the fall is rough: it flips upside down and its head and torso sink into the
+  ground before snapping into the get-up. Client-side ragdoll; two untested fixes in the detail
+  (send `KnockdownFalling` first; raise the reported position). Accepted for now
 
 ---
 

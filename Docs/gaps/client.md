@@ -205,3 +205,23 @@ and the server log carried the evidence. But CRAFT3 chooses a resource economy a
 recipes against it, and a player cannot manage materials they cannot see — a thumper payout the
 inventory won't show is a loop with its middle missing. Settle it before CRAFT4, and treat the
 answer as a constraint on the CRAFT3 decision rather than a bug to fix afterwards.
+
+### CLIENT-5 — A knocked-down monster's fall is drawn rough [ ] open, accepted for now
+
+Found 2026-10-03 on STUN-4. Since c3f7a235 a monster under an effect with the KnockDown combat flag reports the
+`Knockdown` movement state (0xA000) in its pose, and the client does play a knockdown: the Fiend falls, lies for
+the effect's 3 seconds, gets up and carries on. The fall is rough. On the way down it flips upside down and its
+head and torso sink into the ground for a moment, then it snaps into the get-up animation.
+
+The knockdown appears to run on the client's Havok ragdoll (the exe carries `$(FULL_BODY)|KnockDown|KnockDown_Loop`,
+`animationFromRagdoll` and a ragdoll driver), so the motion happens client-side and the server never sees it.
+Two untested ideas:
+
+- **Fall first.** Send `KnockdownFalling` (0xB000) for a moment before `Knockdown`, in case the client expects a
+  fall into the pose rather than a jump straight to it. The more promising of the two.
+- **Raise the reported position.** The pose keeps reporting the monster's feet; if the client pins the ragdoll's
+  hips to that point, the torso would sink. Report it somewhat higher while knocked down.
+
+Retail likely paired most knockdowns with a knockback, so the body flew and landed rather than folding where it
+stood; `applyeffect 2967` on its own has no push. Left as is by choice: the knockdown works, and the time is better
+spent on unbuilt ability steps.
