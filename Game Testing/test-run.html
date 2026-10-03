@@ -1,9 +1,9 @@
-<title>PIN — Poison Trail cooldown (TRAIL-2)</title>
+<title>PIN — Cone attacks (CONE-1–CONE-3)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Poison Trail cooldown (TRAIL-2)</h1>
+    <h1>Cone attacks (CONE-1–CONE-3)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -16,38 +16,82 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run (commit <code>ac569be</code>) the original Poison Trail worked: running left a trail of clouds that hurt
-    and slowed. Its cooldown didn't show. The log had three faults, fixed in commit <code>af72715</code>:</p>
-    <ul>
-    <li>The cooldown was filed under ability 0 instead of Poison Trail (227), because effects never remembered which
-      ability made them. The client had no button to show it on.</li>
-    <li>It counted from the button press, not from when the trail ended, so it would have run out 6 seconds early.</li>
-    <li>Pressing again mid-trail was accepted every time. The "not already trailing" check looked at an empty target
-      list instead of at you.</li>
-    </ul>
-    <p>Same module as last run, 102707.</p>
+    <p>About 350 abilities pick their targets as "everyone in a cone in front of you": melee strikes, Healing Wave,
+    Thermal Wave, monster sweeps, and the use key's reach check. The server step that does this was empty, so every one
+    of them found nobody. This commit builds it from the client's own version. The shape is a cone along your aim,
+    starting at shoulder height. Some abilities use a tube that widens instead.</p>
+    <p>The test ability is Healing Wave, module 79018. It fits any frame. It fires a 15 m cone, 45° wide (22.5° either
+    side of your aim). Friendlies inside are healed 300; enemies inside take 300 and are knocked back. Its recharge is
+    30 seconds.</p>
   </section>
-  <section class="block" data-open="true" id="trail-2">
+  <section class="block" data-open="true" id="cone-1">
     <button class="block-head" type="button">
-      <span class="block-n">TRAIL-2</span>
-      <span class="block-t">The cooldown starts when the trail ends</span>
+      <span class="block-n">CONE-1</span>
+      <span class="block-t">Healing Wave heals a friendly in front of you, not one behind</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">TRAIL-2</span><span class="marker pass">[x]</span><span class="entry-t">The cooldown starts when the trail ends</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="trail-2-0" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in on the Recluse; if Poison Trail isn't on key 2, <code class="run">equipitem 102707 Ability2</code></span></span></label>
-      <label class="step"><input data-k="trail-2-1" type="checkbox"/><span class="step-body"><span class="lede">Fire Poison Trail and run. Partway through the 6 seconds, press it again. It should do nothing</span></span></label>
-      <label class="step"><input data-k="trail-2-2" type="checkbox"/><span class="step-body"><span class="lede">After the trail ends, watch the ability icon. Note whether it shows a cooldown, and press it again within 15 seconds</span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">CONE-1</span><span class="marker">[ ]</span><span class="entry-t">Healing Wave heals a friendly in front of you, not one behind</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cone-1-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers if they're running. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in on any frame</span></span></label>
+      <label class="step"><input data-k="cone-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 79018</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 79018 Ability3</code></span></span></label>
+      <label class="step"><input data-k="cone-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 290</code> (a friendly Accord Assault). Aim at it and <code class="run">target</code>, then <code class="run">sethealth 100</code></span></span></label>
+      <label class="step"><input data-k="cone-1-4" type="checkbox"/><span class="step-body"><span class="lede">Stand about 5 m from it and turn your back on it. Fire Healing Wave (key 3). Then <code class="run">sethealth</code>: it should still read 100</span></span></label>
+      <label class="step"><input data-k="cone-1-5" type="checkbox"/><span class="step-body"><span class="lede">Wait out the 30-second recharge. Face the NPC from about 8 m and fire Healing Wave again. Then <code class="run">sethealth</code></span></span></label>
+      <label class="step"><input data-k="cone-1-6" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Ability (227|0) (inflicts|refused)|ActivateAbility 227" ~/Games/PIN/logs/GameServer.log | tail -20
+      <span class="cmd"><pre><code>grep -aE "ActivateAbility 31366|31366 (inflicts|refused)|TargetConeAECommand 16189(51|42)|HealDamageCommand 1618946" ~/Games/PIN/logs/GameServer.log | tail -20
       </code></pre><button class="copy" type="button">Copy</button></span>
-      <div class="callout pass"><p>Pass: the icon shows a 15-second cooldown once the trail ends. The log shows one
-      <code>ActivateAbility 227</code> per trail and <code>Ability 227 inflicts cooldowns: global 0 ms, local 15000 ms</code>
-      about 6 seconds after it, and no <code>Ability 0</code> line. A second trail doesn't start until 15 seconds after that.
-      If the icon shows no cooldown but the server refuses, record that: the client may not be told about a
-      cooldown that starts late.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Icon showed the cooldown. Log: <code>ActivateAbility 227</code> at 12:24:25, <code>local 15000 ms</code> at 12:24:31 as the trail ended, next trail 12:24:46, with no press accepted mid-trail and no <code>Ability 0</code> line.</p></div><div class="result"><label for="r-trail-2">Result</label><textarea data-k="n-trail-2" id="r-trail-2" placeholder="Icon behaviour; when the second trail worked"></textarea></div></div>
+      <ul>
+      <li>Pass: step 4 reads 100 and step 5 reads 400. The log has two <code>ActivateAbility 31366</code> lines. Each
+        is followed by <code>TargetConeAECommand 1618951 cone 15m, radius 0 to 6.2m ... hits</code>. The second one is
+        followed by <code>HealDamageCommand 1618946 healed ... for 300</code>.</li>
+      <li>Fail, the cone line reads <code>cone 0m</code>: the module's range stat wasn't read. Record the line.</li>
+      <li>Fail, the NPC behind you was healed: the cone is pointing the wrong way. Record both cone lines; they show
+        where it started and which way it pointed.</li>
+      <li>Fail, the NPC in front wasn't healed: record the cone lines and the NPC's distance.</li>
+      </ul><div class="result"><label for="r-cone-1">Result</label><textarea data-k="n-cone-1" id="r-cone-1" placeholder="sethealth after each wave; the cone lines"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cone-2">
+    <button class="block-head" type="button">
+      <span class="block-n">CONE-2</span>
+      <span class="block-t">Healing Wave hits and knocks back an enemy in front of you</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CONE-2</span><span class="marker">[ ]</span><span class="entry-t">Healing Wave hits and knocks back an enemy in front of you</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cone-2-1" type="checkbox"/><span class="step-body"><span class="lede">Walk away from the friendly NPC. <code class="run">npc 1196</code> (a Fiend)</span></span></label>
+      <label class="step"><input data-k="cone-2-2" type="checkbox"/><span class="step-body"><span class="lede">Once the recharge is over, face the Fiend from within 10 m and fire Healing Wave. Note whether it's thrown back</span></span></label>
+      <label class="step"><input data-k="cone-2-3" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "ActivateAbility 31366|TargetConeAECommand 16189(51|42)|took [0-9.]+ damage from|ForcePush" ~/Games/PIN/logs/GameServer.log | tail -20
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: the Fiend is thrown back. The log has <code>TargetConeAECommand 1618942 ... 1 hits</code> and the Fiend
+        taking 300 damage.</li>
+      <li>Fail, damage but no knockback: the cone works and the push doesn't. Record any <code>ForcePush</code> lines;
+        that's a separate step.</li>
+      </ul><div class="result"><label for="r-cone-2">Result</label><textarea data-k="n-cone-2" id="r-cone-2" placeholder="Damage taken; was it knocked back"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cone-3">
+    <button class="block-head" type="button">
+      <span class="block-n">CONE-3</span>
+      <span class="block-t">The use key still works</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CONE-3</span><span class="marker">[ ]</span><span class="entry-t">The use key still works</span></div><p>The use key
+      (ability 187) also checks with a cone that what you're using is still within reach while you hold it. Until now
+      that cone found nothing and a 3 m bubble around you did all the work. The cone only adds reach, so nothing should
+      change, but this checks it.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="cone-3-1" type="checkbox"/><span class="step-body"><span class="lede">Use something with the use key that you normally use, such as a vendor or terminal. Note whether it works as it did before</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: it works as before. If it cancels partway or doesn't start, record what you
+      were using and roughly when.</p></div><div class="result"><label for="r-cone-3">Result</label><textarea data-k="n-cone-3" id="r-cone-3" placeholder="What you used; did it work"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-poison-trail-cooldown"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-cones"></script>
