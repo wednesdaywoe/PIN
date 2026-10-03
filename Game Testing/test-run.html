@@ -1,10 +1,10 @@
-<title>PIN — Area Abilities (AREA-1–AREA-4)</title>
+<title>PIN — Poison Clouds (CLOUD-1–CLOUD-3)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Area Abilities (AREA-1–AREA-4)</h1>
-    <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
+    <h1>Poison Clouds (CLOUD-1–CLOUD-3)</h1>
+    <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
     <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
@@ -17,97 +17,86 @@
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history
     and in the older pages linked from the <a href="index.html">index</a>. Setup, admin commands and the monster type
     id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Tests commit <code>205266b</code>, after a report that area abilities only did impact damage. Poison Ball,
-    the chemical grenade and most other fired area abilities keep their area effect in the ammo's
-    <em>impact ability</em>, which the server never ran — the shot only dealt its own direct damage. Now it runs
-    where the shot lands, the area search centres there, the poison damages what it poisoned, and the poison's
-    duration ends instead of lasting for ever.</p>
-    <p><strong>Not fixed, don't test:</strong> Creeping Death (34734) and Poison Trail (40592). Their cloud is a
-    server-only step whose settings never shipped, so the server has nothing to build it from. That needs a
-    design decision, not a fix.</p>
-    <p>Every entry uses Poison Ball, module <code>77108</code> (ability 34943), on a Biotech frame such as the Recluse.
-    The ability reads its radius, damage and duration off the equipped module, so it must be slotted, not run
-    with the admin <code>ability</code> command.</p>
+    <p>Tests commit <code>042b218</code>. Creeping Death and Poison Trail leave a cloud — a "tiny object" — that the
+    server never made, because the step that creates it shipped with no settings. The cloud's own behaviour did ship,
+    as a status effect on the tiny object, so the server now creates the object and runs that effect:</p>
+    <ul>
+    <li><strong>Creeping Death</strong> (tiny object 387): a cloud where the shot lands that grows from 2 m to about
+      6 m over its 4 seconds, hitting each enemy inside for the module's damage about once a second.</li>
+    <li><strong>Poison Trail</strong> (tiny object 386): ten clouds 2 m apart along the shot's path, each lasting 6
+      seconds, hitting enemies inside twice a second and slowing them for 5 seconds.</li>
+    </ul>
+    <p>Run on a Biotech frame such as the Recluse. The modules below were picked for readable numbers: Creeping Death
+    86064 does 120 a hit, Poison Trail 86058 does 20.</p>
   </section>
-  <section class="block" data-open="true" id="area-1">
+  <section class="block" data-open="true" id="cloud-1">
     <button class="block-head" type="button">
-      <span class="block-n">AREA-1</span>
-      <span class="block-t">Poison Ball poisons every monster in its radius</span>
+      <span class="block-n">CLOUD-1</span>
+      <span class="block-t">Creeping Death leaves a cloud that hurts enemies inside</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">AREA-1</span><span class="marker pass">[x]</span><span class="entry-t">Poison Ball poisons every monster in its radius</span></div><div class="steps"><ol>
-      <label class="step"><input checked data-k="area-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (already built and installed), and log in on a Biotech frame</span></span></label>
-      <label class="step"><input checked data-k="area-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 77108</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 77108 Ability1</code> — Poison Ball on key <code>1</code></span></span></label>
-      <label class="step"><input checked data-k="area-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code>, take two steps sideways, <code class="run">npc 1196</code>, two more steps, <code class="run">npc 1196</code> — three Chosen Fiends within a few metres of each other</span></span></label>
-      <label class="step"><input checked data-k="area-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, aim at the middle Fiend and press <code>1</code>. Watch their health bars for 10 seconds</span></span></label>
-      <label class="step"><input checked data-k="area-1-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">CLOUD-1</span><span class="marker">[ ]</span><span class="entry-t">Creeping Death leaves a cloud that hurts enemies inside</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cloud-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (already built and installed), and log in on a Biotech frame</span></span></label>
+      <label class="step"><input data-k="cloud-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 86064</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86064 Ability1</code> — Creeping Death on key <code>1</code></span></span></label>
+      <label class="step"><input data-k="cloud-1-3" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
+      <label class="step"><input data-k="cloud-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, aim at the ground just in front of the Fiends and press <code>1</code> once. Watch for 6 seconds without shooting</span></span></label>
+      <label class="step"><input data-k="cloud-1-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "landed at|LoadRegisterFromItemStatCommand 1083506|SetStatusEffect.*Id 10924|ReplenishableDuration|took [0-9.]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -60
+      <span class="cmd"><pre><code>grep -aE "landed at|Spawned tiny object|Removed tiny object|no weapon|took [0-9.]+ damage from Fallback" ~/Games/PIN/logs/GameServer.log | tail -40
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: one <code>Ability projectile ... landed at ... running impact ability 39482</code>, effect 10924 set on all three
-        Fiends, and each of them taking damage once a second.</li>
-      <li>Fail, a <code>landed</code> line but no 10924: the area search found no one. The <code>LoadRegisterFromItemStatCommand 1083506</code>
-        line shows the radius stat it read; record it. A 0 there means the module's stats didn't reach the loadout.</li>
-      <li>Fail, no <code>landed</code> line: the shot missed everything, or the key isn't Poison Ball. Check the log for
-        <code>Ability 34943 starting</code>.</li>
-      </ul><div class="callout pass"><p><strong>Passed 2026-10-03, and found a bug.</strong> Three Fiends spawned together at 10:05; one shot at 10:05:41 poisoned all three. But each took <strong>three</strong> ticks of 114 a second, not one, and all three died together. The poison's tick carries a 5 m splash, so each poisoned Fiend also hit its two poisoned neighbours. Fixed in the next commit: an effect's tick no longer splashes. Rechecked as AREA-4.</p></div><div class="result"><label for="r-area-1">Result</label><textarea data-k="n-area-1" id="r-area-1" placeholder="Which Fiends were poisoned; damage per tick"></textarea></div></div>
+      <li>Pass: <code>Spawned tiny object 387 ... effect 13042, pfx 433770</code>, then each Fiend taking 120 about once a second,
+        then <code>Removed tiny object 387</code> about 4 seconds after it spawned, and no 120s after that.</li>
+      <li>Fail, the tiny object spawned but no one took damage: the cloud's search found no one, possibly because it
+        starts small. Repeat with the shot landing right at their feet and record the lines.</li>
+      <li>Fail, no <code>Spawned tiny object</code>: record the <code>landed at</code> line and anything mentioning
+        <code>TinyObjectCreate</code>.</li>
+      </ul><div class="result"><label for="r-cloud-1">Result</label><textarea data-k="n-cloud-1" id="r-cloud-1" placeholder="Damage per Fiend per second; when the cloud went"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="area-2">
+  <section class="block" data-open="true" id="cloud-2">
     <button class="block-head" type="button">
-      <span class="block-n">AREA-2</span>
-      <span class="block-t">The poison ends</span>
+      <span class="block-n">CLOUD-2</span>
+      <span class="block-t">Poison Trail lays a line of clouds that hurt and slow</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">AREA-2</span><span class="marker pass">[x]</span><span class="entry-t">The poison ends</span></div><p>Read off the same run as AREA-1. The duration
-      step was rebuilt from a guess, so this is the entry that checks the guess.</p>
-      <div class="steps"><ol>
-      <label class="step"><input checked data-k="area-2-1" type="checkbox"/><span class="step-body"><span class="lede">In the AREA-1 grep output, find the <code>ReplenishableDurationCommand ... ended its effect after</code> lines</span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">CLOUD-2</span><span class="marker">[ ]</span><span class="entry-t">Poison Trail lays a line of clouds that hurt and slow</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cloud-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">createitem 86058</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86058 Ability2</code> — Poison Trail on key <code>2</code></span></span></label>
+      <label class="step"><input data-k="cloud-2-2" type="checkbox"/><span class="step-body"><span class="lede">If the CLOUD-1 Fiends are dead, <code class="run">npc 1196</code> three times again without moving</span></span></label>
+      <label class="step"><input data-k="cloud-2-3" type="checkbox"/><span class="step-body"><span class="lede">From about 10 m away, aim at the ground just in front of the Fiends and press <code>2</code> once. Watch how fast they walk for the next few seconds</span></span></label>
+      <label class="step"><input data-k="cloud-2-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
-      <div class="callout pass"><p>Pass: one per poisoned Fiend, each reading 8 to 10 seconds with the same register value, and no damage lines for
-      them after it. A reading of exactly 10 with a register of 0 or NaN means the fallback was used — record it; the
-      poison ended, but not for the data's reason.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Six poisons, each <code>ended its effect after 8 s (register 8)</code>: the module's own duration stat, not the fallback, and no damage after it.</p></div><div class="result"><label for="r-area-2">Result</label><textarea data-k="n-area-2" id="r-area-2" placeholder="The ended lines"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="area-3">
-    <button class="block-head" type="button">
-      <span class="block-n">AREA-3</span>
-      <span class="block-t">A shot into the ground still poisons</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">AREA-3</span><span class="marker pass">[x]</span><span class="entry-t">A shot into the ground still poisons</span></div><div class="steps"><ol>
-      <label class="step"><input checked data-k="area-3-1" type="checkbox"/><span class="step-body"><span class="lede">Once the AREA-1 poison has ended and Poison Ball's cooldown is over, aim at the ground about 2 m in front of the Fiends and press <code>1</code></span></span></label>
-      <label class="step"><input checked data-k="area-3-2" type="checkbox"/><span class="step-body"><span class="lede">Rerun the AREA-1 grep</span></span></label>
-      </ol></div>
-      <div class="callout pass"><p>Pass: a new <code>landed at</code> line with a position on the ground, and 10924 set on the Fiends within the radius
-      of it. Before this fix a ground hit did nothing at all.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> At 10:01:48 a shot landed on the ground at (-374.8, 744.1), 2.7 m from the Fiend, with no direct hit, and still poisoned it for 8 seconds.</p></div><div class="result"><label for="r-area-3">Result</label><textarea data-k="n-area-3" id="r-area-3" placeholder="Landed position; who was poisoned"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="area-4">
-    <button class="block-head" type="button">
-      <span class="block-n">AREA-4</span>
-      <span class="block-t">A group takes one poison tick each, not three</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">AREA-4</span><span class="marker pass">[x]</span><span class="entry-t">A group takes one poison tick each, not three</span></div><p>The fix for what AREA-1 found.</p>
-      <div class="steps"><ol>
-      <label class="step"><input checked data-k="area-4-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (after the shared-target fix is installed). Log in, Poison Ball still on key <code>1</code></span></span></label>
-      <label class="step"><input checked data-k="area-4-2" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
-      <label class="step"><input checked data-k="area-4-3" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, fire Poison Ball at them, and stop shooting. Watch their health for 8 seconds</span></span></label>
-      <label class="step"><input checked data-k="area-4-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "landed at|took 114 damage from|ignoring its|ended its effect" ~/Games/PIN/logs/GameServer.log | tail -40
+      <span class="cmd"><pre><code>grep -aE "ran period ability|Spawned tiny object 386|Removed tiny object 386|took 20 damage from Fallback|SetStatusEffect.*Id 14599" ~/Games/PIN/logs/GameServer.log | tail -50
       </code></pre><button class="copy" type="button">Copy</button></span>
-      <div class="callout pass"><p>Pass: each Fiend's health drops by 114 once a second (about 8 lines each, about 1100 health over the 8 seconds, so
-      none of them dies from a 2000-health start), with <code>effect tick, ignoring its 5m splash</code> lines alongside.
-      Fail: health still drops 342 a second; record the lines.</p></div><div class="callout"><p><strong>First run 2026-10-03 10:13, failed — and found the real bug.</strong> All three Fiends got the poison, but all three ticks landed on one Fiend (2234378803562665472), 342 a second. Each poison was set up on a copy of the ability's state that <em>shared</em> one target list with the others, so the last Fiend set up was every poison's target. The earlier "tripling" was this plus the splash spreading it back out. Fixed in the next commit (each copy gets its own lists); run this entry again on that build.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03 on f58c7cd.</strong> Three Fiends spawned together; three Poison Balls at 10:17:45, 10:17:59 and 10:18:12. Each shot poisoned all three, each Fiend took one 114 tick a second (2011 → 1099 over the first 8 s), and each poison ended at 8 s. The third shot's ticks finished them.</p></div><div class="result"><label for="r-area-4">Result</label><textarea data-k="n-area-4" id="r-area-4" placeholder="Health per second per Fiend"></textarea></div></div>
+      <ul>
+      <li>Pass: <code>ran period ability 40593 at N point(s)</code> with up to ten <code>Spawned tiny object 386</code> lines,
+        Fiends inside a cloud taking 20 twice a second and getting effect 14599 (the slow), and every 386 removed about
+        6 seconds later.</li>
+      <li>Fail, fewer clouds than expected: the trail stops where the shot hits, so a shot into a Fiend or the ground
+        2 m away lays one or two. Repeat aiming further past them and record N.</li>
+      </ul><div class="result"><label for="r-cloud-2">Result</label><textarea data-k="n-cloud-2" id="r-cloud-2" placeholder="How many clouds; damage and slow on the Fiends"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="cloud-3">
+    <button class="block-head" type="button">
+      <span class="block-n">CLOUD-3</span>
+      <span class="block-t">The clouds can be seen</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">CLOUD-3</span><span class="marker">[ ]</span><span class="entry-t">The clouds can be seen</span></div><p>Answered from what you saw during CLOUD-1
+      and CLOUD-2. The cloud is sent as a particle effect on an area marker, the way the race finish line is drawn;
+      whether the client draws these particular effects that way is untested.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="cloud-3-1" type="checkbox"/><span class="step-body"><span class="lede">Note whether a cloud appeared where Creeping Death landed, and whether it disappeared when the damage stopped</span></span></label>
+      <label class="step"><input data-k="cloud-3-2" type="checkbox"/><span class="step-body"><span class="lede">Note whether Poison Trail's clouds appeared along the ground</span></span></label>
+      </ol></div>
+      <div class="callout pass"><p>Pass: visible clouds that last as long as the damage. Damage with no visible cloud is a partial pass — the
+      cloud works, and only its drawing needs another approach; describe what you saw, if anything.</p></div><div class="result"><label for="r-cloud-3">Result</label><textarea data-k="n-cloud-3" id="r-cloud-3" placeholder="What you saw"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-area-abilities"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-poison-clouds"></script>
