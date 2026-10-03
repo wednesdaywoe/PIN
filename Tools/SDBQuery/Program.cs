@@ -30,7 +30,8 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
           find <Type> <Property> <value> [text] List <Type>CommandDefs where Property == value, optionally containing text
           after <Type> [depth]                  Most common server-side commands following <Type>
           ops                                   Uses of the non-commutative register operands (exponentiate, subtract, divide)
-          unimpl                                Command types used by abilities that the Factory does not create, by ability count
+          unimpl [idFile]                       Command types used by abilities that the Factory does not create, by ability count;
+                                                with idFile, only the ability ids listed in it, and each type's ids are printed
           attr <attributeId>...                 Print attribute definitions
           attrs <text>                          Attribute definitions whose name contains <text>, ignoring case
           using <Type>                          Abilities whose chain (or a chain it calls) runs <Type>, with the steps in order
@@ -75,7 +76,7 @@ switch (argList[0])
         query.Ops();
         break;
     case "unimpl":
-        query.Unimplemented();
+        query.Unimplemented(rest.Length > 0 ? File.ReadAllText(rest[0]).Split((char[])[' ', '\n', '\r', ','], StringSplitOptions.RemoveEmptyEntries).Select(uint.Parse).ToHashSet() : null);
         break;
     case "text":
         {
@@ -471,14 +472,14 @@ internal partial class Query
         }
     }
 
-    public void Unimplemented()
+    public void Unimplemented(HashSet<uint> only)
     {
         var factoryPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "UdpHosts", "GameServer", "Systems", "Aptitude", "Factory.cs"));
         var implemented = File.ReadLines(factoryPath).Select(l => FactoryCaseRegex().Match(l)).Where(m => m.Success).Select(m => m.Groups[1].Value).ToHashSet();
 
         var abilitiesByType = new Dictionary<string, HashSet<uint>>();
         var environmentByType = new Dictionary<string, string>();
-        var abilities = Table<AbilityData>("_abilitydata").ToList();
+        var abilities = Table<AbilityData>("_abilitydata").Where(a => only == null || only.Contains(a.Id)).ToList();
         foreach (var ability in abilities)
         {
             Visit(ability.Chain, ability.Id, [], 0);
@@ -491,6 +492,10 @@ internal partial class Query
         foreach (var (name, ids) in abilitiesByType.Where(kv => !implemented.Contains(kv.Key)).OrderByDescending(kv => kv.Value.Count))
         {
             Console.WriteLine($"{ids.Count,9}  {instancesByType.GetValueOrDefault(name),9}  {environmentByType[name],-6}  {name}");
+            if (only != null)
+            {
+                Console.WriteLine($"                             {string.Join(' ', ids.Order())}");
+            }
         }
 
         // Follows nested chains, effects and called abilities so each command type is credited to the abilities that reach it
