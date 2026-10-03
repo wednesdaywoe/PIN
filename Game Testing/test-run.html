@@ -1,9 +1,9 @@
-<title>PIN — Poison Clouds (CLOUD-1–CLOUD-3)</title>
+<title>PIN — Poison Clouds, second run (CLOUD-1–CLOUD-3)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Poison Clouds (CLOUD-1–CLOUD-3)</h1>
+    <h1>Poison Clouds, second run (CLOUD-1–CLOUD-3)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -17,66 +17,76 @@
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history
     and in the older pages linked from the <a href="index.html">index</a>. Setup, admin commands and the monster type
     id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Tests commit <code>042b218</code>. Creeping Death and Poison Trail leave a cloud — a "tiny object" — that the
-    server never made, because the step that creates it shipped with no settings. The cloud's own behaviour did ship,
-    as a status effect on the tiny object, so the server now creates the object and runs that effect:</p>
+    <p>Tests commit <code>6ef97ae</code>, a second try at the poison clouds. The first run (commit <code>042b218</code>)
+    failed both abilities, for two separate reasons, both now fixed:</p>
     <ul>
-    <li><strong>Creeping Death</strong> (tiny object 387): a cloud where the shot lands that grows from 2 m to about
-      6 m over its 4 seconds, hitting each enemy inside for the module's damage about once a second.</li>
-    <li><strong>Poison Trail</strong> (tiny object 386): ten clouds 2 m apart along the shot's path, each lasting 6
-      seconds, hitting enemies inside twice a second and slowing them for 5 seconds.</li>
+    <li><strong>Creeping Death's cloud touched nothing.</strong> The cloud works out its size each tick from a number
+      it saves when it appears and adds one to every tick. The three steps that save and recall that number were never
+      built, so its search radius came out at half a metre and found no one. They now work the way the client's own
+      code does, so the cloud starts 2 m wide and grows half a metre every half second, to about 6 m.</li>
+    <li><strong>Poison Trail read 0 for every stat.</strong> Equipping a module in game never recalculated the
+      character's stat totals, which is where abilities read their numbers. So the clouds lasted 0 seconds (created and
+      removed at once), the cooldown was 0, and the range was 0. Equipping now recalculates them.</li>
     </ul>
-    <p>Run on a Biotech frame such as the Recluse. The modules below were picked for readable numbers: Creeping Death
-    86064 does 120 a hit, Poison Trail 86058 does 20.</p>
+    <p>What each cloud should do, from the shipped data:</p>
+    <ul>
+    <li><strong>Creeping Death</strong> (module 86064): a cloud where the shot lands, lasting 4 seconds. Every half
+      second it poisons each enemy inside for 120.</li>
+    <li><strong>Poison Trail</strong> (module 86058): small clouds 2 m wide, laid along the shot's path, each lasting 6
+      seconds. Every half second each one hits enemies inside for 20 and slows them for 5 seconds. A 15-second
+      cooldown.</li>
+    </ul>
   </section>
   <section class="block" data-open="true" id="cloud-1">
     <button class="block-head" type="button">
       <span class="block-n">CLOUD-1</span>
-      <span class="block-t">Creeping Death leaves a cloud that hurts enemies inside</span>
+      <span class="block-t">Creeping Death's cloud grows and hurts enemies inside</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CLOUD-1</span><span class="marker">[ ]</span><span class="entry-t">Creeping Death leaves a cloud that hurts enemies inside</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="cloud-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (already built and installed), and log in on a Biotech frame</span></span></label>
-      <label class="step"><input data-k="cloud-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 86064</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86064 Ability1</code> — Creeping Death on key <code>1</code></span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">CLOUD-1</span><span class="marker">[ ]</span><span class="entry-t">Creeping Death's cloud grows and hurts enemies inside</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cloud-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (already built and installed), and log in on a Biotech frame such as the Recluse</span></span></label>
+      <label class="step"><input data-k="cloud-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel, equip Creeping Death even if it's already slotted, so its stats are recalculated: <code class="run">createitem 86064</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86064 Ability1</code></span></span></label>
       <label class="step"><input data-k="cloud-1-3" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
-      <label class="step"><input data-k="cloud-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, aim at the ground just in front of the Fiends and press <code>1</code> once. Watch for 6 seconds without shooting</span></span></label>
+      <label class="step"><input data-k="cloud-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, aim at the ground at the Fiends' feet and fire Creeping Death once. Watch for 6 seconds without shooting: note whether the cloud seems to grow</span></span></label>
       <label class="step"><input data-k="cloud-1-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "landed at|Spawned tiny object|Removed tiny object|no weapon|took [0-9.]+ damage from Fallback" ~/Games/PIN/logs/GameServer.log | tail -40
+      <span class="cmd"><pre><code>grep -aE "Spawned tiny object 387|Removed tiny object 387|PeekRegisterCommand 1484092|SetStatusEffect.*Id 4161|took [0-9.]+ damage from Fallback" ~/Games/PIN/logs/GameServer.log | tail -60
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: <code>Spawned tiny object 387 ... effect 13042, pfx 433770</code>, then each Fiend taking 120 about once a second,
-        then <code>Removed tiny object 387</code> about 4 seconds after it spawned, and no 120s after that.</li>
-      <li>Fail, the tiny object spawned but no one took damage: the cloud's search found no one, possibly because it
-        starts small. Repeat with the shot landing right at their feet and record the lines.</li>
-      <li>Fail, no <code>Spawned tiny object</code>: record the <code>landed at</code> line and anything mentioning
-        <code>TinyObjectCreate</code>.</li>
-      </ul><div class="result"><label for="r-cloud-1">Result</label><textarea data-k="n-cloud-1" id="r-cloud-1" placeholder="Damage per Fiend per second; when the cloud went"></textarea></div></div>
+      <li>Pass: <code>Spawned tiny object 387</code>, then <code>PeekRegisterCommand 1484092</code> lines whose result
+        climbs 2, 2.5, 3 and so on (the cloud's radius in metres), Fiends taking 120 as they get effect 4161, and
+        <code>Removed tiny object 387</code> about 4 seconds after it spawned.</li>
+      <li>Fail, the radius climbs but no one takes damage: the Fiends were outside it. Record how far the shot landed
+        from them and repeat closer.</li>
+      <li>Fail, no <code>PeekRegisterCommand</code> lines: record the lines around <code>Spawned tiny object 387</code>.</li>
+      </ul><div class="result"><label for="r-cloud-1">Result</label><textarea data-k="n-cloud-1" id="r-cloud-1" placeholder="Radius values; damage per Fiend; when the cloud went"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="cloud-2">
     <button class="block-head" type="button">
       <span class="block-n">CLOUD-2</span>
-      <span class="block-t">Poison Trail lays a line of clouds that hurt and slow</span>
+      <span class="block-t">Poison Trail lays clouds that hurt and slow, and sets a cooldown</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CLOUD-2</span><span class="marker">[ ]</span><span class="entry-t">Poison Trail lays a line of clouds that hurt and slow</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="cloud-2-1" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">createitem 86058</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86058 Ability2</code> — Poison Trail on key <code>2</code></span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">CLOUD-2</span><span class="marker">[ ]</span><span class="entry-t">Poison Trail lays clouds that hurt and slow, and sets a cooldown</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cloud-2-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Poison Trail, even if you already did last run: <code class="run">createitem 86058</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 86058 Ability2</code></span></span></label>
       <label class="step"><input data-k="cloud-2-2" type="checkbox"/><span class="step-body"><span class="lede">If the CLOUD-1 Fiends are dead, <code class="run">npc 1196</code> three times again without moving</span></span></label>
-      <label class="step"><input data-k="cloud-2-3" type="checkbox"/><span class="step-body"><span class="lede">From about 10 m away, aim at the ground just in front of the Fiends and press <code>2</code> once. Watch how fast they walk for the next few seconds</span></span></label>
-      <label class="step"><input data-k="cloud-2-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      <label class="step"><input data-k="cloud-2-3" type="checkbox"/><span class="step-body"><span class="lede">From about 15 m away, aim at the ground a few metres past the Fiends, so the shot passes over them, and fire Poison Trail once. Watch how fast they walk for the next few seconds</span></span></label>
+      <label class="step"><input data-k="cloud-2-4" type="checkbox"/><span class="step-body"><span class="lede">Straight away, try to fire Poison Trail again. Note whether the ability icon shows a cooldown and whether it fires</span></span></label>
+      <label class="step"><input data-k="cloud-2-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "ran period ability|Spawned tiny object 386|Removed tiny object 386|took 20 damage from Fallback|SetStatusEffect.*Id 14599" ~/Games/PIN/logs/GameServer.log | tail -50
+      <span class="cmd"><pre><code>grep -aE "ran period ability|Spawned tiny object 386|Removed tiny object 386|took 20 damage from Fallback|SetStatusEffect.*Id 14599|40592 (inflicts|refused)" ~/Games/PIN/logs/GameServer.log | tail -60
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: <code>ran period ability 40593 at N point(s)</code> with up to ten <code>Spawned tiny object 386</code> lines,
-        Fiends inside a cloud taking 20 twice a second and getting effect 14599 (the slow), and every 386 removed about
-        6 seconds later.</li>
-      <li>Fail, fewer clouds than expected: the trail stops where the shot hits, so a shot into a Fiend or the ground
-        2 m away lays one or two. Repeat aiming further past them and record N.</li>
-      </ul><div class="result"><label for="r-cloud-2">Result</label><textarea data-k="n-cloud-2" id="r-cloud-2" placeholder="How many clouds; damage and slow on the Fiends"></textarea></div></div>
+      <li>Pass: <code>Ability 40592 inflicts cooldowns: ... local 15000 ms</code>, then <code>ran period ability 40593 at
+        N point(s)</code> with N <code>Spawned tiny object 386</code> lines. Fiends inside a cloud take 20 every half
+        second and get effect 14599 (the slow). Every 386 is removed about 6 seconds after it appeared. The second
+        press is refused, or the client won't send it.</li>
+      <li>Fail, the clouds are still removed at once: record the <code>LoadRegisterFromItemStatCommand 1634929</code>
+        lines, which show the duration the cloud read.</li>
+      </ul><div class="result"><label for="r-cloud-2">Result</label><textarea data-k="n-cloud-2" id="r-cloud-2" placeholder="How many clouds; damage and slow on the Fiends; the cooldown"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="cloud-3">
@@ -86,17 +96,16 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CLOUD-3</span><span class="marker">[ ]</span><span class="entry-t">The clouds can be seen</span></div><p>Answered from what you saw during CLOUD-1
-      and CLOUD-2. The cloud is sent as a particle effect on an area marker, the way the race finish line is drawn;
-      whether the client draws these particular effects that way is untested.</p>
+      <div class="entry"><div class="entry-head"><span class="id">CLOUD-3</span><span class="marker">[ ]</span><span class="entry-t">The clouds can be seen</span></div><p>Answered from what you saw
+      during CLOUD-1 and CLOUD-2. Last run, Creeping Death's cloud was visible.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="cloud-3-1" type="checkbox"/><span class="step-body"><span class="lede">Note whether a cloud appeared where Creeping Death landed, and whether it disappeared when the damage stopped</span></span></label>
+      <label class="step"><input data-k="cloud-3-1" type="checkbox"/><span class="step-body"><span class="lede">Note whether Creeping Death's cloud appeared, whether it grew, and whether it went when the damage stopped</span></span></label>
       <label class="step"><input data-k="cloud-3-2" type="checkbox"/><span class="step-body"><span class="lede">Note whether Poison Trail's clouds appeared along the ground</span></span></label>
       </ol></div>
-      <div class="callout pass"><p>Pass: visible clouds that last as long as the damage. Damage with no visible cloud is a partial pass — the
-      cloud works, and only its drawing needs another approach; describe what you saw, if anything.</p></div><div class="result"><label for="r-cloud-3">Result</label><textarea data-k="n-cloud-3" id="r-cloud-3" placeholder="What you saw"></textarea></div></div>
+      <div class="callout pass"><p>Pass: visible clouds that last as long as the damage. A cloud that doesn't grow on
+      screen while the damage radius does is a partial pass; describe what you saw.</p></div><div class="result"><label for="r-cloud-3">Result</label><textarea data-k="n-cloud-3" id="r-cloud-3" placeholder="What you saw"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-poison-clouds"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-poison-clouds-2"></script>
