@@ -1093,7 +1093,10 @@
   },
   {
     "id": 934029,
-    "comment": ""
+    "comment": "Poison Trail, original form (ability 227, about 100 modules): effect 346 on the user runs this every 200 ms for stat 112 seconds. Uses the 1962 Poison Trail cloud, tiny object 386 (effect 13015 reads 112 duration, 1588 AOE, 113 damage); the older clouds 8/12 do their damage through RegisterClientProximity, which is unknown. Dropped at the user's feet, at most one per 2 m (PIN's spacing rule). Chosen 2026-10-03.",
+    "tiny_object_id": 386,
+    "at_self": 1,
+    "min_spacing": 2
   },
   {
     "id": 940198,
