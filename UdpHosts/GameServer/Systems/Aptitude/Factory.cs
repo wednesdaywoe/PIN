@@ -441,12 +441,12 @@ public class Factory
             //     return new UpdateWaitCommand(SDBInterface.GetUpdateWaitCommandDef(commandId));
             // case CommandType.LoadRegisterFromStat:
             //     return new LoadRegisterFromStatCommand(SDBInterface.GetLoadRegisterFromStatCommandDef(commandId));
-            // case CommandType.PushRegister:
-            //     return new PushRegisterCommand(SDBInterface.GetPushRegisterCommandDef(commandId));
-            // case CommandType.PopRegister:
-            //     return new PopRegisterCommand(SDBInterface.GetPopRegisterCommandDef(commandId));
-            // case CommandType.PeekRegister:
-            //     return new PeekRegisterCommand(SDBInterface.GetPeekRegisterCommandDef(commandId));
+            case CommandType.PushRegister:
+                return new PushRegisterCommand(SDBInterface.GetPushRegisterCommandDef(commandId));
+            case CommandType.PopRegister:
+                return new PopRegisterCommand(SDBInterface.GetPopRegisterCommandDef(commandId));
+            case CommandType.PeekRegister:
+                return new PeekRegisterCommand(SDBInterface.GetPeekRegisterCommandDef(commandId));
             case CommandType.WhileLoop:
                 return new WhileLoopCommand(SDBInterface.GetWhileLoopCommandDef(commandId));
             // case CommandType.MovementSlide:

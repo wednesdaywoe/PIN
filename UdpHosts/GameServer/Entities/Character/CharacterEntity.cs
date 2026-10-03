@@ -1434,6 +1434,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public void EquipItemByGUID(int loadoutId, LoadoutSlotType slot, ulong guid)
     {
         Player.Inventory.EquipItemByGUID(loadoutId, slot, guid);
+        CurrentLoadout.CalculateItemAttributes();
         ApplyLoadout(CurrentLoadout);
     }
 

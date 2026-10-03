@@ -380,7 +380,12 @@ public class CharacterLoadout
         }
     }
 
-    private void CalculateItemAttributes()
+    /// <summary>
+    ///     Totals the stats of the chassis and every slotted module. Abilities read their numbers from these totals
+    ///     (LoadRegisterFromItemStat), so they must be redone whenever a slot changes, or a newly equipped module's
+    ///     ability reads 0 for every stat.
+    /// </summary>
+    public void CalculateItemAttributes()
     {
         var attributes = new Dictionary<ushort, float>()
         {

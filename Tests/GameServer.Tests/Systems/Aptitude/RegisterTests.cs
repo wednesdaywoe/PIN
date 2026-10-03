@@ -44,35 +44,87 @@ public class RegisterTests
         Assert.Equal(7f, context.Register);
     }
 
+    // A stack, as the client's PushRegister/PeekRegister/PopRegister (FUN_00bb3ae0, 00bb37c0, 00bb3940) keep it
     [Fact]
-    public void PushThenPop_RestoresRegister()
+    public void PushThenPop_IsLastInFirstOut()
     {
         var context = NewContext();
+        var push = new PushRegisterCommand(new PushRegisterCommandDef());
+        var pop = new PopRegisterCommand(new PopRegisterCommandDef { Regop = (byte)Operand.ASSIGN });
+
         context.Register = 5;
+        push.Execute(context);
+        context.Register = 7;
+        push.Execute(context);
+        Assert.Equal(7f, context.Register);
 
-        new PushRegisterCommand(new PushRegisterCommandDef()).Execute(context);
-        Assert.Equal(0f, context.Register);
-        Assert.Equal(5f, context.FormerRegister);
-
-        context.Register = 9;
-        new PopRegisterCommand(new PopRegisterCommandDef()).Execute(context);
+        context.Register = 0;
+        Assert.True(pop.Execute(context));
+        Assert.Equal(7f, context.Register);
+        Assert.True(pop.Execute(context));
         Assert.Equal(5f, context.Register);
-        Assert.Equal(0f, context.FormerRegister);
+        Assert.False(pop.Execute(context));
     }
 
-    [Theory]
-    [InlineData(2f, 3f, true)]
-    [InlineData(0f, 0f, false)]
-    public void PeekRegister_CombinesWithFormerAndReturnsNonZero(float register, float former, bool expected)
+    [Fact]
+    public void PeekRegister_CombinesTopAndKeepsIt()
     {
         var context = NewContext();
-        context.Register = register;
-        context.FormerRegister = former;
+        context.Register = 4;
+        new PushRegisterCommand(new PushRegisterCommandDef()).Execute(context);
 
-        var result = new PeekRegisterCommand(new PeekRegisterCommandDef { Regop = (byte)Operand.ADD }).Execute(context);
+        context.Register = 0.5f;
+        var peek = new PeekRegisterCommand(new PeekRegisterCommandDef { Regop = (byte)Operand.MULTIPLY });
+        Assert.True(peek.Execute(context));
+        Assert.Equal(2f, context.Register);
+        Assert.Single(context.RegisterStack);
+    }
 
-        Assert.Equal(register + former, context.Register);
-        Assert.Equal(expected, result);
+    [Fact]
+    public void PeekRegister_EmptyStack_Fails()
+    {
+        Assert.False(new PeekRegisterCommand(new PeekRegisterCommandDef()).Execute(NewContext()));
+    }
+
+    // Creeping Death's cloud (effect 13042): its apply chain pushes 4, and each update tick peeks it into the radius
+    // (0.5 x top) and replaces it with top + 1, so the cloud grows half a metre a tick.
+    [Fact]
+    public void CreepingDeathSequence_GrowsByOneEachTick()
+    {
+        var context = NewContext();
+        var push = new PushRegisterCommand(new PushRegisterCommandDef());
+        var peek = new PeekRegisterCommand(new PeekRegisterCommandDef { Regop = (byte)Operand.MULTIPLY });
+        var pop = new PopRegisterCommand(new PopRegisterCommandDef { Regop = (byte)Operand.ADD });
+
+        context.Register = 4;
+        push.Execute(context);
+
+        for (var tick = 0; tick < 3; tick++)
+        {
+            context.Register = 0.5f;
+            peek.Execute(context);
+            Assert.Equal(2f + tick * 0.5f, context.Register);
+
+            context.Register = 1;
+            pop.Execute(context);
+            push.Execute(context);
+        }
+
+        Assert.Equal(7f, context.RegisterStack.Peek());
+    }
+
+    [Fact]
+    public void CopyContext_CopiesRegisterStackInOrder()
+    {
+        var context = NewContext();
+        context.RegisterStack.Push(1);
+        context.RegisterStack.Push(2);
+
+        var copy = Context.CopyContext(context);
+        copy.RegisterStack.Pop();
+
+        Assert.Equal(2f, context.RegisterStack.Peek());
+        Assert.Equal(1f, copy.RegisterStack.Peek());
     }
 
     [Theory]

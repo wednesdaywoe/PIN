@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace GameServer.Systems.Aptitude;
@@ -33,6 +34,12 @@ public class Context
     /// </summary>
     public Stack<AptitudeTargets> TargetStack { get; } = new();
     public float Register { get; set; }
+
+    /// <summary>
+    ///     Saved registers for PushRegister, PeekRegister and PopRegister. An effect keeps its context, so values pushed
+    ///     in its apply chain carry into its update ticks.
+    /// </summary>
+    public Stack<float> RegisterStack { get; private set; } = new();
     public float FormerRegister { get; set; }
     public int Bonus { get; set; }
     public uint InitTime { get; set; }
@@ -64,6 +71,7 @@ public class Context
             Targets = new AptitudeTargets(original.Targets),
             FormerTargets = new AptitudeTargets(original.FormerTargets),
             Register = original.Register,
+            RegisterStack = new Stack<float>(original.RegisterStack.Reverse()),
             Bonus = original.Bonus,
             InitTime = original.InitTime,
             Initiated = original.Initiated,
