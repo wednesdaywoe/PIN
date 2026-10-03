@@ -40,6 +40,8 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
           tinyfor <statId>...                   Tiny objects whose spawn status effect's chains read any of these item stats
           effect <effectId>                     Print a status effect's chains
           refs <id>                             Every SDB record with a numeric field equal to <id>, other than its own key
+          text <id>...                          English text for localized string ids (e.g. a NameId)
+          where <Type>                          Where <Type> runs: an ability's own chain or which phase of an effect, by count
         """);
     return 1;
 }
@@ -74,6 +76,26 @@ switch (argList[0])
         break;
     case "unimpl":
         query.Unimplemented();
+        break;
+    case "text":
+        {
+            var index = sdb.GetIndexByName("dblocalization::LocalizedText");
+            var table = sdb.Tables[index];
+            int idColumn = table.GetColumnIndexByName("id");
+            int englishColumn = table.GetColumnIndexByName("english");
+            var wanted = rest.Select(uint.Parse).ToHashSet();
+            foreach (var row in table.Rows)
+            {
+                if (row[idColumn] != null && wanted.Contains(Convert.ToUInt32(row[idColumn])) && row[englishColumn] is string text)
+                {
+                    Console.WriteLine($"{row[idColumn]}: {text.Trim('\0', ' ')}");
+                }
+            }
+
+            break;
+        }
+    case "where":
+        query.Where(rest[0]);
         break;
     case "using":
         query.Using(rest[0]);
@@ -250,6 +272,61 @@ internal partial class Query
                     Console.WriteLine($"  {(GameServer.Enums.Operand)group.Key}: {group.Count()}  values: {string.Join(", ", values)}");
                 }
             }
+        }
+    }
+
+    public void Where(string type)
+    {
+        // Every chain reached from an ability or an effect, labelled with the nearest root above it: the ability's
+        // own chain (and the branches it calls), or the effect phase it runs in
+        var label = new Dictionary<uint, string>();
+        var queue = new Queue<(uint Chain, string Label)>();
+        foreach (var ability in Table<AbilityData>("_abilitydata").Where(a => a.Chain != 0))
+        {
+            queue.Enqueue((ability.Chain, "ability"));
+        }
+
+        foreach (var effect in Table<StatusEffectData>("_statuseffectdata"))
+        {
+            foreach (var (name, chain) in new[] { ("Apply", effect.ApplyChain), ("Update", effect.UpdateChain), ("Duration", effect.DurationChain), ("Remove", effect.RemoveChain) })
+            {
+                if (chain != 0)
+                {
+                    queue.Enqueue((chain, $"effect {name}"));
+                }
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var (chain, chainLabel) = queue.Dequeue();
+            if (!label.TryAdd(chain, chainLabel))
+            {
+                continue;
+            }
+
+            foreach (var b in Commands(chain))
+            {
+                foreach (var (_, nested) in NestedChains(Def(TypeName(b), b.Id)))
+                {
+                    queue.Enqueue((nested, chainLabel));
+                }
+            }
+        }
+
+        var counts = new Dictionary<string, int>();
+        foreach (var (chain, chainLabel) in label)
+        {
+            var hits = Commands(chain).Count(b => TypeName(b) == type);
+            if (hits > 0)
+            {
+                counts[chainLabel] = counts.GetValueOrDefault(chainLabel) + hits;
+            }
+        }
+
+        foreach (var (where, count) in counts.OrderByDescending(kv => kv.Value))
+        {
+            Console.WriteLine($"{count,6}  {where}");
         }
     }
 
