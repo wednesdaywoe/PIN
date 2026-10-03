@@ -34,7 +34,11 @@ public static class NpcPose
 
     public static void Publish(IShard shard, CharacterEntity npc, AIState state)
     {
-        if (!Changed(npc, state))
+        if (state.ForcedPoseTicks > 0)
+        {
+            state.ForcedPoseTicks--;
+        }
+        else if (!Changed(npc, state))
         {
             return;
         }

@@ -117,4 +117,10 @@ public sealed class AIState
     public float KnockbackSecondsLeft { get; set; }
 
     public bool KnockedBack => KnockbackSecondsLeft > 0f;
+
+    /// <summary>
+    ///     Ticks left in which the pose goes out even if nothing changed. Set on landing from a knockback: the client
+    ///     carries a falling NPC on past its last pose, so it has to be told more than once that the fall has stopped.
+    /// </summary>
+    public int ForcedPoseTicks { get; set; }
 }

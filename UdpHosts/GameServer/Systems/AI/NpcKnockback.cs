@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using GameServer.Entities.Character;
+using Serilog;
 
 namespace GameServer.Systems.AI;
 
@@ -35,6 +36,9 @@ public static class NpcKnockback
 
     private static readonly float[] WallProbeHeights = [0.5f, 1.2f];
 
+    /// <summary>Extra ticks the landing pose is sent, a sixth of a second at the AI's 50 ms tick.</summary>
+    private const int LandingPoseRepeats = 3;
+
     public static void Start(CharacterEntity npc, AIState state, Vector3 velocity)
     {
         state.KnockbackVelocity = velocity;
@@ -61,6 +65,17 @@ public static class NpcKnockback
             physics.TryHitWorld);
         npc.SetPosition(next);
         shard.Physics.UpdateEntity(npc);
+
+        if (!state.KnockedBack)
+        {
+            state.ForcedPoseTicks = LandingPoseRepeats;
+
+            // Walking finds its ground from 30 m up and this from 1 m up. Where they differ (under an overhang),
+            // the NPC will be lifted to the higher surface as soon as it walks.
+            var walkGround = physics.TryGetGroundHeight(next, out var walkZ) ? walkZ.ToString("0.00") : "none";
+            Log.Debug("NPC {Npc} landed at {Position}; walking would stand it at Z {WalkGround}", npc.EntityId, next, walkGround);
+        }
+
         return true;
     }
 
