@@ -1,9 +1,9 @@
-<title>PIN — Knockback (CONE-2)</title>
+<title>PIN — Knockback against walls (CONE-4)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Knockback (CONE-2)</h1>
+    <h1>Knockback against walls (CONE-4)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -16,39 +16,39 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run (commit <code>8a7c040</code>) the cone attacks worked. Healing Wave healed a friendly in front of you
-    and not one behind (CONE-1 passed), hit a Fiend in front for 300, and the use key still worked (CONE-3 passed).
-    The Fiend wasn't knocked back.</p>
-    <p>The push step was a stand-in: it only ever pushed players, straight up, and skipped every monster. Monsters
-    are moved only by the server, so this commit gives them a flight: a pushed monster is thrown along an arc away
-    from you, can't walk or shoot until it lands, and its position is sent out every 50 ms as it flies. The client's
-    data says how hard and how high; how far that carries is PIN's choice. Healing Wave's push should carry a Fiend
-    about 6 m in two thirds of a second.</p>
+    <p>Last run knockback worked on open ground (CONE-2 passed), and melee worked. Against things it went wrong:
+    one Fiend was thrown inside an object, and one thrown at a steep wall jumped to the top of it.</p>
+    <p>Two causes. The flight never checked for anything in its path, so it could pass into objects. And it looked for
+    the ground from 30 m above the monster, so beside a wall the first surface it found was the wall's top. Now each
+    step of the flight checks for a wall at knee and chest height and stops half a metre short of it, then the monster
+    drops straight down. The ground is looked for from just above its feet.</p>
+    <p>Some objects have no collision on the server at all, a known gap. A monster thrown at one of those will still
+    pass into it, because the server can't see it. Step 3 tells the two apart.</p>
   </section>
-  <section class="block" data-open="true" id="cone-2">
+  <section class="block" data-open="true" id="cone-4">
     <button class="block-head" type="button">
-      <span class="block-n">CONE-2</span>
-      <span class="block-t">Healing Wave knocks back an enemy in front of you</span>
+      <span class="block-n">CONE-4</span>
+      <span class="block-t">A monster thrown at a wall or object stops against it</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CONE-2</span><span class="marker pass">[x]</span><span class="entry-t">Healing Wave knocks back an enemy in front of you</span></div><div class="steps"><ol>
-      <label class="step"><input data-k="cone-2-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in; if Healing Wave isn't on key 3, <code class="run">equipitem 79018 Ability3</code></span></span></label>
-      <label class="step"><input data-k="cone-2-2" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code> (a Fiend). Face it from within 10 m and fire Healing Wave. Note how far it's thrown and whether it lands on the ground</span></span></label>
-      <label class="step"><input data-k="cone-2-3" type="checkbox"/><span class="step-body"><span class="lede">After the 30-second recharge, do it again with the Fiend on a slope or against a rock. Note anything odd: sinking into the ground, floating, or snapping back to where it was</span></span></label>
+      <div class="entry"><div class="entry-head"><span class="id">CONE-4</span><span class="marker">[ ]</span><span class="entry-t">A monster thrown at a wall or object stops against it</span></div><div class="steps"><ol>
+      <label class="step"><input data-k="cone-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in; if Healing Wave isn't on key 3, <code class="run">equipitem 79018 Ability3</code></span></span></label>
+      <label class="step"><input data-k="cone-4-2" type="checkbox"/><span class="step-body"><span class="lede">Stand so a steep wall or cliff is a few metres behind a Fiend (<code class="run">npc 1196</code>), and throw it into the wall with Healing Wave. Repeat against an object such as a rock, crate or building, after the 30-second recharge</span></span></label>
+      <label class="step"><input data-k="cone-4-3" type="checkbox"/><span class="step-body"><span class="lede">If a Fiend ends up inside anything, aim at that object and run <code class="run">probe</code>. Note what the reply says the ray hit</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "ActivateAbility 31366|TargetConeAECommand 1618942|knocked back|took [0-9.]+ damage from" ~/Games/PIN/logs/GameServer.log | tail -20
+      <span class="cmd"><pre><code>grep -aE "ActivateAbility 31366|knocked back|probe" ~/Games/PIN/logs/GameServer.log | tail -20
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: the Fiend flies back a few metres, lands, and carries on fighting. The log has
-        <code>NPC ... knocked back at &lt;...&gt;</code> after each wave.</li>
-      <li>Fail, a <code>knocked back</code> line but the Fiend doesn't move on screen: the server moved it and the client
-        wasn't told. Record whether it later jumps to a new spot.</li>
-      <li>Fail, it flies but too far, too high, or too little: give a rough distance. The flight numbers are a choice,
-        not data, and easy to change.</li>
-      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> The Fiend was thrown back and landed. Log: <code>knocked back at &lt;3.67, 9.61, 6.17&gt;</code> at 14:54:44 and again at 14:55:12, the second from about 7 m along where the first landed.</p></div><div class="result"><label for="r-cone-2">Result</label><textarea data-k="n-cone-2" id="r-cone-2" placeholder="How far it flew; how it landed"></textarea></div></div>
+      <li>Pass: the Fiend stops against the wall or object and drops to the ground at its foot. It doesn't end up on
+        top or inside.</li>
+      <li>Still inside an object, and <code>probe</code> says it hit nothing or something far behind it: that object
+        has no collision on the server. That's the known gap, not this fix.</li>
+      <li>Still inside, and <code>probe</code> says it hit the object: the wall check is missing it. Record roughly how
+        tall the object is; the checks are at 0.5 m and 1.2 m up.</li>
+      </ul><div class="result"><label for="r-cone-4">Result</label><textarea data-k="n-cone-4" id="r-cone-4" placeholder="Wall: where it ended up. Object: where it ended up; probe reply"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-knockback"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-knockback-walls"></script>
