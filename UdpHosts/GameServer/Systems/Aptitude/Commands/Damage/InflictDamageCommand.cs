@@ -92,7 +92,15 @@ public class InflictDamageCommand : Command, ICommand
             }
         }
 
-        if (splashRange > 0)
+        // An effect's tick (a poison's damage over time) hurts the one carrying it and no one else. Poison Ball's tick
+        // carries Splashrange 5, and with splash every poisoned creature also hit each poisoned neighbour, so three
+        // stacked Fiends each took three ticks a second. Only the original server knew what that splash was for; its
+        // description promises damage over time to the poisoned, nothing more.
+        if (splashRange > 0 && context.ExecutionHint == ExecutionHint.UpdateEffect)
+        {
+            Logger.Debug("{Command} {CommandId} is an effect tick, ignoring its {Splash}m splash", nameof(InflictDamageCommand), Params.Id, splashRange);
+        }
+        else if (splashRange > 0)
         {
             Vector3 origin;
             if (Params.Frominitiatorpos == 1)

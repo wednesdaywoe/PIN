@@ -1,9 +1,9 @@
-<title>PIN — Area Abilities (AREA-1–AREA-3)</title>
+<title>PIN — Area Abilities (AREA-1–AREA-4)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Area Abilities (AREA-1–AREA-3)</h1>
+    <h1>Area Abilities (AREA-1–AREA-4)</h1>
     <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -36,10 +36,10 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">AREA-1</span><span class="marker">[~]</span><span class="entry-t">Poison Ball poisons every monster in its radius</span></div><div class="steps"><ol>
+      <div class="entry"><div class="entry-head"><span class="id">AREA-1</span><span class="marker pass">[x]</span><span class="entry-t">Poison Ball poisons every monster in its radius</span></div><div class="steps"><ol>
       <label class="step"><input checked data-k="area-1-1" type="checkbox"/><span class="step-body"><span class="lede">Start the servers: <code class="run">~/Games/PIN/start-pin.sh --no-build</code> (already built and installed), and log in on a Biotech frame</span></span></label>
       <label class="step"><input checked data-k="area-1-2" type="checkbox"/><span class="step-body"><span class="lede">In the Admin chat channel: <code class="run">createitem 77108</code>, then <code class="run">dbg_inventory resend</code>, then <code class="run">equipitem 77108 Ability1</code> — Poison Ball on key <code>1</code></span></span></label>
-      <label class="step"><input data-k="area-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code>, take two steps sideways, <code class="run">npc 1196</code>, two more steps, <code class="run">npc 1196</code> — three Chosen Fiends within a few metres of each other</span></span></label>
+      <label class="step"><input checked data-k="area-1-3" type="checkbox"/><span class="step-body"><span class="lede"><code class="run">npc 1196</code>, take two steps sideways, <code class="run">npc 1196</code>, two more steps, <code class="run">npc 1196</code> — three Chosen Fiends within a few metres of each other</span></span></label>
       <label class="step"><input checked data-k="area-1-4" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, aim at the middle Fiend and press <code>1</code>. Watch their health bars for 10 seconds</span></span></label>
       <label class="step"><input checked data-k="area-1-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
       </ol></div>
@@ -52,7 +52,7 @@
         line shows the radius stat it read; record it. A 0 there means the module's stats didn't reach the loadout.</li>
       <li>Fail, no <code>landed</code> line: the shot missed everything, or the key isn't Poison Ball. Check the log for
         <code>Ability 34943 starting</code>.</li>
-      </ul><div class="callout"><p><strong>Partly shown 2026-10-03.</strong> Every Poison Ball shot landed and ran impact ability 39482 (or 41869 for the [CST] module), read a radius of 4 (<code>Poison Ball Effect Radius</code>), and poisoned the Fiend it reached: effect 10924, 114 damage a second for 8 seconds. But only ever one Fiend: the first shots had one spawned, and the later three stood 7–8 m apart, outside a 4 m radius of each other. Group poisoning is unproven, not failed. Recheck: <code class="run">npc 1196</code> three times <em>without moving</em>, then one shot at them.</p></div><div class="result"><label for="r-area-1">Result</label><textarea data-k="n-area-1" id="r-area-1" placeholder="Which Fiends were poisoned; damage per tick"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03, and found a bug.</strong> Three Fiends spawned together at 10:05; one shot at 10:05:41 poisoned all three. But each took <strong>three</strong> ticks of 114 a second, not one, and all three died together. The poison's tick carries a 5 m splash, so each poisoned Fiend also hit its two poisoned neighbours. Fixed in the next commit: an effect's tick no longer splashes. Rechecked as AREA-4.</p></div><div class="result"><label for="r-area-1">Result</label><textarea data-k="n-area-1" id="r-area-1" placeholder="Which Fiends were poisoned; damage per tick"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="area-2">
@@ -85,6 +85,28 @@
       </ol></div>
       <div class="callout pass"><p>Pass: a new <code>landed at</code> line with a position on the ground, and 10924 set on the Fiends within the radius
       of it. Before this fix a ground hit did nothing at all.</p></div><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> At 10:01:48 a shot landed on the ground at (-374.8, 744.1), 2.7 m from the Fiend, with no direct hit, and still poisoned it for 8 seconds.</p></div><div class="result"><label for="r-area-3">Result</label><textarea data-k="n-area-3" id="r-area-3" placeholder="Landed position; who was poisoned"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="area-4">
+    <button class="block-head" type="button">
+      <span class="block-n">AREA-4</span>
+      <span class="block-t">A group takes one poison tick each, not three</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">AREA-4</span><span class="marker">[ ]</span><span class="entry-t">A group takes one poison tick each, not three</span></div><p>The fix for what AREA-1 found.
+      Restart first so the new build is running.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="area-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers and start them again: <code class="run">~/Games/PIN/start-pin.sh --no-build</code>. Log in, Poison Ball still on key <code>1</code></span></span></label>
+      <label class="step"><input data-k="area-4-2" type="checkbox"/><span class="step-body"><span class="lede">Without moving: <code class="run">npc 1196</code> three times</span></span></label>
+      <label class="step"><input data-k="area-4-3" type="checkbox"/><span class="step-body"><span class="lede">Back off about 15 m, fire Poison Ball at them, and stop shooting. Watch their health for 8 seconds</span></span></label>
+      <label class="step"><input data-k="area-4-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "landed at|took 114 damage from|ignoring its|ended its effect" ~/Games/PIN/logs/GameServer.log | tail -40
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <div class="callout pass"><p>Pass: each Fiend's health drops by 114 once a second (about 8 lines each, about 1100 health over the 8 seconds, so
+      none of them dies from a 2000-health start), with <code>effect tick, ignoring its 5m splash</code> lines alongside.
+      Fail: health still drops 342 a second; record the lines.</p></div><div class="result"><label for="r-area-4">Result</label><textarea data-k="n-area-4" id="r-area-4" placeholder="Health per second per Fiend"></textarea></div></div>
     </div>
   </section>
 </div>
