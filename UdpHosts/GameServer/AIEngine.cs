@@ -89,6 +89,13 @@ public class AIEngine
             // Move before shooting, so the range and line-of-sight checks are made from where the NPC
             // ends the tick rather than from where it started it, and so the turn to face a target is
             // the last word on which way it's pointing.
+            // A knocked-back NPC is in the air: it neither walks nor shoots until it lands
+            if (NpcKnockback.Tick(_shard, npc, state, elapsedSeconds))
+            {
+                NpcPose.Publish(_shard, npc, state);
+                continue;
+            }
+
             NpcMovement.Tick(_shard, npc, state, elapsedSeconds, _logger);
             NpcCombat.Tick(_shard, npc, state, currentTime, _logger);
 
@@ -97,6 +104,21 @@ public class AIEngine
             // clients, on the assumption that only a client ever moves a character.
             NpcPose.Publish(_shard, npc, state);
         }
+    }
+
+    /// <summary>
+    ///     Throws an NPC along an arc starting at <paramref name="velocity" />, in metres per second. See <see cref="NpcKnockback" />.
+    /// </summary>
+    public void KnockBack(CharacterEntity npc, System.Numerics.Vector3 velocity)
+    {
+        if (!_stateByEntity.TryGetValue(npc.EntityId, out var state))
+        {
+            state = new AIState();
+            _stateByEntity[npc.EntityId] = state;
+        }
+
+        NpcKnockback.Start(npc, state, velocity);
+        _logger.Debug("NPC {Npc} knocked back at {Velocity} from {Position}", npc.EntityId, velocity, npc.Position);
     }
 
     public ulong? CurrentTargetOf(ulong npcEntityId)

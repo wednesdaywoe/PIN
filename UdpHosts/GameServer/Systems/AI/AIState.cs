@@ -106,4 +106,15 @@ public sealed class AIState
     ///     spawned exactly where the defaults sit would compare equal and never send one.
     /// </summary>
     public bool HasSentPose { get; set; }
+
+    /// <summary>Speed of a knockback in progress (<see cref="NpcKnockback"/>), falling under gravity until it lands.</summary>
+    public Vector3 KnockbackVelocity { get; set; }
+
+    /// <summary>Where the knockback started, the floor to land on when the ground under the NPC is unknown.</summary>
+    public float KnockbackLaunchZ { get; set; }
+
+    /// <summary>Seconds of flight left before the knockback ends whether it has landed or not.</summary>
+    public float KnockbackSecondsLeft { get; set; }
+
+    public bool KnockedBack => KnockbackSecondsLeft > 0f;
 }
