@@ -33,6 +33,7 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
           unimpl                                Command types used by abilities that the Factory does not create, by ability count
           attr <attributeId>...                 Print attribute definitions
           using <Type>                          Abilities whose chain (or a chain it calls) runs <Type>, with the steps in order
+          ammo <ammoId>                         Print an ammo type and the ability chains it runs
           refs <id>                             Every SDB record with a numeric field equal to <id>, other than its own key
         """);
     return 1;
@@ -71,6 +72,20 @@ switch (argList[0])
         break;
     case "using":
         query.Using(rest[0]);
+        break;
+    case "ammo":
+        var ammo = SDBInterface.GetAmmo(uint.Parse(rest[0]));
+        Console.WriteLine(Query.Describe(ammo));
+        foreach (var (slot, abilityId) in new[] { ("impact", ammo.AbilityId), ("touch", ammo.TouchAbilityId), ("period", ammo.PeriodAbilityId), ("airburst", ammo.AirburstAbilityId) })
+        {
+            if (abilityId != 0)
+            {
+                var chain = SDBInterface.GetAbilityData(abilityId)?.Chain ?? 0;
+                Console.WriteLine($"-- {slot} ability {abilityId}, chain {chain}");
+                query.DumpChain(chain, 1, []);
+            }
+        }
+
         break;
     case "refs":
         query.Refs(uint.Parse(rest[0]));
@@ -113,7 +128,7 @@ internal partial class Query
             var name = TypeName(b);
             var def = Def(name, b.Id);
             Console.WriteLine($"{new string(' ', depth * 2)}{name} [{SDBInterface.GetCommandType(b.Subtype)?.Environment}] {Describe(def)}");
-            foreach (var (property, chain) in NestedChains(def))
+            foreach (var (property, chain) in NestedChains(def).Concat(EffectChains(def)))
             {
                 Console.WriteLine($"{new string(' ', (depth * 2) + 1)}{property}:");
                 DumpChain(chain, depth + 1, seen);
@@ -223,7 +238,8 @@ internal partial class Query
         {
             var name = TypeName(b);
             steps.Add(name);
-            foreach (var (_, chain) in NestedChains(Def(name, b.Id)))
+            var def = Def(name, b.Id);
+            foreach (var (_, chain) in NestedChains(def).Concat(EffectChains(def)))
             {
                 Collect(chain, steps, seen, depth + 1);
             }
@@ -339,6 +355,23 @@ internal partial class Query
 
             yield return b;
             next = b.Next;
+        }
+    }
+
+    // A command that applies an effect runs that effect's chains, which hold most of what an ability does
+    private static IEnumerable<(string Property, uint Chain)> EffectChains(object def)
+    {
+        if (def?.GetType().GetProperty("EffectId")?.GetValue(def) is not uint effectId || SDBInterface.GetStatusEffectData(effectId) is not { } effect)
+        {
+            yield break;
+        }
+
+        foreach (var (name, chain) in new[] { ("Apply", effect.ApplyChain), ("Update", effect.UpdateChain), ("Duration", effect.DurationChain), ("Remove", effect.RemoveChain) })
+        {
+            if (chain != 0)
+            {
+                yield return ($"effect {effectId} {name} (every {effect.UpdateFrequency} ms)", chain);
+            }
         }
     }
 

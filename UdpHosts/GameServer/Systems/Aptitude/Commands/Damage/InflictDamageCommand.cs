@@ -133,8 +133,10 @@ public class InflictDamageCommand : Command, ICommand
 
     private void ApplyDamage(IDamageable target, CharacterEntity attacker, Context context, float damage, byte damageType, uint weaponId, string weaponName)
     {
-        // Prevent players from killing themselves with their own abilties
-        if (ReferenceEquals(target, attacker) || target.EntityId == context.Self?.EntityId)
+        // Prevent players from killing themselves with their own abilities. This used to skip context.Self as well, which
+        // is the same character in an ability but the victim inside an effect, so a poison's damage over time spared
+        // the one thing it was poisoning.
+        if (ReferenceEquals(target, attacker))
         {
             return;
         }

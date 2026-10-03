@@ -23,7 +23,6 @@ public class TargetPBAECommand : Command, ICommand
         // Params.ScaleOffset
         // Params.ScaleQuerySize
         // Params.AimPosOffset
-        // Params.UseInitPos
         // Params.UseBodyPosition
         if (context.Targets.Count >= Params.MaxTargets)
         {
@@ -49,9 +48,9 @@ public class TargetPBAECommand : Command, ICommand
             Logger.Debug("{Command} {CommandId} has IncludeInteractives set to 1, investigate what to do", nameof(TargetPBAECommand), Params.Id);
         }
 
-        // It seems that all 4 combos of UseInitPos and UseBodyPosition are possible (e.g. they can both be 0, both be 1 or be exclusive)
-        // No idea what that implies...
-        Vector3 origin = context.Self.Position;
+        // UseInitPos centres the query where the execution started rather than on Self. Every impact ability a
+        // projectile runs sets it, with InitPosition the point the projectile landed. UseBodyPosition is still unread.
+        Vector3 origin = Params.UseInitPos == 1 ? context.InitPosition : context.Self.Position;
         var matches = context.Shard.Entities
         .Where((pair) =>
         {

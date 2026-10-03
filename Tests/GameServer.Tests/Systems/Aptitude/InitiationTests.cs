@@ -11,7 +11,7 @@ public class InitiationTests
     private readonly ActiveInitiationCommand _command = new(new ActiveInitiationCommandDef { Id = 1 });
 
     [Fact]
-    public void ActiveInitiation_StampsTheActivationTimeAndPosition()
+    public void ActiveInitiation_StampsTheActivationTimeAndLeavesInitPosition()
     {
         var self = new FakeTarget("self") { Position = new Vector3(1, 2, 3) };
         var context = NewContext(self: self);
@@ -22,7 +22,7 @@ public class InitiationTests
 
         Assert.True(context.Initiated);
         Assert.Equal(5000u, context.ActivationTime);
-        Assert.Equal(new Vector3(4, 5, 6), context.InitPosition);
+        Assert.Equal(new Vector3(1, 2, 3), context.InitPosition);
     }
 
     [Fact]

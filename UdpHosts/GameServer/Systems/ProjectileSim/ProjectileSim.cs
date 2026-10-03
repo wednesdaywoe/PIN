@@ -4,6 +4,7 @@ using GameServer.Entities.Character;
 using GameServer.Physics;
 using GameServer.StaticDB;
 using GameServer.StaticDB.Records.dbitems;
+using GameServer.Systems.Aptitude;
 using GameServer.Systems.Combat;
 using GameServer.Systems.Hostility;
 using Serilog;
@@ -83,22 +84,34 @@ public class ProjectileSim
     /// </summary>
     public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage)
     {
-        // Deliberately still nothing on a world hit, unlike the weapon path above. An ability's area damage
-        // is InflictDamageCommand's job and it has its own radius off the command def, so reading the ammo
-        // radius here as well would apply two blasts to any chain that fires a projectile and then inflicts
-        // damage. DATA-21 is about weapons.
-        if (!TryResolveHit(shooter, origin, direction, 0, out var hit, out var target) || target == null)
+        // No ammo-radius splash here, unlike the weapon path above. An ability's area damage comes from the
+        // ammo's impact ability (below) or InflictDamageCommand's own radius, so reading the ammo radius as well
+        // would apply a second blast. DATA-21 is about weapons.
+        if (!TryResolveHit(shooter, origin, direction, 0, out var hit, out var target))
         {
             return;
         }
 
-        target.TakeDamage(new DamageInfo
+        if (target != null)
         {
-            Amount = damage * hit.DamageMod,
-            Attacker = shooter,
-            DamageType = ammo.Damagetype,
-            Flags = ResolveFlags(hit),
-        });
+            target.TakeDamage(new DamageInfo
+            {
+                Amount = damage * hit.DamageMod,
+                Attacker = shooter,
+                DamageType = ammo.Damagetype,
+                Flags = ResolveFlags(hit),
+            });
+        }
+
+        // Where the area happens. Poison Ball, the chemical grenade and most other thrown or fired area abilities
+        // put their whole effect in the ammo's impact ability, which searches around InitPosition (TargetPBAE
+        // UseInitPos) for whoever to poison or damage. It runs on a world hit too: a grenade on the ground still goes off.
+        if (ammo.AbilityId != 0)
+        {
+            var targets = target is IAptitudeTarget struck ? new AptitudeTargets(struck) : new AptitudeTargets();
+            _logger.Debug("Ability projectile {Ammo} landed at {Position}, running impact ability {AbilityId}", ammo.Name, hit.Position, ammo.AbilityId);
+            _shard.Abilities.HandleActivateAbility(_shard, shooter, ammo.AbilityId, _shard.CurrentTime, targets, initPosition: hit.Position);
+        }
     }
 
     /*
