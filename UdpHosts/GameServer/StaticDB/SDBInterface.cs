@@ -230,7 +230,7 @@ public class SDBInterface
     private static Dictionary<uint, HasTargetsDurationCommandDef> _hhasTargetsDurationCommandDef;
     private static Dictionary<uint, RopePullCommandDef> _ropePullCommandDef;
     private static Dictionary<uint, SetTargetOffsetCommandDef> _setTargetOffsetCommandDef;
-    private static Dictionary<uint, HealDamageCommandDef> _hhealDamageCommandDef;
+    private static Dictionary<uint, HealDamageCommandDef> _healDamageCommandDef;
     private static Dictionary<uint, BullrushCommandDef> _bullrushCommandDef;
     private static Dictionary<uint, EnergyToDamageCommandDef> _energyToDamageCommandDef;
     private static Dictionary<uint, BattleFrameDurationCommandDef> _battleFrameDurationCommandDef;
@@ -502,7 +502,7 @@ public class SDBInterface
         _hhasTargetsDurationCommandDef = loader.LoadHasTargetsDurationCommandDef();
         _ropePullCommandDef = loader.LoadRopePullCommandDef();
         _setTargetOffsetCommandDef = loader.LoadSetTargetOffsetCommandDef();
-        _hhealDamageCommandDef = loader.LoadHealDamageCommandDef();
+        _healDamageCommandDef = loader.LoadHealDamageCommandDef();
         _bullrushCommandDef = loader.LoadBullrushCommandDef();
         _energyToDamageCommandDef = loader.LoadEnergyToDamageCommandDef();
         _battleFrameDurationCommandDef = loader.LoadBattleFrameDurationCommandDef();
@@ -930,7 +930,7 @@ public class SDBInterface
     public static HasTargetsDurationCommandDef GetHasTargetsDurationCommandDef(uint id) => _hhasTargetsDurationCommandDef.GetValueOrDefault(id);
     public static RopePullCommandDef GetRopePullCommandDef(uint id) => _ropePullCommandDef.GetValueOrDefault(id);
     public static SetTargetOffsetCommandDef GetSetTargetOffsetCommandDef(uint id) => _setTargetOffsetCommandDef.GetValueOrDefault(id);
-    public static HealDamageCommandDef GetHealDamageCommandDef(uint id) => _hhealDamageCommandDef.GetValueOrDefault(id);
+    public static HealDamageCommandDef GetHealDamageCommandDef(uint id) => _healDamageCommandDef.GetValueOrDefault(id);
     public static BullrushCommandDef GetBullrushCommandDef(uint id) => _bullrushCommandDef.GetValueOrDefault(id);
     public static EnergyToDamageCommandDef GetEnergyToDamageCommandDef(uint id) => _energyToDamageCommandDef.GetValueOrDefault(id);
     public static BattleFrameDurationCommandDef GetBattleFrameDurationCommandDef(uint id) => _battleFrameDurationCommandDef.GetValueOrDefault(id);

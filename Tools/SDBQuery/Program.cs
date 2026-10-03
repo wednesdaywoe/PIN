@@ -32,6 +32,8 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
           ops                                   Uses of the non-commutative register operands (exponentiate, subtract, divide)
           unimpl                                Command types used by abilities that the Factory does not create, by ability count
           attr <attributeId>...                 Print attribute definitions
+          using <Type>                          Abilities whose chain (or a chain it calls) runs <Type>, with the steps in order
+          refs <id>                             Every SDB record with a numeric field equal to <id>, other than its own key
         """);
     return 1;
 }
@@ -66,6 +68,12 @@ switch (argList[0])
         break;
     case "unimpl":
         query.Unimplemented();
+        break;
+    case "using":
+        query.Using(rest[0]);
+        break;
+    case "refs":
+        query.Refs(uint.Parse(rest[0]));
         break;
     case "attr":
         foreach (var id in rest)
@@ -186,6 +194,65 @@ internal partial class Query
                 {
                     var values = group.GroupBy(r => r.Value).OrderByDescending(g => g.Count()).Take(10).Select(g => $"{g.Key}x{g.Count()}");
                     Console.WriteLine($"  {(GameServer.Enums.Operand)group.Key}: {group.Count()}  values: {string.Join(", ", values)}");
+                }
+            }
+        }
+    }
+
+    public void Using(string type)
+    {
+        foreach (var ability in Table<AbilityData>("_abilitydata").Where(a => a.Chain != 0).OrderBy(a => a.Id))
+        {
+            var steps = new List<string>();
+            Collect(ability.Chain, steps, [], 0);
+            if (steps.Contains(type))
+            {
+                Console.WriteLine($"{ability.Id}: {string.Join(" > ", steps)}");
+            }
+        }
+    }
+
+    private void Collect(uint chainId, List<string> steps, HashSet<uint> seen, int depth)
+    {
+        if (!seen.Add(chainId) || depth > 6)
+        {
+            return;
+        }
+
+        foreach (var b in Commands(chainId))
+        {
+            var name = TypeName(b);
+            steps.Add(name);
+            foreach (var (_, chain) in NestedChains(Def(name, b.Id)))
+            {
+                Collect(chain, steps, seen, depth + 1);
+            }
+        }
+    }
+
+    public void Refs(uint id)
+    {
+        foreach (var (name, field) in _fields)
+        {
+            if (field.GetValue(null) is not IDictionary table)
+            {
+                continue;
+            }
+
+            foreach (DictionaryEntry entry in table)
+            {
+                var records = entry.Value is IEnumerable list and not string ? list.Cast<object>() : [entry.Value];
+                foreach (var record in records)
+                {
+                    var hits = record?.GetType().GetProperties()
+                        .Where(property => property.Name != "Id" && property.GetIndexParameters().Length == 0)
+                        .Where(property => property.GetValue(record) is { } value && value is byte or sbyte or short or ushort or int or uint or long or ulong && Convert.ToDecimal(value) == id)
+                        .Select(property => property.Name)
+                        .ToList();
+                    if (hits is { Count: > 0 })
+                    {
+                        Console.WriteLine($"{name}[{entry.Key}].{string.Join(",", hits)}: {Describe(record)}");
+                    }
                 }
             }
         }

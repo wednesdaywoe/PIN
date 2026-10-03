@@ -217,8 +217,8 @@ public class Factory
             //     return new SetTargetOffsetCommand(SDBInterface.GetSetTargetOffsetCommandDef(commandId));
             // case CommandType.RequireEnergy:
             //     return new RequireEnergyCommand(SDBInterface.GetRequireEnergyCommandDef(commandId));
-            // case CommandType.HealDamage:
-            //     return new HealDamageCommand(SDBInterface.GetHealDamageCommandDef(commandId));
+            case CommandType.HealDamage:
+                return new HealDamageCommand(SDBInterface.GetHealDamageCommandDef(commandId));
             case CommandType.Bullrush:
                 return new BullrushCommand(SDBInterface.GetBullrushCommandDef(commandId));
             case CommandType.EnergyToDamage:
@@ -377,8 +377,8 @@ public class Factory
             //     return new RestockAmmoCommand(CustomDBInterface.GetRestockAmmoCommandDef(commandId));
             case CommandType.SetRegister:
                 return new SetRegisterCommand(SDBInterface.GetSetRegisterCommandDef(commandId));
-            // case CommandType.LoadRegisterFromBonus:
-            //     return new LoadRegisterFromBonusCommand(SDBInterface.GetLoadRegisterFromBonusCommandDef(commandId));
+            case CommandType.LoadRegisterFromBonus:
+                return new LoadRegisterFromBonusCommand(SDBInterface.GetLoadRegisterFromBonusCommandDef(commandId));
             // case CommandType.BonusGreaterThan:
             //     SDB has zero instances of this command
             // case CommandType.TargetByNPC:
