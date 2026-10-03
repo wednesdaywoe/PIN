@@ -56,7 +56,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CONE-5</span><span class="marker">[ ]</span><span class="entry-t">A landing monster doesn't sink and pop back up</span></div><p>Two possible causes.
+      <div class="entry"><div class="entry-head"><span class="id">CONE-5</span><span class="marker pass">[x]</span><span class="entry-t">A landing monster doesn't sink and pop back up</span></div><p>Two possible causes.
       Your client may keep a falling monster falling past the last position it was sent, until the monster walks
       again; the landing position is now sent three times so the client sees it stop. Or the server may disagree
       with itself about the ground: landing looks from 1 m above the monster, walking from 30 m above, so under a
@@ -71,7 +71,7 @@
       <li>Still sinks: the <code>landed at</code> lines decide which cause. If the Z in the position and the
         <code>walking would stand it at Z</code> figure differ, the server disagrees with itself; if they match,
         it's the client's smoothing.</li>
-      </ul><div class="result"><label for="r-cone-5">Result</label><textarea data-k="n-cone-5" id="r-cone-5" placeholder="Did it sink; against what"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> No sinking. Both landings logged Z 401.14 against walking's 401.14, so the cause was the client carrying the fall on, fixed by repeating the landing pose.</p></div><div class="result"><label for="r-cone-5">Result</label><textarea data-k="n-cone-5" id="r-cone-5" placeholder="Did it sink; against what"></textarea></div></div>
     </div>
   </section>
 </div>
