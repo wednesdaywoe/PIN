@@ -157,7 +157,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">DET-5</span><span class="marker">[ ]</span><span class="entry-t">While a ball is flying, pressing again detonates it instead of throwing another</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">DET-5</span><span class="marker pass">[x]</span><span class="entry-t">While a ball is flying, pressing again detonates it instead of throwing another</span></div>
       <p>The ability picks "throw" or "detonate" by checking for a short mark the throw puts on you, which the data
       ends after half a second. The server now keeps that mark on you for as long as your ball is in the air. So any
       press during the flight detonates, and the 13-second cooldown starts at the burst. The unknown is your game
@@ -178,7 +178,7 @@
       <li>The server detonated but the screen showed a second ball being thrown: the client's guess disagrees.
         Describe what was drawn; the ball on screen is not real.</li>
       <li>Two <code>in flight</code> lines for one flight: the hold didn't work.</li>
-      </ul><div class="result"><label for="r-det-5">Result</label><textarea data-k="n-det-5" id="r-det-5" placeholder="Burst or second ball on screen? One throw per flight in the log?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Six throws, each with exactly one <code>in flight</code> line: three set off in the air by a second press (one at 0.65 s into the flight), three landed, and every one started the 13-second cooldown at the burst or landing. No second ball and no spam. None of the throws ran out of flight, so the 5-second burst in the sky wasn't seen this run.</p></div><div class="result"><label for="r-det-5">Result</label><textarea data-k="n-det-5" id="r-det-5" placeholder="Burst or second ball on screen? One throw per flight in the log?"></textarea></div></div>
     </div>
   </section>
 </div>
