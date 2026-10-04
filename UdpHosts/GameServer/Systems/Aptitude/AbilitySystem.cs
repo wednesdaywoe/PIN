@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using AeroMessages.GSS.V66.Character.Command;
@@ -19,6 +20,9 @@ public class AbilitySystem
     private readonly Dictionary<ulong, ResourceNodeBeaconCalldownRequest> _playerThumperCalldownRequests;
     private readonly Lazy<FactionStances> _factions;
     private ulong _lastUpdate;
+
+    // Chains booked to run at a set time while the effect that booked them lasts; see UpdateWaitAndFireOnceCommand
+    private readonly List<(uint Due, Context Context, Action Run)> _scheduled = [];
 
     public AbilitySystem(Shard shard)
     {
@@ -84,12 +88,41 @@ public class AbilitySystem
         if (currentTime > _lastUpdate + _updateIntervalMs)
         {
             _lastUpdate = currentTime;
+            RunScheduled((uint)currentTime);
             foreach (var entity in _shard.Entities.Values)
             {
                 if (entity is IAptitudeTarget target)
                 {
                     ProcessTarget(target, currentTime);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Runs <paramref name="run" /> at <paramref name="due" /> (shard time), as long as the effect whose context
+    ///     this is is still on its target then. Effects are only looked at every UpdateFrequency ms, which can be
+    ///     coarser than a wait in their Update chain (Fungal Bloom waits 510 ms in an effect checked every 1000 ms).
+    /// </summary>
+    public void Schedule(uint due, Context context, Action run)
+    {
+        _scheduled.Add((due, context, run));
+    }
+
+    internal void RunScheduled(uint now)
+    {
+        if (_scheduled.Count == 0)
+        {
+            return;
+        }
+
+        var due = _scheduled.Where(entry => unchecked((int)(now - entry.Due)) >= 0).ToList();
+        foreach (var entry in due)
+        {
+            _scheduled.Remove(entry);
+            if (entry.Context.Self?.GetActiveEffects().Any(state => ReferenceEquals(state?.Context, entry.Context)) == true)
+            {
+                entry.Run();
             }
         }
     }
