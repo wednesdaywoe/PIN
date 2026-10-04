@@ -213,8 +213,8 @@ public class Factory
                 return new RequireCStateCommand(SDBInterface.GetRequireCStateCommandDef(commandId));
             case CommandType.RequireSprintModifier:
                 return new RequireSprintModifierCommand(SDBInterface.GetRequireSprintModifierCommandDef(commandId));
-            // case CommandType.RopePull:
-            //     return new RopePullCommand(SDBInterface.GetRopePullCommandDef(commandId));
+            case CommandType.RopePull:
+                return new RopePullCommand(SDBInterface.GetRopePullCommandDef(commandId));
             // case CommandType.SetTargetOffset:
             //     return new SetTargetOffsetCommand(SDBInterface.GetSetTargetOffsetCommandDef(commandId));
             // case CommandType.RequireEnergy:
@@ -383,8 +383,8 @@ public class Factory
                 return new LoadRegisterFromBonusCommand(SDBInterface.GetLoadRegisterFromBonusCommandDef(commandId));
             // case CommandType.BonusGreaterThan:
             //     SDB has zero instances of this command
-            // case CommandType.TargetByNPC:
-            //     return new TargetByNPCCommand(CustomDBInterface.GetTargetByNPCCommandDef(commandId));
+            case CommandType.TargetByNPC:
+                return new TargetByNPCCommand(CustomDBInterface.GetTargetByNPCCommandDef(commandId));
             case CommandType.ImpactToggleEffect:
                 return new ImpactToggleEffectCommand(SDBInterface.GetImpactToggleEffectCommandDef(commandId));
             case CommandType.DeployableCalldown:
@@ -440,8 +440,8 @@ public class Factory
             //     return new ActivateMissionCommand(CustomDBInterface.GetActivateMissionCommandDef(commandId));
             // case CommandType.UpdateWait:
             //     return new UpdateWaitCommand(SDBInterface.GetUpdateWaitCommandDef(commandId));
-            // case CommandType.LoadRegisterFromStat:
-            //     return new LoadRegisterFromStatCommand(SDBInterface.GetLoadRegisterFromStatCommandDef(commandId));
+            case CommandType.LoadRegisterFromStat:
+                return new LoadRegisterFromStatCommand(SDBInterface.GetLoadRegisterFromStatCommandDef(commandId));
             case CommandType.PushRegister:
                 return new PushRegisterCommand(SDBInterface.GetPushRegisterCommandDef(commandId));
             case CommandType.PopRegister:
@@ -639,8 +639,8 @@ public class Factory
                 return new RequireItemAttributeCommand(SDBInterface.GetRequireItemAttributeCommandDef(commandId));
             // case CommandType.AddLootTable:
             //     return new AddLootTableCommand(CustomDBInterface.GetAddLootTableCommandDef(commandId));
-            // case CommandType.UpdateWaitAndFireOnce:
-            //     return new UpdateWaitAndFireOnceCommand(SDBInterface.GetUpdateWaitAndFireOnceCommandDef(commandId));
+            case CommandType.UpdateWaitAndFireOnce:
+                return new UpdateWaitAndFireOnceCommand(SDBInterface.GetUpdateWaitAndFireOnceCommandDef(commandId));
             case CommandType.RequireZoneType:
                 return new RequireZoneTypeCommand(SDBInterface.GetRequireZoneTypeCommandDef(commandId));
             // case CommandType.SetInteractionType:

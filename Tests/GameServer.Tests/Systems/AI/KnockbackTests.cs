@@ -146,4 +146,33 @@ public class KnockbackTests
         Assert.Equal(40f, position.Z);
         Assert.True(position.X > 2f);
     }
+
+    [Fact]
+    public void RopePull_LandsShortOfThePuller()
+    {
+        // Gravity Pull: Speed 25, Range 15, from 13 m away
+        var velocity = RopePullCommand.Pull(new Vector3(13f, 0f, 0f), Vector3.Zero, 25f, 15f);
+
+        var landed = Fly(new Vector3(13f, 0f, 0f), velocity, FlatGround, NoWall);
+
+        // The 50 ms steps carry a 25 m/s flight up to two steps (2.5 m) past the ideal arc
+        Assert.InRange(landed.X, RopePullCommand.StopShort - 2.6f, RopePullCommand.StopShort + 0.1f);
+        Assert.Equal(0f, landed.Z);
+    }
+
+    [Fact]
+    public void RopePull_TravelsNoFurtherThanItsRange()
+    {
+        var velocity = RopePullCommand.Pull(new Vector3(40f, 0f, 0f), Vector3.Zero, 25f, 15f);
+
+        var landed = Fly(new Vector3(40f, 0f, 0f), velocity, FlatGround, NoWall);
+
+        Assert.InRange(landed.X, 25f - 2.6f, 25f + 0.1f);
+    }
+
+    [Fact]
+    public void RopePull_AlreadyClose_DoesNotMove()
+    {
+        Assert.Equal(Vector3.Zero, RopePullCommand.Pull(new Vector3(2f, 0f, 0f), Vector3.Zero, 25f, 15f));
+    }
 }
