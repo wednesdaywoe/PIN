@@ -263,6 +263,14 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public int ShieldRechargePerSec { get; set; }
     public int ShieldRechargeDelayMs { get; set; }
     public ulong LastDamagedTime { get; private set; }
+
+    /// <summary>Ultimate meter, 0 to 100. See <see cref="Systems.Combat.UltimateCharge"/>.</summary>
+    public float SuperCharge { get; private set; }
+
+    /// <summary>Last time this player dealt or took a hit, for <see cref="Systems.Combat.UltimateCharge"/>.</summary>
+    public ulong LastCombatTime { get; set; }
+
+    private float _sentSuperCharge = -1f;
     public GibVisuals GibVisualsInfo { get; set; }
     public ProcessDelayData ProcessDelay { get; set; }
     public EmoteData Emote { get; set; }
@@ -1726,6 +1734,28 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         }
     }
 
+    /// <summary>
+    ///     Sets the ultimate meter, kept within 0 to 100 unless <paramref name="allowOvercharge"/>. The client is told on
+    ///     a change of a whole point or more, and always on reaching full or empty, so a steady fill isn't a message a tick.
+    /// </summary>
+    public void SetSuperCharge(float value, bool allowOvercharge = false)
+    {
+        SuperCharge = Math.Max(0f, allowOvercharge ? value : Math.Min(value, Systems.Combat.UltimateCharge.Full));
+        if (Character_CombatController == null)
+        {
+            return;
+        }
+
+        var edge = SuperCharge >= Systems.Combat.UltimateCharge.Full || SuperCharge <= 0f;
+        if (Math.Abs(SuperCharge - _sentSuperCharge) >= 1f || (edge && SuperCharge != _sentSuperCharge))
+        {
+            _sentSuperCharge = SuperCharge;
+            Character_CombatController.SuperChargeProp = new SuperChargeData { Value = SuperCharge, Op = 0 };
+        }
+    }
+
+    public void AddSuperCharge(float amount) => SetSuperCharge(SuperCharge + amount);
+
     public void SetCurrentShields(int newValue)
     {
         CurrentShields = Math.Min(Math.Max(0, newValue), MaxShields.Value);
@@ -1771,6 +1801,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         // Landing a hit restarts the recharge wait whether the shield took any of it or not
         LastDamagedTime = Shard.CurrentTimeLong;
+        Systems.Combat.UltimateCharge.OnHit(damage.Attacker, this, amount, Shard.CurrentTimeLong);
 
         Logger.Debug(
             "{Target} took {Amount} damage from {Attacker}, {Absorbed} of it on shields, {Shields} shields and {Health} health left",
@@ -2192,7 +2223,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             CombatFlagsProp = new CombatFlagsData { Value = 0, Time = Shard.CurrentTime },
             PermissionFlagsProp = PermissionFlags,
             NemesesProp = new NemesesData { Values = [] },
-            SuperChargeProp = new SuperChargeData { Value = 100, Op = 0 }
+            SuperChargeProp = new SuperChargeData { Value = SuperCharge, Op = 0 }
         };
         Character_MissionAndMarkerController = new MissionAndMarkerController();
         Character_LocalEffectsController = new LocalEffectsController();

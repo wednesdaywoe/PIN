@@ -15,23 +15,19 @@ public class ConsumeSuperChargeCommand : Command, ICommand
         Params = par;
     }
 
+    /// <summary>
+    ///     Takes Percent points off the ultimate meter, a percent of a full meter rather than of what's left; almost every
+    ///     def spends 100. A negative Percent is a gain (-5 on a kill-type event, -500 to refill). Kept within 0 to 100
+    ///     unless AllowOvercharge.
+    /// </summary>
     public bool Execute(Context context)
     {
-        var target = context.Self;
-
-        if (target is CharacterEntity character)
+        if ((context.Self ?? context.Initiator) is CharacterEntity character)
         {
-            var currentValue = character.Character_CombatController.SuperChargeProp.Value;
-
             var percent = AbilitySystem.RegistryOp(context.Register, Params.Percent, (Operand)Params.PercentRegop);
-            var value = percent / 100 * currentValue;
-
-            character.Character_CombatController.SuperChargeProp = new SuperChargeData()
-               {
-                   Value = currentValue - value,
-                   Op = (byte)Operand.ASSIGN,
-               };
-
+            var before = character.SuperCharge;
+            character.SetSuperCharge(before - percent, Params.AllowOvercharge == 1);
+            Logger.Debug("{Command} {CommandId}: ultimate meter {Before} -> {After} on {Character}", nameof(ConsumeSuperChargeCommand), Params.Id, before, character.SuperCharge, character);
             return true;
         }
 

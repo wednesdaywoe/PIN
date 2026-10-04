@@ -14,18 +14,19 @@ public class RequireSuperChargeCommand : Command, ICommand
         Params = par;
     }
 
+    /// <summary>Passes when the ultimate meter holds at least Percent points (100 in almost every def).</summary>
     public bool Execute(Context context)
     {
-        var target = context.Self;
-
-        if (target is CharacterEntity character)
+        if ((context.Self ?? context.Initiator) is CharacterEntity character)
         {
-            var currentValue = character.Character_CombatController.SuperChargeProp.Value;
-
             var percent = AbilitySystem.RegistryOp(context.Register, Params.Percent, (Operand)Params.PercentRegop);
-            var value = percent / 100 * currentValue;
+            var enough = character.SuperCharge >= percent - 0.001f;
+            if (!enough)
+            {
+                Logger.Debug("{Command} {CommandId}: ultimate meter {Value} is short of {Percent} on {Character}", nameof(RequireSuperChargeCommand), Params.Id, character.SuperCharge, percent, character);
+            }
 
-            return currentValue >= value;
+            return enough != (Params.Negate == 1);
         }
 
         Logger.Warning("{Command} {CommandId} fails because target is not a Character. If this is happening, we should investigate why.", nameof(RequireSuperChargeCommand), Params.Id);
