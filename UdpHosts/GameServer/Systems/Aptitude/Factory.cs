@@ -251,8 +251,8 @@ public class Factory
                 return new RequestBattleFrameListCommand(SDBInterface.GetRequestBattleFrameList(commandId));
             case CommandType.NPCSpawn:
                 return new NPCSpawnCommand(CustomDBInterface.GetNPCSpawnCommandDef(commandId));
-            // case CommandType.ApplyImpulse:
-            //     return new ApplyImpulseCommand(SDBInterface.GetApplyImpulseCommandDef(commandId));
+            case CommandType.ApplyImpulse:
+                return new ApplyImpulseCommand(SDBInterface.GetApplyImpulseCommandDef(commandId));
             case CommandType.DeployableSpawn:
                 return new DeployableSpawnCommand(CustomDBInterface.GetDeployableSpawnCommandDef(commandId));
             // case CommandType.NPCDroidModeChange:
