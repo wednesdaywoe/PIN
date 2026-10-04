@@ -1,9 +1,9 @@
-<title>PIN — Ultimate meter (ULT-1–ULT-4)</title>
+<title>PIN — Ultimate meter and four abilities</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Ultimate meter (ULT-1–ULT-4)</h1>
+    <h1>Ultimate meter and four abilities (ULT, WAIT, PULL)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -17,8 +17,10 @@
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
     <p>Last run finished leaps and slams: Meteor Strike and Crater both work and can be repeated, and nothing gets
-    stuck after landing. Crater module 86369 has no knockback stat, so it only damages; 88059 knocks back.</p>
-    <p>This run is the ultimate meter. Until now it was permanently full, so ultimates could be fired any time. Now:</p>
+    stuck after landing.</p>
+    <p>This run has two parts. Do them in order; the ULT entries end with you dying, which is fine before the rest.</p>
+    <p><strong>Part 1, the ultimate meter (ULT-1 to ULT-4).</strong> Until now it was permanently full, so ultimates
+    could be fired any time. Now:</p>
     <ul>
     <li>It starts <strong>empty</strong> each session and survives death.</li>
     <li>It fills while you're <strong>in combat</strong> (you hit something, or got hit, in the last 10 seconds):
@@ -29,8 +31,19 @@
     <li>An ultimate needs a full meter and empties it.</li>
     </ul>
     <p>The rates are a first guess and easy to change. <code>supercharge</code> on its own shows the meter;
-    <code>supercharge 100</code> fills it. Every default loadout's ultimate uses the meter, so whichever frame you wear
-    will do.</p>
+    <code>supercharge 100</code> fills it.</p>
+    <p><strong>Part 2, four abilities that did nothing until now (WAIT-1 to WAIT-3, PULL-1).</strong> Many abilities
+    have a step that says "wait this long, then do this once". The server skipped that step, so whatever hung off it
+    never happened. It now runs. These four depend on it:</p>
+    <ul>
+    <li><strong>Fuel Air Bomb</strong> (Firecat ultimate): the throw itself.</li>
+    <li><strong>Assassinate</strong> (Raptor): the strike's damage.</li>
+    <li><strong>Gravity Pull</strong> (Mammoth): its damage. The pull that drags enemies to you is also new: the server
+    now throws each monster in an arc that lands 2.5 to 5 m in front of you.</li>
+    <li><strong>Fungal Bloom</strong> (Recluse ultimate): the throw itself.</li>
+    </ul>
+    <p>All four are equipped with <code>equipitem</code> onto whatever frame you wear. If one does nothing at all
+    when pressed, switch to its own frame in the garage, equip it there, and try again; note which.</p>
   </section>
   <section class="block" data-open="true" id="ult-1">
     <button class="block-head" type="button">
@@ -109,6 +122,88 @@
       </ul><div class="result"><label for="r-ult-4">Result</label><textarea data-k="n-ult-4" id="r-ult-4" placeholder="Value after respawn?"></textarea></div></div>
     </div>
   </section>
+  <section class="block" data-open="true" id="wait-1">
+    <button class="block-head" type="button">
+      <span class="block-n">WAIT-1</span>
+      <span class="block-t">Fuel Air Bomb is thrown</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">WAIT-1</span><span class="marker">[ ]</span><span class="entry-t">Fuel Air Bomb is thrown</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="wait-1-1" type="checkbox"/><span class="step-body"><span class="lede">After respawning, create the four modules this part uses, then refresh your inventory: <code class="run">createitem 86045</code> <code class="run">createitem 141980</code> <code class="run">createitem 143288</code> <code class="run">createitem 139852</code> <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="wait-1-2" type="checkbox"/><span class="step-body"><span class="lede">Equip Fuel Air Bomb as your ultimate and fill the meter: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">supercharge 100</code>. With nothing targeted, turn on invulnerability: <code class="run">invuln on</code>. Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>, and back off about 20 m</span></span></label>
+      <label class="step"><input data-k="wait-1-3" type="checkbox"/><span class="step-body"><span class="lede">Aim at the Fiends and press the ultimate's key. Watch for about 5 seconds</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: about half a second after the press, a bomb is thrown and lands near where you aimed, and the meter empties. The log has <code>UpdateWaitAndFireOnceCommand ... after 500 ms</code> and an <code>Ability projectile</code> line.</li>
+      <li>Bonus, not built for this run: its description promises an explosion 2 seconds after landing and a fire patch. Note whether either happens and whether the Fiends take damage.</li>
+      </ul><div class="result"><label for="r-wait-1">Result</label><textarea data-k="n-wait-1" id="r-wait-1" placeholder="Thrown? Where did it land? Explosion or fire after it landed?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="wait-2">
+    <button class="block-head" type="button">
+      <span class="block-n">WAIT-2</span>
+      <span class="block-t">Assassinate strikes</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">WAIT-2</span><span class="marker">[ ]</span><span class="entry-t">Assassinate strikes</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="wait-2-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Assassinate: <code class="run">equipitem 141980 Ability1</code>. Walk up to a Fiend until it is within about 3 m, facing it</span></span></label>
+      <label class="step"><input data-k="wait-2-2" type="checkbox"/><span class="step-body"><span class="lede">Press the key for your first ability slot. Watch the Fiend's health bar</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: about 0.4 seconds after the press, the Fiend in front of you takes a hit (300 damage on this module). The log has <code>UpdateWaitAndFireOnceCommand ... after 400 ms</code>.</li>
+      <li>Its description also says you teleport a short way ahead. That part is the client's and wasn't touched; note whether it happens.</li>
+      </ul><div class="result"><label for="r-wait-2">Result</label><textarea data-k="n-wait-2" id="r-wait-2" placeholder="Hit landed? Teleport ahead? Anything odd?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="pull-1">
+    <button class="block-head" type="button">
+      <span class="block-n">PULL-1</span>
+      <span class="block-t">Gravity Pull drags enemies to you and hurts them</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">PULL-1</span><span class="marker">[ ]</span><span class="entry-t">Gravity Pull drags enemies to you and hurts them</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="pull-1-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Gravity Pull: <code class="run">equipitem 143288 Ability2</code>. Spawn three Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code> <code class="run">npc 1196</code>. Back off until they are 8 to 15 m away, all in front of you</span></span></label>
+      <label class="step"><input data-k="pull-1-2" type="checkbox"/><span class="step-body"><span class="lede">Face them and press the key for your second ability slot</span></span></label>
+      <label class="step"><input data-k="pull-1-3" type="checkbox"/><span class="step-body"><span class="lede">Wait out the 9-second cooldown. Turn so one Fiend is well off to your side and another is in front, then press it again</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: the Fiends in front fly toward you in a short arc and land 2.5 to 5 m in front of you. About half a second after the pull, each takes damage (100 on this module). On the second press, the Fiend off to the side doesn't move. The log has <code>RopePullCommand ... pulling</code> and <code>knocked back</code> lines.</li>
+      <li>They fly past you, land far off, sink into the ground, or nothing moves: note which. The landing distance and arc height are easy to change.</li>
+      </ul><div class="result"><label for="r-pull-1">Result</label><textarea data-k="n-pull-1" id="r-pull-1" placeholder="Pulled? Where did they land? Damage? Side Fiend left alone?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="wait-3">
+    <button class="block-head" type="button">
+      <span class="block-n">WAIT-3</span>
+      <span class="block-t">Fungal Bloom is thrown</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">WAIT-3</span><span class="marker">[ ]</span><span class="entry-t">Fungal Bloom is thrown</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="wait-3-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Fungal Bloom as your ultimate and fill the meter: <code class="run">equipitem 139852 AbilityHKM</code> <code class="run">supercharge 100</code>. Stand about 10 m from a group of Fiends</span></span></label>
+      <label class="step"><input data-k="wait-3-2" type="checkbox"/><span class="step-body"><span class="lede">Aim at the ground beside them and press the ultimate's key</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: about half a second after the press, a projectile flies to where you aimed, and Fiends within about 2 m of where it lands are shoved a little. The log has <code>UpdateWaitAndFireOnceCommand ... after 510 ms</code>.</li>
+      <li>Expected gap: the fungus and its spore mines probably don't appear, because the object it plants has no data on this server. Note whatever you do see.</li>
+      </ul><div class="result"><label for="r-wait-3">Result</label><textarea data-k="n-wait-3" id="r-wait-3" placeholder="Thrown? Shove where it landed? Any fungus or mines?"></textarea></div></div>
+    </div>
+  </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-ultimate"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull"></script>
