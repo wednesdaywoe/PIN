@@ -1,9 +1,9 @@
-<title>PIN — Leaps and slams (IMP-1–IMP-3)</title>
+<title>PIN — Leaps and slams (IMP-1–IMP-4)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Leaps and slams (IMP-1–IMP-3)</h1>
+    <h1>Leaps and slams (IMP-1–IMP-4)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -34,7 +34,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">IMP-1</span><span class="marker">[ ]</span><span class="entry-t">Meteor Strike jumps you up, then dives you where you aim</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">IMP-1</span><span class="marker pass">[x]</span><span class="entry-t">Meteor Strike jumps you up, then dives you where you aim</span></div>
       <p>From the game data: pressing it pushes you up for 1 second, then launches you at 45 m/s. On landing, enemies
       near you are damaged and knocked back (that part uses the knockback already tested with the cone attacks).</p>
       <div class="steps"><ol>
@@ -56,7 +56,7 @@
         what you saw instead.</li>
       <li>No <code>launches</code> lines at all: the ability never reached the server's launch step. Note whether
         the animation played.</li>
-      </ul><div class="result"><label for="r-imp-1">Result</label><textarea data-k="n-imp-1" id="r-imp-1" placeholder="Rise? Dive along aim? Landed where aimed? Fiends thrown?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Meteor Strike rises and dives along the aim; the log shows the rise (1618797, up 5 m/s plus running speed), the dive (1634936, 45 m/s pointing down along the aim), and the shove on landing. The aim guess holds.</p></div><div class="result"><label for="r-imp-1">Result</label><textarea data-k="n-imp-1" id="r-imp-1" placeholder="Rise? Dive along aim? Landed where aimed? Fiends thrown?"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="imp-2">
@@ -66,7 +66,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">IMP-2</span><span class="marker">[ ]</span><span class="entry-t">Crater jumps you up, then slams you straight down</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">IMP-2</span><span class="marker fail">[!]</span><span class="entry-t">Crater jumps you up, then slams you straight down</span></div>
       <p>From the game data: pressing it pushes you up, keeping your running speed. 1.3 seconds later you're driven
       straight down at 30 m/s, and on landing nearby enemies are damaged and thrown.</p>
       <div class="steps"><ol>
@@ -83,7 +83,7 @@
         launches ... &lt;0, 0, -30&gt;</code>. Fiends near the landing are thrown back.</li>
       <li>You rise but are never slammed down: the second push didn't reach the client. Note whether a
         <code>818397</code> line is in the log.</li>
-      </ul><div class="result"><label for="r-imp-2">Result</label><textarea data-k="n-imp-2" id="r-imp-2" placeholder="Rise? Forward when running? Slam down? Fiends thrown?"></textarea></div></div>
+      </ul><div class="callout fail"><p><strong>Failed 2026-10-03: works once, then never again.</strong> The first Crater rose, slammed down and shoved (log 21:29:50). Every later press failed at the first step. Cause: Crater gives you a lockout effect (8322) only if your module has the Crater Dome attribute, and lasts until you change battleframe. Both of those checks were unbuilt and always said yes, so every Crater locked itself forever. Both are now built; see IMP-4.</p></div><div class="result"><label for="r-imp-2">Result</label><textarea data-k="n-imp-2" id="r-imp-2" placeholder="Rise? Forward when running? Slam down? Fiends thrown?"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="imp-3">
@@ -105,6 +105,34 @@
       </ul><div class="result"><label for="r-imp-3">Result</label><textarea data-k="n-imp-3" id="r-imp-3" placeholder="Anything stuck after landing?"></textarea></div></div>
     </div>
   </section>
+  <section class="block" data-open="true" id="imp-4">
+    <button class="block-head" type="button">
+      <span class="block-n">IMP-4</span>
+      <span class="block-t">Crater can be used again after its cooldown</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">IMP-4</span><span class="marker">[ ]</span><span class="entry-t">Crater can be used again after its cooldown</span></div>
+      <p>Two server checks are now real. "Does your module have this attribute?" reads your equipped items, the way the
+      client does: a value of zero counts as no. "Until you change battleframe" now ends an effect when you switch to
+      a different frame. Your Crater (86369) has no dome attribute, so it should never take the lockout. About 40
+      other equippable abilities use the attribute check, so a different ability that suddenly refuses to fire is
+      worth reporting.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="imp-4-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers, then <code class="run">~/Games/PIN/start-pin.sh</code>. Log in; Crater should still be on key 3 (if not: <code class="run">equipitem 86369 Ability3</code>)</span></span></label>
+      <label class="step"><input data-k="imp-4-2" type="checkbox"/><span class="step-body"><span class="lede">Press 3. Wait for the cooldown to finish (45 seconds), then press 3 again. Do it a third time</span></span></label>
+      <label class="step"><input data-k="imp-4-3" type="checkbox"/><span class="step-body"><span class="lede">Use Meteor Strike (key 2) once more, to check it still works with the attribute check real</span></span></label>
+      <label class="step"><input data-k="imp-4-4" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "Ability (212|39243) |RequireItemAttributeCommand 1575165|ApplyImpulseCommand [0-9]+ launches|failed its chain" ~/Games/PIN/logs/GameServer.log | tail -40
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: all three Craters rise and slam. Each shows <code>RequireItemAttributeCommand 1575165: attribute 1254
+        is 0</code> and no <code>Ability 212 failed its chain</code>. Meteor Strike still rises and dives.</li>
+      <li>A later Crater still fails: note it; the log will show which step refused.</li>
+      </ul><div class="result"><label for="r-imp-4">Result</label><textarea data-k="n-imp-4" id="r-imp-4" placeholder="All three Craters? Meteor Strike still OK?"></textarea></div></div>
+    </div>
+  </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-impulse"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-impulse-2"></script>
