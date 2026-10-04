@@ -58,6 +58,9 @@ public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget, IDam
     /// </summary>
     public uint DeathAbility { get; set; }
 
+    /// <summary>Placed by an ultimate: its abilities' damage earns no ultimate meter (see Context.FromUltimate).</summary>
+    public bool FromUltimate { get; set; }
+
     public ushort StatusEffectsChangeTime_0 { get; set; }
     public ushort StatusEffectsChangeTime_1 { get; set; }
     public ushort StatusEffectsChangeTime_2 { get; set; }
@@ -248,7 +251,7 @@ public sealed class DeployableEntity : BaseAptitudeEntity, IAptitudeTarget, IDam
 
         if (DeathAbility != 0)
         {
-            Shard.Abilities.HandleActivateAbility(Shard, this, DeathAbility);
+            Shard.Abilities.HandleActivateAbility(Shard, this, DeathAbility, FromUltimate);
         }
 
         Shard.EntityMan.SetRemainingLifetime(this, DestroyedLifetimeMs);

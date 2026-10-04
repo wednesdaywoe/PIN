@@ -41,10 +41,10 @@ public class TinyObjectCreateCommand : Command, ICommand
             }
         }
 
-        context.Shard.EntityMan.SpawnTinyObject(Params.TinyObjectId, position, owner, context.AbilityId);
+        context.Shard.EntityMan.SpawnTinyObject(Params.TinyObjectId, position, owner, context.AbilityId, context.FromUltimate);
         if (Params.AlsoTinyObjectId != 0)
         {
-            context.Shard.EntityMan.SpawnTinyObject(Params.AlsoTinyObjectId, position, owner, context.AbilityId);
+            context.Shard.EntityMan.SpawnTinyObject(Params.AlsoTinyObjectId, position, owner, context.AbilityId, context.FromUltimate);
         }
 
         return true;

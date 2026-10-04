@@ -303,7 +303,7 @@ public class AbilitySystem
         }
     }
 
-    public bool HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, uint activationTime, AptitudeTargets targets, Guid? executionId = null, Vector3? initPosition = null)
+    public bool HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, uint activationTime, AptitudeTargets targets, Guid? executionId = null, Vector3? initPosition = null, bool fromUltimate = false)
     {
         var execId = executionId ?? Guid.NewGuid();
         using var logContext = Serilog.Context.LogContext.PushProperty("ExecutionId", execId);
@@ -323,7 +323,8 @@ public class AbilitySystem
             AbilityId = abilityId,
             Targets = targets,
             InitTime = activationTime,
-            ExecutionHint = ExecutionHint.Ability
+            ExecutionHint = ExecutionHint.Ability,
+            FromUltimate = fromUltimate,
         };
         if (initPosition is { } position)
         {
@@ -333,9 +334,9 @@ public class AbilitySystem
         return chain.Execute(context);
     }
 
-    public void HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId)
+    public void HandleActivateAbility(IShard shard, IAptitudeTarget initiator, uint abilityId, bool fromUltimate = false)
     {
-        HandleActivateAbility(shard, initiator, abilityId, _shard.CurrentTime, new AptitudeTargets());
+        HandleActivateAbility(shard, initiator, abilityId, _shard.CurrentTime, new AptitudeTargets(), fromUltimate: fromUltimate);
     }
 
     public void HandleTargetAbility()

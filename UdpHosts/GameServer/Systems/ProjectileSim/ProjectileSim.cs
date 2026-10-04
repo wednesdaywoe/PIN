@@ -92,7 +92,7 @@ public class ProjectileSim
     ///    </para>
     /// </summary>
     /// <param name="effectContext">The context of the effect whose Apply fired this, if any. See <see cref="HoldsEffect"/>.</param>
-    public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage, Context effectContext = null)
+    public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage, Context effectContext = null, bool fromUltimate = false)
     {
         // No ammo-radius splash here, unlike the weapon path above. An ability's area damage comes from the
         // ammo's impact ability (below) or InflictDamageCommand's own radius, so reading the ammo radius as well
@@ -102,7 +102,7 @@ public class ProjectileSim
             var resolved = TryResolveHit(shooter, origin, direction, 0, out var hit, out var target);
             if (resolved)
             {
-                Land(shooter, ammo, damage, hit, target);
+                Land(shooter, ammo, damage, hit, target, fromUltimate);
             }
 
             return;
@@ -118,6 +118,7 @@ public class ProjectileSim
             Gravity = ammo.Gravity,
             FiredAt = _shard.CurrentTimeLong,
             HeldEffect = SDBInterface.IsDetonatable(ammo.Id) ? effectContext : null,
+            FromUltimate = fromUltimate,
         };
 
         var landed = TraceFlight(flight, out var seconds);
@@ -205,7 +206,7 @@ public class ProjectileSim
 
             // The struck target was chosen at launch. It may have died since; the blast still lands where it was.
             var target = flight.Target is { IsAlive: true } ? flight.Target : null;
-            Land(flight.Shooter, flight.Ammo, flight.Damage, flight.Hit, target);
+            Land(flight.Shooter, flight.Ammo, flight.Damage, flight.Hit, target, flight.FromUltimate);
         }
     }
 
@@ -215,11 +216,11 @@ public class ProjectileSim
         _logger.Debug("Ability projectile {Ammo} {Why} in the air at {Position}, running {AbilityId}", flight.Ammo.Name, why, position, abilityId);
         if (abilityId != 0)
         {
-            _shard.Abilities.HandleActivateAbility(_shard, flight.Shooter, abilityId, _shard.CurrentTime, new AptitudeTargets(), initPosition: position);
+            _shard.Abilities.HandleActivateAbility(_shard, flight.Shooter, abilityId, _shard.CurrentTime, new AptitudeTargets(), initPosition: position, fromUltimate: flight.FromUltimate);
         }
     }
 
-    private void Land(CharacterEntity shooter, Ammo ammo, float damage, ProjectileHitResult hit, IDamageable target)
+    private void Land(CharacterEntity shooter, Ammo ammo, float damage, ProjectileHitResult hit, IDamageable target, bool fromUltimate = false)
     {
         if (target != null)
         {
@@ -229,6 +230,7 @@ public class ProjectileSim
                 Attacker = shooter,
                 DamageType = ammo.Damagetype,
                 Flags = ResolveFlags(hit),
+                FromUltimate = fromUltimate,
             });
         }
 
@@ -239,7 +241,7 @@ public class ProjectileSim
         {
             var targets = target is IAptitudeTarget struck ? new AptitudeTargets(struck) : new AptitudeTargets();
             _logger.Debug("Ability projectile {Ammo} landed at {Position}, running impact ability {AbilityId}", ammo.Name, hit.Position, ammo.AbilityId);
-            _shard.Abilities.HandleActivateAbility(_shard, shooter, ammo.AbilityId, _shard.CurrentTime, targets, initPosition: hit.Position);
+            _shard.Abilities.HandleActivateAbility(_shard, shooter, ammo.AbilityId, _shard.CurrentTime, targets, initPosition: hit.Position, fromUltimate: fromUltimate);
         }
     }
 
@@ -445,6 +447,8 @@ public class ProjectileSim
         public float Gravity { get; init; }
 
         public ulong FiredAt { get; init; }
+
+        public bool FromUltimate { get; init; }
 
         public ulong EndsAt { get; set; }
 

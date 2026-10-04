@@ -46,7 +46,7 @@ public class UltimateCharge
     }
 
     /// <summary>Called for every hit that lands. Both sides are in combat; the attacker earns the damage bonus.</summary>
-    public static void OnHit(CharacterEntity attacker, CharacterEntity target, float amount, ulong now)
+    public static void OnHit(CharacterEntity attacker, CharacterEntity target, float amount, ulong now, bool fromUltimate = false)
     {
         if (target.IsPlayerControlled)
         {
@@ -59,6 +59,13 @@ public class UltimateCharge
         }
 
         attacker.LastCombatTime = now;
+
+        // An ultimate's own damage still counts as fighting, but doesn't refill the meter it spent (user's call, 2026-10-04)
+        if (fromUltimate)
+        {
+            return;
+        }
+
         var maxHealth = target.MaxHealth.Value;
         if (maxHealth > 0)
         {

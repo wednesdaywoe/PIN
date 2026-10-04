@@ -1818,7 +1818,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
 
         // Landing a hit restarts the recharge wait whether the shield took any of it or not
         LastDamagedTime = Shard.CurrentTimeLong;
-        Systems.Combat.UltimateCharge.OnHit(damage.Attacker, this, amount, Shard.CurrentTimeLong);
+        Systems.Combat.UltimateCharge.OnHit(damage.Attacker, this, amount, Shard.CurrentTimeLong, damage.FromUltimate);
 
         Logger.Debug(
             "{Target} took {Amount} damage from {Attacker}, {Absorbed} of it on shields, {Shields} shields and {Health} health left",

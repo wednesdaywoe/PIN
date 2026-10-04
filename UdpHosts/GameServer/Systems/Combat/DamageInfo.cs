@@ -44,6 +44,9 @@ public readonly record struct DamageInfo
     /// <summary>Human-readable weapon name, already built by the template resolver.</summary>
     public string WeaponName { get; init; }
 
+    /// <summary>Dealt by an ultimate or anything it started; earns no ultimate meter (see Context.FromUltimate).</summary>
+    public bool FromUltimate { get; init; }
+
     /// <summary>
     ///     <see cref="Amount"/> as whole points. Health pools are integers, so every
     ///     <see cref="IDamageable"/> rounds at the same moment and in the same direction, and a hit that

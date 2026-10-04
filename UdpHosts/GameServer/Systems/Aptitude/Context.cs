@@ -51,6 +51,12 @@ public class Context
     public uint ActivationTime { get; set; }
     public Vector3 InitPosition { get; set; }
     public ExecutionHint ExecutionHint { get; set; }
+
+    /// <summary>
+    ///     Set once an ultimate passes its RequireSuperCharge, and carried into everything it starts (effects,
+    ///     projectile landings, tiny objects, deployables), so its damage earns no ultimate meter back.
+    /// </summary>
+    public bool FromUltimate { get; set; }
     public Guid ExecutionId { get; set; }
 
     public Dictionary<ICommand, ICommandActiveContext> Actives { get; set; } = [];
@@ -79,6 +85,7 @@ public class Context
             InitPosition = original.InitPosition,
             ExecutionHint = original.ExecutionHint,
             ExecutionId = original.ExecutionId,
+            FromUltimate = original.FromUltimate,
         };
     }
 

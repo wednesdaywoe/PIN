@@ -26,7 +26,15 @@ public class RequireSuperChargeCommand : Command, ICommand
                 Logger.Debug("{Command} {CommandId}: ultimate meter {Value} is short of {Percent} on {Character}", nameof(RequireSuperChargeCommand), Params.Id, character.SuperCharge, percent, character);
             }
 
-            return enough != (Params.Negate == 1);
+            var passed = enough != (Params.Negate == 1);
+
+            // Everything this ultimate goes on to do is its damage, which shouldn't pay back the meter it just spent
+            if (passed && Params.Negate != 1)
+            {
+                context.FromUltimate = true;
+            }
+
+            return passed;
         }
 
         Logger.Warning("{Command} {CommandId} fails because target is not a Character. If this is happening, we should investigate why.", nameof(RequireSuperChargeCommand), Params.Id);

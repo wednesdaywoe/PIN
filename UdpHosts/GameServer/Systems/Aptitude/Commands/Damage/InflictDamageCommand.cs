@@ -174,6 +174,7 @@ public class InflictDamageCommand : Command, ICommand
             DamageType = damageType,
             WeaponId = weaponId,
             WeaponName = weaponName,
+            FromUltimate = context.FromUltimate,
         });
     }
 }

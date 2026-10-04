@@ -57,7 +57,7 @@ public class FireProjectileCommand : Command, ICommand
         var bursts = Math.Max((byte)1, Params.Burstcount);
         for (var i = 0; i < bursts; i++)
         {
-            context.Shard.ProjectileSim.FireAbilityProjectile(shooter, origin, direction, ammo, damage, context.ExecutionHint == ExecutionHint.ApplyEffect ? context : null);
+            context.Shard.ProjectileSim.FireAbilityProjectile(shooter, origin, direction, ammo, damage, context.ExecutionHint == ExecutionHint.ApplyEffect ? context : null, context.FromUltimate);
         }
 
         return true;

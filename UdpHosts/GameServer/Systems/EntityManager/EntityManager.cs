@@ -148,7 +148,7 @@ public class EntityManager
         return vehicleEntity;
     }
 
-    public DeployableEntity SpawnDeployable(uint typeId, Vector3 position, Quaternion orientation, CharacterEntity owner = null, bool useOwnerFaction = false, byte overrideFactionId = 0)
+    public DeployableEntity SpawnDeployable(uint typeId, Vector3 position, Quaternion orientation, CharacterEntity owner = null, bool useOwnerFaction = false, byte overrideFactionId = 0, bool fromUltimate = false)
     {
         var deployableInfo = SDBInterface.GetDeployable(typeId);
         var deployableEntity = new DeployableEntity(_shard, _shard.GetNextGuid(), typeId, 0, owner);
@@ -213,6 +213,7 @@ public class EntityManager
         // what every deployable was before it could be damaged at all.
         deployableEntity.SetMaxHealth(deployableInfo.StartHitpoints, true);
         deployableEntity.DeathAbility = deployableInfo.DeathAbilityid;
+        deployableEntity.FromUltimate = fromUltimate;
 
         if (deployableInfo.StartHitpoints <= 0)
         {
@@ -232,12 +233,12 @@ public class EntityManager
 
         if (deployableInfo.SpawnAbilityid != 0)
         {
-            _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, deployableInfo.SpawnAbilityid);
+            _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, deployableInfo.SpawnAbilityid, fromUltimate);
         }
 
         if (deployableInfo.ConstructedAbilityid != 0)
         {
-            RunDelayed(deployableInfo.BuildTimeMs, () => _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, deployableInfo.ConstructedAbilityid));
+            RunDelayed(deployableInfo.BuildTimeMs, () => _shard.Abilities.HandleActivateAbility(_shard, deployableEntity, deployableInfo.ConstructedAbilityid, fromUltimate));
         }
 
         if (deployableInfo.TurretType != 0)
@@ -315,7 +316,7 @@ public class EntityManager
     ///     Leaves a tiny object (a poison cloud and the like) at <paramref name="position" /> and starts the status
     ///     effect its row names. The object itself never reaches clients; its particle effect goes out as an area visual.
     /// </summary>
-    public TinyObjectEntity SpawnTinyObject(uint typeId, Vector3 position, CharacterEntity owner, uint abilityId)
+    public TinyObjectEntity SpawnTinyObject(uint typeId, Vector3 position, CharacterEntity owner, uint abilityId, bool fromUltimate = false)
     {
         var row = SDBInterface.GetTinyObject(typeId);
         if (row == null)
@@ -357,6 +358,7 @@ public class EntityManager
                 AbilityId = abilityId,
                 InitPosition = position,
                 InitTime = _shard.CurrentTime,
+                FromUltimate = fromUltimate,
             });
         }
 
