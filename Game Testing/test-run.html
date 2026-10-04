@@ -93,7 +93,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">IMP-3</span><span class="marker">[ ]</span><span class="entry-t">The launches don't leave you stuck</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">IMP-3</span><span class="marker pass">[x]</span><span class="entry-t">The launches don't leave you stuck</span></div>
       <p>A forced move tells the client to take over your movement for a moment. Earlier work on Charge showed a
       forced move that never ends can lock the camera or controls.</p>
       <div class="steps"><ol>
@@ -102,7 +102,7 @@
       <ul>
       <li>Pass: everything works straight after landing.</li>
       <li>Stuck camera, no movement, or sliding: say which ability and what's stuck. Relogging clears it.</li>
-      </ul><div class="result"><label for="r-imp-3">Result</label><textarea data-k="n-imp-3" id="r-imp-3" placeholder="Anything stuck after landing?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Nothing stuck after Meteor Strike or Crater.</p></div><div class="result"><label for="r-imp-3">Result</label><textarea data-k="n-imp-3" id="r-imp-3" placeholder="Anything stuck after landing?"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="imp-4">
@@ -130,7 +130,7 @@
       <li>Pass: all three Craters rise and slam. Each shows <code>RequireItemAttributeCommand 1575165: attribute 1254
         is 0</code> and no <code>Ability 212 failed its chain</code>. Meteor Strike still rises and dives.</li>
       <li>A later Crater still fails: note it; the log will show which step refused.</li>
-      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Crater fired again after its cooldown (log 21:42:51 and 21:43:38, attribute 1254 read as 0, no failed chain), and Meteor Strike still rises and dives (21:44:11).</p></div><div class="result"><label for="r-imp-4">Result</label><textarea data-k="n-imp-4" id="r-imp-4" placeholder="All three Craters? Meteor Strike still OK?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Crater fired again after its cooldown (log 21:42:51 and 21:43:38, attribute 1254 read as 0, no failed chain), and Meteor Strike still rises and dives (21:44:11).</p></div><div class="callout"><p><strong>Note 2026-10-03:</strong> this Crater damaged the Fiends but didn't throw them. That is the module, not the server: 86369 has no Crater Knockback Potency (1135), so the shove reads strength 0. Crater 88059 has 15, Meteor Strike 101840 has 10.</p></div><div class="result"><label for="r-imp-4">Result</label><textarea data-k="n-imp-4" id="r-imp-4" placeholder="All three Craters? Meteor Strike still OK?"></textarea></div></div>
     </div>
   </section>
 </div>

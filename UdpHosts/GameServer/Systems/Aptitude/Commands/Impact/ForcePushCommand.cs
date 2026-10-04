@@ -28,6 +28,8 @@ public class ForcePushCommand : Command, ICommand
         var strength = AbilitySystem.RegistryOp(context.Register, Params.Strength, (Operand)Params.StrengthRegop);
         if (strength <= 0f)
         {
+            // Usually a module without the knockback stat the chain reads (Crater 86369 has no Crater Knockback Potency)
+            Logger.Debug("{Command} {CommandId} pushes no one: strength {Strength}", nameof(ForcePushCommand), Params.Id, strength);
             return true;
         }
 
