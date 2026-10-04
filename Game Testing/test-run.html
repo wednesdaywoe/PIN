@@ -104,6 +104,7 @@
       <ul>
       <li>Pass: at full, the ultimate lights up. It fires, the arc empties, <code>supercharge</code> answers 0, and the second press does nothing. The log has <code>ConsumeSuperChargeCommand ... ultimate meter 100 -&gt; 0</code>.</li>
             <li><strong>Run 2 PASSED: lit at full, fired, emptied. About 20-25% came straight back: that is the damage bonus. Absorption Bomb's closing blast hit three Fiends for 3270 each, 5 points each (the per-hit cap), plus combat time.</strong></li>
+            <li><strong>Ultimate damage no longer refills the meter (your call, 2026-10-04). Re-test: fill with <code>supercharge 100</code>, use Absorption Bomb or Fuel Air Bomb into a group of Fiends, then run <code>supercharge</code> straight away: it should read only a few points (combat time), not 20.</strong></li>
       </ul><div class="result"><label for="r-ult-3">Result</label><textarea data-k="n-ult-3" id="r-ult-3" placeholder="Lit at full? Fired? Emptied? Second press refused?"></textarea></div></div>
     </div>
   </section>
@@ -220,4 +221,4 @@
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-6"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-7"></script>
