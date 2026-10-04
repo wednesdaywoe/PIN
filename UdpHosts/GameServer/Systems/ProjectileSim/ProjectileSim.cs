@@ -91,7 +91,8 @@ public class ProjectileSim
     ///    early. Ammo with no speed lands at once, as every ability projectile did before.
     ///    </para>
     /// </summary>
-    public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage)
+    /// <param name="effectContext">The context of the effect whose Apply fired this, if any. See <see cref="HoldsEffect"/>.</param>
+    public void FireAbilityProjectile(CharacterEntity shooter, Vector3 origin, Vector3 direction, Ammo ammo, float damage, Context effectContext = null)
     {
         // No ammo-radius splash here, unlike the weapon path above. An ability's area damage comes from the
         // ammo's impact ability (below) or InflictDamageCommand's own radius, so reading the ammo radius as well
@@ -116,6 +117,7 @@ public class ProjectileSim
             Velocity = direction * ammo.ProjectileSpeed,
             Gravity = ammo.Gravity,
             FiredAt = _shard.CurrentTimeLong,
+            HeldEffect = SDBInterface.IsDetonatable(ammo.Id) ? effectContext : null,
         };
 
         var landed = TraceFlight(flight, out var seconds);
@@ -137,6 +139,20 @@ public class ProjectileSim
             ammo.Name,
             seconds,
             landed ? $"lands at {flight.Hit.Position}" : "lands nowhere");
+    }
+
+    /// <summary>
+    ///     True while a detonatable projectile fired from this effect is still in the air. The two-press abilities choose
+    ///     between throwing and detonating by whether the throw's effect is still on the player (Poison Ball's 15205),
+    ///     and the data ends that effect after 500 ms. Held for the whole flight instead, a press while the ball flies
+    ///     always detonates it, so it can't be thrown again before its cooldown starts at the burst. A PIN choice.
+    /// </summary>
+    public bool HoldsEffect(Context effectContext)
+    {
+        lock (_inFlight)
+        {
+            return _inFlight.Exists(f => ReferenceEquals(f.HeldEffect, effectContext));
+        }
     }
 
     /// <summary>
@@ -435,6 +451,8 @@ public class ProjectileSim
         public ProjectileHitResult Hit { get; set; }
 
         public IDamageable Target { get; set; }
+
+        public Context HeldEffect { get; init; }
 
         public Vector3 PositionAt(float seconds) => Origin + (Velocity * seconds) - new Vector3(0, 0, 0.5f * Gravity * seconds * seconds);
     }

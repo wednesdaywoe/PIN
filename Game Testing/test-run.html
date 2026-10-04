@@ -1,9 +1,9 @@
-<title>PIN — Throw, then press again (DET-1–DET-4)</title>
+<title>PIN — Throw, then press again (DET-1–DET-5)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Throw, then press again (DET-1–DET-4)</h1>
+    <h1>Throw, then press again (DET-1–DET-5)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -129,7 +129,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">DET-4</span><span class="marker">[ ]</span><span class="entry-t">A ball that never hits anything bursts at the end of its flight</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">DET-4</span><span class="marker fail">[!]</span><span class="entry-t">A ball that never hits anything bursts at the end of its flight</span></div>
       <p>The two-press Poison Ball only starts its cooldown when it explodes. A ball that never hit anything used to
       vanish without exploding, so no cooldown. Now it bursts in the air when its 5-second flight ends. The game
       data suggests this but doesn't say it outright.</p>
@@ -147,9 +147,40 @@
       <li>Note whether the client draws a burst in the sky at the 5-second mark. If it doesn't, the client may
         expect a ball to fizzle rather than burst.</li>
       <li>Fail: you can keep throwing balls into the sky with no cooldown, as before.</li>
-      </ul><div class="result"><label for="r-det-4">Result</label><textarea data-k="n-det-4" id="r-det-4" placeholder="Burst in the sky? Cooldown started?"></textarea></div></div>
+      </ul><div class="callout fail"><p><strong>Not fixed 2026-10-03.</strong> Each ball that hit nothing did burst at the end of its flight and started the 13-second cooldown (log 20:43:00), but that is 5 seconds after the throw, and three more balls were thrown in between. Throwing during any flight was still possible. Changed so a press during the flight detonates instead: DET-5.</p></div><div class="result"><label for="r-det-4">Result</label><textarea data-k="n-det-4" id="r-det-4" placeholder="Burst in the sky? Cooldown started?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="det-5">
+    <button class="block-head" type="button">
+      <span class="block-n">DET-5</span>
+      <span class="block-t">While a ball is flying, pressing again detonates it instead of throwing another</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">DET-5</span><span class="marker">[ ]</span><span class="entry-t">While a ball is flying, pressing again detonates it instead of throwing another</span></div>
+      <p>The ability picks "throw" or "detonate" by checking for a short mark the throw puts on you, which the data
+      ends after half a second. The server now keeps that mark on you for as long as your ball is in the air. So any
+      press during the flight detonates, and the 13-second cooldown starts at the burst. The unknown is your game
+      client: it also guesses what a press does, and may draw a new throw while the server detonates.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="det-5-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers, then <code class="run">~/Games/PIN/start-pin.sh</code>. Log in; Poison Ball 86057 should still be on key 1 (if not: <code class="run">equipitem 86057 Ability1</code>)</span></span></label>
+      <label class="step"><input data-k="det-5-2" type="checkbox"/><span class="step-body"><span class="lede">Aim high and far, press 1, wait about 1 second, then press 1 again. Watch whether the ball bursts in the air, or a second ball appears</span></span></label>
+      <label class="step"><input data-k="det-5-3" type="checkbox"/><span class="step-body"><span class="lede">After the cooldown, aim high and press 1 rapidly about five times</span></span></label>
+      <label class="step"><input data-k="det-5-4" type="checkbox"/><span class="step-body"><span class="lede">After the cooldown, aim straight up, press 1 once and leave it. It should burst on its own after 5 seconds and start the cooldown</span></span></label>
+      <label class="step"><input data-k="det-5-5" type="checkbox"/><span class="step-body"><span class="lede">Back at the source machine:</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "Ability projectile|DetonateProjectilesCommand|held: its projectile|inflicts cooldowns: global 0" ~/Games/PIN/logs/GameServer.log | tail -40
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: each throw has exactly one <code>in flight</code> line. It is followed by <code>Effect 15205 on ...
+        held</code> lines, then either <code>detonated in the air</code> (steps 2 and 3) or <code>ran out of flight
+        in the air</code> (step 4), then <code>category 74 13000 ms</code>. Step 3 throws one ball, not several.</li>
+      <li>The server detonated but the screen showed a second ball being thrown: the client's guess disagrees.
+        Describe what was drawn; the ball on screen is not real.</li>
+      <li>Two <code>in flight</code> lines for one flight: the hold didn't work.</li>
+      </ul><div class="result"><label for="r-det-5">Result</label><textarea data-k="n-det-5" id="r-det-5" placeholder="Burst or second ball on screen? One throw per flight in the log?"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-03-detonate-2"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-03-detonate-3"></script>

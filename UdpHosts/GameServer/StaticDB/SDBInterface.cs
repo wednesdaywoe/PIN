@@ -258,6 +258,7 @@ public class SDBInterface
     private static Dictionary<uint, FireUiEventCommandDef> _ffireUiEventCommandDef;
     private static Dictionary<uint, UiNamedVariableCommandDef> _uiNamedVariableCommandDef;
     private static Dictionary<uint, DetonateProjectilesCommandDef> _detonateProjectilesCommandDef;
+    private static HashSet<uint> _detonatableAmmo;
     private static Dictionary<uint, SetWeaponDamageTypeCommandDef> _setWeaponDamageTypeCommandDef;
     private static Dictionary<uint, TargetFilterMovestateCommandDef> _targetFilterMovestateCommandDef;
     private static Dictionary<uint, TargetByHostilityCommandDef> _ttargetByHostilityCommandDef;
@@ -958,6 +959,9 @@ public class SDBInterface
     public static FireUiEventCommandDef GetFireUiEventCommandDef(uint id) => _ffireUiEventCommandDef.GetValueOrDefault(id);
     public static UiNamedVariableCommandDef GetUiNamedVariableCommandDef(uint id) => _uiNamedVariableCommandDef.GetValueOrDefault(id);
     public static DetonateProjectilesCommandDef GetDetonateProjectilesCommandDef(uint id) => _detonateProjectilesCommandDef.GetValueOrDefault(id);
+
+    /// <summary>True when some DetonateProjectiles command can set off this ammo type in the air.</summary>
+    public static bool IsDetonatable(uint ammoId) => (_detonatableAmmo ??= _detonateProjectilesCommandDef.Values.Select(d => d.AmmoTypeId).ToHashSet()).Contains(ammoId);
     public static SetWeaponDamageTypeCommandDef GetSetWeaponDamageTypeCommandDef(uint id) => _setWeaponDamageTypeCommandDef.GetValueOrDefault(id);
     public static TargetFilterMovestateCommandDef GetTargetFilterMovestateCommandDef(uint id) => _targetFilterMovestateCommandDef.GetValueOrDefault(id);
     public static TargetByHostilityCommandDef GetTargetByHostilityCommandDef(uint id) => _ttargetByHostilityCommandDef.GetValueOrDefault(id);

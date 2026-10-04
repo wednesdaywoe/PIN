@@ -114,6 +114,10 @@ public class AbilitySystem
                         activeEffect.Effect.UpdateChain.Execute(activeEffect.Context);
                     }
                 }
+                else if (_shard.ProjectileSim.HoldsEffect(activeEffect.Context))
+                {
+                    _logger.Debug("Effect {EffectId} on {Target} held: its projectile is still in flight", activeEffect.Effect.Id, entity);
+                }
                 else
                 {
                     DoRemoveEffect(activeEffect);
