@@ -21,4 +21,11 @@ public record TinyObjectCreateCommandDef : ICommandDef
     ///     rule, not shipped: an effect dropping clouds every 200 ms would otherwise stack thirty on someone standing still.
     /// </summary>
     public float MinSpacing { get; set; }
+
+    /// <summary>
+    ///     A second tiny object created at the same spot. PIN's own field: where a blast should turn into a lingering
+    ///     area through TinyObjectUpdate, which shipped without data and isn't built, both are made at once
+    ///     (Fuel Air Bomb's blast and fire patch).
+    /// </summary>
+    public uint AlsoTinyObjectId { get; set; }
 }

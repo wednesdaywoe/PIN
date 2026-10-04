@@ -1,4 +1,5 @@
 using System.Numerics;
+using GameServer.Entities.Character;
 using GameServer.StaticDB.Records.customdata;
 
 namespace GameServer.Systems.Aptitude.Commands.Deployable;
@@ -21,7 +22,10 @@ public class DeployableSpawnCommand : Command, ICommand
         if (Params.DeployableTypeId != null && Params.DeployableTypeId != 0)
         {
             var typeId = (uint)Params.DeployableTypeId;
-            var entity = context.Shard.EntityMan.SpawnDeployable(typeId, position, orientation);
+            // Owned by whoever used the ability, on their side: its own abilities read the owner's module stats, and
+            // it fights the owner's enemies (Fungal Bloom's fungus)
+            var owner = context.Initiator as CharacterEntity ?? context.Initiator?.Owner;
+            var entity = context.Shard.EntityMan.SpawnDeployable(typeId, position, orientation, owner, useOwnerFaction: owner != null);
 
             if (entity == null)
             {

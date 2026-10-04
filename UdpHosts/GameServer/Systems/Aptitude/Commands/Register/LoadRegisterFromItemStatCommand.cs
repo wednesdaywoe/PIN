@@ -37,6 +37,12 @@ public class LoadRegisterFromItemStatCommand : Command, ICommand
             target = context.Initiator;
         }
 
+        // A placed object or tiny object carries no module; its stats are its owner's (the fungus reads Fungal Bloom's)
+        if (target is not CharacterEntity && target?.Owner != null)
+        {
+            target = target.Owner;
+        }
+
         if (target is not CharacterEntity character)
         {
             Logger.Warning("{Command} {CommandId} target is not a Character, is something wrong?", nameof(LoadRegisterFromItemStatCommand), Params.Id);

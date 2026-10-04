@@ -1933,7 +1933,9 @@
   },
   {
     "id": 1523899,
-    "comment": ""
+    "comment": "Fuel Air Bomb landing (ability 40515, ammo 397). Blast = tiny 440 (effect 14644: full/half/fifth damage rings from stats 974 damage, 976 AOE); fire patch = tiny 110 (effect 4160: stat 2047 DoT every 500 ms for stat 1900 s). The blast's own Remove runs TinyObjectUpdate, presumably the handover to the patch, which shipped without data; both are made at once instead. Tiny 374 (older one-ring blast) and 441 (patch via RegisterClientProximity, unknown) passed over. Chosen 2026-10-04.",
+    "tiny_object_id": 440,
+    "also_tiny_object_id": 110
   },
   {
     "id": 1533562,

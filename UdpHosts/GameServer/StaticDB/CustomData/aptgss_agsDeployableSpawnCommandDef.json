@@ -1128,7 +1128,9 @@
     },
     {
         "id": 1323027,
-        "comment": "Triggered by Ability 40662 - Desecrated Ammo Impact\u0000 "
+        "comment": "Triggered by Ability 40662 - Desecrated Ammo Impact. Fungal Bloom's fungus: deployable 3903 'Desecrated Fungus' (the only deployable so named); its Constructed ability 40675 fires spores for stat 1842 seconds and then destroys it. Lifetime is a 60 s safety cap. Chosen 2026-10-04.",
+        "deployable_type_id": 3903,
+        "lifetime": 60000
     },
     {
         "id": 1332696,
