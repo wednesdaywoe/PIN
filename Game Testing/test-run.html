@@ -103,6 +103,7 @@
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
       <li>Pass: at full, the ultimate lights up. It fires, the arc empties, <code>supercharge</code> answers 0, and the second press does nothing. The log has <code>ConsumeSuperChargeCommand ... ultimate meter 100 -&gt; 0</code>.</li>
+            <li><strong>Run 2 PASSED: lit at full, fired, emptied. About 20-25% came straight back: that is the damage bonus. Absorption Bomb's closing blast hit three Fiends for 3270 each, 5 points each (the per-hit cap), plus combat time.</strong></li>
       </ul><div class="result"><label for="r-ult-3">Result</label><textarea data-k="n-ult-3" id="r-ult-3" placeholder="Lit at full? Fired? Emptied? Second press refused?"></textarea></div></div>
     </div>
   </section>
@@ -120,6 +121,7 @@
       </ol></div>
       <ul>
       <li>Pass: it still answers 60 after respawning, and the arc is still drawn.</li>
+            <li><strong>Run 2 PASSED: 87.7 at death, 87.7 after respawning.</strong></li>
       </ul><div class="result"><label for="r-ult-4">Result</label><textarea data-k="n-ult-4" id="r-ult-4" placeholder="Value after respawn?"></textarea></div></div>
     </div>
   </section>
@@ -141,6 +143,7 @@
       <ul>
       <li>Pass: about half a second after the press, a bomb is thrown and lands near where you aimed, and the meter empties. The log has <code>UpdateWaitAndFireOnceCommand ... after 500 ms</code> and an <code>Ability projectile</code> line.</li>
       <li>Bonus, not built for this run: its description promises an explosion 2 seconds after landing and a fire patch. Note whether either happens and whether the Fiends take damage.</li>
+            <li><strong>Run 2: thrown as expected (PASS for this run's change). No explosion or damage after landing: the landing creates a 'tiny object' that should carry the blast; next to investigate.</strong></li>
       </ul><div class="result"><label for="r-wait-1">Result</label><textarea data-k="n-wait-1" id="r-wait-1" placeholder="Thrown? Where did it land? Explosion or fire after it landed?"></textarea></div></div>
     </div>
   </section>
@@ -163,6 +166,7 @@
       <li>Run 1 (2026-10-04): the strike landed, but you stayed put while the blue blink played. The server now moves you: to where Assassinate's invisible teleport shot lands (on the Fiend, a wall or the ground, up to 20 m ahead), stopping 1.5 m short of it.</li>
       <li>Re-test pass: you blink forward to just in front of the Fiend, then the strike hits it. Try once from about 10 m away as well; you should arrive next to it. The log has <code>TeleportCommand ... teleporting</code>.</li>
       <li>You land inside the Fiend, under the ground, or get pulled back to where you started a moment later: note which.</li>
+            <li><strong>Run 2 PASSED: hit lands and you teleport to the enemy at several distances. From ~30 m you went ~18 m and struck air: the module's range is 20 m (Assassinate Range), stopping 1.5 m short. Matches the data.</strong></li>
       </ul><div class="result"><label for="r-wait-2">Result</label><textarea data-k="n-wait-2" id="r-wait-2" placeholder="Hit landed? Teleport ahead? Anything odd?"></textarea></div></div>
     </div>
   </section>
@@ -206,6 +210,7 @@
       <li>Pass: about half a second after the press, a projectile flies to where you aimed, and Fiends within about 2 m of where it lands are shoved a little. The log has <code>UpdateWaitAndFireOnceCommand ... after 510 ms</code>.</li>
       <li>Run 2 (2026-10-04): the meter was spent but the server never threw anything: the 510 ms wait sits in an effect the server only looked at once a second, and the effect ended before the second look. Fixed: the wait now books its own moment. Re-test: the log must have <code>UpdateWaitAndFireOnceCommand 1398495 ... after 510 ms</code>.</li>
       <li>Expected gap: the fungus and its spore mines probably don't appear, because the object it plants has no data on this server. Note whatever you do see.</li>
+            <li><strong>Run 2 was on the build before the fix (server not restarted): the 'explodes at your feet' was the client's own visual; the server threw nothing. Re-test after a restart.</strong></li>
       </ul><div class="result"><label for="r-wait-3">Result</label><textarea data-k="n-wait-3" id="r-wait-3" placeholder="Thrown? Shove where it landed? Any fungus or mines?"></textarea></div></div>
     </div>
   </section>
