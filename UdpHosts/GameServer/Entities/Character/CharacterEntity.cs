@@ -1740,7 +1740,13 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     /// </summary>
     public void SetSuperCharge(float value, bool allowOvercharge = false)
     {
+        var before = SuperCharge;
         SuperCharge = Math.Max(0f, allowOvercharge ? value : Math.Min(value, Systems.Combat.UltimateCharge.Full));
+        if ((int)(SuperCharge / 10f) != (int)(before / 10f))
+        {
+            Logger.Debug("{Character} ultimate meter now {SuperCharge:0.#}", this, SuperCharge);
+        }
+
         if (Character_CombatController == null)
         {
             return;
@@ -1768,8 +1774,19 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     /// </summary>
     public void TakeDamage(DamageInfo damage)
     {
-        if (!IsAlive || Invulnerable)
+        if (!IsAlive)
         {
+            return;
+        }
+
+        if (Invulnerable)
+        {
+            // Still a fight: being shot at keeps a player in combat for the ultimate meter, even with nothing lost
+            if (IsPlayerControlled && damage.Points > 0)
+            {
+                LastCombatTime = Shard.CurrentTimeLong;
+            }
+
             return;
         }
 

@@ -81,6 +81,7 @@
       </ol></div>
       <ul>
       <li>Pass: the arc grows as you fight, and the value rises: roughly 8 to 10 points per 10 seconds of fighting, more while you're landing hits. Once you've been out of combat for 10 seconds it stops rising.</li>
+      <li>Run 1 (2026-10-04): it only rose for about 10 s after each Assassinate or Gravity Pull hit. That is the combat window, not the cooldowns: hits taken while invulnerable weren't counted, so only your own hits kept you in combat. Fixed; Fiends hitting you now count too, invulnerable or not.</li>
       <li>The value rises but the arc doesn't move: the client isn't drawing the server's value. Note it.</li>
       <li>Note how the speed feels. The rate is easy to change.</li>
       </ul><div class="result"><label for="r-ult-2">Result</label><textarea data-k="n-ult-2" id="r-ult-2" placeholder="Arc growing? Values over time? Stopped out of combat?"></textarea></div></div>
@@ -206,4 +207,4 @@
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-2"></script>
