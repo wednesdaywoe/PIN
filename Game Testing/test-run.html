@@ -112,7 +112,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">IMP-4</span><span class="marker">[ ]</span><span class="entry-t">Crater can be used again after its cooldown</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">IMP-4</span><span class="marker pass">[x]</span><span class="entry-t">Crater can be used again after its cooldown</span></div>
       <p>Two server checks are now real. "Does your module have this attribute?" reads your equipped items, the way the
       client does: a value of zero counts as no. "Until you change battleframe" now ends an effect when you switch to
       a different frame. Your Crater (86369) has no dome attribute, so it should never take the lockout. About 40
@@ -130,7 +130,7 @@
       <li>Pass: all three Craters rise and slam. Each shows <code>RequireItemAttributeCommand 1575165: attribute 1254
         is 0</code> and no <code>Ability 212 failed its chain</code>. Meteor Strike still rises and dives.</li>
       <li>A later Crater still fails: note it; the log will show which step refused.</li>
-      </ul><div class="result"><label for="r-imp-4">Result</label><textarea data-k="n-imp-4" id="r-imp-4" placeholder="All three Craters? Meteor Strike still OK?"></textarea></div></div>
+      </ul><div class="callout pass"><p><strong>Passed 2026-10-03.</strong> Crater fired again after its cooldown (log 21:42:51 and 21:43:38, attribute 1254 read as 0, no failed chain), and Meteor Strike still rises and dives (21:44:11).</p></div><div class="result"><label for="r-imp-4">Result</label><textarea data-k="n-imp-4" id="r-imp-4" placeholder="All three Craters? Meteor Strike still OK?"></textarea></div></div>
     </div>
   </section>
 </div>
