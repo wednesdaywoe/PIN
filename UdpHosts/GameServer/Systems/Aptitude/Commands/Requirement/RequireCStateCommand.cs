@@ -1,4 +1,5 @@
 using GameServer.Entities.Character;
+using GameServer.Entities.Deployable;
 using GameServer.StaticDB.Records.aptfs;
 using static AeroMessages.GSS.V66.Character.CharacterStateData;
 
@@ -57,6 +58,12 @@ public class RequireCStateCommand : Command, ICommand
             {
                 result = true;
             }
+        }
+        else if (source is DeployableEntity deployable)
+        {
+            // A placed object has no character state: it is living until destroyed, then dead. Fungal Bloom's fungus
+            // keeps its spore effect only while "Living", and failing this ended it the moment it began.
+            result = deployable.IsAlive ? Params.Living == 1 : Params.Dead == 1;
         }
         else
         {

@@ -132,7 +132,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WAIT-1</span><span class="marker">[ ]</span><span class="entry-t">Fuel Air Bomb is thrown</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">WAIT-1</span><span class="marker">[x]</span><span class="entry-t">Fuel Air Bomb is thrown</span></div>
       <div class="steps"><ol>
       <label class="step"><input data-k="wait-1-1" type="checkbox"/><span class="step-body"><span class="lede">After respawning, create the four modules this part uses, then refresh your inventory: <code class="run">createitem 86045</code> <code class="run">createitem 141980</code> <code class="run">createitem 143288</code> <code class="run">createitem 139852</code> <code class="run">dbg_inventory resend</code></span></span></label>
       <label class="step"><input data-k="wait-1-2" type="checkbox"/><span class="step-body"><span class="lede">Equip Fuel Air Bomb as your ultimate and fill the meter: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">supercharge 100</code>. With nothing targeted, turn on invulnerability: <code class="run">invuln on</code>. Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>, and back off about 20 m</span></span></label>
@@ -145,6 +145,7 @@
       <li>Bonus, not built for this run: its description promises an explosion 2 seconds after landing and a fire patch. Note whether either happens and whether the Fiends take damage.</li>
             <li><strong>Run 2: thrown as expected (PASS for this run's change). No explosion or damage after landing: the landing creates a 'tiny object' that should carry the blast; next to investigate.</strong></li>
             <li><strong>Run 3 (2026-10-04): still no blast: the landing step had no object filled in. Now filled: a blast (full damage at the centre, half and a fifth further out, Thermal) plus a fire patch that burns enemies every half second for 5 s. The data's 2-second fuse isn't anywhere the server can read, so the blast is on landing. Re-test pass: the Fiends near the landing take a big hit, then keep taking small burns; the log has <code>TinyObject</code> lines and no 'nothing created'.</strong></li>
+            <li><strong>Run 4 PASSED for damage: the blast and the burning fire patch both hurt. No explosion visual: the blast lives in an object only the server knows about, so the game is never told to draw it (same for the poison clouds). Showing those objects to the game is its own job. The spent blast object is now also removed instead of lingering.</strong></li>
       </ul><div class="result"><label for="r-wait-1">Result</label><textarea data-k="n-wait-1" id="r-wait-1" placeholder="Thrown? Where did it land? Explosion or fire after it landed?"></textarea></div></div>
     </div>
   </section>
@@ -213,9 +214,10 @@
       <li>Expected gap: the fungus and its spore mines probably don't appear, because the object it plants has no data on this server. Note whatever you do see.</li>
             <li><strong>Run 2 was on the build before the fix (server not restarted): the 'explodes at your feet' was the client's own visual; the server threw nothing. Re-test after a restart.</strong></li>
             <li><strong>Run 3 (2026-10-04): the throw now fires (log: after 510 ms), and landing at your feet is the data: the seed is lobbed at 5 m/s, you plant it. Nothing grew because the fungus object wasn't filled in. Now it is (deployable 3903, 'Desecrated Fungus'), owned by you. Re-test pass: a fungus appears where the seed lands and spores fly up out of it for about 30 s, then it goes. Expected gap: the spores probably don't act as mines yet (their trigger is unbuilt and has no data). Note whether the fungus is visible at all.</strong></li>
+            <li><strong>Run 4: the fungus spawned and fired one spore (the short throw, gas cloud and stun you saw), then removed itself at once: its 30 s spore timer also requires its owner to be 'living', a check that only understood characters. Placed objects now count as living until destroyed. Re-test pass: the fungus keeps throwing spores at random for about 30 s.</strong></li>
       </ul><div class="result"><label for="r-wait-3">Result</label><textarea data-k="n-wait-3" id="r-wait-3" placeholder="Thrown? Shove where it landed? Any fungus or mines?"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-5"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-6"></script>
