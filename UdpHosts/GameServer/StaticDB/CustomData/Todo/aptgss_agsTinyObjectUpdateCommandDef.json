@@ -101,15 +101,17 @@
   },
   {
     "id": 1363987,
-    "comment": ""
+    "comment": "Fungal Bloom spore mine (tiny 389) set off by an enemy within 3 m (proximity 1363992): bursts into the poison cloud, tiny 390 (effect 13147: 4 m damage from stats 1841/1910, applies 13151 accuracy penalty + DoT). Chosen 2026-10-04.",
+    "next_tiny_object_id": 390
   },
   {
     "id": 1363990,
-    "comment": ""
+    "comment": "Fungal Bloom spore mine (tiny 389) reaching the end of stat 1844 seconds untriggered: just ends (a guess; no data says it bursts). 2026-10-04."
   },
   {
     "id": 1364025,
-    "comment": ""
+    "comment": "Fungal Bloom poison cloud (tiny 390) ending: leaves the blinding cloud, tiny 391 (effect 13152: stat 1845 seconds, afflicts anyone within 3 m with 13151). Chosen 2026-10-04.",
+    "next_tiny_object_id": 391
   },
   {
     "id": 1380987,

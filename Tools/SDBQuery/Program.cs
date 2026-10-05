@@ -189,7 +189,7 @@ internal partial class Query
         {
             var name = TypeName(b);
             var def = Def(name, b.Id);
-            Console.WriteLine($"{new string(' ', depth * 2)}{name} [{SDBInterface.GetCommandType(b.Subtype)?.Environment}] {Describe(def)}");
+            Console.WriteLine($"{new string(' ', depth * 2)}{name} [{SDBInterface.GetCommandType(b.Subtype)?.Environment}] {(def == null ? $"Id={b.Id}" : Describe(def))}");
             foreach (var (property, chain) in NestedChains(def).Concat(EffectChains(def)))
             {
                 Console.WriteLine($"{new string(' ', (depth * 2) + 1)}{property}:");

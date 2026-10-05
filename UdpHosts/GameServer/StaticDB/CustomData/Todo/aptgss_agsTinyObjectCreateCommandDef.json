@@ -1613,11 +1613,14 @@
   },
   {
     "id": 1364026,
-    "comment": ""
+    "comment": "Fungal Bloom poison (effect 13147) ending on an enemy a spore hit directly, where TargetTinyObject finds no tiny: leaves the blinding cloud, tiny 391, at that enemy. Chosen 2026-10-04.",
+    "tiny_object_id": 391,
+    "at_self": 1
   },
   {
     "id": 1364632,
-    "comment": ""
+    "comment": "Fungal Bloom spore (ammo 1212, landing ability 40666) that hit no enemy: lays a spore mine, tiny 389 (effect 13148 reads stat 1844 Spore Mine Duration). Chosen 2026-10-04.",
+    "tiny_object_id": 389
   },
   {
     "id": 1379453,

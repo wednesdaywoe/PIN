@@ -105,6 +105,7 @@
       <li>Pass: at full, the ultimate lights up. It fires, the arc empties, <code>supercharge</code> answers 0, and the second press does nothing. The log has <code>ConsumeSuperChargeCommand ... ultimate meter 100 -&gt; 0</code>.</li>
             <li><strong>Run 2 PASSED: lit at full, fired, emptied. About 20-25% came straight back: that is the damage bonus. Absorption Bomb's closing blast hit three Fiends for 3270 each, 5 points each (the per-hit cap), plus combat time.</strong></li>
             <li><strong>Ultimate damage no longer refills the meter (your call, 2026-10-04). Re-test: fill with <code>supercharge 100</code>, use Absorption Bomb or Fuel Air Bomb into a group of Fiends, then run <code>supercharge</code> straight away: it should read only a few points (combat time), not 20.</strong></li>
+            <li><strong>Run 5: Fuel Air Bomb's kills still refilled ~10 points: the 'ultimate' mark was dropped whenever an effect was applied, and the throw runs inside one. Fixed. Same re-test as above.</strong></li>
       </ul><div class="result"><label for="r-ult-3">Result</label><textarea data-k="n-ult-3" id="r-ult-3" placeholder="Lit at full? Fired? Emptied? Second press refused?"></textarea></div></div>
     </div>
   </section>
@@ -139,7 +140,7 @@
       <label class="step"><input data-k="wait-1-2" type="checkbox"/><span class="step-body"><span class="lede">Equip Fuel Air Bomb as your ultimate and fill the meter: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">supercharge 100</code>. With nothing targeted, turn on invulnerability: <code class="run">invuln on</code>. Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>, and back off about 20 m</span></span></label>
       <label class="step"><input data-k="wait-1-3" type="checkbox"/><span class="step-body"><span class="lede">Aim at the Fiends and press the ultimate's key. Watch for about 5 seconds</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
       <li>Pass: about half a second after the press, a bomb is thrown and lands near where you aimed, and the meter empties. The log has <code>UpdateWaitAndFireOnceCommand ... after 500 ms</code> and an <code>Ability projectile</code> line.</li>
@@ -162,7 +163,7 @@
       <label class="step"><input data-k="wait-2-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Assassinate: <code class="run">equipitem 141980 Ability1</code>. Walk up to a Fiend until it is within about 3 m, facing it</span></span></label>
       <label class="step"><input data-k="wait-2-2" type="checkbox"/><span class="step-body"><span class="lede">Press the key for your first ability slot. Watch the Fiend's health bar</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
       <li>Pass: about 0.4 seconds after the press, the Fiend in front of you takes a hit (300 damage on this module). The log has <code>UpdateWaitAndFireOnceCommand ... after 400 ms</code>.</li>
@@ -186,7 +187,7 @@
       <label class="step"><input data-k="pull-1-2" type="checkbox"/><span class="step-body"><span class="lede">Face them and press the key for your second ability slot</span></span></label>
       <label class="step"><input data-k="pull-1-3" type="checkbox"/><span class="step-body"><span class="lede">Wait out the 9-second cooldown. Turn so one Fiend is well off to your side and another is in front, then press it again</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
       <li>Pass: the Fiends in front fly toward you in a short arc and land 2.5 to 5 m in front of you. About half a second after the pull, each takes damage (100 on this module). On the second press, the Fiend off to the side doesn't move. The log has <code>RopePullCommand ... pulling</code> and <code>knocked back</code> lines.</li>
@@ -207,7 +208,7 @@
       <label class="step"><input data-k="wait-3-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Fungal Bloom as your ultimate and fill the meter: <code class="run">equipitem 139852 AbilityHKM</code> <code class="run">supercharge 100</code>. Stand about 10 m from a group of Fiends</span></span></label>
       <label class="step"><input data-k="wait-3-2" type="checkbox"/><span class="step-body"><span class="lede">Aim at the ground beside them and press the ultimate's key</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
       <li>Pass: about half a second after the press, a projectile flies to where you aimed, and Fiends within about 2 m of where it lands are shoved a little. The log has <code>UpdateWaitAndFireOnceCommand ... after 510 ms</code>.</li>
@@ -216,9 +217,10 @@
             <li><strong>Run 2 was on the build before the fix (server not restarted): the 'explodes at your feet' was the client's own visual; the server threw nothing. Re-test after a restart.</strong></li>
             <li><strong>Run 3 (2026-10-04): the throw now fires (log: after 510 ms), and landing at your feet is the data: the seed is lobbed at 5 m/s, you plant it. Nothing grew because the fungus object wasn't filled in. Now it is (deployable 3903, 'Desecrated Fungus'), owned by you. Re-test pass: a fungus appears where the seed lands and spores fly up out of it for about 30 s, then it goes. Expected gap: the spores probably don't act as mines yet (their trigger is unbuilt and has no data). Note whether the fungus is visible at all.</strong></li>
             <li><strong>Run 4: the fungus spawned and fired one spore (the short throw, gas cloud and stun you saw), then removed itself at once: its 30 s spore timer also requires its owner to be 'living', a check that only understood characters. Placed objects now count as living until destroyed. Re-test pass: the fungus keeps throwing spores at random for about 30 s.</strong></li>
+            <li><strong>Run 5: the fungus lived its 30 s but fired ~1,300 spores (a re-armed timer counted from the fungus's birth, so it fired every tick), and a spore that misses lays a mine that wasn't filled in. Now: an effect's clock starts when it is applied; a missed spore lays a spore mine (tiny 389); an enemy within 3 m bursts it into a poison cloud (390: damage within 4 m plus an accuracy penalty and poison), which then leaves a blinding cloud (391) for 7 s that afflicts anyone walking in. The server watches these objects itself, since the game never sees them. Re-test pass: a spore every 0.1 to 1 s; Fiends walking over the area get hurt and poisoned; log has <code>RegisterClientProximityCommand</code> and <code>becomes 390</code>. Nothing is drawn for mines or clouds (same as the poison clouds).</strong></li>
       </ul><div class="result"><label for="r-wait-3">Result</label><textarea data-k="n-wait-3" id="r-wait-3" placeholder="Thrown? Shove where it landed? Any fungus or mines?"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-7"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-04-ult-wait-pull-8"></script>

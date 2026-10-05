@@ -20,8 +20,13 @@ public class ImpactApplyEffectCommand : Command, ICommand
             // Kept so a cooldown the effect inflicts (Poison Trail's starts when its trail ends) is filed under the
             // ability; without it the cooldown went to ability 0 and the client never showed it
             AbilityId = context.AbilityId,
-            InitTime = context.InitTime,
-            ExecutionHint = ExecutionHint.ApplyEffect
+            // An effect's timers (TimeDuration, UpdateWaitAndFireOnce) count from when it was applied. Inheriting the
+            // ability's start made a re-applied effect already overdue: Fungal Bloom's fungus re-arms its spore timer
+            // from its own remove chain and fired a spore every tick, 1,300 in 30 s.
+            InitTime = context.Shard.CurrentTime,
+            ActivationTime = context.ActivationTime,
+            ExecutionHint = ExecutionHint.ApplyEffect,
+            FromUltimate = context.FromUltimate,
         };
 
         if (Params.InheritInitPos == 1)
