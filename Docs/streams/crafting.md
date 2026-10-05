@@ -102,6 +102,15 @@ verifiable by a maintainer.
   data), and the display objection is gone — `/mats` draws every material a character holds, raw tier
   included ([client-ui.md](client-ui.md), UI4 met 2026-08-21), so an economy priced in raw resources
   is no longer unplayable on those grounds. needs: CRAFT5
+
+  **One part of this is settled, as a mechanism rather than an economy (`03f6322`).** Vein types are
+  now PIN content: `StaticDB/CustomData/resource_node_type.json` is laid over the shipped table, and
+  ids 700–715 pay the sixteen refined materials (Copper 77703 through Radine 82419) that the graded
+  recipes are priced in, one vein per material. **Verified in game 2026-10-02**: deposit 7 on vein 700
+  ran a full defended cycle and paid 25 Copper, and the client drew a vein id it never shipped without
+  dropping the session. Whether the economy uses these veins is still this item's decision. No
+  shipped deposit uses them yet, and no Copper has been spent on a recipe
+  ([DATA-27](../ISSUE-REGISTER.md))
 - [~] **CRAFT4** — **A curated recipe set. Its main question is answered, 2026-08-22, by a CRAFT5 step
   that turned out to be impossible.** The run sheet said "equip the crafted result"; 81626 is item type
   **17, CraftingComponent** — a part, not gear — and in shipped data **nothing consumes it at all**,

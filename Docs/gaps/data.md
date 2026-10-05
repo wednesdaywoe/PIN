@@ -66,7 +66,7 @@ it rules out the reading where a lookup happens to work once.
 
 <a id="data-3"></a>
 
-### DATA-3 — `Battleframe.base_health` doesn't match observed live health [ ] open
+### DATA-3 — `Battleframe.base_health` doesn't match observed live health [~] player pool set to 1000 2026-08-16, unverified in game
 
 The SDB column reads roughly 1000; a live capture shows the real value was 19192
 ([Capture Replay](../../Game Testing/Capture-Replay.html)). Something scales base health before it
@@ -136,12 +136,26 @@ search. And the surviving skeleton is usable on its own terms: it says how a ret
 shaped, how many spawn steps it took and in what order, without saying what any of them spawned.
 [M7](../streams/m7-encounter-combat.md) is where that stops being trivia.
 
+**Update 2026-10-05: PIN's side has narrowed.** The [abilities stream](../streams/abilities.md)
+built 18 command classes that were stubs: ApplyImpulse, BattleFrameDuration, DetonateProjectiles,
+HealDamage, InflictCooldown, LoadRegisterFromBonus, LoadRegisterFromStat, RegisterClientProximity,
+ReplenishableDuration, RequireItemAttribute, RopePull, TargetByNPC, TargetConeAE, Teleport,
+TimeCooldown, TinyObjectCreate, TinyObjectDestroy and TinyObjectUpdate. Classes whose `Execute` only
+returns a constant went from 189 of 317 to 171 of 318, and Factory cases from 103 to 130. Those that
+also run in the client were built from the decompiled `apt::*Command` classes
+([Tools/ClientRE](../../Tools/ClientRE/)). Those that only run on the server were rebuilt from what
+the surrounding data needs, and the made-up values are listed in the stream. The shipped data hasn't
+changed: the server-only def tables are still empty. Hand-filled rows now exist for 6
+`TinyObjectCreate`, 2 `TinyObjectUpdate` and 1 `DeployableSpawn` def ([DATA-28](#data-28)).
+`SDBQuery unimpl` (`Tools/SDBQuery/Program.cs`) counts a command type as built if `Factory.cs` has a
+case for it, and ranks the rest by how many abilities reach them.
+
 <a id="data-6"></a>
 
 ### DATA-6 — Monster health and shields are hardcoded placeholders [~] 906 of 3109 creature types tiered 2026-08-15, 2203 still flat
 
 `dbcharacter::Monster` and `MonsterScaling` exist but aren't read.
-[CharacterEntity.cs:342-347](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L342-L347)
+[CharacterEntity.cs:478-510](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L478-L510)
 gives every monster the same placeholder max health/shields regardless of type or level.
 
 **This is what "bullet sponge" means, and [N16](../../Game Testing/NPC-Combat.html) is the first entry
@@ -409,27 +423,29 @@ the tier by using two creatures that share a weapon.
 
 ### DATA-7 — Character level comes from `HardcodedCharacterData`, not real progression [ ] open
 
-Every read of `Level`/`EffectiveLevel` — `EntityManager.cs:1186`,
-`CharacterEntity.cs:1692-1693`, `BaseController.cs:449-450` — resolves through the hardcoded
+Every read of `Level`/`EffectiveLevel` — `EntityManager.cs:1324`,
+`CharacterEntity.cs:2197-2198`, `BaseController.cs:583-584` — resolves through the hardcoded
 character stand-in rather than tracked XP/progression state. Blocks anything that should scale
 with a real level.
 
 <a id="data-8"></a>
 
-### DATA-8 — A scatter of aptitude commands read a hardcoded constant instead of the def parameter [ ] open
+### DATA-8 — A scatter of aptitude commands read a hardcoded constant instead of the def parameter [ ] open, 1 of 3 left
 
-Three separate commands each hardcode one number that the def is supposed to supply:
+**One of three is left, as of 2026-10-05.** The muzzle-offset origin is still one constant per stance
+and doesn't vary by character or frame
+([CharacterEntity.cs:1656](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L1656)).
 
-- Muzzle-offset origin is one constant per stance, doesn't vary by character or frame
-  ([CharacterEntity.cs:1355](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L1355)).
-- `CombatController.SendAbilityActivated` hardcodes `GlobalCooldown` instead of reading it off
-  `InstantActivationCommand`'s def
-  ([CombatController.cs:311-313](../../UdpHosts/GameServer/Controllers/Character/CombatController.cs#L311-L313)).
-- `ForcePushCommand` push force is a constant, not read from ability params
-  ([ForcePushCommand.cs:18](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Impact/ForcePushCommand.cs#L18)).
+The other two are fixed:
 
-Low severity individually; grouped because the pattern (and the fix) is the same for all three —
-plumb the def value through instead of the placeholder.
+- `CombatController.SendAbilityActivated` sends the cooldowns `InflictCooldownCommand` applied from
+  its def (`character.Cooldowns.ToData()`) instead of a fixed `GlobalCooldown`. Fixed in `d4aba6b`
+  and the merge `6131602`. Cooldowns passed 4 of 4 in game on 2026-10-02.
+- `ForcePushCommand` reads Strength through `RegistryOp`, plus Loft, instead of a constant (`44e20e5`,
+  `894d717`). Knockback and IMP-3 passed on 2026-10-03. Its `Falloff` field is still unread.
+
+Low severity. The fix for the muzzle offset is the same as for the other two: take the value from
+the def.
 
 <a id="data-9"></a>
 
@@ -889,7 +905,21 @@ resolved in `OnSuccess`, which neither branch changes.
 
 <a id="data-19"></a>
 
-### DATA-19 — No ultimate-charge model [ ] open, found 2026-08-14
+### DATA-19 — No ultimate-charge model [x] built 2026-10-03, passed in game 2026-10-04/05
+
+**Closed 2026-10-05.** `35971cb` built it. `SuperCharge` lives on `CharacterEntity` and runs 0 to
+100: it is empty at login and kept through death. `UltimateCharge` fills it while the player is in
+combat, `RequireSuperCharge` checks it against the def's Percent, and `ConsumeSuperCharge` subtracts
+Percent points. The client is sent changes in whole-point steps and at full and empty. Follow-ups:
+- hits on an invulnerable player still count as combat (`22162ca`)
+- an ultimate's own damage earns no meter (`38e4991`, the user's call 2026-10-04), with the mark
+  carried through effects, projectiles, tiny objects and deployables (`8448165`)
+
+ULT-1..4 passed on 2026-10-04 and the ultimate-damage rule passed on 2026-10-05. The answer to the
+first open question below turned out to be a character stat the server owns. The rates are
+invented and are [DATA-29](#data-29). P1 is unblocked and still unrun.
+
+Original entry, kept for the record:
 
 Found by [Prediction-Sweep P1](../../Game Testing/Prediction-Sweep.html) rather than by reading:
 module 141814 — the second owner of the camera-lock effect, ability 41232 — turns out to be an
@@ -1267,3 +1297,72 @@ moment the test used `85968` instead.
 
 Open work: establish what the two bits are, from the client binary or by sampling items known to
 have been player-visible in retail, and record the drawable set so a test never picks a ghost again.
+
+<a id="data-28"></a>
+
+### DATA-28 — Almost every tiny-object step shipped empty, and the working ones are mapped by hand [ ] open, found 2026-10-03
+
+A tiny object is a small server-side thing an ability leaves in the world: a poison cloud, a blast, a
+fire patch, a spore mine. Each `dbcharacter::TinyObject` row did ship, and names the status effect
+that does the object's work, so once one exists it behaves correctly. What didn't ship is which row
+a given step creates. **569 of 575 `TinyObjectCreate` defs and 46 of 48 `TinyObjectUpdate` defs
+are empty.**
+
+The working ones are filled in by hand from ability evidence:
+- 1631446 → 387 (Creeping Death)
+- 1281349 → 386 (Poison Trail)
+- 934029 → 386 at the user's feet (Poison Trail's original form)
+- 1523899 → 440 + 110 (Fuel Air Bomb)
+- Fungal Bloom's 389 → 390 → 391 chain
+
+Every other step still creates nothing (`042b218`, `ac569be`, `26b4a0e`, `8448165`).
+
+Two of these needed fields that don't exist in retail's data:
+- Fuel Air Bomb's blast should turn into a fire patch through a `TinyObjectUpdate` that has no data,
+  so PIN creates both at once through an `also_tiny_object_id` field it made up
+  (`TinyObjectCreateCommandDef.cs`).
+- Placing Poison Trail's clouds at the user's feet with spacing needed `AtSelf` and `MinSpacing`.
+
+Fuel Air Bomb's 2-second fuse isn't stored anywhere the server can read either, so the blast goes off
+on landing.
+
+Open work: use `SDBQuery tinyfor` to find which equippable abilities reach an unmapped step, and map
+the common ones. Whether the objects are *drawn* is a separate question, answered by VIS-1..4 in the
+current [test run](../../Game%20Testing/test-run.html).
+
+<a id="data-29"></a>
+
+### DATA-29 — The ultimate meter's rates are PIN's own [ ] open, by necessity
+
+[DATA-19](#data-19)'s meter works, but every number in it was made up:
+- 120 s from empty to full while in combat
+- in combat means a hit dealt or taken in the last 10 s
+- a damage bonus of 10 points per target's worth of health dealt, at most 5 from one hit
+- both scaled by the ultimate module's Charge Speed (attr 959, 1 to 1.2), which did ship
+
+All of these are in `UltimateCharge.cs`. Nothing found so far says what retail used. The 2016
+capture is the place to look, if its session ever gains charge.
+
+The meter also starts empty each session and isn't saved with the character. That was decided
+rather than missed, so it isn't a defect. If it turns out to annoy players, the place to change it
+is the M6 save file.
+
+<a id="data-30"></a>
+
+### DATA-30 — Area and cone targeting doesn't check walls [ ] open, found 2026-10-05
+
+`TargetPBAE` and `TargetConeAE` find everyone within range and never read `IgnoreWalls`, so any area
+ability reaches through rocks and buildings
+([TargetConeAECommand.cs:35](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Target/TargetConeAECommand.cs#L35),
+[TargetPBAECommand.cs:22](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Target/TargetPBAECommand.cs#L22)).
+The code comment gives the reason as "the server has no terrain to test against", which was true
+when it was written and stopped being true on 2026-08-17, when terrain loaded
+([DATA-23](#data-23)). The line-of-sight raycast NPCs use already gives a rise cover from creature
+fire, and it would serve here too.
+
+Also unread: `UseBodyPosition` on `TargetPBAE` (`TargetConeAE` reads it), and `IncludeInteractives`
+on both. `TargetPBAE` logs the latter as "investigate".
+
+Low severity until a fight happens around cover. Whether the client's own prediction respects walls
+for these abilities is unknown, and worth checking before building it, so the server doesn't
+disagree with what the player sees.

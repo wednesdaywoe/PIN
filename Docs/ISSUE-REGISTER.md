@@ -20,6 +20,25 @@ an acceptable state; an unknown one is not. Full narrative for every entry lives
 
 ## Current frontier
 
+**Re-audited offline 2026-10-05, against the code as it stands after the abilities work of
+2026-10-02..05.** Every open entry was checked against the source. Results:
+
+- **One entry closed:** [DATA-19](gaps/data.md#data-19). The ultimate meter is built and passed in
+  game.
+- **Two entries moved:** [NET-14](gaps/network.md#net-14) is fixed in code but not seen in game.
+  [DATA-8](gaps/data.md#data-8) is down to one of its three constants.
+- **Two entries changed without moving:** [DATA-5](gaps/data.md#data-5) has 18 fewer stub classes,
+  and [NET-3](gaps/network.md#net-3) gained wraparound coverage from the `master` merge.
+- **Three new entries**, all from the same work and none of them a regression:
+  [DATA-28](gaps/data.md#data-28), tiny objects that only work where they were mapped by hand;
+  [DATA-29](gaps/data.md#data-29), the meter's invented rates; and
+  [DATA-30](gaps/data.md#data-30), area targeting that reaches through walls.
+
+The audit also found the gap files behind this summary on DATA-3, NET-23 and CLIENT-4 since
+mid-August, plus a run of line numbers that had drifted. Both are corrected. The guesses that keep
+the new abilities working, rather than defects, are listed in
+[streams/abilities.md](streams/abilities.md) and aren't repeated here.
+
 **The first deliberate sitting on terrain ran on 2026-08-17 and the world held: five of seven
 entries passed, and the two findings are both PIN's, not the merge's.**
 [Solid World](../Game Testing/solid-world.html) went 5 of 7 with one measurement and one failure.
@@ -192,7 +211,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Static Data — DATA
 
-[Full detail](gaps/data.md) — 4 of 23 closed
+[Full detail](gaps/data.md) — 9 of 30 closed
 
 - [x] **DATA-1** — Battleframe shield pool was kept at 3000 instead of build 1962's real 0 as a
   deliberate observability trade-off. **The trade was backwards and it is 0 now** (2026-08-15,
@@ -223,7 +242,12 @@ has no entries in that category, which reflects nothing having run rather than n
 - [ ] **DATA-4** — Splash and ability-projectile range falloff are guessed/unmodeled, unlike the
   confirmed weapon curve. Only reachable through an ability — weapons never splash at all, see
   **DATA-21**
-- [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs
+- [ ] **DATA-5** — 3797 of 3812 server-side aptitude command defs are empty stubs. **Narrowed
+  2026-10-02..05 by the [abilities stream](streams/abilities.md)**: stub command classes went from
+  189 of 317 to 171 of 318, and 18 now do real work, most of them built from the client's own
+  decompiled logic. The server-only ones that shipped empty were rebuilt from what the surrounding
+  data needs, and those guesses are listed in the stream. Tiny objects are the largest hand-filled
+  set, and they are [DATA-28](gaps/data.md#data-28)
 - [~] **DATA-6** — Monster health/shields are hardcoded placeholders, not read from SDB. One flat
   pool for every creature, and at 2500 that was ~64 player rifle shots each — the "bullet sponge"
   reading [N16](../Game Testing/NPC-Combat.html) came back with. Researched 2026-08-13: `MonsterScaling`
@@ -265,8 +289,11 @@ has no entries in that category, which reflects nothing having run rather than n
   running server, 13 unit tests, in-game check is
   [D7](../Game Testing/Damage-Loop.html#-d7-creatures-are-no-longer-all-the-same-size)
 - [ ] **DATA-7** — Character level comes from `HardcodedCharacterData`, not real progression
-- [ ] **DATA-8** — Three aptitude commands read a hardcoded constant instead of their def parameter
-  (muzzle offset, GlobalCooldown, ForcePush force)
+- [ ] **DATA-8** — The muzzle offset is one constant per stance instead of coming from the character
+  or frame. **Two of the entry's original three are fixed**: `AbilityActivated` carries the real
+  cooldowns from `InflictCooldown` (`d4aba6b`, cooldowns passed 4 of 4 on 2026-10-02), and
+  `ForcePush` reads its strength and loft from the def (`44e20e5`, knockback passed 2026-10-03).
+  `ForcePush`'s `Falloff` is still unread
 - [~] **DATA-9** — Two web endpoints return invented or hardcoded-stub character data
 - [ ] **DATA-10** — NPC perception, standoff and leash tuning are invented. Researched 2026-08-13:
   retail's numbers ship inline on 2100 of 3109 `dbmonster` rows, the instance table behind the other
@@ -322,7 +349,11 @@ has no entries in that category, which reflects nothing having run rather than n
   departure the client plays is the animation, and the model staying behind is the client never
   being told the entity is gone
 
-- [ ] **DATA-19** — No ultimate-charge model: slotting an Ultimate empties its charge meter and
+- [x] **DATA-19** — **Built 2026-10-03, passed in game 2026-10-04/05.** The meter fills in combat,
+  gates ultimates and empties when one is used (`35971cb`, follow-ups `22162ca`, `38e4991`,
+  `8448165`). ULT-1..4 passed, and so did the rule that an ultimate's own damage earns no meter.
+  The rates are PIN's own, recorded as [DATA-29](gaps/data.md#data-29). Prediction-Sweep P1,
+  which this blocked, can now run but hasn't. Original entry: No ultimate-charge model: slotting an Ultimate empties its charge meter and
   nothing ever refills it, so every Ultimate is a one-way trip to unusable. Found 2026-08-14 by
   [P1](../Game Testing/Prediction-Sweep.html): module 141814 (the second Charge, ability 41232) is an
   Ultimate, slotting it emptied the meter, and the in-combat refill the client expects never came —
@@ -454,7 +485,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 6 of 26 closed
+[Full detail](gaps/network.md) — 9 of 28 closed
 
 - [x] **NET-1** — No retransmit queue; "reliable" only acked, never resent. Built 2026-08-14:
   `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it and resends
@@ -472,7 +503,10 @@ has no entries in that category, which reflects nothing having run rather than n
   to byte-identical payloads. Reading it found two live faults beside it — a recognised resend was
   decoded and then handled a second time, so anything the client resent ran twice, and a resent
   fragment arriving mid-split threw out of `SortedDictionary.Add` on the shard thread, the same shape
-  as NET-21. Both fixed, neither seen in game
+  as NET-21. Both fixed, neither seen in game. **2026-10-02:** `ba493bc` made the same two fixes
+  independently on `master`, and the merge (`6131602`) kept this branch's duplicate check and took
+  master's offset-keyed split buffer, so a split that spans the sequence wraparound now reassembles in
+  order. `Tests/GameServer.Tests/Network/ChannelTests.cs` covers resend and split at unit level
 - [~] **NET-4** — `MTUProbe` received and silently dropped, no response sent
 - [ ] **NET-5** — Oversized UGSS messages needing RGSS split aren't handled
 - [ ] **NET-6** — Physics material id 0 has no fallback, drops hit attribution
@@ -484,8 +518,11 @@ has no entries in that category, which reflects nothing having run rather than n
 - [~] **NET-12** — `MovementState` packed wider than before, flagged unresolved in its own comment
 - [ ] **NET-13** — Vehicle seat assignment blocks the last seat on some vehicles; entry does a
   blunt view refresh
-- [ ] **NET-14** — `SpawnDeployable` computes a faction then discards it, using `DefaultFaction`
-  directly
+- [~] **NET-14** — `SpawnDeployable` computed a faction then discarded it, using `DefaultFaction`
+  directly. **Fixed in code 2026-10-02 (`7b14bae`)**: the computed faction is used, and
+  `DeployableSpawn` passes the owner so a placed object takes its owner's faction. Not checked in
+  game. Fungal Bloom's fungus (2026-10-04) is owned and fights for its owner, but nobody has looked
+  at a deployable whose `DefaultFaction` is 0
 - [ ] **NET-15** — `OrientationLockCommand` sends an unpaired `ForcedMovementCancelled`, deferred
   by design
 - [ ] **NET-16** — Predicted effects reach the owning client twice, likely diverging from retail
@@ -671,6 +708,24 @@ has no entries in that category, which reflects nothing having run rather than n
   (77703), which shows in inventory as a Metals crafting component; the client drew the node and
   stayed connected, so an id it never shipped is safe in `ObserverView`. No shipped deposit uses a
   custom vein yet, and the Copper has not been spent on a recipe
+
+- [ ] **DATA-28** — **Almost every tiny-object step shipped empty, and the ones that work are mapped
+  by hand.** 569 of 575 `TinyObjectCreate` defs and 46 of 48 `TinyObjectUpdate` defs are blank, so
+  which object a step makes is filled in by hand from ability evidence (Creeping Death, Poison Trail
+  twice, Fuel Air Bomb, Fungal Bloom). Any unmapped step still creates nothing. Fuel Air Bomb's
+  blast-to-fire-patch update has no data, so PIN made up an `also_tiny_object_id` field to create
+  both at once. Its 2-second fuse isn't stored anywhere the server can read, so the blast goes off on
+  landing. Found 2026-10-03 by the [abilities stream](streams/abilities.md)
+- [ ] **DATA-29** — **The ultimate meter's rates are PIN's own.** 120 s from empty to full in combat,
+  a 10 s combat window, and 10 points per target's worth of health dealt with at most 5 per hit, all
+  scaled by the module's Charge Speed (`UltimateCharge.cs`). Nothing shipped says what retail used.
+  The meter starts empty each session and isn't saved, which is a choice rather than an oversight.
+  Built 2026-10-03, see [DATA-19](gaps/data.md#data-19)
+- [ ] **DATA-30** — **Area and cone targeting doesn't check walls.** `TargetPBAE` and `TargetConeAE`
+  don't read `IgnoreWalls`, so every area ability reaches through cover. The code comment says the
+  server has no terrain to test against, which stopped being true on 2026-08-17: the line-of-sight
+  query NPCs use would serve. `UseBodyPosition` (PBAE) and `IncludeInteractives` are also unread
+  (`TargetConeAECommand.cs:35`, `TargetPBAECommand.cs:22`). Found 2026-10-05 in an offline audit
 
 ## Client & Environment — CLIENT
 

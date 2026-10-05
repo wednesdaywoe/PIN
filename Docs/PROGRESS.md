@@ -32,6 +32,49 @@ M8 session stability                                done
 
 ## Current frontier
 
+**Caught up 2026-10-05.** This section stopped at the end of the milestone plan in August. Since
+then the work has gone into streams opened after the slice closed, and it is summarised here in
+order.
+
+**The slice closed and three streams followed.** [Crafting](streams/crafting.md) opened 2026-08-19.
+CRAFT1 and CRAFT2 passed, and CRAFT5 got as far as iron mined from the ground becoming a crafted item
+on 2026-08-22, with only the equip and relog steps left. [Client UI](streams/client-ui.md) opened
+2026-08-21 and met UI1–UI5: `/mats` draws every material a character holds. Then on 2026-10-02 the
+ground started paying the sixteen refined materials the graded recipes want, through vein types
+700–715 that PIN defines itself, verified in game with a 25-Copper payout. What the economy does with
+them is still CRAFT3's decision.
+
+**Abilities were the main work of 2026-10-02 to 2026-10-05**, in a stream opened afterwards to record
+them: [streams/abilities.md](streams/abilities.md). Eight of its nine items passed in game, in
+short runs over four days. In order, the server now:
+- targets the way the client does, including cones
+- applies the client's cooldowns and heals
+- flies thrown abilities and runs what happens where they land, including mid-air detonation
+- knocks back, launches, stuns and roots monsters
+- has an ultimate meter that is earned in combat instead of always full, which closes
+  [DATA-19](ISSUE-REGISTER.md)
+- leaves working objects in the world: poison clouds, Fuel Air Bomb's blast and fire patch, and
+  Fungal Bloom's fungus and spore mines
+
+Two tools made this possible: [Tools/SDBQuery](../Tools/SDBQuery/), which reads ability chains out of
+the client database, and [Tools/ClientRE](../Tools/ClientRE/), headless Ghidra over the client
+binary, so most commands were built from the client's own logic instead of guessed. The commands
+that only ever ran on the server shipped empty ([DATA-5](ISSUE-REGISTER.md)), and the values filled
+in for them are listed in the stream as guesses. **What's next:** the current
+[test run](../Game%20Testing/test-run.html) is VIS-1..4, whether those ground objects are drawn
+(built 2026-10-05, not yet run).
+
+**Fixes that came in alongside.** Thirteen commits landed on `master` by mistake and were merged back
+on 2026-10-02 (`6131602`). They brought Channel's resent and split-packet fixes, the aptitude
+target-handling fixes, the SDBQuery tool, and a GameServer xUnit project (428 tests at the merge).
+Upstream fixes were cherry-picked too:
+- deployable timers run on the shard thread, which fixed a crash during view flushes
+- a shot that hits terrain no longer blames whichever entity shares the static's index
+- New Eden's deployables nearly doubled (469 to 838) from upstream's 1962 replay extractions
+
+Thumper waves were doubled to 18 creatures on 2026-10-02 so area abilities had groups to hit, which
+goes well past what the defence table was tuned for.
+
 **M6 and M8 both closed on 2026-08-14, in one evening sitting, 13 of 13 entries.**
 [Persistence](../Game Testing/Persistence.html) went 7 of 7: a session's crystite and items survive a
 menu logout, a double relog with nothing doubling, a killed client, and — beyond what any entry
@@ -572,10 +615,14 @@ Out of scope because the slice closes without them:
   in the loop needs it
 - **Other zones** — the server hosts one `ZoneId` per process; a second zone is configuration, not
   code, until zone transitions matter
-- **The remaining ~197 aptitude stubs** — implement the ones the slice's abilities actually hit,
-  when they turn out to be hit; working the folder alphabetically is unbounded
+- **The remaining aptitude stubs (~197 then, 171 on 2026-10-05)** — implement the ones the slice's abilities actually hit,
+  when they turn out to be hit; working the folder alphabetically is unbounded.
+  **No longer deferred as of 2026-10-02**: now the [abilities stream](streams/abilities.md), worked
+  in the order play reaches each command, as this line said to
 - **Projectile travel time, gravity, bounce** — hitscan resolves hits correctly; travel time
-  changes feel, not whether the loop closes
+  changes feel, not whether the loop closes. **Ability projectiles now fly** an arc under their
+  ammo's gravity and land after the flight time (2026-10-03, [abilities](streams/abilities.md)
+  ABIL4). Weapon fire is still hitscan
 - **Damage type resistance tables** — loaded but unused; damage lands without them, they make it
   correct
 - **Turret damageability** — `Turret_ObserverView` has no health field, so the client doesn't

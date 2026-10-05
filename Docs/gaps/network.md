@@ -58,7 +58,7 @@ ever finds out.
 
 ### NET-2 — `CurrentShortTime` wraps every ~65 seconds [ ] open
 
-[Shard.cs:84](../../UdpHosts/GameServer/Shard.cs#L84) truncates the shard clock to a `ushort`.
+[Shard.cs:112](../../UdpHosts/GameServer/Shard.cs#L112) truncates the shard clock to a `ushort`.
 Already a known source of bugs at one player; more entities and more players is more chances to
 land on the wrap. See the [public-server appendix](../streams/public-server-hardening.md) for why
 this gets worse with scale, but it's not scale-gated — it can bite today.
@@ -88,11 +88,16 @@ Neither has been seen in game. The capture holds exactly one client-to-server re
 whole session, so this is rare enough that only [L4](../../Game Testing/Reliability.html) under induced
 loss is likely to exercise it.
 
+**2026-10-02:** `ba493bc`, made on `master`, fixed the same two faults independently. The merge
+(`6131602`) kept this branch's `DeliveredSequences` duplicate check and took master's offset-keyed
+split buffer, which also makes a split that spans the sequence wraparound reassemble in order.
+`Tests/GameServer.Tests/Network/ChannelTests.cs` now covers resend and split at unit level.
+
 <a id="net-4"></a>
 
 ### NET-4 — `MTUProbe` silently dropped [~] needs confirmation
 
-[NetworkClient.cs:308](../../UdpHosts/GameServer/NetworkClient.cs#L308) receives the control packet
+[NetworkClient.cs:325](../../UdpHosts/GameServer/NetworkClient.cs#L325) receives the control packet
 and does nothing with it — no response sent. Unclear whether the client ever depends on getting one
 back; needs a capture to check what retail did here.
 
@@ -100,7 +105,7 @@ back; needs a capture to check what retail did here.
 
 ### NET-5 — Oversized UGSS messages aren't split [ ] open
 
-[Channel.cs:472](../../UdpHosts/GameServer/Channel.cs#L472): a message too large for one RGSS frame
+[Channel.cs:569](../../UdpHosts/GameServer/Channel.cs#L569): a message too large for one RGSS frame
 has no split-and-reassemble path. Fine until something large enough to need it gets sent.
 
 ## Physics and hit resolution
@@ -109,7 +114,7 @@ has no split-and-reassemble path. Fine until something large enough to need it g
 
 ### NET-6 — Physics material id 0 has no fallback [ ] open
 
-[PhysicsEngine.cs:287](../../UdpHosts/GameServer/Physics/PhysicsEngine.cs#L287) (see also
+[PhysicsEngine.cs:323](../../UdpHosts/GameServer/Physics/PhysicsEngine.cs#L323) (see also
 [layer 7](../Architecture/07-physics-and-world.md)) resolves material id 0 to null instead of a
 default, silently dropping hit attribution for anything that lands on it.
 
@@ -117,7 +122,7 @@ default, silently dropping hit attribution for anything that lands on it.
 
 ### NET-7 — HKX loader desyncs shape child index [ ] open, significant
 
-[PhysicsEngine.Shapes.cs:154](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L154): the
+[PhysicsEngine.Shapes.cs:152](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L152): the
 HKX loader adds extra children beyond what the shape defs describe, so the child index used to
 resolve a hit no longer lines up with the def that named it. Can misattribute which body part —
 including headshots — a hit actually landed on. Worth prioritizing over the rest of this section;
@@ -127,8 +132,8 @@ it's the one with a gameplay-visible failure mode.
 
 ### NET-8 — Shapeless tagfiles fall back to a placeholder box [ ] open
 
-[PhysicsEngine.Shapes.cs:83](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L83) plus
-[TagfileLoader.cs:39,412,418](../../Lib/Shared.Collision/Tagfile/TagfileLoader.cs): a tagfile with no
+[PhysicsEngine.Shapes.cs:81](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L81) plus
+[TagfileLoader.cs:23,504,514,520](../../Lib/Shared.Collision/Tagfile/TagfileLoader.cs): a tagfile with no
 shapes gets a generic box collider instead of failing loud or being flagged. Makes a missing-shape
 bug look like working collision until someone notices the box doesn't match the model.
 
@@ -138,7 +143,7 @@ bug look like working collision until someone notices the box doesn't match the 
 
 ### NET-9 — Entity scope-in bypasses proper tick logic [ ] open, workaround
 
-[EntityManager.cs:1810](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs#L1810) is
+[EntityManager.cs:2023](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs#L2023) is
 marked `TEMP: Hack` in its own code — it pushes new entities to clients by bypassing the real
 scope/distance tick logic rather than going through it. Works today; the real path it's standing in
 for still needs building.
@@ -147,7 +152,7 @@ for still needs building.
 
 ### NET-10 — `ScopeRange == 0` semantics unknown [~] needs confirmation
 
-[EntityManager.cs:183](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs#L183):
+[EntityManager.cs:207](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs#L207):
 unclear whether zero means "no scope range" or "use the default" — currently falls back to the
 component default, unconfirmed against what the original data intended.
 
@@ -162,7 +167,7 @@ for a fired shot ignores any override, always resolving the base ammo type.
 
 ### NET-12 — `MovementState` packing widened without confirmation [~] needs confirmation
 
-[MovementRelay.cs:48](../../UdpHosts/GameServer/Systems/MovementRelay/MovementRelay.cs#L48) carries
+[MovementRelay.cs:61](../../UdpHosts/GameServer/Systems/MovementRelay/MovementRelay.cs#L61) carries
 its own comment flagging doubt — "This was ushort previously!" — about whether the wider packing is
 correct or a regression.
 
@@ -179,7 +184,12 @@ which works but costs more than it needs to.
 
 <a id="net-14"></a>
 
-### NET-14 — `SpawnDeployable` computes a faction it then discards [ ] open
+### NET-14 — `SpawnDeployable` computes a faction it then discards [~] fixed in code 2026-10-02, unverified
+
+**Fixed in code 2026-10-02 (`7b14bae`)**: `hostilityInfo.FactionId` now takes the computed
+faction (`EntityManager.cs:189`), and `DeployableSpawnCommand` passes `useOwnerFaction` when the
+deployable has an owner, so a placed object takes its owner's faction. Not checked in game: V6
+hasn't been re-run. Original entry:
 
 [Deployables-And-Vehicles.md V6](../../Game Testing/Deployables-And-Vehicles.html): `SpawnDeployable`
 resolves `factionId` from owner/override/SDB-default, then assigns `deployableInfo.DefaultFaction`
@@ -426,7 +436,13 @@ has at least one asserted value that the client agrees with.
 
 <a id="net-23"></a>
 
-### NET-23 — A dead player has no way back [ ] open, found 2026-08-13
+### NET-23 — A dead player has no way back [~] built 2026-08-15, 4 of 5 checks passed
+
+**Status 2026-10-05: the narrative below is from before the fix.** `b33d5e5` (2026-08-15) added
+`BleedoutSim`, and the character now goes through `Incapacitated` with `respawn_input` set and
+`RespawnTimes` filled. DEATH-RESPAWN-1, 3, 4 and 5 passed on 2026-08-15/16, and ULT-4 died, gave up
+and respawned normally on 2026-10-04. Only DEATH-RESPAWN-2, the countdown's units, is unrun. The
+summary in the [register](../ISSUE-REGISTER.md) has the detail.
 
 Death is a one-way door. Found by [N16](../../Game Testing/NPC-Combat.html) on 2026-08-13, which is the
 first time in PIN's history that a player has been killed by the game rather than by a command: the

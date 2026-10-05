@@ -125,7 +125,7 @@ path, so nothing in the server is currently wrong, but any future inbound read o
 (or capture analysis, which is how it surfaced) must decode by the encoder's convention, as
 `FacingReport.Dequantise` does.
 
-### CLIENT-4 — Some held resources never appear in the inventory panel [ ] open, partly walked back
+### CLIENT-4 — Some held resources never appear in the inventory panel [x] closed 2026-08-21 by the MatList panel
 
 Found 2026-08-21 on the [CRAFT2](../../Game%20Testing/Crafting.html) pass. The build spent 15
 Crystite, 1 Chitin Fibers and 1 Copper Wiring, and the server's counts moved correctly for all
