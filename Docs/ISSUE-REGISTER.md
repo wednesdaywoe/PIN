@@ -735,7 +735,11 @@ has no entries in that category, which reflects nothing having run rather than n
   scaled by the module's Charge Speed (`UltimateCharge.cs`). Nothing shipped says what retail used.
   The meter starts empty each session and isn't saved, which is a choice rather than an oversight.
   Built 2026-10-03, see [DATA-19](gaps/data.md#data-19)
-- [ ] **DATA-30** — **Area and cone targeting doesn't check walls.** `TargetPBAE` and `TargetConeAE`
+- [~] **DATA-30** — **Fixed in code 2026-10-05, not yet seen in game.** The client packs
+  IgnoreWalls into its spatial query's flags (bit 2, constructor 0xbb8520), and 1,999 of 2,207 PBAE
+  and 610 of 622 cone defs leave it clear. Both commands now drop a target when a statics-only ray
+  from the query centre is blocked to all of three points up its body (`WallCheck`), before
+  MaxTargets is counted. Original entry: **Area and cone targeting doesn't check walls.** `TargetPBAE` and `TargetConeAE`
   don't read `IgnoreWalls`, so every area ability reaches through cover. The code comment says the
   server has no terrain to test against, which stopped being true on 2026-08-17: the line-of-sight
   query NPCs use would serve. `UseBodyPosition` (PBAE) and `IncludeInteractives` are also unread

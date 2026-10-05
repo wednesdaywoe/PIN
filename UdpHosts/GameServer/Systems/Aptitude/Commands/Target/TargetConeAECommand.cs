@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -32,12 +33,18 @@ public class TargetConeAECommand : Command, ICommand
 
     public bool Execute(Context context)
     {
-        // Unread: IgnoreWalls (the server has no terrain to test against), IncludeInteractives (TargetPBAE doesn't
-        // separate them either), ScaleOffset and ScaleQuerySize (no entity scale on the server), AimRadiusBias (0 in
-        // every def) and AimDirOffset/AimPosOffset (zero in every def).
+        // Unread: IncludeInteractives (TargetPBAE doesn't separate them either), ScaleOffset and ScaleQuerySize (no
+        // entity scale on the server), AimRadiusBias (0 in every def) and AimDirOffset/AimPosOffset (zero in every def).
         var shape = BuildShape(context);
         var candidates = context.Shard.Entities.Values.OfType<IAptitudeTarget>();
-        var hits = Pick(shape, candidates, context.Self, Params.SortByAngle == 1, Params.MaxTargets);
+        Func<IAptitudeTarget, bool> inSight = null;
+        if (Params.IgnoreWalls == 0)
+        {
+            var physics = context.Shard.Physics;
+            inSight = target => WallCheck.InSight(shape.Origin, target.Position, physics.TryHitWorld);
+        }
+
+        var hits = Pick(shape, candidates, context.Self, Params.SortByAngle == 1, Params.MaxTargets, inSight);
 
         Logger.Debug("{Command} {CommandId} cone {Length:0.#}m, radius {Start:0.#} to {End:0.#}m from {Origin} along {Direction}: {Hits} hits",
             nameof(TargetConeAECommand), Params.Id, shape.Length, shape.StartRadius, shape.EndRadius, shape.Origin, shape.Direction, hits.Count);
@@ -65,7 +72,7 @@ public class TargetConeAECommand : Command, ICommand
         return true;
     }
 
-    internal static List<IAptitudeTarget> Pick(ConeShape shape, IEnumerable<IAptitudeTarget> candidates, IAptitudeTarget self, bool sortByAngle, int maxTargets)
+    internal static List<IAptitudeTarget> Pick(ConeShape shape, IEnumerable<IAptitudeTarget> candidates, IAptitudeTarget self, bool sortByAngle, int maxTargets, Func<IAptitudeTarget, bool> inSight = null)
     {
         var hits = new List<(IAptitudeTarget Target, float Key)>();
         foreach (var candidate in candidates)
@@ -81,6 +88,12 @@ public class TargetConeAECommand : Command, ICommand
                 var point = candidate.Position + new Vector3(0f, 0f, height);
                 if (!float.IsNaN(shape.AlongIfInside(point, BodyAllowance)))
                 {
+                    // Behind a wall is checked last, and before MaxTargets, as the client's query drops it outright
+                    if (inSight != null && !inSight(candidate))
+                    {
+                        break;
+                    }
+
                     var key = sortByAngle ? shape.AngleKey(point) : Vector3.Distance(shape.Origin, point);
                     hits.Add((candidate, key));
                     break;

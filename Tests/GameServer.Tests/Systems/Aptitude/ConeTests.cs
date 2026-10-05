@@ -1,4 +1,5 @@
 using System.Numerics;
+using GameServer.Systems.AI;
 using GameServer.Systems.Aptitude.Commands.Target;
 using Xunit;
 
@@ -114,4 +115,50 @@ public class ConeTests
 
         Assert.Equal([farOnLine], hits);
     }
+
+    [Fact]
+    public void Pick_DropsWhatIsOutOfSightBeforeCountingMaxTargets()
+    {
+        var self = new FakeTarget("self");
+        var behindWall = new FakeTarget("behindWall") { Position = new Vector3(0f, 2f, 0f) };
+        var near = new FakeTarget("near") { Position = new Vector3(0f, 5f, 0f) };
+        var far = new FakeTarget("far") { Position = new Vector3(0f, 8f, 0f) };
+
+        var hits = TargetConeAECommand.Pick(Cone(10f, 45f), [behindWall, near, far], self, false, 1, target => target != behindWall);
+
+        Assert.Equal([near], hits);
+    }
+
+    [Fact]
+    public void WallCheck_AWallTallerThanTheBodyHides_ALowOneDoesNot()
+    {
+        var from = new Vector3(0f, 0f, 1f);
+        var target = new Vector3(0f, 10f, 0f);
+
+        Assert.False(WallCheck.InSight(from, target, Wall(height: 3f)));
+        Assert.True(WallCheck.InSight(from, target, Wall(height: 1f)));
+        Assert.True(WallCheck.InSight(from, new Vector3(0f, 3f, 0f), Wall(height: 3f)));
+    }
+
+    /// <summary>
+    ///     A wall across the aim at y = 5 standing <paramref name="height" /> metres tall from z = 0
+    /// </summary>
+    private static NpcKnockback.WallProbe Wall(float height) =>
+        (Vector3 origin, Vector3 direction, float maxDistance, out float distance) =>
+        {
+            distance = maxDistance;
+            if (direction.Y <= 0f)
+            {
+                return false;
+            }
+
+            var t = (5f - origin.Y) / direction.Y;
+            if (t < 0f || t > maxDistance || origin.Z + (direction.Z * t) > height)
+            {
+                return false;
+            }
+
+            distance = t;
+            return true;
+        };
 }

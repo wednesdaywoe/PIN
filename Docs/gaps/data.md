@@ -1349,7 +1349,33 @@ is the M6 save file.
 
 <a id="data-30"></a>
 
-### DATA-30 — Area and cone targeting doesn't check walls [ ] open, found 2026-10-05
+### DATA-30 — Area and cone targeting doesn't check walls [~] fixed in code 2026-10-05, unverified in game
+
+**Fixed in code 2026-10-05.** The open question below, whether the client respects walls, is
+answered from its own code. `apt::TargetPBAECommand`'s constructor (0xbb8520) builds a flags word
+from the def and hands it to the spatial query: bit 0 set when `IncludeSelf` is 0, bit 1
+`IncludeInteractives`, bit 2 `IgnoreWalls`. So the client's query honours walls unless told not to,
+and almost every def tells it nothing:
+
+| | Defs | IgnoreWalls = 0 | UseBodyPosition = 1 | IncludeInteractives = 1 |
+|---|---|---|---|---|
+| TargetPBAE | 2,207 | 1,999 | 209 | 46 |
+| TargetConeAE | 622 | 610 | 213 | 25 |
+
+The server now does the same with `WallCheck.InSight`, a statics-only ray (`TryHitWorld`, the same
+probe knockback uses) from the query centre to three points up the target's body at 0.3, 0.9 and
+1.6 m. The target is in sight if any of the three is clear. `TargetPBAE` lifts its centre by 0.5 m
+first, because both of its centres sit on the ground: a projectile's landing point, or a pair of
+feet. `TargetConeAE` casts from the cone's own origin, which is already at muzzle or body height. In
+both, a target behind a wall is dropped before MaxTargets is counted, as the client's query never
+returns it at all. Tests: `ConeTests.Pick_DropsWhatIsOutOfSightBeforeCountingMaxTargets` and
+`WallCheck_AWallTallerThanTheBodyHides_ALowOneDoesNot`.
+
+What stays open: the client's own query point and hitbox test aren't decoded, so the body heights
+and the 0.5 m lift are stand-ins. A test needs a wall: throw Poison Ball at a Fiend standing behind a
+rock and one in the open. `UseBodyPosition` (PBAE) and `IncludeInteractives` are still unread.
+
+Original entry:
 
 `TargetPBAE` and `TargetConeAE` find everyone within range and never read `IgnoreWalls`, so any area
 ability reaches through rocks and buildings

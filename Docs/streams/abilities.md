@@ -117,8 +117,8 @@ backs them:
 
 - **A player's own self-cast combat-flag effects** are left to the client. 303 of them have no
   duration step the server builds, so they would never end if the server held them.
-- **Area and cone targeting ignores walls** ([DATA-30](../gaps/data.md#data-30)). The terrain to
-  check against is loaded now, so this can be built offline.
+- **Area and cone targeting respects walls** ([DATA-30](../gaps/data.md#data-30)): built
+  2026-10-05 from the client's query flags, not yet run in game.
 - **Prediction-Sweep P1** was blocked on the ultimate meter and can now run.
 - **The remaining unimplemented command types.** Next: run `SDBQuery unimpl` over the equippable
   set and work down from the top. As before, go by what the commonly used modules hit, not by count.

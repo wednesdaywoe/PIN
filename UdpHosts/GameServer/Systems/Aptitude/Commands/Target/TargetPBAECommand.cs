@@ -19,7 +19,6 @@ public class TargetPBAECommand : Command, ICommand
     public bool Execute(Context context)
     {
         // Unused:
-        // Params.IgnoreWalls
         // Params.ScaleOffset
         // Params.ScaleQuerySize
         // Params.AimPosOffset
@@ -51,6 +50,10 @@ public class TargetPBAECommand : Command, ICommand
         // UseInitPos centres the query where the execution started rather than on Self. Every impact ability a
         // projectile runs sets it, with InitPosition the point the projectile landed. UseBodyPosition is still unread.
         Vector3 origin = Params.UseInitPos == 1 ? context.InitPosition : context.Self.Position;
+
+        // Both centres sit on the ground, a landing point or a pair of feet, so the wall check starts a little above
+        var physics = Params.IgnoreWalls == 0 ? context.Shard.Physics : null;
+        var sightFrom = origin + new Vector3(0f, 0f, WallCheck.GroundLift);
         var matches = context.Shard.Entities
         .Where((pair) =>
         {
@@ -65,7 +68,7 @@ public class TargetPBAECommand : Command, ICommand
                 var distance = Vector3.Distance(origin, compatibleEntity.Position);
                 if (distance <= radius)
                 {
-                    return true;
+                    return physics == null || WallCheck.InSight(sightFrom, compatibleEntity.Position, physics.TryHitWorld);
                 }
             }
             
