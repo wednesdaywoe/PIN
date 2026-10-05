@@ -41,7 +41,16 @@ public class TargetConeAECommand : Command, ICommand
         if (Params.IgnoreWalls == 0)
         {
             var physics = context.Shard.Physics;
-            inSight = target => WallCheck.InSight(shape.Origin, target.Position, physics.TryHitWorld);
+            inSight = target =>
+            {
+                if (WallCheck.InSight(shape.Origin, target.Position, physics.TryHitWorld))
+                {
+                    return true;
+                }
+
+                Logger.Debug("{Command} {CommandId} {Target} is behind a wall from {Origin}", nameof(TargetConeAECommand), Params.Id, target.EntityId, shape.Origin);
+                return false;
+            };
         }
 
         var hits = Pick(shape, candidates, context.Self, Params.SortByAngle == 1, Params.MaxTargets, inSight);

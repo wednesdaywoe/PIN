@@ -68,7 +68,13 @@ public class TargetPBAECommand : Command, ICommand
                 var distance = Vector3.Distance(origin, compatibleEntity.Position);
                 if (distance <= radius)
                 {
-                    return physics == null || WallCheck.InSight(sightFrom, compatibleEntity.Position, physics.TryHitWorld);
+                    if (physics == null || WallCheck.InSight(sightFrom, compatibleEntity.Position, physics.TryHitWorld))
+                    {
+                        return true;
+                    }
+
+                    Logger.Debug("{Command} {CommandId} {Target} is behind a wall from {Origin}", nameof(TargetPBAECommand), Params.Id, compatibleEntity.EntityId, sightFrom);
+                    return false;
                 }
             }
             

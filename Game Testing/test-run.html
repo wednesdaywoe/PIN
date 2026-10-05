@@ -1,9 +1,9 @@
-<title>PIN — Visible area objects</title>
+<title>PIN — Visible area objects and walls</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Visible area objects (VIS)</h1>
+    <h1>Visible area objects and walls (VIS, WALL)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -26,6 +26,11 @@
     appears and removed when it goes.</p>
     <p>This list is now sent for every character, monsters included, which is new to the game. VIS-1 checks that
     nothing broke because of it. Note anything odd too, such as damage numbers appearing twice.</p>
+    <p><strong>Then: area abilities and walls (WALL-1 to WALL-3).</strong> Until now an area ability reached
+    everyone in range, even behind a rock. The game data marks most of them to stop at walls, so now they do: the server
+    checks for world geometry between the centre of the effect and three points up each target's body. A few
+    abilities are marked to ignore walls; Poison Ball is one and is used as the comparison. The VIS-1 restart covers
+    this change too. You'll need a rock or boulder taller than you.</p>
   </section>
   <section class="block" data-open="true" id="vis-1">
     <button class="block-head" type="button">
@@ -113,6 +118,72 @@
       <li>The log has <code>Spawned tiny object 387</code> (Creeping Death) and <code>Spawned tiny object 386</code> (Poison Trail), with slot numbers.</li>
       <li>Poison Trail can lay many clouds at once; only 32 objects per player can be listed. Note if later clouds in a long run stop appearing (the log then shows <code>slot -1</code>).</li>
       </ul><div class="result"><label for="r-vis-4">Result</label><textarea data-k="n-vis-4" id="r-vis-4" placeholder="Creeping Death cloud visible? Trail clouds visible? Any missing?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="wall-1">
+    <button class="block-head" type="button">
+      <span class="block-n">WALL-1</span>
+      <span class="block-t">Healing Wave doesn't reach a friendly behind a rock</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">WALL-1</span><span class="marker">[ ]</span><span class="entry-t">Healing Wave doesn't reach a friendly behind a rock</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="wall-1-1" type="checkbox"/><span class="step-body"><span class="lede">Create Healing Wave and refresh: <code class="run">createitem 79018</code> <code class="run">dbg_inventory resend</code>. Equip it: <code class="run">equipitem 79018 Ability3</code></span></span></label>
+      <label class="step"><input data-k="wall-1-2" type="checkbox"/><span class="step-body"><span class="lede">Find a rock or boulder taller than you and a few metres wide. Stand right behind it and spawn a friendly: <code class="run">npc 290</code>. Aim at it, <code class="run">target</code>, then wound it: <code class="run">sethealth 100</code></span></span></label>
+      <label class="step"><input data-k="wall-1-3" type="checkbox"/><span class="step-body"><span class="lede">Walk round the rock to about 4 m from it, so the rock is fully between you and the NPC. Face the NPC through the rock and press Healing Wave. Run the log command</span></span></label>
+      <label class="step"><input data-k="wall-1-4" type="checkbox"/><span class="step-body"><span class="lede">Step sideways until you can see the NPC, at about the same distance. Wait 30 seconds for the cooldown, press Healing Wave at it, and run the log command again</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: from behind the rock, the log has <code>TargetConeAECommand ... is behind a wall</code> and no <code>healed</code> line. In view, the log has <code>healed ... for 300</code> and the NPC's health bar goes up.</li>
+      <li>If the hidden press heals it anyway, note how big the rock is and how close you stood. The server checks three points up the NPC's body, so a rock lower than its head won't hide it.</li>
+      </ul><div class="result"><label for="r-wall-1">Result</label><textarea data-k="n-wall-1" id="r-wall-1" placeholder="Hidden press: behind a wall, no heal? In-view press: healed?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="wall-2">
+    <button class="block-head" type="button">
+      <span class="block-n">WALL-2</span>
+      <span class="block-t">A point-blank heal doesn't reach behind a rock</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">WALL-2</span><span class="marker">[ ]</span><span class="entry-t">A point-blank heal doesn't reach behind a rock</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="wall-2-1" type="checkbox"/><span class="step-body"><span class="lede">Wound the NPC from WALL-1 again: aim at it, <code class="run">target</code>, <code class="run">sethealth 100</code></span></span></label>
+      <label class="step"><input data-k="wall-2-2" type="checkbox"/><span class="step-body"><span class="lede">Go back behind the rock so it hides the NPC, staying within 10 m of it. Run <code class="run">ability 31217</code>, a 10 m heal around you, and run the log command</span></span></label>
+      <label class="step"><input data-k="wall-2-3" type="checkbox"/><span class="step-body"><span class="lede">Step into view, still within 10 m. Wait about 50 seconds for the cooldown, run <code class="run">ability 31217</code> again, and run the log command</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: from behind the rock, the log has <code>TargetPBAECommand ... is behind a wall</code> and no heal. In view, the log has <code>healed ... for 300</code>.</li>
+      </ul><div class="result"><label for="r-wall-2">Result</label><textarea data-k="n-wall-2" id="r-wall-2" placeholder="Hidden: behind a wall, no heal? In view: healed?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="wall-3">
+    <button class="block-head" type="button">
+      <span class="block-n">WALL-3</span>
+      <span class="block-t">Fuel Air Bomb stops at a rock, Poison Ball doesn't</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">WALL-3</span><span class="marker">[ ]</span><span class="entry-t">Fuel Air Bomb stops at a rock, Poison Ball doesn't</span></div>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="wall-3-1" type="checkbox"/><span class="step-body"><span class="lede">Create both modules and refresh: <code class="run">createitem 86045</code> <code class="run">createitem 77108</code> <code class="run">dbg_inventory resend</code>. Equip them: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">equipitem 77108 Ability1</code>. Clear your target and turn on invulnerability: <code class="run">clear</code> <code class="run">invuln on</code></span></span></label>
+      <label class="step"><input data-k="wall-3-2" type="checkbox"/><span class="step-body"><span class="lede">Stand where you can see the ground just behind a rock. Aim at that ground and run <code class="run">probe</code>. Note the three numbers after <code>world at</code></span></span></label>
+      <label class="step"><input data-k="wall-3-3" type="checkbox"/><span class="step-body"><span class="lede">Walk round to the other side so the rock hides that spot. Spawn a Fiend there: <code>npc 1196 x y z</code>, using the three numbers. It shouldn't come for you, because it can't see you. If it does, the spot isn't hidden; try a bigger rock</span></span></label>
+      <label class="step"><input data-k="wall-3-4" type="checkbox"/><span class="step-body"><span class="lede">Fill the meter: <code class="run">supercharge 100</code>. Throw Fuel Air Bomb so it lands at the foot of the rock on your side, 2 to 3 m from the Fiend. Run the log command</span></span></label>
+      <label class="step"><input data-k="wall-3-5" type="checkbox"/><span class="step-body"><span class="lede">Throw Poison Ball at the same place and run the log command again</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: Fuel Air Bomb doesn't hurt the Fiend. The log has <code>TargetPBAECommand ... is behind a wall</code> and no <code>took ... damage from</code> line for the Fiend.</li>
+      <li>Poison Ball does poison it, through the rock. That ability is one of the 208 marked in the game data to ignore walls, so this is the control: it shows the Fiend was close enough to be hit.</li>
+      <li>If the Fiend is hurt by Fuel Air Bomb, note where the bomb landed. If Poison Ball doesn't reach it either, the Fiend was too far away and the Fuel Air Bomb result tells us nothing.</li>
+      </ul><div class="result"><label for="r-wall-3">Result</label><textarea data-k="n-wall-3" id="r-wall-3" placeholder="Fuel Air Bomb: behind a wall, no damage? Poison Ball: poisoned?"></textarea></div></div>
     </div>
   </section>
 </div>
