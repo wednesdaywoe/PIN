@@ -485,7 +485,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 10 of 28 closed
+[Full detail](gaps/network.md) — 11 of 28 closed
 
 - [x] **NET-1** — No retransmit queue; "reliable" only acked, never resent. Built 2026-08-14:
   `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it and resends
@@ -519,7 +519,12 @@ has no entries in that category, which reflects nothing having run rather than n
   UGSS packets and no split fragments among them, while all 52 of the server's split fragments ride
   ReliableGss. Nothing PIN sends is known to be that large yet, so the change is a precaution
 - [ ] **NET-6** — Physics material id 0 has no fallback, drops hit attribution
-- [ ] **NET-7** — HKX loader desyncs shape child index, can misattribute headshots
+- [x] **NET-7** — **Closed 2026-10-05: not a defect.** HKX loader desyncs shape child index, can
+  misattribute headshots. The FIXME that opened this was out of date from the commit that wrote it
+  (`846f0d5`): the pose builder keys its lookup by compound child and adds one entry per child,
+  HKX route included, and Bepu keeps children in that order and reports that index on a ray hit. In
+  30 server logs on `jpc` only two poses use HKX, both deployables with a single shape, and creature
+  hits resolve by name (33,002 Body, 866 Head, 830 Hull). Guarded by `ActivePoseTests`
 - [ ] **NET-8** — Shapeless tagfiles silently fall back to a placeholder box collider
 - [ ] **NET-9** — Entity scope-in bypasses proper tick logic via a marked `TEMP: Hack`
 - [~] **NET-10** — `ScopeRange == 0` semantics unconfirmed

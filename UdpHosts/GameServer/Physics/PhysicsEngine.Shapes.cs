@@ -149,7 +149,8 @@ public partial class PhysicsEngine
 
                 builder.AddForKinematic(shapeId, pose, 1);
 
-                // FIXME: The HKX route will add multiple children so the child index no longer aligns with the shape defs
+                // Keyed by compound child, not by shape def: the HKX route above adds one entry per child it
+                // adds, so a ray hit's child index finds its own shape here (ActivePoseTests).
                 result.Add(childIndex++, new ActivePoseShapeData()
                 {
                     DamageMod = shapeDef.DamageMod,

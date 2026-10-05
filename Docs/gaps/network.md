@@ -164,7 +164,30 @@ default, silently dropping hit attribution for anything that lands on it.
 
 <a id="net-7"></a>
 
-### NET-7 — HKX loader desyncs shape child index [ ] open, significant
+### NET-7 — HKX loader desyncs shape child index [x] closed 2026-10-05, not a defect
+
+**Closed 2026-10-05 by reading the code and the logs.** The FIXME this entry quotes sat on the
+primitive-shape branch of `CreateActivePose` and described a problem the code never had. The lookup
+`_assetIdToPoseCompoundData` is keyed by a manually tracked `childIndex` that goes up once for every
+child added to the `CompoundBuilder`, in the HKX branch (once per static, or once for its
+placeholder) as well as the primitive one. That was already true in the first commit (`846f0d5`).
+`CompoundBuilder.BuildKinematicCompound` copies children in insertion order, and `Compound.RayTest`
+reports the child's own index to `OnRayHit`, which is what `ProjectileRayCast` looks up. A mesh
+child would still report the compound's index, so even that case attributes correctly.
+
+The logs agree. Across the 30 GameServer logs on `jpc`, only two poses ever take the HKX branch, the
+Sin Uplink Tower (Body, 24 loads) and the tiny thumper (Hull, 11). Both are deployables with one
+shape, so all their children map to the same body part whatever the index. Creature poses are all
+primitives, and impacts resolve by name: 33,002 Body, 866 Head, 830 Hull.
+
+The guard is `Tests/GameServer.Tests/Physics/ActivePoseTests.cs`. It builds a pose that mixes
+primitives, an HKX shape and the two skipped names, and checks that compound child *i* is the shape
+recorded at index *i*. The FIXME is replaced with a comment saying so.
+
+One thing noticed in passing and not filed: HKX statics in a pose are offset by `Origin * scale` but
+the shapes themselves aren't scaled. It only matters for a scaled deployable.
+
+Original entry:
 
 [PhysicsEngine.Shapes.cs:152](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L152): the
 HKX loader adds extra children beyond what the shape defs describe, so the child index used to
