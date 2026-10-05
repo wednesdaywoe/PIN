@@ -109,6 +109,9 @@ public class Shard : IShard
     public uint ZoneId { get; private set; }
     public ulong CurrentTimeLong { get; private set; }
     public uint CurrentTime => unchecked((uint)CurrentTimeLong);
+    // Milliseconds, so it wraps every 65.5 s. The wire fields are 16-bit, so that is the protocol, not
+    // a truncation to fix. Nothing on the server compares two short times today; anything that starts
+    // to must do it in wrapping arithmetic, as (short)(a - b), never a < b.
     public ushort CurrentShortTime => unchecked((ushort)CurrentTime);
     public IDictionary<ushort, Tuple<IEntity, Enums.GSS.Controllers>> EntityRefMap { get; }
     public Serilog.ILogger Logger { get; }

@@ -566,7 +566,16 @@ public class Channel
             headerLength += 2;
         }
 
-        // TODO: Send UGSS messages that are split over RGSS
+        // A message too big for one unreliable packet goes over the reliable channel instead of being
+        // split. Retail never split on UGSS: the 2016 capture has 250,656 server UGSS packets and no
+        // split fragments, while all 52 of its server split fragments ride ReliableGss. Splitting here
+        // would also lose the whole message to one dropped fragment, with nothing to resend it.
+        if (Type == ChannelType.UnreliableGss && packetData.Length + headerLength > _maxPacketSize)
+        {
+            _logger.Debug("<- {Channel} message of {Length} bytes is too big for one packet, sending it on ReliableGss", Type, packetData.Length);
+            return _client.NetChannels[ChannelType.ReliableGss].Send(packetData);
+        }
+
         while (packetData.Length > 0)
         {
             var length = Math.Min(packetData.Length + headerLength, _maxPacketSize);

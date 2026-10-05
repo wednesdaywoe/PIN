@@ -56,7 +56,28 @@ ever finds out.
 
 <a id="net-2"></a>
 
-### NET-2 — `CurrentShortTime` wraps every ~65 seconds [ ] open
+### NET-2 — `CurrentShortTime` wraps every ~65 seconds [x] closed 2026-10-05, not a defect
+
+**Closed by an audit of every use, 2026-10-05.** The wrap is real and is the protocol's. Every
+`ShortTime` and `NextShortTime` field in AeroMessages is a `ushort`, so retail's server wrapped on the
+same 65.5 s cycle. What would make it a PIN bug is server code treating short times as ordered
+numbers, and there is none:
+
+- all 20 uses of `CurrentShortTime` assign it to a `ushort` field, and none goes into a wider
+  one, where it would be silently wrong after the first wrap
+- the client's `input.ShortTime` is stored (`MovementShortTime`) and echoed back, never compared
+- the one piece of arithmetic, `NextShortTime = input.ShortTime + 90` in `MovementRelay`, is unchecked
+  and wraps correctly
+
+The client is synced to the same clock: `TimeSyncResponse` sends `CurrentTimeLong` in microseconds.
+NPC poses interpolate smoothly (N8–N13), and the 2026-08-14 ten-minute loss sitting crossed the wrap
+about nine times without trouble. The "known source of bugs" in the original wording came from the
+2026-08-10 roadmap and had no incident behind it.
+
+The guard is a comment on `Shard.CurrentShortTime`: any future comparison must be done in wrapping
+arithmetic, `(short)(a - b)`, never `a < b`.
+
+Original entry:
 
 [Shard.cs:112](../../UdpHosts/GameServer/Shard.cs#L112) truncates the shard clock to a `ushort`.
 Already a known source of bugs at one player; more entities and more players is more chances to
@@ -103,7 +124,30 @@ back; needs a capture to check what retail did here.
 
 <a id="net-5"></a>
 
-### NET-5 — Oversized UGSS messages aren't split [ ] open
+### NET-5 — Oversized UGSS messages aren't split [~] fixed 2026-10-05, unit-tested, not seen in game
+
+**Fixed 2026-10-05.** `Channel.Send` already split any oversized message into fragments with the split
+bit set, on every sequenced channel, the unreliable one included. The TODO asked for something else:
+retail's server *never* split on UGSS. `CaptureReplay --transport` over the 2016 session shows:
+
+| Direction and channel | Packets | Split fragments |
+|----|----|----|
+| S→C UnreliableGss | 250,656 | 0 |
+| S→C ReliableGss | 38,078 | 52 |
+| C→S Matrix | 7,800 | 17 |
+
+So a message too big for one unreliable packet now goes out on ReliableGss, unsplit as far as the
+unreliable channel is concerned. Both GSS channels carry the same message framing, so it is handed
+over as is. This also removes a failure that splitting on UGSS would have had: one dropped fragment
+loses the whole message, with nothing to resend it. Whether the client even reassembles splits on
+UGSS was never known, and now doesn't need to be.
+
+`ChannelTests.Send_UnreliableTooBigForOnePacketGoesReliable` and
+`Send_UnreliableThatFitsStaysUnreliable` pin both sides of the threshold. Nothing PIN sends on UGSS is
+known to reach that size today. The likeliest first case is a view flush that changes many array
+slots at once. Watch for the Debug line `too big for one packet, sending it on ReliableGss`.
+
+Original entry:
 
 [Channel.cs:569](../../UdpHosts/GameServer/Channel.cs#L569): a message too large for one RGSS frame
 has no split-and-reassemble path. Fine until something large enough to need it gets sent.

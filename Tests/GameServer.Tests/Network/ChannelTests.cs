@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using GameServer.Packets;
@@ -22,6 +23,7 @@ public class ChannelTests
     public ChannelTests()
     {
         _channels = Channel.GetChannels(_client, Logger.None);
+        _client.NetChannels = _channels.ToImmutableDictionary();
         foreach (var channel in _channels.Values)
         {
             channel.PacketAvailable += p => _delivered.Add(p.Peek(p.BytesRemaining).ToArray());
@@ -192,6 +194,41 @@ public class ChannelTests
         {
             var header = ParseOutgoing(fragment).Header;
             receiver.HandlePacket(new GamePacket(header, fragment[2..]));
+        }
+
+        receiver.Process(CancellationToken.None);
+
+        Assert.Equal([data], received);
+    }
+
+    [Fact]
+    public void Send_UnreliableThatFitsStaysUnreliable()
+    {
+        _channels[ChannelType.UnreliableGss].Send(new byte[MaxPacketSize - 4]);
+
+        var sent = Assert.Single(_client.SequencedMessages);
+        Assert.Equal(ChannelType.UnreliableGss, ParseOutgoing(sent).Header.Channel);
+    }
+
+    [Theory]
+    [InlineData(MaxPacketSize - 3)]
+    [InlineData(5000)]
+    public void Send_UnreliableTooBigForOnePacketGoesReliable(int size)
+    {
+        var data = Enumerable.Range(0, size).Select(i => (byte)i).ToArray();
+
+        _channels[ChannelType.UnreliableGss].Send(data);
+        var fragments = _client.SequencedMessages.ToArray();
+
+        Assert.NotEmpty(fragments);
+        Assert.All(fragments, f => Assert.Equal(ChannelType.ReliableGss, ParseOutgoing(f).Header.Channel));
+
+        var receiver = Channel.GetChannels(new FakeNetworkClient(), Logger.None)[ChannelType.ReliableGss];
+        var received = new List<byte[]>();
+        receiver.PacketAvailable += p => received.Add(p.Peek(p.BytesRemaining).ToArray());
+        foreach (var fragment in fragments)
+        {
+            receiver.HandlePacket(new GamePacket(ParseOutgoing(fragment).Header, fragment[2..]));
         }
 
         receiver.Process(CancellationToken.None);

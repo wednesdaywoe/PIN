@@ -47,7 +47,7 @@ story that a single-player server never needed.
 | One process hosts one `ZoneId`, and MatrixServer answers `KISS` with a hardcoded `25001` | Something that routes a client to the right process for the right zone. Matrix can't currently say anything else |
 | `_maxPlayersPerShard = 64`, gameplay single-threaded per shard | The cap is probably fine. It's never been tested above one, and scope-in batching, change flush, and the 16-bit `EntityRefMap` are where it would show |
 | `Shard.RunThread` spins on `Thread.Yield()` with no sleep | A paced timestep. Every shard pegs a core right now whether or not anyone is in it, so idle zones cost the same as busy ones |
-| `CurrentShortTime` wraps every ~65 seconds | Already a known source of bugs at one player (tracked as [NET-2](../gaps/network.md)). More entities and more players is more chances to land on it |
+| ~~`CurrentShortTime` wraps every ~65 seconds~~ | Closed 2026-10-05 as not a defect: the wire fields are 16-bit and the server never compares short times ([NET-2](../gaps/network.md#net-2)). Player count doesn't change that |
 | ASP.NET dev certs and `localhost` in `firefall.ini` | Real certs, real DNS, and finding out how much the client actually validates |
 
 ## Operations

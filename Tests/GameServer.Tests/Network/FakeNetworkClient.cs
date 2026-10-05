@@ -20,7 +20,7 @@ internal class FakeNetworkClient : INetworkClient
     public uint SocketId => 1;
     public IPEndPoint RemoteEndpoint => new(IPAddress.Loopback, 0);
     public DateTime NetLastActive => DateTime.Now;
-    public ImmutableDictionary<ChannelType, Channel> NetChannels => throw new NotSupportedException();
+    public ImmutableDictionary<ChannelType, Channel> NetChannels { get; set; } = ImmutableDictionary<ChannelType, Channel>.Empty;
     public IShard AssignedShard => throw new NotSupportedException();
     public ConcurrentQueue<Memory<byte>> SequencedMessages { get; } = new();
 

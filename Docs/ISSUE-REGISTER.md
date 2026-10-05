@@ -485,7 +485,7 @@ has no entries in that category, which reflects nothing having run rather than n
 
 ## Networking & Protocol — NET
 
-[Full detail](gaps/network.md) — 9 of 28 closed
+[Full detail](gaps/network.md) — 10 of 28 closed
 
 - [x] **NET-1** — No retransmit queue; "reliable" only acked, never resent. Built 2026-08-14:
   `RetransmitQueue` holds every Matrix and ReliableGss packet until the client acks it and resends
@@ -496,7 +496,12 @@ has no entries in that category, which reflects nothing having run rather than n
   nothing abandoned, the queue peaking at 82 unacked. Closing it also closed
   [NET-24](gaps/network.md#net-24). Its inbound mirror, [NET-25](gaps/network.md#net-25), remains
   deliberately open
-- [ ] **NET-2** — `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
+- [x] **NET-2** — **Closed 2026-10-05: not a defect.** Every short-time field on the wire is
+  16-bit, so the wrap is the protocol's. The server never compares or subtracts two short times, and
+  its one addition (`NextShortTime`) is already unchecked. The "known source of bugs" came from the
+  2026-08-10 roadmap with no incident behind it, and ten-minute sittings have crossed the wrap many
+  times. Guarded by a comment on `Shard.CurrentShortTime` saying how any future comparison must be
+  done. Original entry: `CurrentShortTime` wraps every ~65 seconds, already a known source of bugs at one
   player
 - [x] **NET-3** — Inbound resend detection / XOR decode correctness was unverified, and the 2016
   capture settled it on 2026-08-14: 24 resent packets, and the 15 whose original also survives decode
@@ -508,7 +513,11 @@ has no entries in that category, which reflects nothing having run rather than n
   master's offset-keyed split buffer, so a split that spans the sequence wraparound now reassembles in
   order. `Tests/GameServer.Tests/Network/ChannelTests.cs` covers resend and split at unit level
 - [~] **NET-4** — `MTUProbe` received and silently dropped, no response sent
-- [ ] **NET-5** — Oversized UGSS messages needing RGSS split aren't handled
+- [~] **NET-5** — Oversized UGSS messages needing RGSS split aren't handled. **Fixed 2026-10-05,
+  unit-tested, not seen in game**: a message too big for one unreliable packet now goes out on
+  ReliableGss instead of being split. That is what retail did. The 2016 capture has 250,656 server
+  UGSS packets and no split fragments among them, while all 52 of the server's split fragments ride
+  ReliableGss. Nothing PIN sends is known to be that large yet, so the change is a precaution
 - [ ] **NET-6** — Physics material id 0 has no fallback, drops hit attribution
 - [ ] **NET-7** — HKX loader desyncs shape child index, can misattribute headshots
 - [ ] **NET-8** — Shapeless tagfiles silently fall back to a placeholder box collider
