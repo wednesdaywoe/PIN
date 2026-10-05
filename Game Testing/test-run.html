@@ -106,6 +106,7 @@
             <li><strong>Run 2 PASSED: lit at full, fired, emptied. About 20-25% came straight back: that is the damage bonus. Absorption Bomb's closing blast hit three Fiends for 3270 each, 5 points each (the per-hit cap), plus combat time.</strong></li>
             <li><strong>Ultimate damage no longer refills the meter (your call, 2026-10-04). Re-test: fill with <code>supercharge 100</code>, use Absorption Bomb or Fuel Air Bomb into a group of Fiends, then run <code>supercharge</code> straight away: it should read only a few points (combat time), not 20.</strong></li>
             <li><strong>Run 5: Fuel Air Bomb's kills still refilled ~10 points: the 'ultimate' mark was dropped whenever an effect was applied, and the throw runs inside one. Fixed. Same re-test as above.</strong></li>
+            <li><strong>Run 7 PASSED 2026-10-05: after Fuel Air Bomb's kills the meter stayed under 10, all of it combat time (the 10 s after your last hit), none from the ultimate's damage.</strong></li>
       </ul><div class="result"><label for="r-ult-3">Result</label><textarea data-k="n-ult-3" id="r-ult-3" placeholder="Lit at full? Fired? Emptied? Second press refused?"></textarea></div></div>
     </div>
   </section>
@@ -203,7 +204,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WAIT-3</span><span class="marker">[ ]</span><span class="entry-t">Fungal Bloom is thrown</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">WAIT-3</span><span class="marker">[x]</span><span class="entry-t">Fungal Bloom is thrown</span></div>
       <div class="steps"><ol>
       <label class="step"><input data-k="wait-3-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Fungal Bloom as your ultimate and fill the meter: <code class="run">equipitem 139852 AbilityHKM</code> <code class="run">supercharge 100</code>. Stand about 10 m from a group of Fiends</span></span></label>
       <label class="step"><input data-k="wait-3-2" type="checkbox"/><span class="step-body"><span class="lede">Aim at the ground beside them and press the ultimate's key</span></span></label>
@@ -219,6 +220,7 @@
             <li><strong>Run 4: the fungus spawned and fired one spore (the short throw, gas cloud and stun you saw), then removed itself at once: its 30 s spore timer also requires its owner to be 'living', a check that only understood characters. Placed objects now count as living until destroyed. Re-test pass: the fungus keeps throwing spores at random for about 30 s.</strong></li>
             <li><strong>Run 5: the fungus lived its 30 s but fired ~1,300 spores (a re-armed timer counted from the fungus's birth, so it fired every tick), and a spore that misses lays a mine that wasn't filled in. Now: an effect's clock starts when it is applied; a missed spore lays a spore mine (tiny 389); an enemy within 3 m bursts it into a poison cloud (390: damage within 4 m plus an accuracy penalty and poison), which then leaves a blinding cloud (391) for 7 s that afflicts anyone walking in. The server watches these objects itself, since the game never sees them. Re-test pass: a spore every 0.1 to 1 s; Fiends walking over the area get hurt and poisoned; log has <code>RegisterClientProximityCommand</code> and <code>becomes 390</code>. Nothing is drawn for mines or clouds (same as the poison clouds).</strong></li>
             <li><strong>Run 6: the spore rate is right now (22 in 30 s) and mines were laid, but every spore was fired from you, along your aim, so they piled up a few metres in front of you, and no Fiend ever walked onto one. Placed objects now fire from themselves: spores go up out of the fungus and scatter up to ~15 m around it. Re-test: plant it among Fiends, wait ~5 s, then use Gravity Pull to drag Fiends across the area (they otherwise stand and shoot). The log reports each mine's nearest enemy once a second (<code>nearest enemy</code>).</strong></li>
+            <li><strong>Run 7 PASSED 2026-10-05: Fiends pulled past the fungus take damage over time; log shows mines set off (389 becomes 390 becomes 391). Mines and clouds aren't drawn: only the fungus is visible.</strong></li>
       </ul><div class="result"><label for="r-wait-3">Result</label><textarea data-k="n-wait-3" id="r-wait-3" placeholder="Thrown? Shove where it landed? Any fungus or mines?"></textarea></div></div>
     </div>
   </section>
