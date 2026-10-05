@@ -58,6 +58,17 @@ public class RegisterClientProximityCommand : Command, ICommand
                            .Take(Params.MaxTargets > 0 ? (int)Params.MaxTargets : int.MaxValue)
                            .ToArray();
 
+        // One line a second per object: how close the nearest enemy came, so a mine that never goes off can be told
+        // apart from one nobody walked near
+        if (context.Shard.CurrentTime / 1000 != (context.Shard.CurrentTime - (Params.RetryInterval > 0 ? Params.RetryInterval : 500u)) / 1000)
+        {
+            var nearest = context.Shard.Entities.Values.OfType<CharacterEntity>()
+                                 .Where(c => c.IsAlive && HostilityRules.CanDamage(attacker, c))
+                                 .Select(c => Vector3.Distance(c.Position, tiny.Position))
+                                 .DefaultIfEmpty(float.NaN).Min();
+            Logger.Debug("{Command} {CommandId}: tiny object {TypeId} {EntityId} watching {Radius} m, nearest enemy {Nearest:0.0} m", nameof(RegisterClientProximityCommand), Params.Id, tiny.TypeId, tiny.EntityId, radius, nearest);
+        }
+
         if (found.Length > 0)
         {
             Logger.Debug("{Command} {CommandId}: {Count} within {Radius} m of tiny object {TypeId}", nameof(RegisterClientProximityCommand), Params.Id, found.Length, radius, tiny.TypeId);
