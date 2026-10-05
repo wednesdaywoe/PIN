@@ -90,6 +90,9 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
     public MovementView Character_MovementView { get; set; }
     public TinyObjectView Character_TinyObjectView { get; set; }
 
+    // Which of the view's 32 tiny object slots are taken
+    private readonly bool[] _tinyObjectSlots = new bool[32];
+
     public new CharacterCollisionComponent Collision { get; set; }
     public INetworkPlayer Player { get; set; }
     public bool IsPlayerControlled => Player != null;
@@ -1330,6 +1333,36 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         }
     }
 
+    /// <summary>
+    ///     Lists a tiny object this character owns (a poison cloud, a spore mine) in one of the 32 slots of its
+    ///     TinyObjectView. Clients build the object from the slot and run its status effect themselves, which is
+    ///     where its particles and sounds come from. Returns the slot, or -1 when all 32 are taken.
+    /// </summary>
+    public int AddTinyObject(ushort typeId, Vector3 position, HostilityInfoData hostility)
+    {
+        var slot = Array.IndexOf(_tinyObjectSlots, false);
+        if (slot < 0 || Character_TinyObjectView == null)
+        {
+            return -1;
+        }
+
+        _tinyObjectSlots[slot] = true;
+        var data = new TinyObjectData { TypeId = typeId, Position = position, HostilityInfo = hostility };
+        Character_TinyObjectView.GetType().GetProperty($"TinyObjects_{slot}Prop").SetValue(Character_TinyObjectView, data, null);
+        return slot;
+    }
+
+    public void RemoveTinyObject(int slot)
+    {
+        if (slot < 0 || slot >= _tinyObjectSlots.Length || !_tinyObjectSlots[slot] || Character_TinyObjectView == null)
+        {
+            return;
+        }
+
+        _tinyObjectSlots[slot] = false;
+        Character_TinyObjectView.GetType().GetProperty($"TinyObjects_{slot}Prop").SetValue(Character_TinyObjectView, null, null);
+    }
+
     public override void ClearStatusEffect(byte index, ushort time, uint debugEffectId)
     {
         Logger.Debug("Character.ClearStatusEffect Index {Index}, Time {Time}, Id {DebugEffectId}", index, time, debugEffectId);
@@ -2340,6 +2373,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
             AltAmmo_0Prop = StartingAltAmmo,
             AltAmmo_1Prop = StartingAltAmmo,
         };
+        Character_TinyObjectView = new TinyObjectView();
         Character_MovementView = new MovementView
         {
             MovementProp = new AeroMessages.GSS.V66.Character.MovementData

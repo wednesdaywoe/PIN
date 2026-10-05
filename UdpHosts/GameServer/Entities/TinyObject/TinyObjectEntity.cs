@@ -10,8 +10,10 @@ namespace GameServer.Entities.TinyObject;
 ///     like any other: the effect's update chain does the work and its remove chain destroys the object.
 /// </summary>
 /// <remarks>
-///     Server-only. It is added to the world without a scope set, so clients are never sent it; what they see is
-///     <see cref="Visual" />, an ordinary area visual carrying the row's particle effect.
+///     It is added to the world without a scope set, so clients are never sent it as an entity of its own. Instead it
+///     is listed in a slot of its owner's TinyObjectView (<see cref="Slot" />): the client builds its own copy from that
+///     and runs the same status effect, whose client-only steps play the particles and sounds. A row that names a
+///     particle effect directly also gets <see cref="Visual" />, an area visual carrying it.
 /// </remarks>
 public sealed class TinyObjectEntity : BaseAptitudeEntity
 {
@@ -27,6 +29,9 @@ public sealed class TinyObjectEntity : BaseAptitudeEntity
     public uint TypeId { get; }
 
     public AreaVisualDataEntity Visual { get; set; }
+
+    /// <summary>The owner's TinyObjectView slot listing this object to clients, or -1 when it isn't listed.</summary>
+    public int Slot { get; set; } = -1;
 
     // Tiny objects have no status effect fields on the wire
     public override void SetStatusEffect(byte index, ushort time, StatusEffectData data)

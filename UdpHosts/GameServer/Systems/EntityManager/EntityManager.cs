@@ -347,7 +347,13 @@ public class EntityManager
             };
         }
 
-        _logger.Debug("Spawned tiny object {TypeId} as {EntityId} at {Position}, effect {EffectId}, pfx {PfxId}", typeId, tiny.EntityId, position, row.SpawnStatusfxId, row.PfxId);
+        // Listed on the owner so clients draw it: they run its status effect, particles and all, on their side
+        if (owner != null && typeId <= ushort.MaxValue)
+        {
+            tiny.Slot = owner.AddTinyObject((ushort)typeId, position, tiny.HostilityInfo);
+        }
+
+        _logger.Debug("Spawned tiny object {TypeId} as {EntityId} at {Position}, effect {EffectId}, pfx {PfxId}, slot {Slot}", typeId, tiny.EntityId, position, row.SpawnStatusfxId, row.PfxId, tiny.Slot);
 
         if (row.SpawnStatusfxId != 0)
         {
@@ -367,6 +373,12 @@ public class EntityManager
 
     public void RemoveTinyObject(TinyObjectEntity tiny)
     {
+        if (tiny.Slot >= 0 && tiny.Owner is CharacterEntity owner)
+        {
+            owner.RemoveTinyObject(tiny.Slot);
+            tiny.Slot = -1;
+        }
+
         if (tiny.Visual != null)
         {
             Remove(tiny.Visual.EntityId);

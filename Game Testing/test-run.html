@@ -1,9 +1,9 @@
-<title>PIN — Ultimate meter and four abilities</title>
+<title>PIN — Visible area objects</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Ultimate meter and four abilities (ULT, WAIT, PULL)</h1>
+    <h1>Visible area objects (VIS)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -16,214 +16,105 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run finished leaps and slams: Meteor Strike and Crater both work and can be repeated, and nothing gets
-    stuck after landing.</p>
-    <p>This run has two parts. Do them in order; the ULT entries end with you dying, which is fine before the rest.</p>
-    <p><strong>Part 1, the ultimate meter (ULT-1 to ULT-4).</strong> Until now it was permanently full, so ultimates
-    could be fired any time. Now:</p>
-    <ul>
-    <li>It starts <strong>empty</strong> each session and survives death.</li>
-    <li>It fills while you're <strong>in combat</strong> (you hit something, or got hit, in the last 10 seconds):
-    about 2 minutes from empty to full.</li>
-    <li>Dealing damage adds a bonus: a whole monster's worth of health dealt adds 10% of the meter, at most 5% from one
-    hit.</li>
-    <li>The ultimate module's Charge Speed (1 to 1.2) multiplies both.</li>
-    <li>An ultimate needs a full meter and empties it.</li>
-    </ul>
-    <p>The rates are a first guess and easy to change. <code>supercharge</code> on its own shows the meter;
-    <code>supercharge 100</code> fills it.</p>
-    <p><strong>Part 2, four abilities that did nothing until now (WAIT-1 to WAIT-3, PULL-1).</strong> Many abilities
-    have a step that says "wait this long, then do this once". The server skipped that step, so whatever hung off it
-    never happened. It now runs. These four depend on it:</p>
-    <ul>
-    <li><strong>Fuel Air Bomb</strong> (Firecat ultimate): the throw itself.</li>
-    <li><strong>Assassinate</strong> (Raptor): the strike's damage.</li>
-    <li><strong>Gravity Pull</strong> (Mammoth): its damage. The pull that drags enemies to you is also new: the server
-    now throws each monster in an arc that lands 2.5 to 5 m in front of you.</li>
-    <li><strong>Fungal Bloom</strong> (Recluse ultimate): the throw itself.</li>
-    </ul>
-    <p>All four are equipped with <code>equipitem</code> onto whatever frame you wear. If one does nothing at all
-    when pressed, switch to its own frame in the garage, equip it there, and try again; note which.</p>
+    <p>Last run finished the ultimate meter and four abilities: Fuel Air Bomb, Assassinate, Gravity Pull and Fungal
+    Bloom all work, and an ultimate's own kills earn no meter.</p>
+    <p><strong>This run: making lingering area objects visible.</strong> Several abilities leave a small object on
+    the ground that does the work: Fuel Air Bomb's blast and fire patch, Fungal Bloom's spore mines and clouds, and the
+    Recluse poison clouds. They hurt, but nothing was drawn, because the game was never told they exist.</p>
+    <p>Each character has a list of up to 32 such objects it owns, which the game reads to build its own copy and play
+    the object's visuals and sounds. The server never filled that list in. Now it does: an object is added when it
+    appears and removed when it goes.</p>
+    <p>This list is now sent for every character, monsters included, which is new to the game. VIS-1 checks that
+    nothing broke because of it. Note anything odd too, such as damage numbers appearing twice.</p>
   </section>
-  <section class="block" data-open="true" id="ult-1">
+  <section class="block" data-open="true" id="vis-1">
     <button class="block-head" type="button">
-      <span class="block-n">ULT-1</span>
-      <span class="block-t">The meter starts empty and the ultimate refuses</span>
+      <span class="block-n">VIS-1</span>
+      <span class="block-t">The world still loads and looks normal</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">ULT-1</span><span class="marker">[x]</span><span class="entry-t">The meter starts empty and the ultimate refuses</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">VIS-1</span><span class="marker">[ ]</span><span class="entry-t">The world still loads and looks normal</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="ult-1-1" type="checkbox"/><span class="step-body"><span class="lede">Stop the servers. Then build, install and start in one go: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in</span></span></label>
-      <label class="step"><input data-k="ult-1-2" type="checkbox"/><span class="step-body"><span class="lede">Look at your ultimate on the action bar: there should be no charge arc around it. Run <code class="run">supercharge</code></span></span></label>
-      <label class="step"><input data-k="ult-1-3" type="checkbox"/><span class="step-body"><span class="lede">Press the ultimate's key</span></span></label>
+      <label class="step"><input data-k="vis-1-1" type="checkbox"/><span class="step-body"><span class="lede">Restart the server so it runs the new build: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in and enter the world</span></span></label>
+      <label class="step"><input data-k="vis-1-2" type="checkbox"/><span class="step-body"><span class="lede">Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>. Walk around them and shoot one</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -20
+      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: no arc, <code>supercharge</code> answers <code>Ultimate meter 0 of 100</code>, and the ultimate doesn't fire.</li>
-      <li>It fires anyway: note it. The client may not be checking the meter, and the log will show whether the server refused (<code>RequireSuperChargeCommand ... short of 100</code>).</li>
-      </ul><div class="result"><label for="r-ult-1">Result</label><textarea data-k="n-ult-1" id="r-ult-1" placeholder="Arc? Meter value? Did the ultimate fire?"></textarea></div></div>
+      <li>Pass: you get into the world as usual, the Fiends look and fight as before, and the game doesn't freeze or close.</li>
+      <li>If the game closes or freezes at world entry, copy its console log before relaunching (it is overwritten on the next start) and stop here.</li>
+      </ul><div class="result"><label for="r-vis-1">Result</label><textarea data-k="n-vis-1" id="r-vis-1" placeholder="Entered normally? Fiends normal?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="ult-2">
+  <section class="block" data-open="true" id="vis-2">
     <button class="block-head" type="button">
-      <span class="block-n">ULT-2</span>
-      <span class="block-t">Fighting fills the meter</span>
+      <span class="block-n">VIS-2</span>
+      <span class="block-t">Fuel Air Bomb's blast and fire patch are drawn</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">ULT-2</span><span class="marker">[x]</span><span class="entry-t">Fighting fills the meter</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">VIS-2</span><span class="marker">[ ]</span><span class="entry-t">Fuel Air Bomb's blast and fire patch are drawn</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="ult-2-1" type="checkbox"/><span class="step-body"><span class="lede">With nothing targeted, turn on invulnerability: <code class="run">invuln on</code>. <code class="run">npc 1196</code> three times, and fight the Fiends. Watch the arc around the ultimate</span></span></label>
-      <label class="step"><input data-k="ult-2-2" type="checkbox"/><span class="step-body"><span class="lede">Every 20 seconds or so, run <code class="run">supercharge</code> and note the value</span></span></label>
-      <label class="step"><input data-k="ult-2-3" type="checkbox"/><span class="step-body"><span class="lede">Stop fighting, move away from any Fiends, and wait 20 seconds. Run <code class="run">supercharge</code> twice, 10 seconds apart</span></span></label>
+      <label class="step"><input data-k="vis-2-1" type="checkbox"/><span class="step-body"><span class="lede">Create the module and refresh your inventory: <code class="run">createitem 86045</code> <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="vis-2-2" type="checkbox"/><span class="step-body"><span class="lede">Equip it as your ultimate and fill the meter: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">supercharge 100</code>. With nothing targeted, turn on invulnerability: <code class="run">invuln on</code></span></span></label>
+      <label class="step"><input data-k="vis-2-3" type="checkbox"/><span class="step-body"><span class="lede">Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>, back off about 20 m, aim at them and press the ultimate's key. Watch for about 6 seconds</span></span></label>
       </ol></div>
-      <ul>
-      <li>Pass: the arc grows as you fight, and the value rises: roughly 8 to 10 points per 10 seconds of fighting, more while you're landing hits. Once you've been out of combat for 10 seconds it stops rising.</li>
-      <li>Run 1 (2026-10-04): it only rose for about 10 s after each Assassinate or Gravity Pull hit. That is the combat window, not the cooldowns: hits taken while invulnerable weren't counted, so only your own hits kept you in combat. Fixed; Fiends hitting you now count too, invulnerable or not.</li>
-      <li>The value rises but the arc doesn't move: the client isn't drawing the server's value. Note it.</li>
-      <li>Note how the speed feels. The rate is easy to change.</li>
-      </ul><div class="result"><label for="r-ult-2">Result</label><textarea data-k="n-ult-2" id="r-ult-2" placeholder="Arc growing? Values over time? Stopped out of combat?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="ult-3">
-    <button class="block-head" type="button">
-      <span class="block-n">ULT-3</span>
-      <span class="block-t">A full meter lights the ultimate, and using it empties the meter</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">ULT-3</span><span class="marker">[x]</span><span class="entry-t">A full meter lights the ultimate, and using it empties the meter</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="ult-3-1" type="checkbox"/><span class="step-body"><span class="lede">Keep fighting until the meter is full, or run <code class="run">supercharge 100</code>. Note whether the ultimate lights up or flashes</span></span></label>
-      <label class="step"><input data-k="ult-3-2" type="checkbox"/><span class="step-body"><span class="lede">Use the ultimate. Then run <code class="run">supercharge</code> and press the ultimate's key again</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -20
+      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: at full, the ultimate lights up. It fires, the arc empties, <code>supercharge</code> answers 0, and the second press does nothing. The log has <code>ConsumeSuperChargeCommand ... ultimate meter 100 -&gt; 0</code>.</li>
-            <li><strong>Run 2 PASSED: lit at full, fired, emptied. About 20-25% came straight back: that is the damage bonus. Absorption Bomb's closing blast hit three Fiends for 3270 each, 5 points each (the per-hit cap), plus combat time.</strong></li>
-            <li><strong>Ultimate damage no longer refills the meter (your call, 2026-10-04). Re-test: fill with <code>supercharge 100</code>, use Absorption Bomb or Fuel Air Bomb into a group of Fiends, then run <code>supercharge</code> straight away: it should read only a few points (combat time), not 20.</strong></li>
-            <li><strong>Run 5: Fuel Air Bomb's kills still refilled ~10 points: the 'ultimate' mark was dropped whenever an effect was applied, and the throw runs inside one. Fixed. Same re-test as above.</strong></li>
-            <li><strong>Run 7 PASSED 2026-10-05: after Fuel Air Bomb's kills the meter stayed under 10, all of it combat time (the 10 s after your last hit), none from the ultimate's damage.</strong></li>
-      </ul><div class="result"><label for="r-ult-3">Result</label><textarea data-k="n-ult-3" id="r-ult-3" placeholder="Lit at full? Fired? Emptied? Second press refused?"></textarea></div></div>
+      <li>Pass: where the bomb lands you see an explosion, then a burning patch on the ground for about 5 seconds. The Fiends still take the big hit and then the small burns.</li>
+      <li>The log has <code>Spawned tiny object 440 ... slot 0</code> and <code>Spawned tiny object 110 ... slot 1</code> (or other slot numbers), each followed later by <code>Removed tiny object</code>.</li>
+      <li>Possible gaps: the data's 2-second fuse still isn't built, so the blast happens on landing. Note if the visual seems delayed or doubled compared with the damage.</li>
+      </ul><div class="result"><label for="r-vis-2">Result</label><textarea data-k="n-vis-2" id="r-vis-2" placeholder="Explosion drawn? Fire patch drawn? How long? Damage still right?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="ult-4">
+  <section class="block" data-open="true" id="vis-3">
     <button class="block-head" type="button">
-      <span class="block-n">ULT-4</span>
-      <span class="block-t">The meter survives death</span>
+      <span class="block-n">VIS-3</span>
+      <span class="block-t">Fungal Bloom's spore mines and clouds are drawn</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">ULT-4</span><span class="marker">[x]</span><span class="entry-t">The meter survives death</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">VIS-3</span><span class="marker">[ ]</span><span class="entry-t">Fungal Bloom's spore mines and clouds are drawn</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="ult-4-1" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">supercharge 60</code>. With nothing targeted, turn off invulnerability: <code class="run">invuln off</code>. Then let the Fiends kill you, give up when downed, and respawn</span></span></label>
-      <label class="step"><input data-k="ult-4-2" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">supercharge</code></span></span></label>
+      <label class="step"><input data-k="vis-3-1" type="checkbox"/><span class="step-body"><span class="lede">Create Fungal Bloom and Gravity Pull and refresh: <code class="run">createitem 139852</code> <code class="run">createitem 143288</code> <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="vis-3-2" type="checkbox"/><span class="step-body"><span class="lede">Equip them and fill the meter: <code class="run">equipitem 139852 AbilityHKM</code> <code class="run">equipitem 143288 Ability2</code> <code class="run">supercharge 100</code></span></span></label>
+      <label class="step"><input data-k="vis-3-3" type="checkbox"/><span class="step-body"><span class="lede">Spawn three Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code> <code class="run">npc 1196</code>. Stand about 10 m away, plant the fungus between you and them, and wait about 5 seconds</span></span></label>
+      <label class="step"><input data-k="vis-3-4" type="checkbox"/><span class="step-body"><span class="lede">Use Gravity Pull to drag the Fiends across the fungus area</span></span></label>
       </ol></div>
-      <ul>
-      <li>Pass: it still answers 60 after respawning, and the arc is still drawn.</li>
-            <li><strong>Run 2 PASSED: 87.7 at death, 87.7 after respawning.</strong></li>
-      </ul><div class="result"><label for="r-ult-4">Result</label><textarea data-k="n-ult-4" id="r-ult-4" placeholder="Value after respawn?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="wait-1">
-    <button class="block-head" type="button">
-      <span class="block-n">WAIT-1</span>
-      <span class="block-t">Fuel Air Bomb is thrown</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WAIT-1</span><span class="marker">[x]</span><span class="entry-t">Fuel Air Bomb is thrown</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="wait-1-1" type="checkbox"/><span class="step-body"><span class="lede">After respawning, create the four modules this part uses, then refresh your inventory: <code class="run">createitem 86045</code> <code class="run">createitem 141980</code> <code class="run">createitem 143288</code> <code class="run">createitem 139852</code> <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="wait-1-2" type="checkbox"/><span class="step-body"><span class="lede">Equip Fuel Air Bomb as your ultimate and fill the meter: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">supercharge 100</code>. With nothing targeted, turn on invulnerability: <code class="run">invuln on</code>. Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>, and back off about 20 m</span></span></label>
-      <label class="step"><input data-k="wait-1-3" type="checkbox"/><span class="step-body"><span class="lede">Aim at the Fiends and press the ultimate's key. Watch for about 5 seconds</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: about half a second after the press, a bomb is thrown and lands near where you aimed, and the meter empties. The log has <code>UpdateWaitAndFireOnceCommand ... after 500 ms</code> and an <code>Ability projectile</code> line.</li>
-      <li>Bonus, not built for this run: its description promises an explosion 2 seconds after landing and a fire patch. Note whether either happens and whether the Fiends take damage.</li>
-            <li><strong>Run 2: thrown as expected (PASS for this run's change). No explosion or damage after landing: the landing creates a 'tiny object' that should carry the blast; next to investigate.</strong></li>
-            <li><strong>Run 3 (2026-10-04): still no blast: the landing step had no object filled in. Now filled: a blast (full damage at the centre, half and a fifth further out, Thermal) plus a fire patch that burns enemies every half second for 5 s. The data's 2-second fuse isn't anywhere the server can read, so the blast is on landing. Re-test pass: the Fiends near the landing take a big hit, then keep taking small burns; the log has <code>TinyObject</code> lines and no 'nothing created'.</strong></li>
-            <li><strong>Run 4 PASSED for damage: the blast and the burning fire patch both hurt. No explosion visual: the blast lives in an object only the server knows about, so the game is never told to draw it (same for the poison clouds). Showing those objects to the game is its own job. The spent blast object is now also removed instead of lingering.</strong></li>
-      </ul><div class="result"><label for="r-wait-1">Result</label><textarea data-k="n-wait-1" id="r-wait-1" placeholder="Thrown? Where did it land? Explosion or fire after it landed?"></textarea></div></div>
+      <li>Pass: spore mines are visible on the ground around the fungus. When a Fiend walks onto one it bursts into a visible poison cloud, which then leaves a second cloud for about 7 seconds.</li>
+      <li>The log has <code>Spawned tiny object 389</code> lines with slot numbers, and <code>becomes 390</code> / <code>becomes 391</code> when mines go off.</li>
+      <li>Note if the mines appear somewhere other than where the Fiends get hurt.</li>
+      </ul><div class="result"><label for="r-vis-3">Result</label><textarea data-k="n-vis-3" id="r-vis-3" placeholder="Mines visible? Clouds visible? In the right places?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="wait-2">
+  <section class="block" data-open="true" id="vis-4">
     <button class="block-head" type="button">
-      <span class="block-n">WAIT-2</span>
-      <span class="block-t">Assassinate blinks forward and strikes</span>
+      <span class="block-n">VIS-4</span>
+      <span class="block-t">The Recluse poison clouds are drawn</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WAIT-2</span><span class="marker">[x]</span><span class="entry-t">Assassinate blinks forward and strikes</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">VIS-4</span><span class="marker">[ ]</span><span class="entry-t">The Recluse poison clouds are drawn</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="wait-2-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Assassinate: <code class="run">equipitem 141980 Ability1</code>. Walk up to a Fiend until it is within about 3 m, facing it</span></span></label>
-      <label class="step"><input data-k="wait-2-2" type="checkbox"/><span class="step-body"><span class="lede">Press the key for your first ability slot. Watch the Fiend's health bar</span></span></label>
+      <label class="step"><input data-k="vis-4-1" type="checkbox"/><span class="step-body"><span class="lede">Create both poison modules and refresh: <code class="run">createitem 86064</code> <code class="run">createitem 102707</code> <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="vis-4-2" type="checkbox"/><span class="step-body"><span class="lede">Equip them: <code class="run">equipitem 86064 Ability1</code> <code class="run">equipitem 102707 Ability2</code></span></span></label>
+      <label class="step"><input data-k="vis-4-3" type="checkbox"/><span class="step-body"><span class="lede">Spawn a Fiend: <code class="run">npc 1196</code>. Fire Creeping Death at it</span></span></label>
+      <label class="step"><input data-k="vis-4-4" type="checkbox"/><span class="step-body"><span class="lede">Press Poison Trail and run in a line for a few seconds</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: about 0.4 seconds after the press, the Fiend in front of you takes a hit (300 damage on this module). The log has <code>UpdateWaitAndFireOnceCommand ... after 400 ms</code>.</li>
-      <li>Run 1 (2026-10-04): the strike landed, but you stayed put while the blue blink played. The server now moves you: to where Assassinate's invisible teleport shot lands (on the Fiend, a wall or the ground, up to 20 m ahead), stopping 1.5 m short of it.</li>
-      <li>Re-test pass: you blink forward to just in front of the Fiend, then the strike hits it. Try once from about 10 m away as well; you should arrive next to it. The log has <code>TeleportCommand ... teleporting</code>.</li>
-      <li>You land inside the Fiend, under the ground, or get pulled back to where you started a moment later: note which.</li>
-            <li><strong>Run 2 PASSED: hit lands and you teleport to the enemy at several distances. From ~30 m you went ~18 m and struck air: the module's range is 20 m (Assassinate Range), stopping 1.5 m short. Matches the data.</strong></li>
-      </ul><div class="result"><label for="r-wait-2">Result</label><textarea data-k="n-wait-2" id="r-wait-2" placeholder="Hit landed? Teleport ahead? Anything odd?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="pull-1">
-    <button class="block-head" type="button">
-      <span class="block-n">PULL-1</span>
-      <span class="block-t">Gravity Pull drags enemies to you and hurts them</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">PULL-1</span><span class="marker">[x]</span><span class="entry-t">Gravity Pull drags enemies to you and hurts them</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="pull-1-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Gravity Pull: <code class="run">equipitem 143288 Ability2</code>. Spawn three Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code> <code class="run">npc 1196</code>. Back off until they are 8 to 15 m away, all in front of you</span></span></label>
-      <label class="step"><input data-k="pull-1-2" type="checkbox"/><span class="step-body"><span class="lede">Face them and press the key for your second ability slot</span></span></label>
-      <label class="step"><input data-k="pull-1-3" type="checkbox"/><span class="step-body"><span class="lede">Wait out the 9-second cooldown. Turn so one Fiend is well off to your side and another is in front, then press it again</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: the Fiends in front fly toward you in a short arc and land 2.5 to 5 m in front of you. About half a second after the pull, each takes damage (100 on this module). On the second press, the Fiend off to the side doesn't move. The log has <code>RopePullCommand ... pulling</code> and <code>knocked back</code> lines.</li>
-      <li>They fly past you, land far off, sink into the ground, or nothing moves: note which. The landing distance and arc height are easy to change.</li>
-      <li><strong>PASSED 2026-10-04:</strong> the Fiends were pulled together and landed in front of you; the log shows the damage half a second after each pull.</li>
-      </ul><div class="result"><label for="r-pull-1">Result</label><textarea data-k="n-pull-1" id="r-pull-1" placeholder="Pulled? Where did they land? Damage? Side Fiend left alone?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="wait-3">
-    <button class="block-head" type="button">
-      <span class="block-n">WAIT-3</span>
-      <span class="block-t">Fungal Bloom is thrown</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WAIT-3</span><span class="marker">[x]</span><span class="entry-t">Fungal Bloom is thrown</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="wait-3-1" type="checkbox"/><span class="step-body"><span class="lede">Equip Fungal Bloom as your ultimate and fill the meter: <code class="run">equipitem 139852 AbilityHKM</code> <code class="run">supercharge 100</code>. Stand about 10 m from a group of Fiends</span></span></label>
-      <label class="step"><input data-k="wait-3-2" type="checkbox"/><span class="step-body"><span class="lede">Aim at the ground beside them and press the ultimate's key</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "RegisterClientProximity|becomes|TinyObject|DeployableSpawn|Desecrated|TeleportCommand|UpdateWaitAndFireOnce|RopePull|Ability projectile|knocked back|landed at|SuperCharge|ultimate meter" ~/Games/PIN/logs/GameServer.log | tail -30
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: about half a second after the press, a projectile flies to where you aimed, and Fiends within about 2 m of where it lands are shoved a little. The log has <code>UpdateWaitAndFireOnceCommand ... after 510 ms</code>.</li>
-      <li>Run 2 (2026-10-04): the meter was spent but the server never threw anything: the 510 ms wait sits in an effect the server only looked at once a second, and the effect ended before the second look. Fixed: the wait now books its own moment. Re-test: the log must have <code>UpdateWaitAndFireOnceCommand 1398495 ... after 510 ms</code>.</li>
-      <li>Expected gap: the fungus and its spore mines probably don't appear, because the object it plants has no data on this server. Note whatever you do see.</li>
-            <li><strong>Run 2 was on the build before the fix (server not restarted): the 'explodes at your feet' was the client's own visual; the server threw nothing. Re-test after a restart.</strong></li>
-            <li><strong>Run 3 (2026-10-04): the throw now fires (log: after 510 ms), and landing at your feet is the data: the seed is lobbed at 5 m/s, you plant it. Nothing grew because the fungus object wasn't filled in. Now it is (deployable 3903, 'Desecrated Fungus'), owned by you. Re-test pass: a fungus appears where the seed lands and spores fly up out of it for about 30 s, then it goes. Expected gap: the spores probably don't act as mines yet (their trigger is unbuilt and has no data). Note whether the fungus is visible at all.</strong></li>
-            <li><strong>Run 4: the fungus spawned and fired one spore (the short throw, gas cloud and stun you saw), then removed itself at once: its 30 s spore timer also requires its owner to be 'living', a check that only understood characters. Placed objects now count as living until destroyed. Re-test pass: the fungus keeps throwing spores at random for about 30 s.</strong></li>
-            <li><strong>Run 5: the fungus lived its 30 s but fired ~1,300 spores (a re-armed timer counted from the fungus's birth, so it fired every tick), and a spore that misses lays a mine that wasn't filled in. Now: an effect's clock starts when it is applied; a missed spore lays a spore mine (tiny 389); an enemy within 3 m bursts it into a poison cloud (390: damage within 4 m plus an accuracy penalty and poison), which then leaves a blinding cloud (391) for 7 s that afflicts anyone walking in. The server watches these objects itself, since the game never sees them. Re-test pass: a spore every 0.1 to 1 s; Fiends walking over the area get hurt and poisoned; log has <code>RegisterClientProximityCommand</code> and <code>becomes 390</code>. Nothing is drawn for mines or clouds (same as the poison clouds).</strong></li>
-            <li><strong>Run 6: the spore rate is right now (22 in 30 s) and mines were laid, but every spore was fired from you, along your aim, so they piled up a few metres in front of you, and no Fiend ever walked onto one. Placed objects now fire from themselves: spores go up out of the fungus and scatter up to ~15 m around it. Re-test: plant it among Fiends, wait ~5 s, then use Gravity Pull to drag Fiends across the area (they otherwise stand and shoot). The log reports each mine's nearest enemy once a second (<code>nearest enemy</code>).</strong></li>
-            <li><strong>Run 7 PASSED 2026-10-05: Fiends pulled past the fungus take damage over time; log shows mines set off (389 becomes 390 becomes 391). Mines and clouds aren't drawn: only the fungus is visible.</strong></li>
-      </ul><div class="result"><label for="r-wait-3">Result</label><textarea data-k="n-wait-3" id="r-wait-3" placeholder="Thrown? Shove where it landed? Any fungus or mines?"></textarea></div></div>
+      <li>Pass: Creeping Death leaves a visible cloud that grows where it lands. Poison Trail leaves a line of visible clouds behind you.</li>
+      <li>The log has <code>Spawned tiny object 387</code> (Creeping Death) and <code>Spawned tiny object 386</code> (Poison Trail), with slot numbers.</li>
+      <li>Poison Trail can lay many clouds at once; only 32 objects per player can be listed. Note if later clouds in a long run stop appearing (the log then shows <code>slot -1</code>).</li>
+      </ul><div class="result"><label for="r-vis-4">Result</label><textarea data-k="n-vis-4" id="r-vis-4" placeholder="Creeping Death cloud visible? Trail clouds visible? Any missing?"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-05-ult-wait-pull-9"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-05-vis-1"></script>
