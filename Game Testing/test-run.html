@@ -152,7 +152,7 @@
       <div class="entry"><div class="entry-head"><span class="id">WALL-2</span><span class="marker">[ ]</span><span class="entry-t">A point-blank heal doesn't reach behind a rock</span></div>
       <div class="steps"><ol>
       <label class="step"><input data-k="wall-2-1" type="checkbox"/><span class="step-body"><span class="lede">Wound the NPC from WALL-1 again: aim at it, <code class="run">target</code>, <code class="run">sethealth 100</code></span></span></label>
-      <label class="step"><input data-k="wall-2-2" type="checkbox"/><span class="step-body"><span class="lede">Go back behind the rock so it hides the NPC, staying within 10 m of it. Run <code class="run">ability 31217</code>, a 10 m heal around you, and run the log command</span></span></label>
+      <label class="step"><input data-k="wall-2-2" type="checkbox"/><span class="step-body"><span class="lede">Go back behind the rock so it hides the NPC, staying within 10 m of it. Type <code class="run">ability 31217</code> in chat. It is an admin command that fires a 10 m heal around you directly; there is no item to create or equip. Then run the log command</span></span></label>
       <label class="step"><input data-k="wall-2-3" type="checkbox"/><span class="step-body"><span class="lede">Step into view, still within 10 m. Wait about 50 seconds for the cooldown, run <code class="run">ability 31217</code> again, and run the log command</span></span></label>
       </ol></div>
       <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
