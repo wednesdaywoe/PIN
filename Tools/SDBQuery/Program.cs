@@ -26,6 +26,7 @@ if (argList.Count == 0 || string.IsNullOrEmpty(sdbPath) || !File.Exists(sdbPath)
         Usage: SDBQuery [--sdb <clientdb.sd2>] <query> [args]   (or set PIN_SDB)
           chain <chainId>                       Print a chain and the chains it calls
           ability <abilityId>                   Print an ability's chain and the chains it calls
+          blueprint <id> [id...]                What a blueprint costs and pays, as the craft command reads it
           ctx <commandId>                       Print the chain a command belongs to
           find <Type> <Property> <value> [text] List <Type>CommandDefs where Property == value, optionally containing text
           after <Type> [depth]                  Most common server-side commands following <Type>
@@ -129,6 +130,28 @@ switch (argList[0])
         break;
     case "table":
         query.DumpTable(rest[0]);
+        break;
+    case "blueprint":
+        foreach (var id in rest.Select(uint.Parse))
+        {
+            var plan = GameServer.Systems.Crafting.BlueprintCrafting.Resolve(id);
+            Console.WriteLine($"Blueprint {id}: type {plan.BlueprintType}, {plan.BuildTimeSecs} s, {plan.Problem ?? "buildable"}");
+            foreach (var line in plan.Inputs)
+            {
+                Console.WriteLine($"  in   {line.Quantity} x {GameServer.Systems.Crafting.BlueprintCrafting.Describe(line.ItemId)}{(line.IsResource ? " (resource)" : "")}");
+            }
+
+            foreach (var line in plan.ClassInputs)
+            {
+                Console.WriteLine($"  in   {line.Quantity} units of class {line.ClassId} (stat {line.StatRead}, attribute {line.Attribute}, {line.Members.Count} members)");
+            }
+
+            foreach (var line in plan.Outputs)
+            {
+                Console.WriteLine($"  out  {line.Quantity} x {GameServer.Systems.Crafting.BlueprintCrafting.Describe(line.ItemId)}");
+            }
+        }
+
         break;
     case "tinyfor":
         query.TinyFor(rest.Select(uint.Parse).ToHashSet());
