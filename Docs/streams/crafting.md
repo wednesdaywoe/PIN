@@ -91,7 +91,12 @@ verifiable by a maintainer.
 
 ## Deferred
 
-- [ ] **CRAFT3** — **The economy decisions**: which resource economy (five-stat graded materials, or
+- [x] **CRAFT3** — **Decided 2026-10-07** (decision 2026-10-07, user-chosen): refining comes back,
+  and material quality is real, carried from the mined batch through to the crafted item's numbers.
+  The work is its own stream, [graded-crafting.md](graded-crafting.md), because it widens this
+  stream's thesis. Rejected: veins paying bars directly; repricing recipes onto ore; counts only.
+  The question as it stood before the decision:
+  **The economy decisions**: which resource economy (five-stat graded materials, or
   the level-banded veins the node types are written for); where crafted output lands; how resources
   are carried; **and now what happens to the raw tier** — 34 of the 42 node types pay an ore no recipe
   wants ([DATA-27](../ISSUE-REGISTER.md)), so the choice is restore a refining step, reprice recipes
@@ -101,7 +106,7 @@ verifiable by a maintainer.
   ([DATA-26](../ISSUE-REGISTER.md), and the stat values ride on the item rather than living in static
   data), and the display objection is gone — `/mats` draws every material a character holds, raw tier
   included ([client-ui.md](client-ui.md), UI4 met 2026-08-21), so an economy priced in raw resources
-  is no longer unplayable on those grounds. needs: CRAFT5
+  is no longer unplayable on those grounds.
 
   **One part of this is settled, as a mechanism rather than an economy (`03f6322`).** Vein types are
   now PIN content: `StaticDB/CustomData/resource_node_type.json` is laid over the shipped table, and
