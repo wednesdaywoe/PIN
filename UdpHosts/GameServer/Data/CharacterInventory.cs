@@ -446,6 +446,28 @@ public class CharacterInventory
         _player.NetChannels[ChannelType.ReliableGss].SendMessage(update, _character.EntityId);
     }
 
+    /// <summary>Sends material stacks exactly as given, as a partial update. For probes; nothing is stored.</summary>
+    public void SendResources(IEnumerable<Resource> resources)
+    {
+        var update = new InventoryUpdate()
+        {
+            ClearExistingData = 0,
+            ItemsPart1Length = 0,
+            ItemsPart1 = [],
+            ItemsPart2Length = 0,
+            ItemsPart2 = [],
+            ItemsPart3Length = 0,
+            ItemsPart3 = [],
+            Resources = resources.ToArray(),
+            Loadouts = [],
+            Unk = 0, // Partial update, see SendItemUpdate
+            SecondItems = [],
+            SecondResources = []
+        };
+
+        _player.NetChannels[ChannelType.ReliableGss].SendMessage(update, _character.EntityId);
+    }
+
     public void SendResourceUpdate(uint sdbId)
     {
         if (!EnablePartialUpdates)
@@ -614,7 +636,7 @@ public class CharacterInventory
         EquipItemByGUID(loadoutId, slot, equippedGUID);
     }
 
-    private byte GetInventoryTypeByItemTypeId(uint sdbId)
+    internal static byte GetInventoryTypeByItemTypeId(uint sdbId)
     {
         var itemInfo = SDBInterface.GetRootItem(sdbId);
         if (itemInfo != null)
@@ -627,7 +649,7 @@ public class CharacterInventory
         }
     }
 
-    private byte GetInventoryTypeByItemType(byte itemType)
+    private static byte GetInventoryTypeByItemType(byte itemType)
     {
         var result = InventoryType.Bag;
         switch ((ItemType)itemType)

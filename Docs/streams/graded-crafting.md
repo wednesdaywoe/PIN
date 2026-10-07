@@ -73,7 +73,9 @@ Order: the two probes first, because each can change the shape of what follows.
   separate stacks of one material by quality and stats, and spending draws from a named batch.
   needs: GRADE1
 - [ ] **GRADE4** — **Thumping rolls a batch.** Each deposit has a quality range; a payout is one
-  batch with a rolled quality and stats for its material family, written into the stats text.
+  batch with a rolled quality and stats for its material family, written into the stats text. The
+  ranges ship: `dbzonemetadata::ResourceNodeTypeResource.ItemQualityLow/High` per node type and item
+  (node 238 pays Iron Bars at 0..400 and Iron Ore at 0..750; found 2026-10-07).
   needs: GRADE3
 - [ ] **GRADE5** — **Refining.** Ore becomes the material recipes want, and the batch's quality
   comes with it: the sixteen shipped raw-to-refined pairs, plus PIN-written recipes for Iron,

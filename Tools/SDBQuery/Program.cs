@@ -417,7 +417,11 @@ internal partial class Query
 
         foreach (var row in table.Values.Cast<object>())
         {
-            Console.WriteLine(Describe(row));
+            // Some tables group rows under a key, as a list per key
+            foreach (var one in row is IList list ? list.Cast<object>() : [row])
+            {
+                Console.WriteLine(Describe(one));
+            }
         }
     }
 

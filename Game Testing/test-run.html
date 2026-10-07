@@ -1,9 +1,9 @@
-<title>PIN — Visible area objects and walls</title>
+<title>PIN — Material quality and the Burst Rifle</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Visible area objects and walls (VIS, WALL)</h1>
+    <h1>Material quality and the Burst Rifle (GRADE1, RIFLE)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -16,176 +16,174 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run finished the ultimate meter and four abilities: Fuel Air Bomb, Assassinate, Gravity Pull and Fungal
-    Bloom all work, and an ultimate's own kills earn no meter.</p>
-    <p><strong>This run: making lingering area objects visible.</strong> Several abilities leave a small object on
-    the ground that does the work: Fuel Air Bomb's blast and fire patch, Fungal Bloom's spore mines and clouds, and the
-    Recluse poison clouds. They hurt, but nothing was drawn, because the game was never told they exist.</p>
-    <p>Each character has a list of up to 32 such objects it owns, which the game reads to build its own copy and play
-    the object's visuals and sounds. The server never filled that list in. Now it does: an object is added when it
-    appears and removed when it goes.</p>
-    <p>This list is now sent for every character, monsters included, which is new to the game. VIS-1 checks that
-    nothing broke because of it. Note anything odd too, such as damage numbers appearing twice.</p>
-    <p><strong>Then: area abilities and walls (WALL-1 to WALL-3).</strong> Until now an area ability reached
-    everyone in range, even behind a rock. The game data marks most of them to stop at walls, so now they do: the server
-    checks for world geometry between the centre of the effect and three points up each target's body. A few
-    abilities are marked to ignore walls; Poison Ball is one and is used as the comparison. The VIS-1 restart covers
-    this change too. You'll need a rock or boulder taller than you.</p>
+    <p>Last run: area objects are drawn now (blasts, fire patches, spore mines, poison clouds), and area abilities
+    stop at walls.</p>
+    <p>Crafting is back, with the goal you chose: refining returns, and the quality of what you mine carries through
+    to what you craft. The plan is in <code>Docs/streams/graded-crafting.md</code>. This run has two parts that
+    don't depend on each other.</p>
+    <p><strong>Part 1 (GRADE1-A to C): can the game show a material's quality, and hold two batches of one
+    material?</strong> In the original game every mined batch had a quality from 0 to 1000 and five stats, such as
+    Conductivity or Toughness, packed into one short text sent with the stack. The server has always sent that text
+    empty. The new <code>batch</code> command sends Aluminum stacks with it filled in. These stacks are for looking
+    only: the server doesn't record them, and <code>dbg_inventory resend</code> clears them.</p>
+    <p><strong>Part 2 (RIFLE-1 to 4): mine metal, craft a Burst Rifle, equip it, log out and back in.</strong> This
+    finishes the August run, which crafted a part nothing could equip. The rifle is three recipes: 50 metal makes a
+    receiver, 75 metal makes a barrel, and both parts plus 200 Crystite make the rifle. Nothing is created with
+    <code>createitem</code>.</p>
+    <p>Start the server on the new build first: <code class="run">~/Games/PIN/start-pin.sh</code></p>
   </section>
-  <section class="block" data-open="true" id="vis-1">
+  <section class="block" data-open="true" id="grade1-a">
     <button class="block-head" type="button">
-      <span class="block-n">VIS-1</span>
-      <span class="block-t">The world still loads and looks normal</span>
+      <span class="block-n">GRADE1-A</span>
+      <span class="block-t">A material shows its quality and stats</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">VIS-1</span><span class="marker pass">[x]</span><span class="entry-t">The world still loads and looks normal</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">GRADE1-A</span><span class="marker">[ ]</span><span class="entry-t">A material shows its quality and stats</span></div>
+      <p>One Aluminum stack with quality 300 and five stats of 100, 150, 200, 250 and 300.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="vis-1-1" type="checkbox"/><span class="step-body"><span class="lede">Restart the server so it runs the new build: <code class="run">~/Games/PIN/start-pin.sh</code>. Log in and enter the world</span></span></label>
-      <label class="step"><input data-k="vis-1-2" type="checkbox"/><span class="step-body"><span class="lede">Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>. Walk around them and shoot one</span></span></label>
+      <label class="step"><input data-k="grade1-a-1" type="checkbox"/><span class="step-body"><span class="lede">Open your materials list, which stays open: <code class="run">/mats</code>. Note whether Aluminum is already listed (it shouldn't be)</span></span></label>
+      <label class="step"><input data-k="grade1-a-2" type="checkbox"/><span class="step-body"><span class="lede">Send the stack: <code class="run">batch 77705 5 300 100 150 200 250 300</code></span></span></label>
+      <label class="step"><input data-k="grade1-a-3" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, find Aluminum (5), and hover it. Note every line of the tooltip, especially any stat names and numbers</span></span></label>
+      <label class="step"><input data-k="grade1-a-4" type="checkbox"/><span class="step-body"><span class="lede">Run the add-on that prints your inventory to the game's log: <code class="run">/invprobe</code></span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: you get into the world as usual, the Fiends look and fight as before, and the game doesn't freeze or close.</li>
-      <li>If the game closes or freezes at world entry, copy its console log before relaunching (it is overwritten on the next start) and stop here.</li>
-      </ul><div class="result"><label for="r-vis-1">Result</label><textarea data-k="n-vis-1" id="r-vis-1" placeholder="Entered normally? Fiends normal?"></textarea></div></div>
+      <li>Pass: the tooltip shows up to five stat names with the numbers 100, 150, 200, 250 and 300 (only names the game knows for Aluminum's family are shown). I'll check the add-on's output in the game's log myself.</li>
+      <li>Also note whether anything shows the quality (300): a number, a colour, or a rarity word like Common or Uncommon.</li>
+      </ul><div class="result"><label for="r-grade1-a">Result</label><textarea data-k="n-grade1-a" id="r-grade1-a" placeholder="Stats shown? Which names and numbers? Any sign of the quality?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="vis-2">
+  <section class="block" data-open="true" id="grade1-b">
     <button class="block-head" type="button">
-      <span class="block-n">VIS-2</span>
-      <span class="block-t">Fuel Air Bomb's blast and fire patch are drawn</span>
+      <span class="block-n">GRADE1-B</span>
+      <span class="block-t">Two batches of one material</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">VIS-2</span><span class="marker pass">[x]</span><span class="entry-t">Fuel Air Bomb's blast and fire patch are drawn</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">GRADE1-B</span><span class="marker">[ ]</span><span class="entry-t">Two batches of one material</span></div>
+      <p>Two Aluminum stacks in one message: 5 at quality 300 with low stats, and 7 at quality 900 with high stats (700 to 900). The question is whether the game shows two rows or merges them into one.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="vis-2-1" type="checkbox"/><span class="step-body"><span class="lede">Create the module and refresh your inventory: <code class="run">createitem 86045</code> <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="vis-2-2" type="checkbox"/><span class="step-body"><span class="lede">Equip it as your ultimate and fill the meter: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">supercharge 100</code>. With nothing targeted, turn on invulnerability: <code class="run">invuln on</code></span></span></label>
-      <label class="step"><input data-k="vis-2-3" type="checkbox"/><span class="step-body"><span class="lede">Spawn two Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code>, back off about 20 m, aim at them and press the ultimate's key. Watch for about 6 seconds</span></span></label>
+      <label class="step"><input data-k="grade1-b-1" type="checkbox"/><span class="step-body"><span class="lede">Clear part A's stack: <code class="run">dbg_inventory resend</code>. Check Aluminum is gone from <code class="run">/mats</code></span></span></label>
+      <label class="step"><input data-k="grade1-b-2" type="checkbox"/><span class="step-body"><span class="lede">Send the pair: <code class="run">batch pair 77705</code></span></span></label>
+      <label class="step"><input data-k="grade1-b-3" type="checkbox"/><span class="step-body"><span class="lede">Look at Aluminum in the inventory and in /mats: one row or two? What counts (5, 7, or 12)? Hover each row and note the stats</span></span></label>
+      <label class="step"><input data-k="grade1-b-4" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">/invprobe</code></span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: where the bomb lands you see an explosion, then a burning patch on the ground for about 5 seconds. The Fiends still take the big hit and then the small burns.</li>
-      <li>The log has <code>Spawned tiny object 440 ... slot 0</code> and <code>Spawned tiny object 110 ... slot 1</code> (or other slot numbers), each followed later by <code>Removed tiny object</code>.</li>
-      <li>Possible gaps: the data's 2-second fuse still isn't built, so the blast happens on landing. Note if the visual seems delayed or doubled compared with the damage.</li>
-      </ul><div class="result"><label for="r-vis-2">Result</label><textarea data-k="n-vis-2" id="r-vis-2" placeholder="Explosion drawn? Fire patch drawn? How long? Damage still right?"></textarea></div></div>
+      <li>Pass (the good outcome): two Aluminum rows, 5 and 7, each with its own stats in the tooltip.</li>
+      <li>Also useful: one row of 7 with the high stats (the second replaced the first), or one row of 12. Any of these settles the question; just note exactly what you see.</li>
+      </ul><div class="result"><label for="r-grade1-b">Result</label><textarea data-k="n-grade1-b" id="r-grade1-b" placeholder="One row or two? Counts? Stats on each?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="vis-3">
+  <section class="block" data-open="true" id="grade1-c">
     <button class="block-head" type="button">
-      <span class="block-n">VIS-3</span>
-      <span class="block-t">Fungal Bloom's spore mines and clouds are drawn</span>
+      <span class="block-n">GRADE1-C</span>
+      <span class="block-t">Two batches with different batch numbers</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">VIS-3</span><span class="marker pass">[x]</span><span class="entry-t">Fungal Bloom's spore mines and clouds are drawn</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">GRADE1-C</span><span class="marker">[ ]</span><span class="entry-t">Two batches with different batch numbers</span></div>
+      <p>The same pair, but each stack also gets a different number in the one unnamed field the stack carries (1 and 2), in case the game uses it to tell batches apart.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="vis-3-1" type="checkbox"/><span class="step-body"><span class="lede">Create Fungal Bloom and Gravity Pull and refresh: <code class="run">createitem 139852</code> <code class="run">createitem 143288</code> <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="vis-3-2" type="checkbox"/><span class="step-body"><span class="lede">Equip them and fill the meter: <code class="run">equipitem 139852 AbilityHKM</code> <code class="run">equipitem 143288 Ability2</code> <code class="run">supercharge 100</code></span></span></label>
-      <label class="step"><input data-k="vis-3-3" type="checkbox"/><span class="step-body"><span class="lede">Spawn three Fiends: <code class="run">npc 1196</code> <code class="run">npc 1196</code> <code class="run">npc 1196</code>. Stand about 10 m away, plant the fungus between you and them, and wait about 5 seconds</span></span></label>
-      <label class="step"><input data-k="vis-3-4" type="checkbox"/><span class="step-body"><span class="lede">Use Gravity Pull to drag the Fiends across the fungus area</span></span></label>
+      <label class="step"><input data-k="grade1-c-1" type="checkbox"/><span class="step-body"><span class="lede">Clear part B: <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="grade1-c-2" type="checkbox"/><span class="step-body"><span class="lede">Send the tagged pair: <code class="run">batch pair 77705 tagged</code></span></span></label>
+      <label class="step"><input data-k="grade1-c-3" type="checkbox"/><span class="step-body"><span class="lede">Same as part B: one row or two, which counts, and the stats on each</span></span></label>
+      <label class="step"><input data-k="grade1-c-4" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">/invprobe</code>, then clear it all: <code class="run">dbg_inventory resend</code></span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: spore mines are visible on the ground around the fungus. When a Fiend walks onto one it bursts into a visible poison cloud, which then leaves a second cloud for about 7 seconds.</li>
-      <li>The log has <code>Spawned tiny object 389</code> lines with slot numbers, and <code>becomes 390</code> / <code>becomes 391</code> when mines go off.</li>
-      <li>Note if the mines appear somewhere other than where the Fiends get hurt.</li>
-      </ul><div class="result"><label for="r-vis-3">Result</label><textarea data-k="n-vis-3" id="r-vis-3" placeholder="Mines visible? Clouds visible? In the right places?"></textarea></div></div>
+      <li>Pass: note what you see. If part B merged the rows and this one shows two, that field is the batch number, which settles how the server must send batches.</li>
+      </ul><div class="result"><label for="r-grade1-c">Result</label><textarea data-k="n-grade1-c" id="r-grade1-c" placeholder="One row or two? Counts? Different from part B?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="vis-4">
+  <section class="block" data-open="true" id="rifle-1">
     <button class="block-head" type="button">
-      <span class="block-n">VIS-4</span>
-      <span class="block-t">The Recluse poison clouds are drawn</span>
+      <span class="block-n">RIFLE-1</span>
+      <span class="block-t">Mine the metal and Crystite</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">VIS-4</span><span class="marker pass">[x]</span><span class="entry-t">The Recluse poison clouds are drawn</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">RIFLE-1</span><span class="marker">[ ]</span><span class="entry-t">Mine the metal and Crystite</span></div>
+      <p>Mining spot type 240 pays Iron Bars and Crystite together. A spot with richness 5 pays about five times the normal amount, so expect about five defended thumps.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="vis-4-1" type="checkbox"/><span class="step-body"><span class="lede">Create both poison modules and refresh: <code class="run">createitem 86064</code> <code class="run">createitem 102707</code> <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="vis-4-2" type="checkbox"/><span class="step-body"><span class="lede">Equip them: <code class="run">equipitem 86064 Ability1</code> <code class="run">equipitem 102707 Ability2</code></span></span></label>
-      <label class="step"><input data-k="vis-4-3" type="checkbox"/><span class="step-body"><span class="lede">Spawn a Fiend: <code class="run">npc 1196</code>. Fire Creeping Death at it</span></span></label>
-      <label class="step"><input data-k="vis-4-4" type="checkbox"/><span class="step-body"><span class="lede">Press Poison Trail and run in a line for a few seconds</span></span></label>
+      <label class="step"><input data-k="rifle-1-1" type="checkbox"/><span class="step-body"><span class="lede">Note your starting materials: <code class="run">/mats</code> <code class="run">dbg_inventory</code></span></span></label>
+      <label class="step"><input data-k="rifle-1-2" type="checkbox"/><span class="step-body"><span class="lede">Somewhere with room to fight, place the mining spot around you, 60 m across, at richness 5: <code class="run">deposit add 240 60 5</code></span></span></label>
+      <label class="step"><input data-k="rifle-1-3" type="checkbox"/><span class="step-body"><span class="lede">Call down a thumper and defend it: <code class="run">thumper</code>. The payout shrinks with the damage it takes, so fight</span></span></label>
+      <label class="step"><input data-k="rifle-1-4" type="checkbox"/><span class="step-body"><span class="lede">When it pays, note the Iron Bars and Crystite figures in /mats</span></span></label>
+      <label class="step"><input data-k="rifle-1-5" type="checkbox"/><span class="step-body"><span class="lede">Repeat until /mats shows at least 125 Iron Bars and 200 Crystite</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Spawned tiny object|Removed tiny object|becomes|Unhandled|Unknown message|Exception" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: Creeping Death leaves a visible cloud that grows where it lands. Poison Trail leaves a line of visible clouds behind you.</li>
-      <li>The log has <code>Spawned tiny object 387</code> (Creeping Death) and <code>Spawned tiny object 386</code> (Poison Trail), with slot numbers.</li>
-      <li>Poison Trail can lay many clouds at once; only 32 objects per player can be listed. Note if later clouds in a long run stop appearing (the log then shows <code>slot -1</code>).</li>
-      </ul><div class="result"><label for="r-vis-4">Result</label><textarea data-k="n-vis-4" id="r-vis-4" placeholder="Creeping Death cloud visible? Trail clouds visible? Any missing?"></textarea></div></div>
+      <li>Pass: each cycle pays both Iron Bars and Crystite, and the totals reach 125 and 200 after a handful of thumps. The log shows a <code>paying</code> line for each.</li>
+      </ul><div class="result"><label for="r-rifle-1">Result</label><textarea data-k="n-rifle-1" id="r-rifle-1" placeholder="Thumps needed? Bars and Crystite per thump?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="wall-1">
+  <section class="block" data-open="true" id="rifle-2">
     <button class="block-head" type="button">
-      <span class="block-n">WALL-1</span>
-      <span class="block-t">Healing Wave doesn't reach a friendly behind a rock</span>
+      <span class="block-n">RIFLE-2</span>
+      <span class="block-t">Craft the two rifle parts</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WALL-1</span><span class="marker pass">[x]</span><span class="entry-t">Healing Wave doesn't reach a friendly behind a rock</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">RIFLE-2</span><span class="marker">[ ]</span><span class="entry-t">Craft the two rifle parts</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="wall-1-1" type="checkbox"/><span class="step-body"><span class="lede">Create Healing Wave and refresh: <code class="run">createitem 79018</code> <code class="run">dbg_inventory resend</code>. Equip it: <code class="run">equipitem 79018 Ability3</code></span></span></label>
-      <label class="step"><input data-k="wall-1-2" type="checkbox"/><span class="step-body"><span class="lede">Find a rock or boulder taller than you and a few metres wide. Stand right behind it and spawn a friendly: <code class="run">npc 290</code>. Aim at it, <code class="run">target</code>, then wound it: <code class="run">sethealth 100</code></span></span></label>
-      <label class="step"><input data-k="wall-1-3" type="checkbox"/><span class="step-body"><span class="lede">Walk round the rock to about 4 m from it, so the rock is fully between you and the NPC. Face the NPC through the rock and press Healing Wave. Run the log command</span></span></label>
-      <label class="step"><input data-k="wall-1-4" type="checkbox"/><span class="step-body"><span class="lede">Step sideways until you can see the NPC, at about the same distance. Wait 30 seconds for the cooldown, press Healing Wave at it, and run the log command again</span></span></label>
+      <label class="step"><input data-k="rifle-2-1" type="checkbox"/><span class="step-body"><span class="lede">Build the receiver from 50 metal: <code class="run">craft 81160</code>. Iron Bars in /mats should drop by 50</span></span></label>
+      <label class="step"><input data-k="rifle-2-2" type="checkbox"/><span class="step-body"><span class="lede">Build the barrel from 75 metal: <code class="run">craft 81161</code>. Iron Bars should drop by another 75</span></span></label>
+      <label class="step"><input data-k="rifle-2-3" type="checkbox"/><span class="step-body"><span class="lede">Check both parts are in your inventory: Burst Rifle Receiver I and Burst Rifle Barrel I</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: from behind the rock, the log has <code>TargetConeAECommand ... is behind a wall</code> and no <code>healed</code> line. In view, the log has <code>healed ... for 300</code> and the NPC's health bar goes up.</li>
-      <li>If the hidden press heals it anyway, note how big the rock is and how close you stood. The server checks three points up the NPC's body, so a rock lower than its head won't hide it.</li>
-      </ul><div class="result"><label for="r-wall-1">Result</label><textarea data-k="n-wall-1" id="r-wall-1" placeholder="Hidden press: behind a wall, no heal? In-view press: healed?"></textarea></div></div>
+      <li>Pass: both crafts succeed, Iron Bars fall by 125 in total, and both parts arrive.</li>
+      </ul><div class="result"><label for="r-rifle-2">Result</label><textarea data-k="n-rifle-2" id="r-rifle-2" placeholder="Both parts? Bars dropped by 125?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="wall-2">
+  <section class="block" data-open="true" id="rifle-3">
     <button class="block-head" type="button">
-      <span class="block-n">WALL-2</span>
-      <span class="block-t">A point-blank heal doesn't reach behind a rock</span>
+      <span class="block-n">RIFLE-3</span>
+      <span class="block-t">Craft and equip the Burst Rifle</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WALL-2</span><span class="marker pass">[x]</span><span class="entry-t">A point-blank heal doesn't reach behind a rock</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">RIFLE-3</span><span class="marker">[ ]</span><span class="entry-t">Craft and equip the Burst Rifle</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="wall-2-1" type="checkbox"/><span class="step-body"><span class="lede">Wound the NPC from WALL-1 again: aim at it, <code class="run">target</code>, <code class="run">sethealth 100</code></span></span></label>
-      <label class="step"><input data-k="wall-2-2" type="checkbox"/><span class="step-body"><span class="lede">Go back behind the rock so it hides the NPC, staying within 10 m of it. Type <code class="run">ability 31217</code> in chat. It is an admin command that fires a 10 m heal around you directly; there is no item to create or equip. Then run the log command</span></span></label>
-      <label class="step"><input data-k="wall-2-3" type="checkbox"/><span class="step-body"><span class="lede">Step into view, still within 10 m. Wait about 50 seconds for the cooldown, run <code class="run">ability 31217</code> again, and run the log command</span></span></label>
+      <label class="step"><input data-k="rifle-3-1" type="checkbox"/><span class="step-body"><span class="lede">Check the plan first: <code class="run">craft check 81162</code>. It should say you have everything</span></span></label>
+      <label class="step"><input data-k="rifle-3-2" type="checkbox"/><span class="step-body"><span class="lede">Build it: <code class="run">craft 81162</code>. Crystite should drop by 200 and both parts should leave your inventory</span></span></label>
+      <label class="step"><input data-k="rifle-3-3" type="checkbox"/><span class="step-body"><span class="lede">Equip it as your secondary weapon: <code class="run">equipitem 85988 Secondary</code></span></span></label>
+      <label class="step"><input data-k="rifle-3-4" type="checkbox"/><span class="step-body"><span class="lede">Switch to it and fire a few shots at something</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: from behind the rock, the log has <code>TargetPBAECommand ... is behind a wall</code> and no heal. In view, the log has <code>healed ... for 300</code>.</li>
-      </ul><div class="result"><label for="r-wall-2">Result</label><textarea data-k="n-wall-2" id="r-wall-2" placeholder="Hidden: behind a wall, no heal? In view: healed?"></textarea></div></div>
+      <li>Pass: the Burst Rifle arrives, equips, appears in your hands, and fires.</li>
+      </ul><div class="result"><label for="r-rifle-3">Result</label><textarea data-k="n-rifle-3" id="r-rifle-3" placeholder="Rifle arrived? Equipped? Fires?"></textarea></div></div>
     </div>
   </section>
-  <section class="block" data-open="true" id="wall-3">
+  <section class="block" data-open="true" id="rifle-4">
     <button class="block-head" type="button">
-      <span class="block-n">WALL-3</span>
-      <span class="block-t">Fuel Air Bomb stops at a rock, Poison Ball doesn't</span>
+      <span class="block-n">RIFLE-4</span>
+      <span class="block-t">The rifle survives logging out</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">WALL-3</span><span class="marker pass">[x]</span><span class="entry-t">Fuel Air Bomb stops at a rock, Poison Ball doesn't</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">RIFLE-4</span><span class="marker">[ ]</span><span class="entry-t">The rifle survives logging out</span></div>
       <div class="steps"><ol>
-      <label class="step"><input data-k="wall-3-1" type="checkbox"/><span class="step-body"><span class="lede">Create both modules and refresh: <code class="run">createitem 86045</code> <code class="run">createitem 77108</code> <code class="run">dbg_inventory resend</code>. Equip them: <code class="run">equipitem 86045 AbilityHKM</code> <code class="run">equipitem 77108 Ability1</code>. Clear your target and turn on invulnerability: <code class="run">clear</code> <code class="run">invuln on</code></span></span></label>
-      <label class="step"><input data-k="wall-3-2" type="checkbox"/><span class="step-body"><span class="lede">Stand where you can see the ground just behind a rock. Aim at that ground and run <code class="run">probe</code>. Note the three numbers after <code>world at</code></span></span></label>
-      <label class="step"><input data-k="wall-3-3" type="checkbox"/><span class="step-body"><span class="lede">Walk round to the other side so the rock hides that spot. Spawn a Fiend there: <code>npc 1196 x y z</code>, using the three numbers. It shouldn't come for you, because it can't see you. If it does, the spot isn't hidden; try a bigger rock</span></span></label>
-      <label class="step"><input data-k="wall-3-4" type="checkbox"/><span class="step-body"><span class="lede">Fill the meter: <code class="run">supercharge 100</code>. Throw Fuel Air Bomb so it lands at the foot of the rock on your side, 2 to 3 m from the Fiend. Run the log command</span></span></label>
-      <label class="step"><input data-k="wall-3-5" type="checkbox"/><span class="step-body"><span class="lede">Throw Poison Ball at the same place and run the log command again</span></span></label>
+      <label class="step"><input data-k="rifle-4-1" type="checkbox"/><span class="step-body"><span class="lede">Log out from the menu and log back in</span></span></label>
+      <label class="step"><input data-k="rifle-4-2" type="checkbox"/><span class="step-body"><span class="lede">Check: <code class="run">dbg_inventory</code> <code class="run">/mats</code>. Is the Burst Rifle still held and still equipped? Are the Iron Bars and Crystite still spent?</span></span></label>
+      <label class="step"><input data-k="rifle-4-3" type="checkbox"/><span class="step-body"><span class="lede">Optionally, remove the rich mining spot so it doesn't linger: run deposit list, then deposit remove with its number</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "behind a wall|healed|took [0-9.]+ damage from|TargetPBAECommand|TargetConeAECommand" ~/Games/PIN/logs/GameServer.log | tail -30
+      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: Fuel Air Bomb doesn't hurt the Fiend. The log has <code>TargetPBAECommand ... is behind a wall</code> and no <code>took ... damage from</code> line for the Fiend.</li>
-      <li>Poison Ball does poison it, through the rock. That ability is one of the 208 marked in the game data to ignore walls, so this is the control: it shows the Fiend was close enough to be hit.</li>
-      <li>If the Fiend is hurt by Fuel Air Bomb, note where the bomb landed. If Poison Ball doesn't reach it either, the Fiend was too far away and the Fuel Air Bomb result tells us nothing.</li>
-      </ul><div class="result"><label for="r-wall-3">Result</label><textarea data-k="n-wall-3" id="r-wall-3" placeholder="Fuel Air Bomb: behind a wall, no damage? Poison Ball: poisoned?"></textarea></div></div>
+      <li>Pass: the rifle is still there and still equipped, and the spent materials stay spent.</li>
+      </ul><div class="result"><label for="r-rifle-4">Result</label><textarea data-k="n-rifle-4" id="r-rifle-4" placeholder="Still held? Still equipped? Materials still spent?"></textarea></div></div>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-05-vis-1"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-07-grade1-rifle-1"></script>
