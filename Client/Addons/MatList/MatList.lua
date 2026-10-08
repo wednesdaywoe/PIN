@@ -126,6 +126,41 @@ local function Heading(subTypeId, name, info)
 end
 
 -- ------------------------------------------
+-- BATCHES
+-- ------------------------------------------
+
+-- A mined batch carries its quality (0..1000) and five stats in resource_type, the packed text
+-- lib_Items.GetResourceStats unpacks (GRADE1, Docs/streams/graded-crafting.md). The shipped tooltip
+-- only reads it for an entry with no .type, which a material from GetInventory never is, so this panel
+-- unpacks it itself. Stat names come from the material's family, in order, skipping zero values -- the
+-- same pairing lib_ItemCard.lua uses.
+local function Batch(resource_type, subTypeId)
+	if type(resource_type) ~= "string" or resource_type == "" then
+		return nil
+	end
+	local ok, values = pcall(LIB_ITEMS.GetResourceStats, resource_type)
+	if not ok or type(values) ~= "table" then
+		return nil
+	end
+
+	local names = {}
+	local ok2, info = pcall(Game.GetResourceTypeInfo, tonumber(subTypeId))
+	if ok2 and type(info) == "table" and type(info.resource_stats) == "table" then
+		names = info.resource_stats
+	end
+
+	local stats, n = {}, 1
+	for i = 1, 5 do
+		local value = values["stat"..i]
+		if value and value ~= 0 then
+			table.insert(stats, {name = names[n] or ("Stat "..i), value = value})
+			n = n + 1
+		end
+	end
+	return {quality = values.quality, stats = stats, names = names}
+end
+
+-- ------------------------------------------
 -- GATHER
 -- ------------------------------------------
 
@@ -137,7 +172,10 @@ local function Gather()
 			return
 		end
 		local id = entry.item_sdb_id or entry.itemTypeId
-		if not id or byId[tostring(id)] then
+		-- Keyed by batch as well as item, so two batches of one material stay two rows if the client
+		-- hands both over
+		local key = tostring(id).."|"..tostring(entry.resource_type or "")
+		if not id or byId[key] then
 			return
 		end
 
@@ -148,15 +186,19 @@ local function Gather()
 		end
 
 		local subTypeId = entry.subTypeId or (info and info.subTypeId)
+		local batch = Batch(entry.resource_type, subTypeId)
 
-		byId[tostring(id)] = {
+		byId[key] = {
 			item_sdb_id = id,
 			name = CleanName(entry.name or (info and info.name)) or ("Item "..tostring(id)),
 			raw_name = entry.name or (info and info.name),
 			icon_id = entry.icon_id or entry.web_icon_id or (info and info.web_icon_id),
 			-- GetItemCount is the one number that agreed with the server on every id (UI1), so it wins
-			-- over whatever the entry carries.
-			quantity = Player.GetItemCount(id) or entry.total or entry.quantity or 0,
+			-- over whatever the entry carries -- except for a batch, where it would count every batch
+			-- of the material at once.
+			quantity = (batch and (entry.total or entry.quantity)) or Player.GetItemCount(id) or entry.total or entry.quantity or 0,
+			resource_type = entry.resource_type,
+			batch = batch,
 			category = Heading(subTypeId, entry.name or (info and info.name), info),
 		}
 	end
@@ -226,9 +268,8 @@ end
 -- built per hover and destroyed on leave because that is what lib_ItemCard does; a tooltip kept alive
 -- between rows shows the previous item for a frame.
 --
--- Materials carry no stat block today (the packed resource_type string arrives empty, see UI6), so
--- what this draws is name, rarity-tinted frame, category path and description. That is the whole of
--- what 1962 has for a material, not a subset of it.
+-- A batch's stats go into info.stats under their family's names, which the card draws as its stat
+-- block; without a batch it draws name, rarity-tinted frame, category path and description.
 local function HideTooltip()
 	if w_TOOLTIP then
 		w_TOOLTIP:Destroy()
@@ -245,6 +286,13 @@ local function ShowTooltip(PARENT, MAT)
 		return
 	end
 	info.quantity = MAT.quantity
+	if MAT.batch then
+		info.stats = info.stats or {}
+		info.stats["Quality"] = MAT.batch.quality
+		for _, STAT in ipairs(MAT.batch.stats) do
+			info.stats[STAT.name] = STAT.value
+		end
+	end
 
 	w_TOOLTIP = LIB_ITEMS.CreateToolTip(PARENT)
 	w_TOOLTIP:DisplayInfo(info)
@@ -297,7 +345,11 @@ local function AddMaterial(MAT)
 	end
 	ICON:SetIcon(icon_id)
 
-	WIDGET:GetChild("name"):SetText(tostring(MAT.name))
+	local label = tostring(MAT.name)
+	if MAT.batch then
+		label = label.."  Q"..tostring(MAT.batch.quality)
+	end
+	WIDGET:GetChild("name"):SetText(label)
 	WIDGET:GetChild("qty"):SetText(_math.MakeReadable(MAT.quantity, true))
 
 	local FOCUS = WIDGET:GetChild("focus")
@@ -349,7 +401,16 @@ local function Draw()
 	log("MatList: drew "..tostring(#list).." material(s)")
 	for _, MAT in ipairs(list) do
 		log("MatList:   "..tostring(MAT.item_sdb_id).." x"..tostring(MAT.quantity)
-			.." '"..tostring(MAT.raw_name).."' icon "..tostring(MAT.icon_id).." ["..tostring(MAT.category).."]")
+			.." '"..tostring(MAT.raw_name).."' icon "..tostring(MAT.icon_id).." ["..tostring(MAT.category).."]"
+			.." resource_type '"..tostring(MAT.resource_type).."'")
+		if MAT.batch then
+			local parts = {}
+			for _, STAT in ipairs(MAT.batch.stats) do
+				table.insert(parts, tostring(STAT.name).."="..tostring(STAT.value))
+			end
+			log("MatList:     batch quality "..tostring(MAT.batch.quality).." "..table.concat(parts, ", ")
+				.." (family names known: "..tostring(#MAT.batch.names)..")")
+		end
 	end
 end
 

@@ -65,6 +65,11 @@ Order: the two probes first, because each can change the shape of what follows.
   same material at different qualities and see two rows with the right counts. If the client merges
   same-material stacks, a player holds one quality per material and GRADE3 averages on pickup
   instead.
+  **Run 1, 2026-10-08:** the inventory tooltip drew no stats. The client keeps the text — its
+  resource entry hands `resource_type` to Lua from the resource object's first field (`0xe087a0`) —
+  but `lib_ItemCard.lua` only unpacks it for an entry with no `.type`, and a `GetInventory` material
+  has one, so the shipped tooltip never looks. `/mats` ([MatList](../../Client/Addons/MatList)) now
+  unpacks it itself, keys rows by batch, and logs the raw text. Re-test pending.
 - [ ] **GRADE2** — **A crafted item can carry its own numbers.** Find what the client reads per
   item instance (start with `Item.Unk6`), write a changed attribute onto one item, and see it in the
   item's tooltip. If no per-item channel exists, quality picks among the shipped Mk I to IV

@@ -44,7 +44,7 @@
       <div class="steps"><ol>
       <label class="step"><input data-k="grade1-a-1" type="checkbox"/><span class="step-body"><span class="lede">Open your materials list, which stays open: <code class="run">/mats</code>. Note whether Aluminum is already listed (it shouldn't be)</span></span></label>
       <label class="step"><input data-k="grade1-a-2" type="checkbox"/><span class="step-body"><span class="lede">Send the stack: <code class="run">batch 77705 5 300 100 150 200 250 300</code></span></span></label>
-      <label class="step"><input data-k="grade1-a-3" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, find Aluminum (5), and hover it. Note every line of the tooltip, especially any stat names and numbers</span></span></label>
+      <label class="step"><input data-k="grade1-a-3" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, find Aluminum (5), and hover it. Note every line of the tooltip, especially any stat names and numbers. Then hover Aluminum in <code>/mats</code> too: its row should now read <strong>Aluminum Q300</strong>, and its tooltip should list Quality and the stats</span></span></label>
       <label class="step"><input data-k="grade1-a-4" type="checkbox"/><span class="step-body"><span class="lede">Run the add-on that prints your inventory to the game's log: <code class="run">/invprobe</code></span></span></label>
       </ol></div>
       <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
@@ -52,6 +52,7 @@
       <ul>
       <li>Pass: the tooltip shows up to five stat names with the numbers 100, 150, 200, 250 and 300 (only names the game knows for Aluminum's family are shown). I'll check the add-on's output in the game's log myself.</li>
       <li>Also note whether anything shows the quality (300): a number, a colour, or a rarity word like Common or Uncommon.</li>
+      <li><strong>Run 1 (2026-10-08): the inventory tooltip showed no stats. Why: the game's own tooltip only reads the quality text for entries without a 'type' field, and materials from your inventory have one, so it never looks. The game does keep the text (it hands it to the interface as <code>resource_type</code>). <code>/mats</code> now reads it itself: re-test by sending the stack again and hovering Aluminum in <code>/mats</code>. The inventory tooltip staying blank is expected. /invprobe wasn't run last time; please run it this time.</strong></li>
       </ul><div class="result"><label for="r-grade1-a">Result</label><textarea data-k="n-grade1-a" id="r-grade1-a" placeholder="Stats shown? Which names and numbers? Any sign of the quality?"></textarea></div></div>
     </div>
   </section>
