@@ -440,7 +440,13 @@ has no entries in that category, which reflects nothing having run rather than n
   command def. It also blocks [V7 and D3](../Game Testing/Deployables-And-Vehicles.html) from being run
   with a weapon at all
 
-- [ ] **DATA-22** — **252 objects in New Eden have no collision on the server**, found 2026-08-17
+- [~] **DATA-22** — **Fixed in code 2026-10-08, not yet seen in game: 295 of zone 448's 300 failed
+  shapes now build.** Two causes, both in the data. Half were rocks with points micrometres apart,
+  which stop Bepu's gift wrapping after its first face, so points are now welded to a millimetre. The
+  other half were flat panels that Havok makes solid through its 0.05 convex radius, and these now
+  become a slab that thick. The 5 that still fail sit at their own centre instead of 400 m
+  underground. Detail in [the gap file](gaps/data.md#data-22). Original entry:
+  **252 objects in New Eden have no collision on the server**, found 2026-08-17
   when a Chosen Fiend shot a tester through a rock formation. Not terrain against scenery as two
   systems: the ground ships as a mesh and converts without a single failure, while individual
   objects ship as `hkpConvexVerticesShape` and 252 of those produce an empty hull. Measured by

@@ -9,7 +9,9 @@ namespace Shared.Collision.Cache;
 
 public static class ChunkCache
 {
-    private const int _formatVersion = 1;
+    // 2: convex hulls are welded, recentred and given thickness when flat (DATA-22), so a version-1
+    // cache holds the placeholder boxes those shapes used to become.
+    private const int _formatVersion = 2;
     private static readonly byte[] _magic = "PCCK"u8.ToArray();
     private static readonly ILogger _logger = Log.ForContext(typeof(ChunkCache));
 

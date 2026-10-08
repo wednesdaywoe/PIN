@@ -1109,7 +1109,7 @@ creature types are DATA-6's remainder, not this one's.
 
 <a id="data-22"></a>
 
-### DATA-22 — 252 objects in New Eden convert to nothing, so you can shoot through them [ ] open, found 2026-08-17
+### DATA-22 — 252 objects in New Eden convert to nothing, so you can shoot through them [~] fixed in code 2026-10-08, not yet seen in game
 
 **A tester was shot through a rock formation by a Chosen Fiend that should have had no line of
 sight, on the first deliberate sitting against terrain collision
@@ -1171,6 +1171,45 @@ vertex centroid instead of at the origin, so a broken rock is solid and wrong ra
 The 17 `IsHullFaceValid` rejections may be a separate cause: that check sums signed tetrahedron
 volumes about the **origin** rather than about the shape's own centroid, which loses precision for
 geometry far from it.
+
+**Fixed in code 2026-10-08, offline.** Zone 448's chunks were copied from jpc and rebuilt on the
+Mac with CollisionGenerator. The failure warning now describes each failed point set, which turned
+the census into two causes. This rebuild counted **300** failures across the same 93 chunks, against
+the 252 recorded in August. The difference wasn't chased. Every count below is from this rebuild.
+
+| | Failures |
+|---|---|
+| Flat to within 0.1% of their size (4-point quads of 14 m × 0.5 m, 9-point panels) | 150 |
+| Solid (rocks of 28–180 points, up to 24 m across) | 150 |
+
+**The flat ones are flat in Havok too, and Havok doesn't mind.** Every `hkpConvexVerticesShape` in
+the zone carries a 0.05 convex radius, and Havok collides with the point set inflated by it, so a
+plane of points is a 10 cm slab. Bepu can't hull a plane, and `CreateShape` hands back no points for
+a hull with two faces. `ConvexPoints.ThickenIfFlat` copies each point the radius either side of the
+plane, which is the slab without its rounded edges.
+
+**The solid ones were coincident points.** The failed rocks have points 3.8 µm apart, and a few
+more under half a millimetre. Bepu's gift wrapping stops after its first face on these, and the
+hull comes back with two faces, which is the flat case above by another route. Welding to a
+millimetre (`ConvexPoints.Weld`) recovered 166 of the 171 solids that failed at that stage.
+
+**Recentring was tried first and fixed nothing.** The failed shapes all sit 440–935 m from their
+chunk-space origin, where a float step is about 6e-5 m, so precision was the obvious suspect.
+Hulling around the points' own centre left the failures where they were (300 before, 321 after,
+shuffled between the two kinds). It stays in, because the weld measures millimetres and wants
+coordinates that can hold one, and the offset goes back in through the pose.
+
+Result: **5 of 300 still fail**: three of 46–148 points that come back with no hull, and two of 23
+points that `IsHullFaceValid` rejects. Their 1 m placeholder now sits at the shape's own centre
+rather than at the chunk origin, so each is a small solid box inside the object, not a hole.
+`ConvexVerticesTests` builds a real 28-point rock from chunk `1_*` and a flat 14 m quad and checks
+both hull to their own bounds. Both fail against the old loader. The chunk and rigid-body cache
+formats went to version 2, so a cache built before this fix rebuilds instead of keeping the
+placeholders.
+
+Stays open until a sitting finds the tester's rock solid. [SOLID-WORLD-10](../../Game Testing/solid-world.html)'s
+`probe` is the instrument. **Any server that has map collision on needs its chunk caches rebuilt**,
+which the version bump does on the next start. It took over four minutes on the Mac.
 
 <a id="data-23"></a>
 

@@ -493,6 +493,25 @@ public class TagfileLoader
             We work with the helper directly so that we can use our own validation function.
             */
             Vector3[] vertices = UnrotateRotatedVertices(obj.RotatedVertices, obj.NumVertices);
+
+            // Scenery stores its points in chunk space, often hundreds of metres from the origin, where a
+            // float step is ~6e-5m and Bepu's tolerances lose their meaning. Hull around the points' own
+            // centre and carry the offset in the pose. This alone fixed none of DATA-22's failures, but
+            // the welding below works in millimetres and wants coordinates that can hold one.
+            var offset = ConvexPoints.BoundsCentre(vertices);
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] -= offset;
+            }
+
+            // Exporters leave coincident points in these sets, and Bepu's gift wrapping gives up on them:
+            // welding to a millimetre recovered 166 of zone 448's 171 failed solids.
+            vertices = ConvexPoints.Weld(vertices, 1e-3f);
+
+            // Havok collides with a convex shape inflated by its convex radius, so a flat point set is a
+            // solid slab to it. Bepu can't hull a plane; give it the slab, the radius either side.
+            vertices = ConvexPoints.ThickenIfFlat(vertices, obj.Radius);
+
             ConvexHullHelper.ComputeHull(vertices, BufferPool, out HullData hullData);
             if (IsHullFaceValid(vertices, hullData))
             {
@@ -500,18 +519,18 @@ public class TagfileLoader
 
                 if (convexHull.Points.Length == 0)
                 {
-                    _logger.Warning("Failed to process hkpConvexVerticesShape {pointer}. Produced a hull with 0 points. Had {numUnrotatedVertices} vertices. ", obj.Name, obj.NumVertices, vertices.Length);
-                    return [new StaticDescription(RigidPose.Identity, PlaceholderBox)];
+                    _logger.Warning("Failed to process hkpConvexVerticesShape {pointer}. Produced a hull with 0 points. {Shape}", obj.Name, ConvexPoints.Describe(vertices, obj.Radius));
+                    return [new StaticDescription(new RigidPose(offset), PlaceholderBox)];
                 }
 
-                var pose = new RigidPose(center);
+                var pose = new RigidPose(center + offset);
                 var stat = new StaticDescription(pose, Simulation.Shapes.Add(convexHull));
                 return [stat];
             }
             else
             {
-                _logger.Warning("Failed to process hkpConvexVerticesShape {pointer}. IsHullFaceValid reports false.", obj.Name);
-                return [new StaticDescription(RigidPose.Identity, PlaceholderBox)];
+                _logger.Warning("Failed to process hkpConvexVerticesShape {pointer}. IsHullFaceValid reports false. {Shape}", obj.Name, ConvexPoints.Describe(vertices, obj.Radius));
+                return [new StaticDescription(new RigidPose(offset), PlaceholderBox)];
             }
         }
         catch (Exception ex)
