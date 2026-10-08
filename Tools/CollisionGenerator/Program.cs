@@ -334,14 +334,20 @@ Examples:
         var pool = new BufferPool();
         var disp = new ThreadDispatcher(1);
         var sim = Simulation.Create(pool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(new Vector3(0, 0, -8)), new SolveDescription(8, 1));
+        var blockers = Simulation.Create(pool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(Vector3.Zero), new SolveDescription(1, 1));
 
         try
         {
             var gtchunkPath = Path.Combine(mapsPath, "chunks", $"{label}.gtchunk");
             Logger.Information("Processing chunk: {Label} ({Path})", label, gtchunkPath);
 
-            var statics = ChunkProcessor.ProcessChunk(gtchunkPath, cachePath, sim, pool, disp, true);
-            Logger.Information("Chunk {Label}: Processed {Count} static descriptions", label, statics.Length);
+            var collision = ChunkProcessor.ProcessChunk(gtchunkPath, cachePath, sim, blockers, pool, disp, true);
+            Logger.Information(
+                "Chunk {Label}: Processed {Count} static descriptions, {Blockers} movement blockers, water materials [{Water}]",
+                label,
+                collision.Statics.Length,
+                collision.Blockers.Length,
+                string.Join(", ", collision.WaterMaterialIds));
         }
         catch (Exception e)
         {
@@ -350,6 +356,7 @@ Examples:
         finally
         {
             sim.Dispose();
+            blockers.Dispose();
             pool.Clear();
             disp.Dispose();
         }

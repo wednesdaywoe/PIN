@@ -4,6 +4,7 @@ using BepuUtilities.Memory;
 using Serilog;
 using Shared.Collision.Cache;
 using Shared.Collision.Chunk;
+using Shared.Collision.Layers;
 using Shared.Collision.Layers.Collision;
 using Shared.Collision.Tagfile;
 
@@ -13,10 +14,15 @@ public static class ChunkProcessor
 {
     private static readonly ILogger _logger = Log.ForContext(typeof(ChunkProcessor));
 
-    public static StaticDescription[] ProcessChunk(
+    /// <summary>
+    ///     Reads one chunk's collision, from the cache when it holds a current copy. Static geometry is
+    ///     built in <paramref name="world"/> and the movement blockers in <paramref name="blockers"/>.
+    /// </summary>
+    public static ChunkCollision ProcessChunk(
         string chunkPath,
         string cachePath,
-        Simulation simulation,
+        Simulation world,
+        Simulation blockers,
         BufferPool pool,
         ThreadDispatcher dispatcher,
         bool forceReload = false)
@@ -24,82 +30,72 @@ public static class ChunkProcessor
         var chunkName = Path.GetFileNameWithoutExtension(chunkPath);
         var cacheFile = ChunkCache.GetCachePath(cachePath, chunkName);
 
-        if (!forceReload && ChunkCache.TryLoad(simulation, pool, dispatcher, cacheFile, out var cached))
+        if (!forceReload && ChunkCache.TryLoad(world, blockers, pool, dispatcher, cacheFile, out var cached))
         {
             return cached;
         }
 
         var chunk = ChunkFileReader.Read(chunkPath);
 
-        var lod3Layers = FindAllLod3CollisionLayers(chunk);
+        var lod3Layers = Lod3Layers(chunk);
 
-        if (lod3Layers.Length == 0)
+        if (!lod3Layers.OfType<ChunkStaticGeometryCollisionLayer>().Any())
         {
             _logger.Warning("Chunk {Name} has no LOD3 collision layers, what?", chunk.Name);
-            return [];
+            return ChunkCollision.Empty;
         }
 
-        var loader = new TagfileLoader(simulation, pool, dispatcher);
+        var statics = Build(new TagfileLoader(world, pool, dispatcher), lod3Layers.OfType<ChunkStaticGeometryCollisionLayer>(), withMeshBlocks: true);
+        var blockerStatics = Build(new TagfileLoader(blockers, pool, dispatcher), lod3Layers.OfType<ChunkMovementBlockerCollisionLayer>(), withMeshBlocks: false);
+        var water = lod3Layers.OfType<ChunkWaterCollisionLayer>()
+            .SelectMany(layer => layer.Enwf.PhysicsMatIds)
+            .Where(id => id != 0)
+            .Distinct()
+            .Order()
+            .ToArray();
 
-        List<StaticDescription> allStatics = [];
+        var result = new ChunkCollision(statics, blockerStatics, water);
 
-        foreach (var collisionLayer in lod3Layers)
+        ChunkCache.Save(world, blockers, pool, result, cacheFile);
+
+        return result;
+    }
+
+    private static StaticDescription[] Build(TagfileLoader loader, IEnumerable<EnwfLayer> layers, bool withMeshBlocks)
+    {
+        List<StaticDescription> result = [];
+
+        foreach (var layer in layers)
         {
-            var hkxBytes = collisionLayer.Enwf.HavokBinaryTagfile;
+            var hkxBytes = layer.Enwf.HavokBinaryTagfile;
 
             if (hkxBytes.Length == 0)
             {
                 continue;
             }
 
-            var vertBlocks = EnwfToBepuConverter.ConvertVertBlocks(collisionLayer.Enwf.VertBlocks);
-            var indiceBlocks = EnwfToBepuConverter.ConvertIndiceBlocks(collisionLayer.Enwf.IndiceBlocks);
-            var statics = loader.ProcessTagfileBytes(hkxBytes, vertBlocks, indiceBlocks);
+            var statics = withMeshBlocks
+                ? loader.ProcessTagfileBytes(
+                    hkxBytes,
+                    EnwfToBepuConverter.ConvertVertBlocks(layer.Enwf.VertBlocks),
+                    EnwfToBepuConverter.ConvertIndiceBlocks(layer.Enwf.IndiceBlocks))
+                : loader.ProcessTagfileBytes(hkxBytes);
 
-            if (statics.Length > 0)
-            {
-                allStatics.AddRange(statics);
-            }
-        }
-
-        var result = allStatics.ToArray();
-
-        ChunkCache.Save(simulation, pool, result, cacheFile);
-
-        return result;
-    }
-
-    private static ChunkStaticGeometryCollisionLayer[] FindAllLod3CollisionLayers(ChunkFile chunk)
-    {
-        List<ChunkStaticGeometryCollisionLayer> result = [];
-
-        foreach (var lod in chunk.Lod)
-        {
-            if (lod.Level != 3)
-            {
-                continue;
-            }
-
-            foreach (var layer in lod.SharedLayers)
-            {
-                if (layer is ChunkStaticGeometryCollisionLayer collision)
-                {
-                    result.Add(collision);
-                }
-            }
-
-            foreach (var subChunk in lod.SubChunks)
-            {
-                foreach (var layer in subChunk.Layers)
-                {
-                    if (layer is ChunkStaticGeometryCollisionLayer collision)
-                    {
-                        result.Add(collision);
-                    }
-                }
-            }
+            result.AddRange(statics);
         }
 
         return [.. result];
+    }
+
+    /// <summary>
+    ///     Every layer at detail level 3, shared and per sub-chunk. Level 3 is the only one that carries
+    ///     collision of any kind.
+    /// </summary>
+    private static WorldLayer[] Lod3Layers(ChunkFile chunk)
+    {
+        return chunk.Lod
+            .Where(lod => lod.Level == 3)
+            .SelectMany(lod => lod.SharedLayers.Concat(lod.SubChunks.SelectMany(subChunk => subChunk.Layers)))
+            .ToArray();
     }
 }

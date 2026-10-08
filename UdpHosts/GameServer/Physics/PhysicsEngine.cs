@@ -44,6 +44,9 @@ public partial class PhysicsEngine
     /// </summary>
     private const float GroundProbeReach = 200f;
 
+    /// <summary>A blocker met this close to the start of a movement line is the one the line starts inside.</summary>
+    private const float BlockerStartedInside = 1e-3f;
+
     private readonly ILogger _logger;
     private readonly EventBus _eventBus;
     private readonly ZoneLoader _zoneLoader;
@@ -77,7 +80,12 @@ public partial class PhysicsEngine
 
         _fallbackShape = Simulation.Shapes.Add(new Sphere(0.9f));
 
-        _zoneLoader = new ZoneLoader(Simulation, BufferPool, ThreadDispatcher, mapsPath, cachePath);
+        // The map's movement blockers stop movement and nothing else, so they get a world of their own:
+        // every shot, sight line and ground probe below queries Simulation and cannot meet one. Nothing
+        // ever steps this one; it only answers IsMovementBlocked.
+        Blockers = Simulation.Create(BufferPool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(Vector3.Zero), new SolveDescription(1, 1));
+
+        _zoneLoader = new ZoneLoader(Simulation, Blockers, BufferPool, ThreadDispatcher, mapsPath, cachePath);
         _rigidBodyLoader = new RigidBodyLoader(Simulation, BufferPool, ThreadDispatcher, assetDBPath, cachePath);
         PoseLoader = new PoseLoader.PoseLoader(assetDBPath);
 
@@ -93,6 +101,15 @@ public partial class PhysicsEngine
     public long? ZoneFileTimestamp { get; private set; }
 
     public Simulation Simulation { get; protected set; }
+
+    /// <summary>The zone's movement blockers, apart from everything else. Empty when map collision is off.</summary>
+    public Simulation Blockers { get; }
+
+    /// <summary>
+    ///     Physics materials of the zone's water bodies, from the chunks' water collision. Empty when map
+    ///     collision is off, which callers read as "the map can't say".
+    /// </summary>
+    public IReadOnlySet<uint> WaterMaterialIds => _zoneLoader.WaterMaterialIds;
     public BufferPool BufferPool { get; private set; }
     public ThreadDispatcher ThreadDispatcher { get; private set; }
     public double TimeAccumulator { get; protected set; }
@@ -423,6 +440,28 @@ public partial class PhysicsEngine
         return hitHandler.T < maxDistance;
     }
 
+    /// <summary>
+    ///     Whether moving in a straight line from <paramref name="from"/> to <paramref name="to"/> crosses one
+    ///     of the map's movement blockers. A blocker the line starts inside doesn't count, so whatever is
+    ///     standing in one can always walk out of it rather than being frozen there.
+    /// </summary>
+    public bool IsMovementBlocked(Vector3 from, Vector3 to)
+    {
+        var offset = to - from;
+        var length = offset.Length();
+        if (length <= 0f)
+        {
+            return false;
+        }
+
+        var hitHandler = default(BlockerHitHandler);
+        hitHandler.T = length;
+
+        Blockers.RayCast(from, offset / length, length, BufferPool, ref hitHandler);
+
+        return hitHandler.Hit;
+    }
+
     public (bool, Vector3, ulong) TargetRayCast(Vector3 origin, Vector3 direction, CharacterEntity source, float maxRange = 500f)
     {
         bool outHit = false;
@@ -519,6 +558,32 @@ public partial class PhysicsEngine
     ///     anything up.
     /// </summary>
     public readonly record struct RayProbe(bool Hit, bool IsWorld, Vector3 Position, float Distance, ulong EntityId, int ShapeHandle);
+
+    /// <summary>
+    ///     Finds a blocker the ray enters. A ray starting inside a convex shape meets it at t = 0, which is
+    ///     the shape it is already in, so those are skipped.
+    /// </summary>
+    private struct BlockerHitHandler : IRayHitHandler
+    {
+        public float T;
+        public bool Hit;
+
+        public readonly bool AllowTest(CollidableReference collidable) => true;
+
+        public readonly bool AllowTest(CollidableReference collidable, int childIndex) => true;
+
+        public void OnRayHit(in RayData ray, ref float maximumT, float t, Vector3 normal, CollidableReference collidable, int childIndex)
+        {
+            if (t <= BlockerStartedInside)
+            {
+                return;
+            }
+
+            maximumT = t;
+            T = t;
+            Hit = true;
+        }
+    }
 
     private struct RayHitHandler : IRayHitHandler
     {

@@ -263,4 +263,44 @@ public class SteeringTests
         Assert.Equal(Speed * Tick, new Vector2(next.X, next.Y).Length(), 4);
         Assert.Equal(3f, next.Z, 4);
     }
+
+    [Fact]
+    public void AStepAcrossAMovementBlockerIsRefused()
+    {
+        // A wall of blocker along x = 0.1, which the first step from the origin crosses.
+        static bool Wall(Vector3 from, Vector3 to) => from.X < 0.1f && to.X >= 0.1f;
+
+        var moved = Steering.TryStep(Vector3.Zero, new Vector3(50f, 0f, 0f), stopWithin: 0f, Speed, Tick, out var next, blocked: Wall);
+
+        Assert.False(moved);
+        Assert.Equal(Vector3.Zero, next);
+    }
+
+    [Fact]
+    public void ABlockerOffTheLineChangesNothing()
+    {
+        static bool Elsewhere(Vector3 from, Vector3 to) => false;
+
+        Steering.TryStep(Vector3.Zero, new Vector3(50f, 0f, 0f), stopWithin: 0f, Speed, Tick, out var probed, blocked: Elsewhere);
+        Steering.TryStep(Vector3.Zero, new Vector3(50f, 0f, 0f), stopWithin: 0f, Speed, Tick, out var unprobed);
+
+        Assert.Equal(unprobed, probed);
+    }
+
+    [Fact]
+    public void TheBlockerIsAskedAboutTheStepAMetreUp()
+    {
+        Vector3 askedFrom = default, askedTo = default;
+        bool Record(Vector3 from, Vector3 to)
+        {
+            askedFrom = from;
+            askedTo = to;
+            return false;
+        }
+
+        Steering.TryStep(Vector3.Zero, new Vector3(50f, 0f, 0f), stopWithin: 0f, Speed, Tick, out var next, blocked: Record);
+
+        Assert.Equal(new Vector3(0f, 0f, 1f), askedFrom);
+        Assert.Equal(next + new Vector3(0f, 0f, 1f), askedTo);
+    }
 }

@@ -48,11 +48,24 @@ public static class Steering
     private const float SlopeTolerance = 1e-3f;
 
     /// <summary>
+    ///     How far above the feet a step is tested against movement blockers: high enough that ground
+    ///     rising under the step isn't read as one. Zone 448's blockers mostly sit low (median top 0.5m
+    ///     above the surface under them), so this meets the ones more than a metre proud, a bit under half.
+    /// </summary>
+    private const float BlockerProbeHeight = 1f;
+
+    /// <summary>
     ///     Answers "how high is the world here", or false where nothing is. Supplied by the shard as
     ///     <c>PhysicsEngine.TryGetGroundHeight</c>; null everywhere the answer is unavailable, including
     ///     every offline test.
     /// </summary>
     public delegate bool GroundProbe(Vector3 at, out float groundZ);
+
+    /// <summary>
+    ///     Answers "does walking this line cross one of the map's movement blockers". Supplied by the shard
+    ///     as <c>PhysicsEngine.IsMovementBlocked</c>; null where there are none to ask about.
+    /// </summary>
+    public delegate bool BlockerProbe(Vector3 from, Vector3 to);
 
     /// <summary>
     ///     Advances <paramref name="from"/> toward <paramref name="destination"/> and reports whether it
@@ -64,9 +77,33 @@ public static class Steering
     ///
     ///     <paramref name="ground"/> is the difference between standing on the hill and walking up beside
     ///     it. Pass one wherever the shard is in reach; pass null and the pre-terrain behaviour is
-    ///     unchanged.
+    ///     unchanged. <paramref name="blocked"/> works the same way for the map's movement blockers: a step
+    ///     that would cross one is refused, as a wall is.
     /// </summary>
-    public static bool TryStep(Vector3 from, Vector3 destination, float stopWithin, float speed, float elapsedSeconds, out Vector3 next, GroundProbe ground = null)
+    public static bool TryStep(Vector3 from, Vector3 destination, float stopWithin, float speed, float elapsedSeconds, out Vector3 next, GroundProbe ground = null, BlockerProbe blocked = null)
+    {
+        if (!TryStepIgnoringBlockers(from, destination, stopWithin, speed, elapsedSeconds, out next, ground))
+        {
+            return false;
+        }
+
+        var up = new Vector3(0f, 0f, BlockerProbeHeight);
+        if (blocked != null && blocked(from + up, next + up))
+        {
+            next = from;
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>Flat distance between two points, which is what every range in the AI is measured in.</summary>
+    public static float FlatDistance(Vector3 a, Vector3 b)
+    {
+        return new Vector2(a.X - b.X, a.Y - b.Y).Length();
+    }
+
+    private static bool TryStepIgnoringBlockers(Vector3 from, Vector3 destination, float stopWithin, float speed, float elapsedSeconds, out Vector3 next, GroundProbe ground)
     {
         next = from;
 
@@ -126,11 +163,5 @@ public static class Steering
 
         next = landing with { Z = from.Z + climb };
         return true;
-    }
-
-    /// <summary>Flat distance between two points, which is what every range in the AI is measured in.</summary>
-    public static float FlatDistance(Vector3 a, Vector3 b)
-    {
-        return new Vector2(a.X - b.X, a.Y - b.Y).Length();
     }
 }

@@ -114,7 +114,7 @@ public static class NpcMovement
         }
 
         var speed = ResolveSpeed(npc, state).Run;
-        if (!Steering.TryStep(npc.Position, destination, stopWithin, speed, elapsedSeconds, out var next, shard.Physics.TryGetGroundHeight))
+        if (!Steering.TryStep(npc.Position, destination, stopWithin, speed, elapsedSeconds, out var next, shard.Physics.TryGetGroundHeight, shard.Physics.IsMovementBlocked))
         {
             Halt(npc);
             return;
