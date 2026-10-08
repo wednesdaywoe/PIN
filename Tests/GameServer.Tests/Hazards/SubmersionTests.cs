@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GameServer.StaticDB.Records.dbvisualrecords;
 using GameServer.Systems.Hazards;
 using Xunit;
@@ -11,6 +12,17 @@ namespace GameServer.Tests.Hazards;
 /// </summary>
 public class SubmersionTests
 {
+    /// <summary>The six rows' ids and physics materials in table order, as the retail db stores them.</summary>
+    private static readonly WaterDesc[] _table =
+    [
+        new() { Id = 10001, PhysicsMaterialId = 10011 }, new() { Id = 10002, PhysicsMaterialId = 10032 },
+        new() { Id = 10003, PhysicsMaterialId = 10033 }, new() { Id = 10008, PhysicsMaterialId = 10037 },
+        new() { Id = 10110, PhysicsMaterialId = 10011 }, new() { Id = 10111, PhysicsMaterialId = 10049 },
+    ];
+
+    /// <summary>The materials zone 448's chunk water collision uses: standard, ooze and marsh.</summary>
+    private static readonly HashSet<uint> _zone448Water = [10011, 10032, 10037];
+
     /// <summary>
     ///     <c>dbvisualrecords::WaterDesc</c> row 10001, the standard water, copied out of the retail db.
     /// </summary>
@@ -121,5 +133,56 @@ public class SubmersionTests
 
         Assert.Equal(WaterHazard.Drowning, Submersion.Read(2).Against(caustic));
         Assert.Equal(WaterHazard.Dying, Submersion.Read(5).Against(caustic));
+    }
+
+    [Fact]
+    public void TheDescriptionNibbleIsARowOfTheTable()
+    {
+        Assert.Equal(10001u, Submersion.Read(0x05).DescribedBy(_table).Id);
+        Assert.Equal(10003u, Submersion.Read(0x25).DescribedBy(_table).Id);
+        Assert.Equal(10111u, Submersion.Read(0x55).DescribedBy(_table).Id);
+    }
+
+    [Fact]
+    public void ANibblePastTheTableFallsBackToRowZeroAsTheClientDoes()
+    {
+        Assert.Equal(10001u, Submersion.Read(0x65).DescribedBy(_table).Id);
+        Assert.Equal(10001u, Submersion.Read(0xF5).DescribedBy(_table).Id);
+    }
+
+    [Fact]
+    public void AnEmptyTableDescribesNothing()
+    {
+        Assert.Null(Submersion.Read(0x05).DescribedBy([]));
+    }
+
+    [Fact]
+    public void ARowTheZonesWaterUsesIsBelieved()
+    {
+        var (ooze, oozeCorroborated) = Submersion.Read(0x15).DescribedBy(_table, _zone448Water);
+        var (marsh, marshCorroborated) = Submersion.Read(0x35).DescribedBy(_table, _zone448Water);
+
+        Assert.Equal(10002u, ooze.Id);
+        Assert.True(oozeCorroborated);
+        Assert.Equal(10008u, marsh.Id);
+        Assert.True(marshCorroborated);
+    }
+
+    [Fact]
+    public void ENV1sNibbleTwoIsNotTakenForCausticWaterIn448()
+    {
+        var (water, corroborated) = Submersion.Read(0x25).DescribedBy(_table, _zone448Water);
+
+        Assert.Equal(10001u, water.Id);
+        Assert.False(corroborated);
+    }
+
+    [Fact]
+    public void WithoutTheMapEveryNibbleIsStandardWater()
+    {
+        var (water, corroborated) = Submersion.Read(0x35).DescribedBy(_table, new HashSet<uint>());
+
+        Assert.Equal(10001u, water.Id);
+        Assert.False(corroborated);
     }
 }

@@ -651,7 +651,7 @@ tightening it is one constant.
 
 <a id="data-13"></a>
 
-### DATA-13 — The water description nibble can't be resolved, so all water is row 10001 [ ] open
+### DATA-13 — The water description nibble can't be resolved, so all water is row 10001 [~] resolved where the map agrees, 2026-10-08; nibble 2 in zone 448 unexplained
 
 `WaterLevelAndDesc` arrives from the client packed `ddddllll`. The low nibble is submersion and is
 fully understood — see [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs), where
@@ -681,6 +681,41 @@ reason. What it costs is that if 448 has any non-standard water, it currently be
 
 `HazardSim` logs each distinct nibble the first time it sees one, which is what a real mapping would
 have to be built from; [E1](../../Game Testing/Environment.html) is the entry that collects them.
+
+**Re-read 2026-10-08 from the client binary and zone 448's map files. The premise above was wrong:**
+the nibble isn't an index into per-zone data. The client packs the byte in `FUN_00c84890` and reads it
+in `FUN_00c84980`. The description is `(row pointer − table base) / 0x60`, the row's position in the
+client's `sttc_waterdesc` table, and a nibble past the end reads as row 0. The level is scaled by
+exactly 1/15 (`0x3D888889`), which confirms the reading above. The table is `dbvisualrecords::WaterDesc`
+in stored order, which is id order: 10001, 10002, 10003, 10008, 10110, 10111.
+
+Where the map comes in is in saying which water a zone has. Zone 448's `.zone` file holds four
+`ZoneWaterLayer`s (0x20300). Each is a flat surface mesh: an origin whose Z is the surface height, a
+colour ramp, the `WaterDesc` id at offset 0x4C, then vertices, UVs, two per-vertex arrays, 32-bit
+triangle indices and a 33-byte trailer. All four parse to the byte, and all four say 10001. The
+chunks' water collision (0x40105, 768 layers in the zone's 93 chunks, 12,999 boxes about 10 × 10 × 3.7
+m) carries physics materials instead, and each `WaterDesc` row names one:
+
+| Material | Row | Chunk water layers in 448 |
+|---|---|---|
+| 10011 | 10001 standard (also 10110) | 452 |
+| 10032 | 10002 ooze | 3 |
+| 10037 | 10008 marsh | 2, plus 1 mixed with 10011 |
+
+**That leaves ENV-1's nibble 2 unexplained.** By the table it is 10003 (material 10033), which drowns
+at 0.08 of your height and kills at 0.33, and nothing in zone 448's water uses that material. The
+client function that chooses the row only decompiles as a fragment, so the source can't be read
+statically yet.
+
+**What the server does now** (decision 2026-10-08, user-chosen: map-checked):
+`Submersion.DescribedBy(table, zoneWaterMaterials)` takes the row the nibble names only if the zone's
+water collision uses that row's material. Anything else falls back to row 0, the standard water, and so
+does everything when map collision is off. In zone 448 that makes ooze (nibble 1) and marsh (nibble
+3) real while nibble 2 stays standard. `HazardSim` logs the first sighting of each nibble at Information
+with the player's position, the row it names and the row it was read as. ENV-1 didn't record a
+position; the next sitting that steps in water will, which is what settling nibble 2 needs.
+Rejected: trusting the index outright (nibble 2 would drown players in the shallows), and keeping
+10001 for everything (throws away ooze and marsh, which the map does corroborate).
 
 <a id="data-14"></a>
 
@@ -1152,8 +1187,9 @@ to be losing small scenery. Parsing a raw `.gtchunk` directly says otherwise: le
 level that carries a collision layer at all — 26.8MB of it in `1_0243_0917`, against zero in levels
 0, 1, 2 and 4. The loader is reading everything there is to read.
 
-**Two more layers in that same file are parsed into objects and consumed by nobody**, confirmed by
-grep across the game server: `ChunkWaterCollisionLayer`, which is the half
+**Two more layers in that same file are parsed into objects and consumed by nobody** (both consumed
+since 2026-10-08: water materials for [DATA-13](#data-13), movement blockers for NPC steering), confirmed by
+grep across the game server at the time: `ChunkWaterCollisionLayer`, which is the half
 [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs) is missing, and
 `ChunkMovementBlockerCollisionLayer`, the invisible bounds nothing enforces. Neither is scenery and
 neither explains this entry; they are recorded here because the same rebuild is what proved it.

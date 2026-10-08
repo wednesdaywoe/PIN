@@ -181,10 +181,12 @@ looks at player-controlled characters only.
 | Fully submerged | same, past `dying_percent` | 2% a tick, multiplied by 1.05 after each one (effect 789) |
 | Melding | position against the perimeter the client is drawing | 5% a tick, invented ([DATA-12](../gaps/data.md#data-12)) |
 
-The water level is the client's reading, not the server's — with `LoadMapsCollision` off there is no
-terrain and no water volume here to measure against, so the one byte the client sends on every
+The water level is the client's reading, not the server's: the one byte the client sends on every
 movement pose is the whole of it. [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs)
-unpacks it; [DATA-13](../gaps/data.md#data-13) covers the half of that byte that can't be resolved.
+unpacks it. The level half is a fraction of 15. The description half is a row of
+`dbvisualrecords::WaterDesc`, and the server believes it only when the zone's water collision uses
+that row's physics material ([DATA-13](../gaps/data.md#data-13)); otherwise, and whenever map
+collision is off, the water is standard.
 
 The melding reads the same control points the client draws the wall from, tessellated as a Hermite
 curve by [MeldingField](../../UdpHosts/GameServer/Systems/Hazards/MeldingField.cs), so the two agree

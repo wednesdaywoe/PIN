@@ -670,8 +670,14 @@ Out of scope because the slice closes without them:
   [DATA-22](ISSUE-REGISTER.md), the 252 objects that convert to nothing on the way in, stays open.
   [streams/solid-world.md](streams/solid-world.md) closed satisfied 2026-08-19 (decision: no M9 —
   the next work opens as [streams/crafting.md](streams/crafting.md) instead), leaving three evicted
-  leftovers here: consume the parsed-but-unused water and movement-blocker layers (and with them,
-  decide whether server-side water is worth having when the client's reading works); sweep the docs
+  leftovers here: consume the parsed-but-unused water and movement-blocker layers (**done
+  2026-10-08**: the zone's water materials check the client's water description, see
+  [DATA-13](gaps/data.md#data-13), and NPC steps refuse to cross a movement blocker, which live in a
+  physics world of their own so shots and sight lines never meet them. Zone 448 has 2,053, mostly
+  boxes, capsules and spheres a few metres across, sitting low: the median top is 0.5 m above the
+  surface under it and a quarter stand more than 1.9 m proud, so a step tested a metre up meets
+  the ones more than a metre proud, a bit under half. What they enclose in retail is unconfirmed; server-side water surfaces
+  stay unused, since the client's reading works); sweep the docs
   that still state the server holds no terrain; decide whether the 13 GB collision cache stays
   outside the repo (rebuild command in [DATA-22](gaps/data.md#data-22); loose end: the deployed
   cache loads 145 more shapes than a fresh rebuild)

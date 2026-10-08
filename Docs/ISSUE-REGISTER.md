@@ -304,7 +304,13 @@ has no entries in that category, which reflects nothing having run rather than n
   [N2/N6](../Game Testing/NPC-Combat.html), fixed 2026-08-12
 - [ ] **DATA-12** — Melding wall damage rate is invented; no melding-wall effect survives in the
   client db to read one from, unlike drowning's 787/789
-- [ ] **DATA-13** — The water description nibble indexes per-zone map data the server doesn't have,
+- [~] **DATA-13** — **Resolved where the map agrees, 2026-10-08; not yet seen in game.** The client
+  code shows the nibble is a row of `dbvisualrecords::WaterDesc` in table order, not per-zone data.
+  Zone 448's water uses the materials of rows 10001, 10002 (ooze) and 10008 (marsh), and the server
+  now believes a nibble only when its row's material is in the zone. ENV-1's nibble 2 names 10003,
+  which the zone doesn't have, so it still reads as standard water and stays unexplained. The first
+  sighting of each nibble is now logged with its position. Detail in [the gap file](gaps/data.md#data-13).
+  Original entry: the water description nibble indexes per-zone map data the server doesn't have,
   so every body of water is read as the standard row 10001; [E1](../Game Testing/Environment.html)
   confirmed zone 448 uses at least two of them
 - [ ] **DATA-14** — No ammo or reload model, so an NPC weapon with a small clip fires continuously
@@ -456,7 +462,7 @@ has no entries in that category, which reflects nothing having run rather than n
   is no phantom wall in the playable world — the whole cost is the object being absent. Killed on
   the way past: the loader reads only detail level 3 of five, which looks like the obvious culprit
   and is not — level 3 is the only level carrying collision at all. Same rebuild confirmed water and
-  movement-blocker collision are parsed and consumed by nobody. **Findable in game, and the instrument is verified**: the new `probe` command reports whether the aim ray met the world, an entity or nothing — [SOLID-WORLD-10](../Game Testing/solid-world.html) ran 2026-08-19 and every control answered correctly, though the night's hunt found no collision-less object, so the 252 remain known only from the offline rebuild. The sweep now costs nothing and can ride along in any sitting
+  movement-blocker collision are parsed and consumed by nobody (both consumed since 2026-10-08). **Findable in game, and the instrument is verified**: the new `probe` command reports whether the aim ray met the world, an entity or nothing — [SOLID-WORLD-10](../Game Testing/solid-world.html) ran 2026-08-19 and every control answered correctly, though the night's hunt found no collision-less object, so the 252 remain known only from the offline rebuild. The sweep now costs nothing and can ride along in any sitting
 - [x] **DATA-24** — **Weapon damage was read off the shared type template instead of the item**,
   found and fixed 2026-08-20. `WeaponTemplates.damage_per_round` is per weapon *type* — 248 items are
   Fusion Cannons, 215 are Photon Lances — while the tuned per-item number is attribute 954, whose

@@ -140,10 +140,10 @@ public class StaticDBLoader : ISDBLoader
         .ToDictionary(row => row.Id);
     }
 
-    public Dictionary<uint, WaterDesc> LoadWaterDesc()
+    /// <summary>In table order, which is what the client's water description nibble indexes.</summary>
+    public List<WaterDesc> LoadWaterDesc()
     {
-        return LoadStaticDB<WaterDesc>("dbvisualrecords::WaterDesc")
-        .ToDictionary(row => row.Id);
+        return LoadStaticDB<WaterDesc>("dbvisualrecords::WaterDesc").ToList();
     }
 
     public Dictionary<uint, AttributeCategory> LoadAttributeCategory()

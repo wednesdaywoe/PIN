@@ -46,7 +46,7 @@ public class SDBInterface
     // dbvisualrecords
     private static Dictionary<uint, WarpaintPalette> _warpaintPalettes;
     private static Dictionary<uint, VisualRecord> _visualRecord;
-    private static Dictionary<uint, WaterDesc> _waterDesc;
+    private static List<WaterDesc> _waterDesc;
 
     // dbitems
     private static Dictionary<uint, AttributeCategory> _attributeCategory;
@@ -634,7 +634,10 @@ public class SDBInterface
     // dbvisualrecords
     public static WarpaintPalette GetWarpaintPalette(uint id) => _warpaintPalettes.GetValueOrDefault(id);
     public static VisualRecord GetVisualRecord(uint id) => _visualRecord.GetValueOrDefault(id);
-    public static WaterDesc GetWaterDesc(uint id) => _waterDesc.GetValueOrDefault(id);
+    public static WaterDesc GetWaterDesc(uint id) => _waterDesc.Find(row => row.Id == id);
+
+    /// <summary>The <c>WaterDesc</c> rows in table order, which the client's description nibble indexes.</summary>
+    public static IReadOnlyList<WaterDesc> GetWaterDescTable() => _waterDesc;
 
     // dbitems
     public static RootItem GetRootItem(uint id) => _rootItem.GetValueOrDefault(id);

@@ -58,16 +58,6 @@ public class HazardSim
     private const byte DrowningDamageType = 23;
     private const byte MeldingDamageType = 29;
 
-    /// <summary>
-    ///     Which <c>dbvisualrecords::WaterDesc</c> row the description nibble means. It is an index into
-    ///     something the map holds and the server doesn't, so every body of water is read as the standard
-    ///     one: drown at 0.735 of your height, die at 1.0. The alternative is worse than a wrong guess —
-    ///     row 10003 starts killing at 0.328, so mistaking a lake for it drowns people in the shallows.
-    ///     <see cref="_seenDescriptions"/> exists to collect what the nibble actually says in play, which
-    ///     is what a real mapping would have to be built from.
-    /// </summary>
-    private const uint DefaultWaterDescId = 10001;
-
     private readonly IShard _shard;
     private readonly ILogger _logger;
     private readonly Dictionary<ulong, HazardState> _stateByEntity = new();
@@ -126,22 +116,29 @@ public class HazardSim
         var submersion = Submersion.Read(character.WaterLevelAndDesc);
         var (melding, bearing) = NearestMelding(character);
 
-        return (submersion.Against(SDBInterface.GetWaterDesc(DefaultWaterDescId)), melding, bearing, submersion);
+        var (water, _) = submersion.DescribedBy(SDBInterface.GetWaterDescTable(), _shard.Physics.WaterMaterialIds);
+        return (submersion.Against(water), melding, bearing, submersion);
     }
 
     private void ApplyWater(CharacterEntity character, HazardState state)
     {
         var submersion = Submersion.Read(character.WaterLevelAndDesc);
 
+        var table = SDBInterface.GetWaterDescTable();
+        var (water, corroborated) = submersion.DescribedBy(table, _shard.Physics.WaterMaterialIds);
+
         if (submersion.InWater && _seenDescriptions.Add(submersion.DescIndex))
         {
-            _logger.Debug(
-                "Water description nibble {Description} seen for the first time; every nibble is read as WaterDesc {Default}",
+            _logger.Information(
+                "Water description nibble {Description} seen for the first time at {Position}: names WaterDesc {Named}, read as {WaterDesc} ({Why})",
                 submersion.DescIndex,
-                DefaultWaterDescId);
+                character.Position,
+                submersion.DescribedBy(table)?.Id,
+                water?.Id,
+                corroborated ? "the zone's water uses its material" : "not corroborated by the zone's water, so standard");
         }
 
-        var hazard = submersion.Against(SDBInterface.GetWaterDesc(DefaultWaterDescId));
+        var hazard = submersion.Against(water);
 
         if (hazard != state.Water)
         {

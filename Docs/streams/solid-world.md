@@ -174,7 +174,7 @@ consequence of this slice to the point of it.
    home now that this stream is closed. The real fix is finding why
    `ConvexHullHelper.ComputeHull` returns an empty hull for 235 objects.
 5. **Consume the water and movement-blocker layers** — evicted on closure to the deferred backlog
-   in [PROGRESS.md](../PROGRESS.md). Still cheap, still not urgent.
+   in [PROGRESS.md](../PROGRESS.md). **Done 2026-10-08**, see the backlog entry there.
 6. **Correct the documentation** — evicted on closure to the same backlog: files across `Docs/`
    still state as fact that the server holds no terrain.
 
