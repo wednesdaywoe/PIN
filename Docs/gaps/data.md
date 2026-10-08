@@ -866,7 +866,7 @@ simply in places the client would not let anyone drill.
 
 <a id="data-18"></a>
 
-### DATA-18 — A thumper's state-change animations are hardcoded ability ids [ ] open
+### DATA-18 — A thumper's state-change animations are hardcoded ability ids [~] fixed in code 2026-10-08, not yet seen in game
 
 A thumper announces each stage of its life by firing an ability, and the ability is what carries
 the animation and the sound. Four fire over a full cycle, and **three of the four are literals in
@@ -901,7 +901,53 @@ observation. Purely cosmetic: the payout, the participants and the completion ev
 resolved in `OnSuccess`, which neither branch changes.
 
 `aptfs::ResourceNodeBeaconCalldownCommandDef` also carries a `death_ability` (33978 on most rows,
-0 on two) that nothing in PIN reads at all, so a destroyed thumper has no departure of any kind.
+0 on two). When this entry was written nothing read it. `ThumperEntity` has read it since M7 and
+fires it when the machine is destroyed.
+
+**Fixed in code 2026-10-08, offline.** The chains were read with [SDBQuery](../../Tools/SDBQuery/),
+and they explain the 2026-08-16 side-by-side completely:
+
+| Ability | What it does |
+|---------|--------------|
+| `34579` (warm-up ends) | 8 s intro (effect 2256), then applies 2260, the drilling loop |
+| `34215` (thumping ends) | removes 2260, plays a 6 s wind-down (effect 1723) |
+| `123` (`completed_ability`) | removes 2260, plays a 6 s wind-down (effect 154), then hands on to 155 |
+| `34216` (PIN's departure) | applies 155 directly: the 7 s launch and particles, then destroys the object; plus a sound aimed at characters and an Accord commendation grant |
+
+So 34216 is 123's second half on its own. The bug was that two things fired on one press. Pressing
+E during COMPLETED reached `EndInteractionCommand`, which fires the interaction's completed ability
+(123, so the wind-down starts), and `OnInteraction` brought the countdown forward, so the next tick
+fired 34216 and the launch started on top of the wind-down. That is the "shot straight up, instantly"
+the sitting saw, and it is why its log had **both 154 and 155 active** when 34216's
+`ImpactRemoveEffect` failed. Pressing E early, during THUMPING, fired only 123 (twice, as it turns
+out: once from `OnInteraction` and once from `EndInteractionCommand`), so the sequence ran
+uninterrupted.
+
+The fix:
+- **Every departure is the beacon's `completed_ability`.** A player's E moves the thumper to LEAVING
+  in both states and fires nothing itself, because `EndInteractionCommand` fires 123 straight after.
+  A thumper whose COMPLETED timer runs out fires 123 from its own def. 34216 is gone.
+- **34579 and 34215 stay as named constants in `Thumper.cs`.** Nothing shipped can replace them. The
+  calldown def has only the landed, completed and death abilities, `dbitems::ResourceNodeBeacon`
+  has no ability column, and nothing in the client database refers to either id. Which ability marks
+  warm-up and the end of drilling was server content, like the wave tables.
+- `Thumper.CountdownAbility` holds the stage-to-ability mapping, and `ThumperStageAbilityTests`
+  pins it.
+
+Two consequences need the next thumper sitting to look at them:
+- A thumper that runs out its COMPLETED timer now plays the wind-down a second time, two minutes after
+  34215 played one, before it launches. 123 is the only departure the data names, so this is the
+  retail-shaped choice, but nobody has seen it.
+- 123 runs 13 s (6 + 7) against LEAVING's 12 s, so `OnSuccess` removes the entity about a second
+  before the launch effect would end. The early path has always done this and looked right on
+  2026-08-16.
+
+Checked headless on 2026-10-08 against the real client database. The zone's debug thumper ran a full
+unattended cycle, with the wave table emptied in a scratch build because an undefended machine dies
+to the doubled waves at about 20%. It fired 111, 34579, 34215, waited out COMPLETED, then fired 123
+and never 34216. Effect 154 ran its 6 s and handed over to 155, `OnSuccess` paid out 12 s later, and
+nothing threw. The entry stays open until a sitting sees both departures play the full wind-down and
+launch.
 
 <a id="data-19"></a>
 

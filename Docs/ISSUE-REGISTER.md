@@ -325,7 +325,12 @@ has no entries in that category, which reflects nothing having run rather than n
   have the same problem; a barren reading now logs the nearest deposit and its distance so finding
   out costs one press of G
 
-- [ ] **DATA-18** — Three of a thumper's four state-change abilities are literals in PIN's source
+- [~] **DATA-18** — **Fixed in code 2026-10-08, not yet seen in game.** Every departure now fires
+  the beacon's `completed_ability` (123), and 34216 is gone. The chains show 34216 is only 123's
+  launch half. Pressing E during COMPLETED fired 123 through `EndInteractionCommand` and then 34216 on
+  the next tick, so the launch cut off the wind-down. 34579 and 34215 stay as named constants because
+  no shipped data names them. Detail in [the gap file](gaps/data.md#data-18). Original entry:
+  Three of a thumper's four state-change abilities are literals in PIN's source
   rather than reads from the beacon's own def: `34579` at the end of warm-up, `34215` at the end of
   thumping, `34216` when a completed thumper departs. Only the early-collection path reads data —
   `OnInteraction` fires the beacon's `CompletedAbility` when you cut a thumper short. **Reported

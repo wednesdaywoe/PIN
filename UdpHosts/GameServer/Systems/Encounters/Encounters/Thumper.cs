@@ -16,6 +16,18 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     private const uint WaveMonsterTypeId = 528;
 
     /// <summary>
+    ///     Fired as warm-up ends: an 8-second intro that hands on to effect 2260, the drilling loop.
+    ///     Neither this nor <see cref="ThumpingEndedAbility"/> has anywhere to be read from. The calldown
+    ///     def carries only <c>landed_ability</c>, <c>completed_ability</c> and <c>death_ability</c>,
+    ///     <c>dbitems::ResourceNodeBeacon</c> carries no ability at all, and nothing in the client
+    ///     database refers to either id. Which ability marked each stage was server content (DATA-18).
+    /// </summary>
+    private const uint WarmupEndedAbility = 34579;
+
+    /// <summary>Fired as drilling ends: removes the 2260 loop and plays a 6-second wind-down.</summary>
+    private const uint ThumpingEndedAbility = 34215;
+
+    /// <summary>
     ///     Where a wave stands up, measured out from the machine. Inside perception range (25m), so an
     ///     escort notices the defender immediately, and far enough out that the approach is watchable.
     ///     The ring is drawn flat at the thumper's own Z and then each point is dropped onto the ground
@@ -122,18 +134,38 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
         return 0.5f + (0.5f * fraction);
     }
 
+    /// <summary>
+    ///     The ability a thumper fires when the countdown on <paramref name="expiring"/> runs out, or 0.
+    /// </summary>
+    /// <remarks>
+    ///     Every departure is the beacon's own <c>completed_ability</c> (123 on all 40 calldown rows): a
+    ///     6-second wind-down, then the 7-second launch. PIN used to send a thumper that finished on its own
+    ///     away with 34216, which is the launch alone and which no shipped data names. Pressing E during
+    ///     COMPLETED fired both, so the launch cut the wind-down off and the thumper shot straight up
+    ///     (DATA-18). A player's E doesn't come through here; <see cref="OnInteraction"/> explains why.
+    /// </remarks>
+    public static uint CountdownAbility(ThumperState expiring, uint landedAbility, uint completedAbility)
+    {
+        return expiring switch
+               {
+                   ThumperState.LANDING => landedAbility,
+                   ThumperState.WARMINGUP => WarmupEndedAbility,
+                   ThumperState.THUMPING => ThumpingEndedAbility,
+                   ThumperState.COMPLETED => completedAbility,
+                   _ => 0,
+               };
+    }
+
+    /// <summary>
+    ///     Sends the thumper away, whether it is still drilling or already done. Fires nothing itself:
+    ///     <c>EndInteractionCommand</c> runs the interaction's completed ability, which is the beacon's
+    ///     <c>completed_ability</c>, straight after this returns. Firing it here as well ran it twice.
+    /// </summary>
     public void OnInteraction(BaseEntity actingEntity, BaseEntity target)
     {
-        switch ((ThumperState)_thumper.StateInfo.State)
+        if (_thumper.StateInfo.State is (byte)ThumperState.THUMPING or (byte)ThumperState.COMPLETED)
         {
-            case ThumperState.THUMPING:
-                Shard.Abilities.HandleActivateAbility(Shard, _thumper, _thumper.CompletedAbility);
-
-                _thumper.TransitionToState(ThumperState.LEAVING);
-                break;
-            case ThumperState.COMPLETED:
-                _thumper.StateInfo = _thumper.StateInfo with { CountdownTime = Shard.CurrentTime };
-                break;
+            _thumper.TransitionToState(ThumperState.LEAVING);
         }
     }
 
@@ -141,26 +173,22 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     {
         if (Shard.CurrentTime >= _thumper.StateInfo.CountdownTime)
         {
-            switch ((ThumperState)_thumper.StateInfo.State)
+            var expiring = (ThumperState)_thumper.StateInfo.State;
+
+            if (expiring == ThumperState.THUMPING)
             {
-                case ThumperState.LANDING:
-                    Shard.Abilities.HandleActivateAbility(Shard, _thumper, _thumper.LandedAbility);
-                    break;
-                case ThumperState.WARMINGUP:
-                    Shard.Abilities.HandleActivateAbility(Shard, _thumper, 34579);
-                    break;
-                case ThumperState.THUMPING:
-                    _thumper.SetProgress(1);
-                    Shard.Abilities.HandleActivateAbility(Shard, _thumper, 34215);
-                    break;
-                case ThumperState.CLOSING:
-                    break;
-                case ThumperState.COMPLETED:
-                    Shard.Abilities.HandleActivateAbility(Shard, _thumper, 34216);
-                    break;
-                case ThumperState.LEAVING:
-                    OnSuccess();
-                    break;
+                _thumper.SetProgress(1);
+            }
+
+            var ability = CountdownAbility(expiring, _thumper.LandedAbility, _thumper.CompletedAbility);
+            if (ability != 0)
+            {
+                Shard.Abilities.HandleActivateAbility(Shard, _thumper, ability);
+            }
+
+            if (expiring == ThumperState.LEAVING)
+            {
+                OnSuccess();
             }
 
             if (_thumper.StateInfo.State < (byte)ThumperState.LEAVING)
