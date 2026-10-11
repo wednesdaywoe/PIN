@@ -496,7 +496,7 @@ public class TagfileLoader
 
             // Scenery stores its points in chunk space, often hundreds of metres from the origin, where a
             // float step is ~6e-5m and Bepu's tolerances lose their meaning. Hull around the points' own
-            // centre and carry the offset in the pose. This alone fixed none of DATA-22's failures, but
+            // centre and carry the offset in the pose. This alone fixed none of data-22's failures, but
             // the welding below works in millimetres and wants coordinates that can hold one.
             var offset = ConvexPoints.BoundsCentre(vertices);
             for (var i = 0; i < vertices.Length; i++)

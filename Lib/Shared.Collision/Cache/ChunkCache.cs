@@ -10,7 +10,7 @@ namespace Shared.Collision.Cache;
 
 public static class ChunkCache
 {
-    // 2: convex hulls are welded, recentred and given thickness when flat (DATA-22), so a version-1
+    // 2: convex hulls are welded, recentred and given thickness when flat (data-22), so a version-1
     // cache holds the placeholder boxes those shapes used to become.
     // 3: also holds the chunk's movement blockers and its water materials, after the statics.
     private const int _formatVersion = 3;

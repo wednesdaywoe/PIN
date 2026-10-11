@@ -11,7 +11,7 @@ namespace GameServer.Systems.Combat;
 /// </summary>
 /// <remarks>
 ///     Without this a player who ignores the prompt — or whose client never draws it — is downed
-///     forever, which is the same dead end NET-23 describes with extra steps. The forced respawn is
+///     forever, which is the same dead end net-23 describes with extra steps. The forced respawn is
 ///     the floor under the feature rather than a nicety.
 /// </remarks>
 public class BleedoutSim
@@ -53,7 +53,7 @@ public class BleedoutSim
 
         _lastUpdate = currentTime;
 
-        // Respawning mutates the shard's entities, so collect first and act after. NET-21 was a set
+        // Respawning mutates the shard's entities, so collect first and act after. net-21 was a set
         // mutated mid-iteration on this same thread.
         _expired.Clear();
 

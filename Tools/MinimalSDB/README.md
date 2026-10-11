@@ -89,7 +89,7 @@ Several needles at once, either on the command line or from `config.json`:
 
 Matching is case-insensitive substring, and the exit code is 0 whether or not anything matched. **No
 match is a result, not a failure.** It says the string never shipped in this db, which is often the
-question worth asking: [DATA-10](../../Docs/gaps/data.md#data-10) established that Firefall's NPC
+question worth asking: [data-10](../../Docs/gaps/data.md#data-10) established that Firefall's NPC
 behaviour parameters live on `dbcharacter::Monster` and nowhere else by searching for `Arch_` and
 getting exactly one table back. No amount of guessing at table names could have produced that.
 

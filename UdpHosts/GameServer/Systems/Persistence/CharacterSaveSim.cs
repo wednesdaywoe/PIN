@@ -12,7 +12,7 @@ namespace GameServer.Systems.Persistence;
 ///     The autosave is the load-bearing half rather than a safety net. <c>RequestLogout</c> is the tidy
 ///     exit and it does save, but the ordinary ways a PIN session actually finishes don't go through it:
 ///     the client is closed, or the connection times out, or the player dies and has to reconnect because
-///     nothing sends <c>RequestRespawn</c> (NET-23). On any of those, the last autosave is the save.
+///     nothing sends <c>RequestRespawn</c> (net-23). On any of those, the last autosave is the save.
 ///
 ///     The interval is the amount of progress a player can lose. A minute is short enough that losing it
 ///     is an annoyance rather than a session, and long enough that a shard with a full zone isn't

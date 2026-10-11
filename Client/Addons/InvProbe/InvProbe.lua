@@ -85,7 +85,7 @@ local function NameOf(sdb_id)
 end
 
 -- resource_type is the packed string lib_Items.GetResourceStats splits into the five stats. PIN sends
--- it empty today (see Docs/streams/client-ui.md UI6), so an empty one here is expected, not a bug.
+-- it empty today (see client-ui-6 in worklog.jsonl), so an empty one here is expected, not a bug.
 local function DescribeStats(resource_type)
 	if type(resource_type) ~= "string" or resource_type == "" then
 		return "resource_type empty -- no stats to draw"
@@ -194,7 +194,7 @@ end
 -- GetInventory() returns two of the six resources the client demonstrably holds, so a panel built on
 -- it would be wrong by construction. This tests the alternative: descend the category tree from 15
 -- ("Crafting Components") and ask GetInventoryItemsOfType at every node. If that reaches the melded
--- resources, UI4 has a route that doesn't depend on the accessor that drops them.
+-- resources, client-ui-4 has a route that doesn't depend on the accessor that drops them.
 local c_CraftingComponents = 15
 
 local function EnumerateByCategory(id, depth, seen, found)

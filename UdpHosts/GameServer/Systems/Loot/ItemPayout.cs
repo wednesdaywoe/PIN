@@ -14,8 +14,8 @@ namespace GameServer.Systems.Loot;
 ///     <para>
 ///     This is the route M3 and M5 both deferred as "the drop protocol". There isn't one for putting an
 ///     item in a bag: the client accepts a single-item <c>InventoryUpdate</c> and lists it unprompted,
-///     confirmed in game 2026-08-20 once the <c>0x02</c> arrival flag was right (NET-18), and crafting
-///     has handed items back that way since CRAFT2. Kill loot reaches here through
+///     confirmed in game 2026-08-20 once the <c>0x02</c> arrival flag was right (net-18), and crafting
+///     has handed items back that way since crafting-2. Kill loot reaches here through
 ///     <see cref="WorldLoot" /> instead of directly — it lies on the ground first and only lands in a bag
 ///     when somebody picks it up.
 ///     </para>
@@ -23,7 +23,7 @@ namespace GameServer.Systems.Loot;
 ///     Two ways a paid item still doesn't reach the player, both logged rather than silently swallowed:
 ///     an id with no <c>RootItem</c> row (data that outlived its item), and an item without the two low
 ///     <c>flags</c> bits, which the inventory panel never draws whatever the server sends
-///     (DATA-25). Neither is a delivery fault, and telling them apart from the log is the whole point
+///     (data-25). Neither is a delivery fault, and telling them apart from the log is the whole point
 ///     of the wording.
 ///     </para>
 /// </remarks>
@@ -37,7 +37,7 @@ public static class ItemPayout
     /// </summary>
     public const uint MaxCopies = 20;
 
-    /// <summary>The two <c>RootItem.flags</c> bits every item the client lists carries. See DATA-25.</summary>
+    /// <summary>The two <c>RootItem.flags</c> bits every item the client lists carries. See data-25.</summary>
     private const uint ListingBits = (uint)(ItemFlags.IsTradable | ItemFlags.IsMailable);
 
     /// <summary>
@@ -77,7 +77,7 @@ public static class ItemPayout
             itemId,
             (ItemType)root.Type,
             copies,
-            drawable ? string.Empty : $" — flags 0x{root.Flags:X} lack the listing bits, so the panel will not draw it (DATA-25)");
+            drawable ? string.Empty : $" — flags 0x{root.Flags:X} lack the listing bits, so the panel will not draw it (data-25)");
 
         return copies;
     }

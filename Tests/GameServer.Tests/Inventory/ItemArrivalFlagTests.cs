@@ -37,7 +37,7 @@ using Xunit;
 namespace GameServer.Tests.Inventory;
 
 /// <summary>
-///     NET-18 — the arrival flag on a created item. A created item is real and equippable but the
+///     net-18 — the arrival flag on a created item. A created item is real and equippable but the
 ///     client never lists it until the whole inventory is redrawn (it only shows after a full
 ///     <c>dbg_inventory resend</c>). The partial <c>InventoryUpdate</c> the client declines is
 ///     missing its arrival flag: retail's ordinary single-item add carries

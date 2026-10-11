@@ -12,7 +12,7 @@ namespace GameServer.Systems.AI;
 ///     <c>dbitems::Battleframe</c> — the same record a player's frame speed comes out of — and that
 ///     resolves a run speed for 2971 of them, leaving 124 with one named nowhere.
 ///
-///     Reading -1 literally would give an NPC that walks backwards, which is DATA-11 again with a
+///     Reading -1 literally would give an NPC that walks backwards, which is data-11 again with a
 ///     different sentinel, so every step of the chain is checked for a positive value before it is
 ///     believed.
 /// </summary>

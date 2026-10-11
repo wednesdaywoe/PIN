@@ -111,7 +111,7 @@ network drop rather than a missing record.
 
 ## Reading the facing
 
-`--facing` answers the question CLIENT-3 asked for two days: did retail bake per-model facing
+`--facing` answers the question client-3 asked for two days: did retail bake per-model facing
 offsets into the orientations it sent? Remote-entity poses never appear as standalone messages —
 they ride inside `RoutedMultipleMessage1` envelopes, addressed by the shorthand ids that
 `RoutedMessageIdAssign` establishes (the assignments themselves also ride inside the envelopes) —

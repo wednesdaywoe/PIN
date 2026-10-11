@@ -11,7 +11,7 @@ namespace GameServer;
 ///     Holds every reliable packet a channel has sent until the client says it arrived, and hands
 ///     back the ones that have gone unanswered too long. Without this "reliable" only meant the
 ///     server acked what the client sent, never that the server's own messages survived a drop
-///     (NET-1).
+///     (net-1).
 /// </summary>
 /// <remarks>
 ///     <para>

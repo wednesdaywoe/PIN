@@ -25,6 +25,6 @@ branch). And a step with several predecessors stops the backwalk at the merge ra
 a side; the report says how many chains start at one (zero, in the 1962 db).
 
 The finding this produced is written up in
-[streams/m7-encounter-combat.md](../../Docs/streams/m7-encounter-combat.md): retail kept wave
+the `encounter-combat` plan (`worklog show encounter-combat`): retail kept wave
 sequencing out of the chains entirely. Chains are one-shot verbs, and the orchestration lived in
 the server-side encounter logic that never shipped.

@@ -16,12 +16,12 @@
   <section class="doc">
     <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../Docs/streams/m7-encounter-combat.md">M7</a>. The milestone is that a thumper is a fight:
+    <p>The check on M7. The milestone is that a thumper is a fight:
     waves spawn while it drills, the machine itself can be destroyed, and the payout depends on how the
     defence went. Everything <a href="Thump-Placement.html">Thump Placement</a> established still holds underneath —
     this stream only adds the part where something shoots back.</p>
     <p><strong>Closed 2026-08-15, 6 of 6, in one sitting on the morning the code landed — and it closed
-    <a href="../Docs/streams/m7-encounter-combat.md">M7</a>, the last milestone in the plan.</strong> The sitting ran three
+    M7, the last milestone in the plan.</strong> The sitting ran three
     cycles where the doc planned two, because the first defended attempt was <em>lost</em>: the deliberate
     20-second observation window THUMPER-DEF-3 asked for cost two-thirds of the pool, and wave 4's three sappers
     crossed the ring in ~2 seconds (they run 11 m/s) and erased the remaining 1300 health in four —
@@ -54,7 +54,7 @@
     hillside; that is the standing bet every offset spawn makes and the reason deposits live on walked
     ground.</p>
     <p>No new creature types: every wave member is 528, one of the two models ever seen rendering, so this
-    stream triggers no <a href="../Docs/gaps/client.md#client-3">CLIENT-3</a> facing check. That is deliberate. The
+    stream triggers no <a href="../Docs/gaps/client.md#client-3">client-3</a> facing check. That is deliberate. The
     first stream that puts a new monster id in a wave inherits the check.</p>
     <p>The log lines this stream reads:</p>
     <span class="cmd"><pre><code>grep -a "wave" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "Thumper .* took .* damage" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "wave member" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "was destroyed by" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "mined node type" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "released" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>    grep -a "fallback shape" ~/Games/PIN/logs/GameServer.log</code></pre><button class="copy" type="button">Copy</button></span>
@@ -163,7 +163,7 @@
       is a stronger provocation than the entry asked for. Escorts hunted the tester like any NPC-Combat
       monster. Two observations came out of the fighting itself, both deferred tuning rather than
       defects: the grenade launcher's small AoE never caught more than one Aranha because they don't
-      group tightly enough, and Aranha melee reach reads longer than it should (DATA-10 territory — the
+      group tightly enough, and Aranha melee reach reads longer than it should (data-10 territory — the
       5m claw plus the 4m standoff means contact starts at range).</p></div>
       <div class="steps"><ol>
       <label class="step"><input checked data-k="thumper-def-4-1" type="checkbox"/><span class="step-body"><span class="lede">During wave 2 or later (first wave with an escort), shoot a sapper without killing it. It should

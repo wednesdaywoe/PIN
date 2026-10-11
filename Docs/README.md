@@ -14,11 +14,14 @@ Which of Firefall's systems are being brought back, and which deliberately aren'
 [Restoration](Restoration.md). What a hit and a body are worth once they are back — the numbers every
 other combat number is chosen against — is in [Combat Scale](Design/Combat-Scale.md).
 
-This project tracks its own state in three living docs, kept current session to session rather
+This project tracks its own state in a worklog and a test register, kept current session to session rather
 than written up after the fact:
 
-- [Progress ledger](PROGRESS.md) — what's missing and the order it's being fixed in
-- [Issue Register](ISSUE-REGISTER.md) — known defects and invented/hardcoded data, audited state
+- [worklog.jsonl](../worklog.jsonl) — every plan and its items. `worklog show` lists the plans; `worklog show <plan>` reads one
+  - Milestones M1 to M8: `combat-models` through `session-stability`
+  - Open work: `crafting`, `graded-crafting`, `client-ui`, `abilities`
+  - Known defects and invented data: `data`, `net` and `client`, with the audit summary in `issue-register`. Each issue's full story is in [gaps/](gaps/)
+- [streams/](streams/) — design notes kept as Markdown: battleframe constraints, solid world, and two appendices on world authoring and a public server
 - [Test Register](../Game Testing/index.html) — what's been verified against a real client; the queue itself
   is in the In-Game Tests, what can be checked without one lives in
   [Tests/GameServer.Tests](../Tests/GameServer.Tests)

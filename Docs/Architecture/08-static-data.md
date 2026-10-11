@@ -21,7 +21,7 @@ Those world files differ in where they came from, which matters when you're deci
 trust one. Most are recovered: melding perimeters carry the same names the client's own
 `system/maps/448.zone` uses. `spawn_group.json` is not. Retail's monster placements lived in
 server-side spawn tables and appear in neither the client db nor the zone file, so its contents are
-PIN's own ([DATA-15](../gaps/data.md#data-15)).
+PIN's own ([data-15](../gaps/data.md#data-15)).
 
 Both are static classes initialised once in the `GameServer` constructor before any client can
 connect, which is why they're reachable from anywhere without injection.

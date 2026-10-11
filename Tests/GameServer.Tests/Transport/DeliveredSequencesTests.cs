@@ -6,7 +6,7 @@ namespace GameServer.Tests.Transport;
 /// <summary>
 ///     What stops a resent packet being processed twice. It has to remember what was actually taken
 ///     rather than the highest sequence acked, because the ack skips over a gap
-///     (<see href="../../../Docs/gaps/network.md">NET-25</see>) and everything behind that gap would
+///     (<see href="../../../Docs/gaps/network.md">net-25</see>) and everything behind that gap would
 ///     otherwise read as a duplicate of something that never arrived.
 /// </summary>
 public class DeliveredSequencesTests

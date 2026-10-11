@@ -3,7 +3,7 @@
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Material quality and the Burst Rifle (GRADE1, RIFLE)</h1>
+    <h1>Material quality and the Burst Rifle (graded-crafting-1, RIFLE)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
   </header>
   <div class="bar">
@@ -19,9 +19,9 @@
     <p>Last run: area objects are drawn now (blasts, fire patches, spore mines, poison clouds), and area abilities
     stop at walls.</p>
     <p>Crafting is back, with the goal you chose: refining returns, and the quality of what you mine carries through
-    to what you craft. The plan is in <code>Docs/streams/graded-crafting.md</code>. This run has two parts that
+    to what you craft. The plan: <code>worklog show graded-crafting</code>. This run has two parts that
     don't depend on each other.</p>
-    <p><strong>Part 1 (GRADE1-A to C): can the game show a material's quality, and hold two batches of one
+    <p><strong>Part 1 (graded-crafting-1-A to C): can the game show a material's quality, and hold two batches of one
     material?</strong> In the original game every mined batch had a quality from 0 to 1000 and five stats, such as
     Conductivity or Toughness, packed into one short text sent with the stack. The server has always sent that text
     empty. The new <code>batch</code> command sends Aluminum stacks with it filled in. These stacks are for looking
@@ -34,12 +34,12 @@
   </section>
   <section class="block" data-open="true" id="grade1-a">
     <button class="block-head" type="button">
-      <span class="block-n">GRADE1-A</span>
+      <span class="block-n">graded-crafting-1-A</span>
       <span class="block-t">A material shows its quality and stats</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">GRADE1-A</span><span class="marker">[ ]</span><span class="entry-t">A material shows its quality and stats</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-A</span><span class="marker">[ ]</span><span class="entry-t">A material shows its quality and stats</span></div>
       <p>One Aluminum stack with quality 300 and five stats of 100, 150, 200, 250 and 300.</p>
       <div class="steps"><ol>
       <label class="step"><input data-k="grade1-a-1" type="checkbox"/><span class="step-body"><span class="lede">Open your materials list, which stays open: <code class="run">/mats</code>. Note whether Aluminum is already listed (it shouldn't be)</span></span></label>
@@ -58,12 +58,12 @@
   </section>
   <section class="block" data-open="true" id="grade1-b">
     <button class="block-head" type="button">
-      <span class="block-n">GRADE1-B</span>
+      <span class="block-n">graded-crafting-1-B</span>
       <span class="block-t">Two batches of one material</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">GRADE1-B</span><span class="marker">[ ]</span><span class="entry-t">Two batches of one material</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-B</span><span class="marker">[ ]</span><span class="entry-t">Two batches of one material</span></div>
       <p>Two Aluminum stacks in one message: 5 at quality 300 with low stats, and 7 at quality 900 with high stats (700 to 900). The question is whether the game shows two rows or merges them into one.</p>
       <div class="steps"><ol>
       <label class="step"><input data-k="grade1-b-1" type="checkbox"/><span class="step-body"><span class="lede">Clear part A's stack: <code class="run">dbg_inventory resend</code>. Check Aluminum is gone from <code class="run">/mats</code></span></span></label>
@@ -81,12 +81,12 @@
   </section>
   <section class="block" data-open="true" id="grade1-c">
     <button class="block-head" type="button">
-      <span class="block-n">GRADE1-C</span>
+      <span class="block-n">graded-crafting-1-C</span>
       <span class="block-t">Two batches with different batch numbers</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">GRADE1-C</span><span class="marker">[ ]</span><span class="entry-t">Two batches with different batch numbers</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-C</span><span class="marker">[ ]</span><span class="entry-t">Two batches with different batch numbers</span></div>
       <p>The same pair, but each stack also gets a different number in the one unnamed field the stack carries (1 and 2), in case the game uses it to tell batches apart.</p>
       <div class="steps"><ol>
       <label class="step"><input data-k="grade1-c-1" type="checkbox"/><span class="step-body"><span class="lede">Clear part B: <code class="run">dbg_inventory resend</code></span></span></label>

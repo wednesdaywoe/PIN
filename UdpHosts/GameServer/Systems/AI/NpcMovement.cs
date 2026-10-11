@@ -20,7 +20,7 @@ public static class NpcMovement
 {
     /// <summary>
     ///     How close an NPC tries to get to what it is shooting at. Invented, like the perception
-    ///     numbers next door in <see cref="TargetSelection"/> and tracked with them as DATA-10 — nothing
+    ///     numbers next door in <see cref="TargetSelection"/> and tracked with them as data-10 — nothing
     ///     in <c>dbmonster</c> carries a preferred engagement distance, and the behaviour trees that
     ///     would have (<c>Behavior</c>, <c>BehaviorOffensive</c>) are names of assets PIN doesn't load.
     ///
@@ -66,7 +66,7 @@ public static class NpcMovement
     ///     Movement state for a character the client should draw running. The high nibble is
     ///     <see cref="Movestate.Running"/> and the low byte carries <see cref="MovementFlags.Movement"/>,
     ///     which is how <c>MovementStateContainer</c> reads the pair apart. Derived from those two enums
-    ///     rather than seen on the wire — NET-12 has the packing itself down as unconfirmed — so an NPC
+    ///     rather than seen on the wire — net-12 has the packing itself down as unconfirmed — so an NPC
     ///     that slides along in an idle pose means this value is wrong, not that it isn't moving.
     /// </summary>
     private const short RunningState = 0x2004;

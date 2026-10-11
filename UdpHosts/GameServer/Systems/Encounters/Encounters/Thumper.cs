@@ -20,7 +20,7 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     ///     Neither this nor <see cref="ThumpingEndedAbility"/> has anywhere to be read from. The calldown
     ///     def carries only <c>landed_ability</c>, <c>completed_ability</c> and <c>death_ability</c>,
     ///     <c>dbitems::ResourceNodeBeacon</c> carries no ability at all, and nothing in the client
-    ///     database refers to either id. Which ability marked each stage was server content (DATA-18).
+    ///     database refers to either id. Which ability marked each stage was server content (data-18).
     /// </summary>
     private const uint WarmupEndedAbility = 34579;
 
@@ -51,14 +51,14 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
 
     /// <summary>
     ///     The escalation, keyed to drilling progress rather than to the clock so it survives any change
-    ///     to the cycle length. Everything about it is invented in the DATA-10 sense, since retail's
+    ///     to the cycle length. Everything about it is invented in the data-10 sense, since retail's
     ///     wave tables lived server-side and never shipped, but the shape follows what the chain walk
     ///     established: the encounter's own state decides when, and each spawn is a one-shot verb.
     ///
     ///     Every member is a Melded Aranha (528). Single-species on purpose: Aranha and Chosen are
     ///     hostile to each other, and a mixed wave fights itself at the foot of the thumper, which is
     ///     the zone-448 lesson the spawn audit exists to catch. 528 is also one of only two creatures
-    ///     ever seen rendering (CLIENT-3), so the waves introduce no unchecked model.
+    ///     ever seen rendering (client-3), so the waves introduce no unchecked model.
     ///     <para>
     ///     <b>This table is the starting-zone stock thumper and nothing else.</b> A solo player has to be
     ///     able to finish it. Retuned 2026-08-16 from a run that lost the machine at 93% having killed ten
@@ -142,7 +142,7 @@ public class Thumper : BaseEncounter, IInteractionHandler, IDeathHandler, IDestr
     ///     6-second wind-down, then the 7-second launch. PIN used to send a thumper that finished on its own
     ///     away with 34216, which is the launch alone and which no shipped data names. Pressing E during
     ///     COMPLETED fired both, so the launch cut the wind-down off and the thumper shot straight up
-    ///     (DATA-18). A player's E doesn't come through here; <see cref="OnInteraction"/> explains why.
+    ///     (data-18). A player's E doesn't come through here; <see cref="OnInteraction"/> explains why.
     /// </remarks>
     public static uint CountdownAbility(ThumperState expiring, uint landedAbility, uint completedAbility)
     {

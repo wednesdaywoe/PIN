@@ -385,13 +385,13 @@ public partial class PhysicsEngine
     ///     The height of the world under <paramref name="at"/>, or false where there is nothing under it.
     ///
     ///     This is the query the server did not have until terrain loaded, and its absence is the whole of
-    ///     <c>DATA-23</c>: every height in the AI is otherwise borrowed from a player, because a player
+    ///     <c>data-23</c>: every height in the AI is otherwise borrowed from a player, because a player
     ///     standing on the ground was the only ground measurement that reached this server. It looks at
     ///     statics only — a creature standing on another creature's head is not standing on the ground,
     ///     and neither is one inside a deployable.
     ///
     ///     False is a real answer and callers must handle it: zone collision has holes in it
-    ///     (<c>DATA-22</c>), and anywhere outside the loaded chunks has no ground by definition. Every
+    ///     (<c>data-22</c>), and anywhere outside the loaded chunks has no ground by definition. Every
     ///     caller here falls back to what it did before terrain, which is a worse answer rather than none.
     /// </summary>
     public bool TryGetGroundHeight(Vector3 at, out float groundZ)
@@ -552,7 +552,7 @@ public partial class PhysicsEngine
     ///
     ///     <see cref="TargetRayCast"/> answers the AI's question — "is my target the first thing in the
     ///     way" — and throws away everything else, so a strike on the world and a ray that met nothing
-    ///     come back identically. That distinction is the whole of <c>DATA-22</c>: an object with no
+    ///     come back identically. That distinction is the whole of <c>data-22</c>: an object with no
     ///     collision is invisible to the server, and telling it apart from one that simply is not there
     ///     means being told which of the two happened. This reports the difference and does not look
     ///     anything up.

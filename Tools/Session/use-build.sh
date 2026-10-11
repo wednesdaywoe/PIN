@@ -9,7 +9,7 @@
 #
 # THE `current` TAG IS A MISNOMER and has already cost a session. It was named when it was the
 # newest build; it has not been the newest since 2026-08-11, and running it now silently rolls back
-# environmental damage, the invuln command, the DATA-11 weapon-modifier fix and NPC locomotion. The
+# environmental damage, the invuln command, the data-11 weapon-modifier fix and NPC locomotion. The
 # name is kept only because test entries written at the time say `use-build.sh current` and those
 # entries have to stay reproducible. Use `latest` for the current tree. The listing below always
 # prints real dates so no tag has to be trusted.

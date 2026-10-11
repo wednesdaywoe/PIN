@@ -2,8 +2,6 @@
 project: pin
 kind: gap-detail
 title: "Issue Register — Client & Environment (CLIENT)"
-relates:
-  - ../ISSUE-REGISTER.md
 ---
 
 # Client & Environment (CLIENT)
@@ -15,7 +13,7 @@ sessions.
 
 <a id="client-1"></a>
 
-### CLIENT-1 — World-entry freeze: lost wakeup in Wine's fsync path [~] mitigated, needs confirmation
+### client-1 — World-entry freeze: lost wakeup in Wine's fsync path [~] mitigated, needs confirmation
 
 An intermittent freeze on world entry survived four rounds of live debugging
 ([Transport-And-Lifecycle T4–T8](../../Game Testing/Transport-And-Lifecycle.html)) before being caught
@@ -37,7 +35,7 @@ workaround can be dropped).
 
 <a id="client-2"></a>
 
-### CLIENT-2 — Firefall under Proton can't complete HTTPS login [x] closed, with a guard
+### client-2 — Firefall under Proton can't complete HTTPS login [x] closed, with a guard
 
 Wine's WinHTTP validates the login TLS handshake against the wrong certificate store, so HTTPS
 login never completes. The permanent fix: every client-facing URL is served plain HTTP instead
@@ -51,7 +49,7 @@ has to be reapplied after any Steam-initiated verify or update. Worth a line in
 
 <a id="client-3"></a>
 
-### CLIENT-3 — Some creature models don't render along the orientation the server sends [x] FIXED &amp; VERIFIED 2026-08-15
+### client-3 — Some creature models don't render along the orientation the server sends [x] FIXED &amp; VERIFIED 2026-08-15
 
 A Melded Aranha (528) engaged at melee range stands and attacks about 90° off from the player it is
 attacking. Confirmed as a model property rather than a server defect on 2026-08-13, by the only test
@@ -70,7 +68,7 @@ said that generalises to a creature rig, and it doesn't.
 — carries only physics height, radius, mass and collision ids. The axis lives in the model asset,
 which the client loads and the server never sees. So a fix means either a hand-built table of
 per-monster yaw offsets, which is invention of exactly the kind
-[DATA-10](data.md#data-10) already tracks too much of, or reading the offset out of the asset DB,
+[data-10](data.md#data-10) already tracks too much of, or reading the offset out of the asset DB,
 which is unexplored.
 
 Left open and unfixed on purpose. It is cosmetic: the shot direction is computed from live positions
@@ -125,9 +123,9 @@ path, so nothing in the server is currently wrong, but any future inbound read o
 (or capture analysis, which is how it surfaced) must decode by the encoder's convention, as
 `FacingReport.Dequantise` does.
 
-### CLIENT-4 — Some held resources never appear in the inventory panel [x] closed 2026-08-21 by the MatList panel
+### client-4 — Some held resources never appear in the inventory panel [x] closed 2026-08-21 by the MatList panel
 
-Found 2026-08-21 on the [CRAFT2](../../Game%20Testing/Crafting.html) pass. The build spent 15
+Found 2026-08-21 on the [crafting-2](../../Game%20Testing/Crafting.html) pass. The build spent 15
 Crystite, 1 Chitin Fibers and 1 Copper Wiring, and the server's counts moved correctly for all
 three — the character's resource kinds went 7 to 6 as one stack emptied out. **The tester saw the
 deduction toasts for all three, but could not find the two crafting materials in the panel**, and
@@ -146,10 +144,10 @@ Petrochemical and the like — appear to have no display at all.**
 >
 > What the shipped panel really drops is **whatever `Player.GetInventory()` omits**, which is a
 > different set: the melded biomaterials (77343, 77344), reachable only through
-> `Player.GetInventoryItemsOfType(15)`. See [client-ui UI1](../streams/client-ui.md) for the
+> `Player.GetInventoryItemsOfType(15)`. See client-ui client-ui-1 for the
 > measurement and [MatList](../../Client/Addons/MatList) for a list that merges both.
 >
-> The CRAFT3 constraint below is void. An economy priced in raw resources hands the player materials
+> The crafting-3 constraint below is void. An economy priced in raw resources hands the player materials
 > that display today.
 
 **The tester then supplied the answer from memory, and the client confirms it: raw resources were
@@ -165,7 +163,7 @@ UI and shipped the shell. Grepping all of `system/gui` for "printer", "molecular
 returns nothing else at all.
 
 So there is no display route for the raw tier, and no panel to fix — there is a named, empty slot
-where one would go. This is the same cull [CRAFT1](../../Game%20Testing/Crafting.html) found from the
+where one would go. This is the same cull [crafting-1](../../Game%20Testing/Crafting.html) found from the
 binary side, where 748 exported `Game.*` names contain no fabrication sender.
 
 **The category tree does not explain it, which rules out a data fix.** `dbitems::Resource_Types` is a
@@ -175,7 +173,7 @@ parent tree and the inventory panel filters on subtype **15** (`lib_SubTypeIds.l
 Resource"** beneath 15, with a **148 "Refined Resource"** node alongside. The ores are classified
 correctly. They have nowhere to be drawn.
 
-**This is a hard constraint on [CRAFT3](../../Game%20Testing/Crafting.html), not a bug to fix
+**This is a hard constraint on [crafting-3](../../Game%20Testing/Crafting.html), not a bug to fix
 afterwards.** An economy priced in raw resources gives the player materials they cannot see, count or
 plan with. An economy priced in refined materials — Iron Bars, Chitin Fibers, Copper Wiring — uses
 items that already draw in the ordinary inventory today, confirmed in game. Either build the panel
@@ -200,13 +198,13 @@ check that guess against retail** — the 2016 capture contains no crafting comp
 `system/gui` is loose Lua and names what the panel binds, so this is readable rather than
 guessable.
 
-**It blocks nothing yet and it blocks a lot soon.** CRAFT2 passed without it, because the toasts
-and the server log carried the evidence. But CRAFT3 chooses a resource economy and CRAFT4 prices
+**It blocks nothing yet and it blocks a lot soon.** crafting-2 passed without it, because the toasts
+and the server log carried the evidence. But crafting-3 chooses a resource economy and crafting-4 prices
 recipes against it, and a player cannot manage materials they cannot see — a thumper payout the
-inventory won't show is a loop with its middle missing. Settle it before CRAFT4, and treat the
-answer as a constraint on the CRAFT3 decision rather than a bug to fix afterwards.
+inventory won't show is a loop with its middle missing. Settle it before crafting-4, and treat the
+answer as a constraint on the crafting-3 decision rather than a bug to fix afterwards.
 
-### CLIENT-5 — A knocked-down monster's fall is drawn rough [ ] open, accepted for now
+### client-5 — A knocked-down monster's fall is drawn rough [ ] open, accepted for now
 
 Found 2026-10-03 on STUN-4. Since c3f7a235 a monster under an effect with the KnockDown combat flag reports the
 `Knockdown` movement state (0xA000) in its pose, and the client does play a knockdown: the Fiend falls, lies for

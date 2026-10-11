@@ -41,16 +41,16 @@ that it walks into the air, rising alongside the hill instead of onto it. Nothin
 that; 208 ground samples and 675 damage lines are all consistent with a perfectly behaved session.
 The second finding was not an entry at all: <strong>sappers spawning inside a hillside</strong>, which the tester
 noticed only because the ground now stops bullets and made them unkillable. Both are
-<a href="../ISSUE-REGISTER.md">DATA-23</a> — terrain loaded for a day and no code asking it where the ground is.</p>
+<a href="../ISSUE-REGISTER.md">data-23</a> — terrain loaded for a day and no code asking it where the ground is.</p>
 <p><strong>The third came from following the tester's own theory offline.</strong> The report was a Chosen shooting
 through a rock formation, with a guess attached: that world terrain and environment meshes behave
 differently. Rebuilding zone 448's collision from the client's map files says the guess is right in
 substance and wrong in mechanism — the ground is a mesh and converts perfectly, while 252 individual
 objects ship as convex hulls that convert to nothing. That is
-<a href="../ISSUE-REGISTER.md">DATA-22</a>. <strong>A tester hypothesis stated as a guess is worth chasing</strong>: this one
+<a href="../ISSUE-REGISTER.md">data-22</a>. <strong>A tester hypothesis stated as a guess is worth chasing</strong>: this one
 was chased with a rebuild rather than a session, and it named a defect no in-game entry would have
 isolated.</p>
-<p><strong>The 2026-08-16 evening sitting closed <a href="../ISSUE-REGISTER.md">DATA-21</a> and confirmed the creature
+<p><strong>The 2026-08-16 evening sitting closed <a href="../ISSUE-REGISTER.md">data-21</a> and confirmed the creature
 cadence change, and its most useful product is a lesson about reading the game rather than a pass.</strong>
 Weapon splash works: a Grenade Launcher put 350 into the creature it struck and 38 into one near the
 edge of a 4m blast, twice for identical numbers, with the direct target billed once and not twice.
@@ -75,7 +75,7 @@ output did.</p>
 <p><strong>Player health at 1,000 is verified, and the player went down</strong> — the first unstaged combat death
 the project has had. One monster 1189 hitting for 112 took the full pool to zero in 9 hits at
 18:51, and the two-stage bleedout fired correctly (<code>downed, tap-out in 2000ms, forced at 30000ms</code>),
-which is <a href="../ISSUE-REGISTER.md">NET-23</a>'s path running on a real kill rather than a staged one. A
+which is <a href="../ISSUE-REGISTER.md">net-23</a>'s path running on a real kill rather than a staged one. A
 single Melded Aranha separately took the tester from 1,000 to 118 in 59 seconds, which is §7's
 "three attackers kill in ~22 s" divided by three, holding within the noise from a direction nobody
 aimed at it. Three readings came free: <strong>the player has no shields at all</strong> (every line reads
@@ -100,10 +100,10 @@ the login returns you to the outpost you left from (Copacabana); and a deliberat
 was quarantined to a <code>.corrupt-&lt;stamp&gt;</code> file with a precise parse error, costing the character its
 progress rather than its ability to log in. <a href="Reliability.html">Reliability Under Loss</a>
 went <strong>6 of 6</strong> and closed <a href="../PROGRESS.md">M8</a> — the rollup line below has the numbers — and its RELIABILITY-6
-closed <a href="../ISSUE-REGISTER.md">NET-24</a>: the haunted thumper really was one lost scope-out on a channel
+closed <a href="../ISSUE-REGISTER.md">net-24</a>: the haunted thumper really was one lost scope-out on a channel
 that never resent. <strong>The loop the project promises now closes end to end and survives both a bad
 link and a logout.</strong></p>
-<p><strong>Inventory went 2 of 3 and turned <a href="../ISSUE-REGISTER.md">NET-18</a> from a question into a defect with
+<p><strong>Inventory went 2 of 3 and turned <a href="../ISSUE-REGISTER.md">net-18</a> from a question into a defect with
 a workaround</strong>: the client declines PIN's partial item update, so a created item appears only
 after <code>dbg_inventory resend</code> — and in the garage picker, not the inventory window, whose search
 doesn't match created items. INVENTORY-3 killed the fullness theory with a measurement (246 → 247 items,
@@ -111,16 +111,16 @@ all Gear, no UI ceiling). The remaining defect is confined to the item arrays of
 next comparison is capture message [9].</p>
 <p><strong>The prediction sweep opened the same night and earned its keep immediately.</strong>
 <a href="Prediction-Sweep.html">PREDICT-SWEEP-0 passed</a> — the cert-gated 86074 slotted on the Dreadnaught,
-every frame reads 45, <a href="../ISSUE-REGISTER.md">NET-19</a> closed — and the first presses after it found a
-class bug, <a href="../ISSUE-REGISTER.md">NET-26</a>: Turret Mode (PREDICT-SWEEP-2) and Frontline Medic (PREDICT-SWEEP-6) both self-cancel
+every frame reads 45, <a href="../ISSUE-REGISTER.md">net-19</a> closed — and the first presses after it found a
+class bug, <a href="../ISSUE-REGISTER.md">net-26</a>: Turret Mode (PREDICT-SWEEP-2) and Frontline Medic (PREDICT-SWEEP-6) both self-cancel
 seconds after engaging while the server keeps the effect set, and the two effects share only one
 duration element, the <code>requirecstate</code> check. Hover Mode (PREDICT-SWEEP-3) was the control and held — its
 required state, airborne, is one the client tracks itself — so the failing states are specifically
-<strong>server-owned</strong>. Two more findings fell out on the way: <a href="../ISSUE-REGISTER.md">DATA-19</a>, Ultimates
+<strong>server-owned</strong>. Two more findings fell out on the way: <a href="../ISSUE-REGISTER.md">data-19</a>, Ultimates
 never recharge (blocks PREDICT-SWEEP-1), and Hover's lift never engaging (a gameplay gap recorded in PREDICT-SWEEP-3, likely
-<a href="../ISSUE-REGISTER.md">DATA-5</a> territory). Offline next steps are written where they belong: name
-effects 1184 and 10812–10815 and read the two <code>requirecstate</code> targets in the SDB (NET-26), and
-diff the partial item message against the capture (NET-18).</p>
+<a href="../ISSUE-REGISTER.md">data-5</a> territory). Offline next steps are written where they belong: name
+effects 1184 and 10812–10815 and read the two <code>requirecstate</code> targets in the SDB (net-26), and
+diff the partial item message against the capture (net-18).</p>
 <p><strong><a href="../PROGRESS.md">M7</a> was built on the morning of 2026-08-15 and closed the same morning —
 <a href="Thumper-Defence.html">Thumper Defence</a> went 6 of 6 in one sitting, and with it the
 milestone plan is finished.</strong> Both offline unknowns resolved on the spot: the collision asset
@@ -144,9 +144,9 @@ stream that still answers anything today.</p>
 <p><strong>That stream just paid for itself, and this is the first time it has.</strong> M8's whole implementation
 was calibrated off the 2016 capture instead of off a guess — the retransmit timeout, the resend count
 the header carries, whether a resend is the same bytes, whether an ack is cumulative — and reading it
-closed <a href="../ISSUE-REGISTER.md">NET-3</a> outright and found two live faults nobody would have reproduced,
+closed <a href="../ISSUE-REGISTER.md">net-3</a> outright and found two live faults nobody would have reproduced,
 because neither happens on a link that doesn't drop packets. The open wire questions
-(<a href="../ISSUE-REGISTER.md">NET-10</a>, <a href="../ISSUE-REGISTER.md">NET-12</a>, <a href="../ISSUE-REGISTER.md">NET-17</a>) are the same
+(<a href="../ISSUE-REGISTER.md">net-10</a>, <a href="../ISSUE-REGISTER.md">net-12</a>, <a href="../ISSUE-REGISTER.md">net-17</a>) are the same
 shape and are still the cheapest work in the register.</p>
 <p><strong><a href="Reliability.html">Reliability Under Loss</a> is new and unrun, RELIABILITY-1 through RELIABILITY-6.</strong> It is the
 only stream in the queue that has to break the network deliberately, with a <code>tc netem</code> rule on <code>lo</code>
@@ -200,8 +200,8 @@ report reads what is under your feet (THUMP-PLACE-2), and the payouts came out a
 a spot and typing <code>deposit add</code> survived a restart with its id, position and radius intact, and was
 thumped again afterwards — so new zone content does not need this repo.</p>
 <p>Two defects came out of the sitting rather than out of a code read, which is what the queue is for:
-<a href="../ISSUE-REGISTER.md">NET-24</a>, a finished thumper the client never removes from the world, and
-<a href="../ISSUE-REGISTER.md">DATA-18</a>, the hardcoded ability that sends it away.</p>
+<a href="../ISSUE-REGISTER.md">net-24</a>, a finished thumper the client never removes from the world, and
+<a href="../ISSUE-REGISTER.md">data-18</a>, the hardcoded ability that sends it away.</p>
 <p><strong>A restart no longer destroys a sitting's log.</strong> THUMP-PLACE-2 passed on 2026-08-14 and its transcript did
 not survive: every start truncated <code>logs/</code>, and the restart THUMP-PLACE-6 asks for took the evidence of
 everything before it. Outgoing logs now move to <code>~/Games/PIN/logs/previous/&lt;server&gt;-&lt;stamp&gt;.log</code>,
@@ -226,7 +226,7 @@ crystite, so the log stated the bug without anyone reproducing anything. <strong
 failure branches applied.</strong> The server was not quietly right while the screen was wrong, and the log
 was not silent; it was fluent and wrong, which is the failure mode a test entry is worst at
 anticipating.</p>
-<p>That session also promoted <a href="../ISSUE-REGISTER.md">DATA-16</a>'s basis-points guess to confirmed, on a table
+<p>That session also promoted <a href="../ISSUE-REGISTER.md">data-16</a>'s basis-points guess to confirmed, on a table
 reached from monster 528 rather than somewhere distant.</p>
 <p><strong>KILL-REWARDS-2 is open and the two sessions disagree.</strong> 48% then 8% against an expected 25%, on 21 and 12
 kills. Both are noise at that size, so nothing has been measured yet — it wants 40 kills in one
@@ -281,8 +281,8 @@ at, no footing is recorded until it walks off that spot, and <code>spawngroup ad
 then.</p>
 <p><strong>Two findings came out of the closing run and neither belongs to M2.</strong> A player who dies has no way
 back — the server kills them correctly and the client never asks to respawn
-(<a href="../ISSUE-REGISTER.md">NET-23</a>) — and the first balance reading ever taken against real content says
-the monsters are bullet sponges, which is <a href="../ISSUE-REGISTER.md">DATA-6</a>'s flat health pool for every
+(<a href="../ISSUE-REGISTER.md">net-23</a>) — and the first balance reading ever taken against real content says
+the monsters are bullet sponges, which is <a href="../ISSUE-REGISTER.md">data-6</a>'s flat health pool for every
 creature in the game rather than anything about the pack. The incoming half of that reading is
 roughly retail already. <strong>The pool has since been dropped from 2500 to 500</strong> (2026-08-13), so any
 NPC Combat entry re-run from here is being run against a different fight than the one recorded
@@ -304,7 +304,7 @@ entry in the queue that forbids the <code>npc</code> command.</p>
 neither walked nor slid. The cause was replication, not steering — <code>Character_MovementView</code> is
 deliberately not flushed to scoped clients and an NPC had nothing sending a pose on its behalf, so a
 client held its scope-in position until a checksum mismatch corrected it in one jump
-(<a href="../ISSUE-REGISTER.md">NET-22</a>). Nothing that run produced was markable.</p>
+(<a href="../ISSUE-REGISTER.md">net-22</a>). Nothing that run produced was markable.</p>
 <p>The shape of that failure is the lesson worth keeping: <strong>the server log could not have shown it.</strong>
 Every line the AI writes describes the server's own copy, which was stepping 30cm every 50ms exactly
 as <code>SteeringTests</code> says. A defect that lives in what was <em>not</em> sent is invisible to a log of what
@@ -318,16 +318,16 @@ prompt anyone to check whether it aims correctly, and NPC-COMBAT-1–NPC-COMBAT-
 <p>Two findings came out of the closing sitting as gaps rather than failures, both from watching a
 melee Aranha. It renders about 90° off the player it is attacking, and a side-by-side against a
 Chosen in the same spot pinned that on the creature model rather than on anything the server sends
-(<a href="../ISSUE-REGISTER.md">CLIENT-3</a>) — cosmetic, since shots are aimed from live positions. And chasing
+(<a href="../ISSUE-REGISTER.md">client-3</a>) — cosmetic, since shots are aimed from live positions. And chasing
 "4m looks too far for a claw" turned up <code>combatDist=</code> inside the shipped behaviour strings, which is
-retail's own standoff distance for most of what <a href="../ISSUE-REGISTER.md">DATA-10</a> currently invents. The
+retail's own standoff distance for most of what <a href="../ISSUE-REGISTER.md">data-10</a> currently invents. The
 research pass that came out of it settled the question: those strings are on <code>dbcharacter::Monster</code>
 and 2100 of its 3109 rows carry them, and the instance table behind the rest was never in the client
 db to be found. It also turned up <code>perceptionDist</code>, which caps at 25m against PIN's 40m.</p>
 <p>Superseded by the sitting that closed NPC-COMBAT-8–NPC-COMBAT-13; kept because the reasoning still applies. Re-run from
 <strong>NPC-COMBAT-8</strong>, the milestone's exit condition. <strong>NPC-COMBAT-9</strong> is still the entry most likely to come
 back with something: the movement state that drives the run animation (<code>0x2004</code>) is derived from two
-enums, has never been seen on the wire, and sits on a packing <a href="../ISSUE-REGISTER.md">NET-12</a> already
+enums, has never been seen on the wire, and sits on a packing <a href="../ISSUE-REGISTER.md">net-12</a> already
 flags — and now finally gets drawn. <strong>NPC-COMBAT-12</strong> looks at whether an NPC stays on the ground, which it has
 no way of knowing: the server holds no terrain, so an NPC borrows its target's footing and refuses
 slopes too steep to be ground.</p>
@@ -337,23 +337,23 @@ green on 2026-08-12. Drowning reproduces effect 789's compounding curve tick for
 entries safe to attempt. Between them they closed the "my character is invulnerable" reading from
 <a href="Hostility.html">HOSTILITY-5</a>.</p>
 <p>ENV-1 also found what it was watching for: <strong>zone 448 uses at least two water descriptions</strong>, not one,
-so <a href="../ISSUE-REGISTER.md">DATA-13</a>'s assumption is load-bearing rather than theoretical.</p>
+so <a href="../ISSUE-REGISTER.md">data-13</a>'s assumption is load-bearing rather than theoretical.</p>
 <p><strong>ENV-3 is what's left and it gates ENV-4.</strong> Where a melding wall is comes from the control points the
 client draws, but which side of it is lethal is inferred from their winding, and the damage rate is
-invented (<a href="../ISSUE-REGISTER.md">DATA-12</a>). A backwards reading would make the safe world lethal. Run it
+invented (<a href="../ISSUE-REGISTER.md">data-12</a>). A backwards reading would make the safe world lethal. Run it
 with <code>invuln</code> on.</p>
-<p>The same session produced <a href="../ISSUE-REGISTER.md">DATA-14</a> off a side question about why a spawned
+<p>The same session produced <a href="../ISSUE-REGISTER.md">data-14</a> off a side question about why a spawned
 monster wasn't hurting anyone: 1196 really does 8 dps, and the ids that hit harder are mostly ones
 whose damage PIN inflates because it doesn't model reloading.</p>
 <p><strong>The standing-still half of NPC Combat is complete, 7 of 7, and it paid for itself several times
 over.</strong> NPC-COMBAT-1–NPC-COMBAT-7 ran on
 2026-08-12 and four of them failed first time. NPC-COMBAT-2 and NPC-COMBAT-6 failing <em>differently</em> — one monster with no
-range, another doing no damage — exposed <a href="../ISSUE-REGISTER.md">DATA-11</a>, a zero multiplier read
+range, another doing no damage — exposed <a href="../ISSUE-REGISTER.md">data-11</a>, a zero multiplier read
 literally that had stripped the range off 269 weapons and the damage off 220 in every weapon the
 server had ever resolved, player weapons included. NPC-COMBAT-4 caught NPCs that never disengaged. NPC-COMBAT-3 caught
 the entry itself being wrong: with <code>LoadMapsCollision</code> off there is no world geometry server-side, so
 every raycast PIN makes sees an empty world with a few entities in it. A crash in the tail of the
-same session log closed <a href="../ISSUE-REGISTER.md">NET-21</a>. None of that was visible from the screen.</p>
+same session log closed <a href="../ISSUE-REGISTER.md">net-21</a>. None of that was visible from the screen.</p>
 <p>Everything below this line predates these sessions and is unchanged.</p>
 <p><strong>Transport is clear; the queue is otherwise untouched since the M1 client sessions.</strong> The
 2026-08-11/12 sessions were entirely about TRANSPORT-7–TRANSPORT-9 — closing the world-entry freeze — so
@@ -362,7 +362,7 @@ their items during the M1 push and are otherwise stable. Everything downstream o
 (all of Prediction-Sweep's PREDICT-SWEEP-0–PREDICT-SWEEP-6, most of the combat items) is still blocked on the same two things
 it's always been blocked on: <code>createitem</code> actually delivering, and PREDICT-SWEEP-0 confirming the certificate
 fix. Nothing has been filed to the issue register as a new failure this session — the two open
-prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracked before this pass.</p>
+prediction fixes (<a href="../ISSUE-REGISTER.md">net-19</a>) were already tracked before this pass.</p>
 <hr/>
 <h2>Read first</h2>
 <ul>
@@ -370,7 +370,7 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
   deploy, admin commands, and the type-id tables the rest of the queue spawns with</li>
 <li>[x] <a href="Transport-And-Lifecycle.html">Transport and Lifecycle</a> — 9 of 9 passing. TRANSPORT-1–TRANSPORT-3
   get a client into the world over HTTP-only; TRANSPORT-4–TRANSPORT-9 close the world-entry freeze, ending in
-  <a href="../ISSUE-REGISTER.md">CLIENT-1</a>'s launch-option workaround</li>
+  <a href="../ISSUE-REGISTER.md">client-1</a>'s launch-option workaround</li>
 </ul>
 <h2>Answerable without a client</h2>
 <ul>
@@ -382,7 +382,7 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
 <li>[~] <a href="Inventory.html">Inventory Delivery</a> — <strong>2 of 3, run 2026-08-14.</strong> INVENTORY-1 landed on
   its own middle branch, confirmed twice: a created item is real, equippable and usable, but only
   appears after <code>dbg_inventory resend</code> — the client declines PIN's partial item update
-  (<a href="../ISSUE-REGISTER.md">NET-18</a> re-scoped to exactly that, still open). INVENTORY-2 passed: the created
+  (<a href="../ISSUE-REGISTER.md">net-18</a> re-scoped to exactly that, still open). INVENTORY-2 passed: the created
   20003 was hand-equipped and the flags round-tripped. INVENTORY-3 killed the fullness theory: 246 → 247
   items, all in Gear, no capacity ceiling in the UI (only a weight meter at 0/255). <strong>The gate on
   PREDICT-SWEEP-0–PREDICT-SWEEP-6 is open in practice</strong>: <code>createitem</code>, then <code>resend</code>, then look in the garage picker — the
@@ -394,16 +394,16 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
   notice you, turn, close the ground, stop where their weapon can reach, shoot, hurt you, track you
   while firing, give up and walk home, and die cleanly mid-burst — and thirteen of them are standing
   in the zone before you type anything, respawn where they fell, and can kill you. It took five
-  sittings and produced <a href="../ISSUE-REGISTER.md">DATA-11</a>, <a href="../ISSUE-REGISTER.md">NET-22</a>,
-  <a href="../ISSUE-REGISTER.md">NET-23</a>, a real AI defect (NPC-COMBAT-4), one entry that was wrong about what the server
+  sittings and produced <a href="../ISSUE-REGISTER.md">data-11</a>, <a href="../ISSUE-REGISTER.md">net-22</a>,
+  <a href="../ISSUE-REGISTER.md">net-23</a>, a real AI defect (NPC-COMBAT-4), one entry that was wrong about what the server
   can see (NPC-COMBAT-3), one entry that fought its own fight from inside a hillside (NPC-COMBAT-16), and
-  <a href="../ISSUE-REGISTER.md">CLIENT-3</a></li>
+  <a href="../ISSUE-REGISTER.md">client-3</a></li>
 <li>[~] <a href="Hostility.html">Hostility</a> — 6 of 7 passing. HOSTILITY-5 passed once NPCs could attack,
   confirming <code>CanDamage</code> with a monster as the attacker. Only HOSTILITY-7 is left and it needs two clients</li>
 <li>[~] <a href="Damage-Decay.html">Damage Decay</a> — 4 of 5 passing. The curve's shape between
   its two confirmed anchor points is deliberately left unqueued</li>
 <li>[ ] <a href="Deployables-And-Vehicles.html">Deployables and Vehicles</a> — 0 of 7 passing, not
-  yet run. <a href="../ISSUE-REGISTER.md">NET-14</a> (the discarded faction id) was found reading this code, not
+  yet run. <a href="../ISSUE-REGISTER.md">net-14</a> (the discarded faction id) was found reading this code, not
   by running DEPLOY-VEH-6</li>
 </ul>
 <h2>Resources</h2>
@@ -413,7 +413,7 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
   and the tester saw it arrive. The first attempt failed inside PIN — 21 kills rolled crystite ten
   times and paid it zero times, because the resource-or-item check consulted <code>dbitems::ResourceItem</code>,
   the gatherable-materials list, which does not contain crystite. That session also confirmed
-  <a href="../ISSUE-REGISTER.md">DATA-16</a>'s basis-points guess on a table that is on the kill path. <strong>KILL-REWARDS-2 is
+  <a href="../ISSUE-REGISTER.md">data-16</a>'s basis-points guess on a table that is on the kill path. <strong>KILL-REWARDS-2 is
   still open and the two sessions disagree</strong> — 48% then 8% against an expected 25%, on 21 and 12
   kills, which is noise at both ends; it wants 40 kills in one post-fix sitting</li>
 <li>[~] <a href="Resource-Payout.html">Resource Payout</a> — 3 of 5 passing, all on 2026-08-13.
@@ -456,7 +456,7 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
   real rate of fire, and three kills came back at 31 hits each with no variance, health stepping by
   39 onto exactly 0. Time to kill 3.1 seconds, which reads the video's "a few seconds" more directly
   than the 2.0 predicted. <strong>The entry measured the wrong gun and still passed</strong> — the equip had
-  silently failed on NET-18, so the rifle fired rather than the Heavy MG, and the health result held
+  silently failed on net-18, so the rifle fired rather than the Heavy MG, and the health result held
   because it is read off the health column rather than off the hit count. <strong>Re-run the same day with
   the equip confirmed: 31 again, six kills across two weapons with no variance anywhere.</strong> It also
   closed DMG-LOOP-2's open ×0.85 — all 93 Heavy MG hits landed a full 39, and <code>ProjectileSim</code> shows the
@@ -477,7 +477,7 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
 <ul>
 <li>[~] <a href="Death-And-Respawn.html">Death and Respawn</a> — <strong>2 of 5, written and run
   2026-08-15, the day the code landed, and the exit condition is one of the two.</strong> The check on
-  <a href="../ISSUE-REGISTER.md">NET-23</a>. <strong>A player died and got back up by both routes</strong> — DEATH-RESPAWN-1's give-up key
+  <a href="../ISSUE-REGISTER.md">net-23</a>. <strong>A player died and got back up by both routes</strong> — DEATH-RESPAWN-1's give-up key
   (down 11:17:02, respawned 11:17:05) and DEATH-RESPAWN-3's 30-second fallback (down 11:03:51, respawned
   11:04:22) — <strong>and both sessions ended in menu logouts instead of the reconnect every previous
   death forced.</strong> DEATH-RESPAWN-1's pass also retires most of DEATH-RESPAWN-2's risk: the tap-out gate reads the same clock
@@ -506,19 +506,19 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
   verdict: ten minutes at 5% induced loss was "indistinguishable from any other session", over
   ~2,550 server resends (94% attempt 1, zero attempt 3), ~100 client resends correctly
   deduplicated, nothing abandoned, and a queue peaking at 82 unacked. RELIABILITY-6 closed
-  <a href="../ISSUE-REGISTER.md">NET-24</a>: 2 stale keyframe requests against a baseline of 648, model gone
-  from the ground. <a href="../ISSUE-REGISTER.md">NET-1</a> closed with the stream</li>
+  <a href="../ISSUE-REGISTER.md">net-24</a>: 2 stale keyframe requests against a baseline of 648, model gone
+  from the ground. <a href="../ISSUE-REGISTER.md">net-1</a> closed with the stream</li>
 </ul>
 <h2>Client prediction</h2>
 <ul>
 <li>[~] <a href="Charge-Camera.html">Charge Camera</a> — 4 of 8 passing (the failures are dead-end
   attempts on the way to CHARGE-CAM-5h's fix, not open bugs). Read this before trusting any prediction-shaped
-  result; <a href="../ISSUE-REGISTER.md">NET-15</a> and <a href="../ISSUE-REGISTER.md">NET-16</a> are what it left open</li>
+  result; <a href="../ISSUE-REGISTER.md">net-15</a> and <a href="../ISSUE-REGISTER.md">net-16</a> are what it left open</li>
 <li>[ ] <a href="Client-Logging.html">Client Logging</a> — reference, not a pass/fail stream: how
   to make the client log its own ability engine, the tooling behind CHARGE-CAM-5h and everything below it</li>
 <li>[ ] <a href="Prediction-Sweep.html">Prediction Sweep</a> — 0 of 23 passing. The 47 other effects
   shaped like the one CHARGE-CAM-5h fixed (27 player-reachable), entirely blocked on PREDICT-SWEEP-0 confirming the
-  certificate fix (<a href="../ISSUE-REGISTER.md">NET-19</a>, rolled up as <a href="../ISSUE-REGISTER.md">NET-20</a>)</li>
+  certificate fix (<a href="../ISSUE-REGISTER.md">net-19</a>, rolled up as <a href="../ISSUE-REGISTER.md">net-20</a>)</li>
 </ul>
 <h2>Battleframe constraints</h2>
 <ul>
@@ -543,10 +543,10 @@ prediction fixes (<a href="../ISSUE-REGISTER.md">NET-19</a>) were already tracke
   waves arrived and sappers landed 82 hits on each machine, but an attacker parked 4m away lost sight
   of it three times, each for a single attack cycle. SOLID-WORLD-7 clean: no new errors, and the 54 that look
   alarming are the character service that has never run, retrying. <strong>SOLID-WORLD-5 failed</strong> and is
-  <a href="../ISSUE-REGISTER.md">DATA-23</a>: a creature chasing the tester uphill rose alongside the slope rather
+  <a href="../ISSUE-REGISTER.md">data-23</a>: a creature chasing the tester uphill rose alongside the slope rather
   than onto it. The sitting's second finding was not on the sheet at all — sappers spawning inside a
   slope, unhittable now that the ground stops bullets — and the third came from chasing SOLID-WORLD-4's one
-  surprise offline, <a href="../ISSUE-REGISTER.md">DATA-22</a>, 252 objects with no collision. Scoped in
+  surprise offline, <a href="../ISSUE-REGISTER.md">data-22</a>, 252 objects with no collision. Scoped in
   <a href="../streams/solid-world.md">streams/solid-world.md</a></li>
 </ul>
 <h2>Known to need the client, not yet scheduled</h2>

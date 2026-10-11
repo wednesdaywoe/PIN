@@ -16,7 +16,7 @@
   <section class="doc">
     <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../Docs/streams/m4-thump-placement.md">M4</a>. The milestone is that where you thump matters:
+    <p>The check on M4. The milestone is that where you thump matters:
     zone 448 now carries four resource deposits, a scan shows them, a ground report reads one, and a
     thumper's payout comes from the spot it stands on rather than from a constant. <strong>The flat 200-crystite
     grant is gone</strong> — <a href="Resource-Payout.html">Resource Payout</a>'s RESOURCE-PAYOUT-2 record describes the old behaviour.</p>
@@ -24,7 +24,7 @@
     <a href="../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json">resource_deposit.json</a>. All
     four centers are coordinates a tester has stood on, and <strong>deposit 1's is the only one the client has
     also confirmed you may thump</strong> — it was moved there on 2026-08-13 after the original center turned
-    out to be inside the station's no-thumping zone (<a href="../Docs/ISSUE-REGISTER.md">DATA-17</a>). The other three
+    out to be inside the station's no-thumping zone (<a href="../Docs/gaps/data.md#data-17">data-17</a>). The other three
     are walked spawn-group footings whose discs extend over unwalked ground, and none of them has been
     scanned yet:</p>
     <div class="tbl-scroll"><table>
@@ -227,7 +227,7 @@
       <p>Two fixes came out of that. Deposit 1's old center sat 14.7m from the station outpost, entirely
       inside its no-thumping zone, so <strong>it was moved to 199.8, 315.7 — one of the three coordinates the
       client itself said <code>OK</code> to</strong>, 67m from the station and reachable on foot
-      (<a href="../Docs/ISSUE-REGISTER.md">DATA-17</a>, now closed). And a barren reading now names the nearest deposit
+      (<a href="../Docs/gaps/data.md#data-17">data-17</a>, now closed). And a barren reading now names the nearest deposit
       and its distance, so a miss says which way to walk instead of only that you missed.</p>
       </details>
       <h3 id="how-to-run-it-again">How to run it again</h3>

@@ -1916,7 +1916,7 @@ public sealed partial class CharacterEntity : BaseAptitudeEntity, IAptitudeTarge
         // Retail's death is two stages and the client's own death screen only opens on the first of
         // them: Bleedout.lua goes to MODE_BLEEDING on character state `incapacitated`, and the
         // give-up prompt that sends RequestRespawn lives inside that screen. Going straight to Dead
-        // means no screen, no prompt, and a session that ends in a reconnect (NET-23). NPCs have no
+        // means no screen, no prompt, and a session that ends in a reconnect (net-23). NPCs have no
         // screen to open, so they still die outright.
         SetCharacterState(
             IsPlayerControlled

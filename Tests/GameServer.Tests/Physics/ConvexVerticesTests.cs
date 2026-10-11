@@ -12,7 +12,7 @@ using Xunit;
 namespace GameServer.Tests.Physics;
 
 /// <summary>
-///     DATA-22: 300 of zone 448's <c>hkpConvexVerticesShape</c>s used to become a placeholder box 400m
+///     data-22: 300 of zone 448's <c>hkpConvexVerticesShape</c>s used to become a placeholder box 400m
 ///     underground, so the rocks they describe had no collision. Two causes, both shaped like the data:
 ///     point sets with coincident points, which Bepu's gift wrapping gives up on, and flat point sets,
 ///     which Havok makes solid with its convex radius and Bepu can't hull at all. These build both,

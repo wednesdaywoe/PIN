@@ -5,7 +5,6 @@ title: Combat Scale
 relates:
   - ../Restoration.md
   - ../thumper-encounter-reconstruction.md
-  - ../ISSUE-REGISTER.md
 ---
 
 # Combat Scale
@@ -67,7 +66,7 @@ serves both — which is the contradiction that opened this document.
 ## 2. What the two-second anchor does and does not constrain
 
 The one confirmed observation in creature tuning is from beta footage: **a basic creature dies in
-about two seconds.** [DATA-6](../ISSUE-REGISTER.md) records how it was reached.
+about two seconds.** [data-6](../gaps/data.md#data-6) records how it was reached.
 
 It constrains exactly one ratio:
 
@@ -142,7 +141,7 @@ Run the same creature at the player: three in contact is ~48 DPS, and a twenty-s
 pool of **960**.
 
 **Route 3 — the shipped value.** `dbitems::Battleframe.base_health` reads about **1,000**
-`[shipped]`, recorded as [DATA-3](../ISSUE-REGISTER.md) and never explained.
+`[shipped]`, recorded as [data-3](../gaps/data.md#data-3) and never explained.
 
 Three routes, one number. Treated as settled enough to build on.
 
@@ -435,7 +434,7 @@ Three further readings fall out of the same lines:
   in §8 item 4 have more than one dial: which creature, not only how many.
 
 **And the death was two-stage, correctly.** `Player … downed, tap-out in 2000ms, forced at 30000ms`
-— NET-23's bleedout path, which until now had only been exercised deliberately, firing on a real
+— net-23's bleedout path, which until now had only been exercised deliberately, firing on a real
 kill.
 
 ##### Why this was nearly recorded as a failure `[method]`

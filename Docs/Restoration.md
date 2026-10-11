@@ -36,7 +36,7 @@ crafted output has to satisfy.
 **XP is a separate question from levels, and the beta had one without the other.** Beta XP was a
 currency: you earned it and you spent it on upgrading your frame. It was part of the resource
 economy rather than a track that pulled a level number up behind it (user, 2026-08-13). So "no
-levels" does not imply "no XP", and dropping XP from [M5](streams/m5-kill-rewards.md) closed a
+levels" does not imply "no XP", and dropping XP from M5 closed a
 milestone rather than a design question — nothing in PIN consumes XP today, and building the
 spending side is its own piece of work, not a rider on paying out for a kill.
 

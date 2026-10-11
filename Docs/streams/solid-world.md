@@ -4,10 +4,8 @@ kind: stream
 title: "Solid World: what the terrain merge changes"
 satisfied: 2026-08-19
 relates:
-  - ../PROGRESS.md
   - world-authoring.md
   - ../gaps/data.md
-  - ../ISSUE-REGISTER.md
 ---
 
 # Solid World
@@ -16,14 +14,14 @@ relates:
 [Solid World](../../Game Testing/solid-world.html) went 5 of 7, and the results are folded in below
 rather than left as predictions.** The short version: the merge is sound, the world behaves, and
 every defect the sitting found belongs to PIN's own code rather than to the terrain.
-**Follow-up run 2026-08-19 — 3 of 3, closing [DATA-23](../gaps/data.md#data-23).** The ground query
+**Follow-up run 2026-08-19 — 3 of 3, closing [data-23](../gaps/data.md#data-23).** The ground query
 holds from both sides (a chasing creature stands on the hill; a wave ring spawns on the slope's
 surface, every member killable) and `probe` answers all of its controls, though the night's hunt
-found no collision-less object for [DATA-22](../gaps/data.md#data-22).
+found no collision-less object for [data-22](../gaps/data.md#data-22).
 
 **Closed satisfied 2026-08-19** (decision 2026-08-19, user-chosen): this does not become M9. The
 vertical slice is done and proven, so the next work opens as a new stream with new goals —
-[crafting](crafting.md), per the [charter](../Restoration.md)'s "thumping first, crafting second" —
+crafting, per the [charter](../Restoration.md)'s "thumping first, crafting second" —
 rather than as a ninth milestone on a finished plan. Leftovers are dispatched at the bottom.
 
 ## What the sitting settled
@@ -40,12 +38,12 @@ Two things the sitting produced that no entry asked for. **Wave members spawn in
 and the tester found it only because the ground now stops bullets and made them unkillable — an old
 placement bug that terrain converted into a defect. And a Chosen shot the tester through a rock
 formation, with a tester hypothesis attached: that terrain and scenery behave differently. Chasing
-that offline produced [DATA-22](../ISSUE-REGISTER.md) — **252 objects in zone 448 convert to nothing
+that offline produced [data-22](../gaps/data.md#data-22) — **252 objects in zone 448 convert to nothing
 at load**, all of them the one shape format scenery uses, while the ground's mesh format fails not
 once.
 
-Both findings are now issue entries: [DATA-22](../gaps/data.md#data-22) for the missing objects,
-[DATA-23](../gaps/data.md#data-23) for the ground query nobody has built.
+Both findings are now issue entries: [data-22](../gaps/data.md#data-22) for the missing objects,
+[data-23](../gaps/data.md#data-23) for the ground query nobody has built.
 
 ## What landed
 
@@ -135,7 +133,7 @@ The 2026-08-17 rebuild counted them in one chunk: 11 water layers and 11 movemen
 
 ## The bigger prize is placement data, and it is a research question
 
-[DATA-15](../gaps/data.md) records that retail's spawn placements were server content and are gone,
+[data-15](../gaps/data.md) records that retail's spawn placements were server content and are gone,
 and [world-authoring.md](world-authoring.md) is the appendix written around that loss. The new
 parser reads several layers out of the zone and chunk files that are not collision at all:
 
@@ -149,7 +147,7 @@ parser reads several layers out of the zone and chunk files that are not collisi
 registry may be nothing more than a string table the client uses for labels. But paths with
 positions and per-step actions are world content by any reading, and the question "what is actually
 in these layers for zone 448" is answerable offline, today, with no client and no session. It is
-the cheapest research in the register and it could move DATA-15, which has been closed as
+the cheapest research in the register and it could move data-15, which has been closed as
 unrecoverable since the beginning.
 
 Worth doing as a separate short pass rather than folding into this one, because the answer decides
@@ -165,16 +163,16 @@ consequence of this slice to the point of it.
 2. ~~**A ground query, and its two callers.**~~ Built 2026-08-17 as
    `PhysicsEngine.TryGetGroundHeight`, verified in game 2026-08-19 by
    [SOLID-WORLD-8 and SOLID-WORLD-9](../../Game Testing/solid-world.html), both passed. That is
-   [DATA-23](../gaps/data.md#data-23) whole, both symptoms, closed.
+   [data-23](../gaps/data.md#data-23) whole, both symptoms, closed.
 3. ~~**An admin command that reports what a ray hits**~~ — built 2026-08-17 as `probe`, verified in
    game 2026-08-19 by [SOLID-WORLD-10](../../Game Testing/solid-world.html): world answered with a
    static id and distance, a creature answered by name, the sky answered nothing, and the ground
    line tracked the caller's footing.
-4. **The failed hulls** — lives in the register as [DATA-22](../gaps/data.md#data-22), which is its
+4. **The failed hulls** — lives in the register as [data-22](../gaps/data.md#data-22), which is its
    home now that this stream is closed. The real fix is finding why
    `ConvexHullHelper.ComputeHull` returns an empty hull for 235 objects.
 5. **Consume the water and movement-blocker layers** — evicted on closure to the deferred backlog
-   in [PROGRESS.md](../PROGRESS.md). **Done 2026-10-08**, see the backlog entry there.
+   in the `progress` plan. **Done 2026-10-08**, see the backlog entry there.
 6. **Correct the documentation** — evicted on closure to the same backlog: files across `Docs/`
    still state as fact that the server holds no terrain.
 
@@ -195,7 +193,7 @@ the authoring path calls it yet before committing a coordinate.
   milestone. Rejected: M9 (extends a plan that declared itself finished); silent maintenance
   (understates work that retired the authoring discipline three milestones were built around).
 - **Does the 13 GB cache stay outside the repo?** Still open, moved to the deferred backlog in
-  [PROGRESS.md](../PROGRESS.md) along with its loose end — the deployed cache loads 1,364,926
+  the `progress` plan along with its loose end — the deployed cache loads 1,364,926
   shapes where a fresh rebuild produces 1,364,781, a difference of 145.
 - **Is server-side water worth having?** Still open, moved to the same backlog with the
   water/movement-blocker item it belongs to.

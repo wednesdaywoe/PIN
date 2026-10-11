@@ -137,7 +137,7 @@ public class Channel
                 // already taken means the ack was lost rather than the packet. Ack it again to stop
                 // the loop, and drop the copy: handing the same message to a controller twice fires
                 // whatever it does twice. Tested against what was actually taken rather than against
-                // LastAck, because LastAck skips over a gap (NET-25) and everything under a gap
+                // LastAck, because LastAck skips over a gap (net-25) and everything under a gap
                 // would then be read as a duplicate of something never received.
                 if (IsReliable && _delivered.Contains(sequenceNumber))
                 {
@@ -157,7 +157,7 @@ public class Channel
             {
                 // Assigned rather than added, because a resent fragment arriving mid-run carries a
                 // sequence number already in the buffer and Add throws on one. An exception here
-                // takes the shard thread with it, which is how NET-21 played out. Keyed by offset from
+                // takes the shard thread with it, which is how net-21 played out. Keyed by offset from
                 // the first fragment so a split spanning the sequence wraparound stays in order.
                 _incomingSplitMessagePackets[(ushort)(sequenceNumber - SplitStartSequenceNumber)] = packet;
                 if (!packet.Header.IsSplit)

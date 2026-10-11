@@ -15,7 +15,7 @@ namespace GameServer.Systems.Admin.Commands;
 ///
 ///     So the interesting result here is the boring-looking one. <b>Aiming squarely at something solid
 ///     and being told the ray found nothing means that object has no collision on the server</b>, which
-///     is <c>DATA-22</c> — 252 objects in zone 448 convert to an empty shape at load and are simply
+///     is <c>data-22</c> — 252 objects in zone 448 convert to an empty shape at load and are simply
 ///     absent. Aim at ground or a building and the same command should answer immediately.
 /// </summary>
 [ServerCommand(

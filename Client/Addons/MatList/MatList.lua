@@ -1,10 +1,10 @@
 -- MatList -- every material the character holds, in one readable list.
 --
--- UI4 of the client-ui stream (Docs/streams/client-ui.md). The stream's own exit condition: open it
+-- client-ui-4 of the client-ui plan (worklog.jsonl). The plan's own exit condition: open it
 -- and read what you have, raw and refined together.
 --
 -- The reason this is an addon and not a patch to the shipped Inventory panel is the gather below.
--- There is no single call that returns every material -- UI1 measured it -- and the shipped panel is
+-- There is no single call that returns every material -- client-ui-1 measured it -- and the shipped panel is
 -- built on the one that returns least:
 --
 --   Player.GetInventory()              -> Iron Ore, Copper Wiring
@@ -130,7 +130,7 @@ end
 -- ------------------------------------------
 
 -- A mined batch carries its quality (0..1000) and five stats in resource_type, the packed text
--- lib_Items.GetResourceStats unpacks (GRADE1, Docs/streams/graded-crafting.md). The shipped tooltip
+-- lib_Items.GetResourceStats unpacks (graded-crafting-1 in worklog.jsonl). The shipped tooltip
 -- only reads it for an entry with no .type, which a material from GetInventory never is, so this panel
 -- unpacks it itself. Stat names come from the material's family, in order, skipping zero values -- the
 -- same pairing lib_ItemCard.lua uses.
@@ -193,7 +193,7 @@ local function Gather()
 			name = CleanName(entry.name or (info and info.name)) or ("Item "..tostring(id)),
 			raw_name = entry.name or (info and info.name),
 			icon_id = entry.icon_id or entry.web_icon_id or (info and info.web_icon_id),
-			-- GetItemCount is the one number that agreed with the server on every id (UI1), so it wins
+			-- GetItemCount is the one number that agreed with the server on every id (client-ui-1), so it wins
 			-- over whatever the entry carries -- except for a batch, where it would count every batch
 			-- of the material at once.
 			quantity = (batch and (entry.total or entry.quantity)) or Player.GetItemCount(id) or entry.total or entry.quantity or 0,

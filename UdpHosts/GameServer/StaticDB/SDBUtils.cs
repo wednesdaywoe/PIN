@@ -514,12 +514,12 @@ public class SDBUtils
     ///     <c>damage_per_round</c>. A template is shared by a whole class of items, 248 of them for the
     ///     Fusion Cannon, so its number is a per-type default; the per-item spread on 954 runs 100 to 8882
     ///     across that one type. Reading the template flattened the entire quality axis and disagreed with
-    ///     the item card, which has always shown 954. DATA-24.
+    ///     the item card, which has always shown 954. data-24.
     ///
     ///     No attribute means the template still decides, the ordinary case for monsters: 513 of their 596
     ///     weapons carry no item attributes, including the anchor <see cref="Systems.Combat.MonsterTier"/>
     ///     is calibrated against. 45 of those also have a template damage of 1, so there's nothing to read
-    ///     anywhere and they still deal 1. That half is DATA-20, unchanged.
+    ///     anywhere and they still deal 1. That half is data-20, unchanged.
     /// </summary>
     private static int ItemTunedDamage(uint weaponSdbId, int templateDamage)
     {

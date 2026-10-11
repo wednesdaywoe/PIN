@@ -11,7 +11,7 @@ namespace GameServer.Tests.AI;
 ///     local forward is +Y. The +Y half is measured off the 2016 retail capture (CaptureReplay
 ///     --facing: every rig retail oriented sits at -90° under a +X reading), and it spent two days as
 ///     +X first — a humanoid's rendered body follows its aim closely enough that N1 couldn't tell,
-///     and only a creature rig (CLIENT-3's sideways Aranha) exposed it. These tests exist so the
+///     and only a creature rig (client-3's sideways Aranha) exposed it. These tests exist so the
 ///     convention can't quietly drift back.
 /// </summary>
 public class FacingTests

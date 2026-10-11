@@ -2,8 +2,6 @@
 project: pin
 kind: gap-detail
 title: "Issue Register — Static Data (DATA)"
-relates:
-  - ../ISSUE-REGISTER.md
 ---
 
 # Static Data (DATA)
@@ -14,7 +12,7 @@ live and running, just running on a number nobody's checked.
 
 <a id="data-1"></a>
 
-### DATA-1 — Battleframe shield pool [x] closed 2026-08-15 by reverting it to retail's 0
+### data-1 — Battleframe shield pool [x] closed 2026-08-15 by reverting it to retail's 0
 
 `dbitems::Battleframe` confirmed in M1 that build 1962 shipped **no live shields** — only 5 of 1676
 rows carry a non-zero `base_shields`, and the 2016 capture agrees, reading 0 on every
@@ -23,7 +21,7 @@ rows carry a non-zero `base_shields`, and the 2016 capture agrees, reading 0 on 
 at 3000 anyway, on the argument that a character with zero shields is harder to observe and debug
 against than one with some. The recharge rate and delay (150/sec, 10000ms) are the real shipped
 values and are unchanged; only the pool size was ever the divergence.
-See [M1](../streams/m1-combat-models.md).
+See M1.
 
 **The observability argument was backwards, and a tester walked into it on 2026-08-15.** The 1962
 client has no shield display at all. `ShieldBar` survives as a texture region in `skins/skin.xml`
@@ -35,7 +33,7 @@ see, and what it actually bought was a window at the start of every fight where 
 does not move, and nothing on screen explains why.
 
 That window is 45 seconds long against the Basin Mouth pack, because most NPC gunfire lands for 1
-point (see [DATA-20](#data-20)). The tester read it as a broken `invuln` command, toggled the
+point (see [data-20](#data-20)). The tester read it as a broken `invuln` command, toggled the
 command three times inside the shield window, filed it as a bug, and only found out otherwise from
 the server log: shields 3000 → 0 with health flat at 19192 across all three toggles.
 
@@ -46,7 +44,7 @@ readout has to be authored in Lua first or the same trap comes straight back.
 
 <a id="data-2"></a>
 
-### DATA-2 — Thump node type hardcoded to `20` for every deposit [x] closed 2026-08-14
+### data-2 — Thump node type hardcoded to `20` for every deposit [x] closed 2026-08-14
 
 Was: `nodeType` resolved to the literal `20` at both call sites, so every deposit in the world was
 the same deposit. M4 replaced the literal with a lookup —
@@ -66,7 +64,7 @@ it rules out the reading where a lookup happens to work once.
 
 <a id="data-3"></a>
 
-### DATA-3 — `Battleframe.base_health` doesn't match observed live health [~] player pool set to 1000 2026-08-16, unverified in game
+### data-3 — `Battleframe.base_health` doesn't match observed live health [~] player pool set to 1000 2026-08-16, unverified in game
 
 The SDB column reads roughly 1000; a live capture shows the real value was 19192
 ([Capture Replay](../../Game Testing/Capture-Replay.html)). Something scales base health before it
@@ -75,7 +73,7 @@ straight from this column is off by roughly 19x.
 
 <a id="data-4"></a>
 
-### DATA-4 — Splash and ability-projectile range falloff are unmodeled [ ] open
+### data-4 — Splash and ability-projectile range falloff are unmodeled [ ] open
 
 M1 confirmed the *weapon* range-decay curve against a real capture
 ([DamageFalloff.cs](../../UdpHosts/GameServer/Systems/ProjectileSim/DamageFalloff.cs)). Two
@@ -87,16 +85,16 @@ range.
 
 <a id="data-5"></a>
 
-### DATA-5 — Nearly all server-side aptitude command defs are empty stubs [ ] open, large scope
+### data-5 — Nearly all server-side aptitude command defs are empty stubs [ ] open, large scope
 
 3797 of 3812 `env=server` `aptgss_` command defs parse, execute and remove nothing; 15 have been
 hand-reconstructed from captures so far
 ([05-aptitude-abilities.md:140-147](../Architecture/05-aptitude-abilities.md)). This is the data
-side of the "~197 aptitude stubs" line in [Deferred](../PROGRESS.md#deferred) — recorded here as
+side of the "~197 aptitude stubs" line in the `progress` plan's Deferred section — recorded here as
 the size of the unknown, not as work to schedule.
 
 **What is missing is the parameters, not the scripts** (measured 2026-08-13, while establishing that
-retail's spawn placements are unrecoverable for [DATA-15](#data-15)). Two things make that precise.
+retail's spawn placements are unrecoverable for [data-15](#data-15)). Two things make that precise.
 
 `apt::CommandType` names every command the engine has, 218 of them, split 168 server and 50 client,
 and each row carries the def table that holds its parameters. Hashing those names against the file
@@ -128,15 +126,15 @@ For the population question specifically, the calls break down as:
 
 The chains these steps sit in were walked on 2026-08-14 by [Tools/ChainWalk](../../Tools/ChainWalk/)
 for M7: they are one-shot verbs, not wave scripts, and the reading is in
-[streams/m7-encounter-combat.md](../streams/m7-encounter-combat.md).
+the `encounter-combat` plan.
 
 Two conclusions worth carrying. Firefall populated a zone by **running scripts**, not by reading a
 placement list, which is why no spawn table turns up anywhere and why looking for one was the wrong
 search. And the surviving skeleton is usable on its own terms: it says how a retail encounter was
 shaped, how many spawn steps it took and in what order, without saying what any of them spawned.
-[M7](../streams/m7-encounter-combat.md) is where that stops being trivia.
+M7 is where that stops being trivia.
 
-**Update 2026-10-05: PIN's side has narrowed.** The [abilities stream](../streams/abilities.md)
+**Update 2026-10-05: PIN's side has narrowed.** The `abilities` plan
 built 18 command classes that were stubs: ApplyImpulse, BattleFrameDuration, DetonateProjectiles,
 HealDamage, InflictCooldown, LoadRegisterFromBonus, LoadRegisterFromStat, RegisterClientProximity,
 ReplenishableDuration, RequireItemAttribute, RopePull, TargetByNPC, TargetConeAE, Teleport,
@@ -146,13 +144,13 @@ also run in the client were built from the decompiled `apt::*Command` classes
 ([Tools/ClientRE](../../Tools/ClientRE/)). Those that only run on the server were rebuilt from what
 the surrounding data needs, and the made-up values are listed in the stream. The shipped data hasn't
 changed: the server-only def tables are still empty. Hand-filled rows now exist for 6
-`TinyObjectCreate`, 2 `TinyObjectUpdate` and 1 `DeployableSpawn` def ([DATA-28](#data-28)).
+`TinyObjectCreate`, 2 `TinyObjectUpdate` and 1 `DeployableSpawn` def ([data-28](#data-28)).
 `SDBQuery unimpl` (`Tools/SDBQuery/Program.cs`) counts a command type as built if `Factory.cs` has a
 case for it, and ranks the rest by how many abilities reach them.
 
 <a id="data-6"></a>
 
-### DATA-6 — Monster health and shields are hardcoded placeholders [~] 906 of 3109 creature types tiered 2026-08-15, 2203 still flat
+### data-6 — Monster health and shields are hardcoded placeholders [~] 906 of 3109 creature types tiered 2026-08-15, 2203 still flat
 
 `dbcharacter::Monster` and `MonsterScaling` exist but aren't read.
 [CharacterEntity.cs:478-510](../../UdpHosts/GameServer/Entities/Character/CharacterEntity.cs#L478-L510)
@@ -162,8 +160,8 @@ gives every monster the same placeholder max health/shields regardless of type o
 that felt it.** 2500 health against a player rifle landing 39 a shot is about 64 shots to kill a
 level 1 Chosen Fiend, and it is the same 64 shots for every monster in the game. The other half of
 that session's balance reading is not this entry: the player's 19192 is
-[DATA-3](#data-3)'s live-observed number and correct, and the Chosen's 1 damage a shot resolves to
-about the 8 dps [DATA-14](#data-14) measured for monster 1196, so the incoming side is roughly
+[data-3](#data-3)'s live-observed number and correct, and the Chosen's 1 damage a shot resolves to
+about the 8 dps [data-14](#data-14) measured for monster 1196, so the incoming side is roughly
 retail. It is the outgoing side — one flat health pool for every creature — that makes a fight
 against a low-level monster take as long as a fight against anything else.
 
@@ -184,7 +182,7 @@ multiplier applied *after* the base — one player is always 100%.
 
 So the base health formula is `MonsterScaling[level].health`, and **the missing input is level, not
 the table.** A monster's level was set by whatever spawned it, which was server content
-([DATA-15](#data-15)). The shipped substitute is `difficulty_cost`: monster 528 sits at 20, in the
+([data-15](#data-15)). The shipped substitute is `difficulty_cost`: monster 528 sits at 20, in the
 lowest populated band (only four rated monsters in the whole db are below it), and monster 1196
 sits at 35, which matches how the two actually play. It is an encounter budget rather than a level,
 so it orders monsters correctly but does not convert to one.
@@ -206,7 +204,7 @@ The proposed fix keeps the shipped curve and puts the one missing number where P
 world content: an optional per-member `level` in `spawn_group.json`, defaulting per group, set in
 game by a `spawngroup level` subcommand alongside `add` and `delay`. That closes this entry using
 only shipped data plus PIN's own placements, and it does not reintroduce player levels, which the
-[restoration charter](../PROGRESS.md) rules out. The interim lever was
+[restoration charter](../Restoration.md) rules out. The interim lever was
 `HardcodedCharacterData.MonsterMaxHealth` and it has now been moved, so what is left here is the
 per-monster path rather than the number.
 
@@ -250,7 +248,7 @@ needs a fallback for the unrated two thirds rather than reading 0 as a level.
 Growth decelerates deliberately, so a few levels are worth much more at the bottom than the top —
 which is what makes the low band the useful one for tiering ordinary fauna.
 
-The player's 19192 ([DATA-3](#data-3)) is **level 38** on this curve, not the 45 that
+The player's 19192 ([data-3](#data-3)) is **level 38** on this curve, not the 45 that
 `HardcodedCharacterData.Level` stamps. The two are independent numbers from different tables and the
 disagreement is minor, but any argument of the form "the player is level 45, so monsters should be
 too" is reading the stamp rather than the health.
@@ -314,7 +312,7 @@ direction is from above, and 500 → 1200 is already a 2.4× move. **Confirmed i
 31 hits each with no variance, health stepping down by 39 to land exactly on 0 from 1200. Time to
 kill was **about 3.1 seconds** rather than the predicted 2.0, because the run measured the assault
 rifle at 10 rounds a second and not the Heavy MG at 15 — the equip had silently failed on
-[NET-18](network.md#net-18). That makes the outcome *better* evidence than the prediction was: 3.1
+[net-18](network.md#net-18). That makes the outcome *better* evidence than the prediction was: 3.1
 seconds is the video's "a few seconds" read directly, and the same pool under the Heavy MG would be
 about 2. Both sit inside the band, so **1200 holds** and nothing needs moving.
 
@@ -421,7 +419,7 @@ the tier by using two creatures that share a weapon.
 
 <a id="data-7"></a>
 
-### DATA-7 — Character level comes from `HardcodedCharacterData`, not real progression [ ] open
+### data-7 — Character level comes from `HardcodedCharacterData`, not real progression [ ] open
 
 Every read of `Level`/`EffectiveLevel` — `EntityManager.cs:1324`,
 `CharacterEntity.cs:2197-2198`, `BaseController.cs:583-584` — resolves through the hardcoded
@@ -430,7 +428,7 @@ with a real level.
 
 <a id="data-8"></a>
 
-### DATA-8 — A scatter of aptitude commands read a hardcoded constant instead of the def parameter [ ] open, 1 of 3 left
+### data-8 — A scatter of aptitude commands read a hardcoded constant instead of the def parameter [ ] open, 1 of 3 left
 
 **One of three is left, as of 2026-10-05.** The muzzle-offset origin is still one constant per stance
 and doesn't vary by character or frame
@@ -449,24 +447,24 @@ the def.
 
 <a id="data-9"></a>
 
-### DATA-9 — Two web endpoints return invented or stub data [~] needs confirmation
+### data-9 — Two web endpoints return invented or stub data [~] needs confirmation
 
 `CharactersController.cs:36-38`'s `CharacterData` endpoint returns `Key`/`Namespace`/`Value`
 fields the code itself flags with "ToDo: What are these?". `garage_slots` and
 `character_sheet.json` return a fixed frame (Firecat / Rhino) regardless of the actual character
 ([Prediction-Sweep.md:171-172](../../Game Testing/Prediction-Sweep.html)) — currently the leading
-suspect if [NET-19](network.md#net-19)'s P0 verification doesn't hold.
+suspect if [net-19](network.md#net-19)'s P0 verification doesn't hold.
 
 <a id="data-10"></a>
 
-### DATA-10 — NPC perception/threat tuning is invented; retail's own numbers ship for a third of the table [ ] open
+### data-10 — NPC perception/threat tuning is invented; retail's own numbers ship for a third of the table [ ] open
 
 `dbmonster::Monster` carries `Behavior`/`BehaviorOffensive`/`BehaviorDefensive` name references but
 no numeric perception radius or aggro field, so
 [TargetSelection.cs](../../UdpHosts/GameServer/Systems/AI/TargetSelection.cs) picks its own
 detection range (25m, narrowed from 40m) and threat gain/decay/engage-threshold constants rather
 than reading them off a def. Every monster currently notices, aggros and disengages identically regardless of type. Part
-of [M2](../streams/m2-npc-combat.md).
+of M2.
 
 The attack and locomotion passes add more invented numbers of the same kind:
 
@@ -530,8 +528,8 @@ Parsing the strings that did ship yields, per monster:
 | `maxDistFromSpawn` | 13 | 30 and 45 | 50m chase leash |
 | `am1MaxDist` / `am1MinDist` | 23 / 14 | 5 to 150 / 0 to 10 | nothing yet; ability ranges |
 | `wideTurnRadius` | 8 | 3, 5, 10 | nothing yet; NPCs turn instantly |
-| `triggerPullTime` | 301 | 100 to 10000 | nothing yet; see [DATA-14](#data-14) |
-| `fireRestDuration` | 251 | 0 to 9000 | nothing yet; see [DATA-14](#data-14) |
+| `triggerPullTime` | 301 | 100 to 10000 | nothing yet; see [data-14](#data-14) |
+| `fireRestDuration` | 251 | 0 to 9000 | nothing yet; see [data-14](#data-14) |
 
 150 monsters carry a standoff distance of one kind or the other.
 
@@ -562,13 +560,13 @@ where it started, which is a question about the zone rather than about eyesight.
 **Narrowing the radius does not by itself put anything near the station.** Zone 448's thirteen
 monsters are where they were placed, in the basin, 120m out. What changed is that a group *may* now
 stand on the shelf, and putting one there is a walk with `spawngroup add` like every other placement
-([DATA-15](#data-15)) — there is no server-side terrain to place one from a desk.
+([data-15](#data-15)) — there is no server-side terrain to place one from a desk.
 
 Still one number for every monster in the game. Reading it per monster would not help the zone as it
 stands: 1196, 528 and 2342 are all in the 695-row third that carries only a `BehaviorInstanceId`.
 
 `triggerPullTime` and `fireRestDuration` are the two most widely populated parameters in the whole
-set, and they describe exactly the pause [DATA-14](#data-14) says is missing from NPC cadence. That
+set, and they describe exactly the pause [data-14](#data-14) says is missing from NPC cadence. That
 is a second lead out of the same strings and it covers 301 monsters, not 150.
 
 The leash and the cap were added after [N4](../../Game Testing/NPC-Combat.html) ran, and are worth
@@ -584,7 +582,7 @@ you would look for it: that record's `FastSpeed` is an override which 3095 of it
 record a player's frame speed comes from — and that resolves a real run speed for 2971 monsters.
 Only 124 need a stand-in, and even that is the table's own most common value (6 m/s) rather than a
 guess. What this does mean is that reading -1 as a speed would have every one of them walking
-backwards, which is [DATA-11](#data-11) again with a different sentinel.
+backwards, which is [data-11](#data-11) again with a different sentinel.
 
 None of the invented numbers are confirmed against anything, and [N1 to
 N13](../../Game Testing/NPC-Combat.html) passing doesn't change that. Those entries check that
@@ -594,7 +592,7 @@ three aren't.
 
 <a id="data-11"></a>
 
-### DATA-11 — A zero multiplier in `WeaponTemplateModifiers` was read literally [x] fixed 2026-08-12
+### data-11 — A zero multiplier in `WeaponTemplateModifiers` was read literally [x] fixed 2026-08-12
 
 A weapon item's numbers are its template's, adjusted by its own `dbitems::WeaponTemplateModifiers`
 row as `(base + modifier) * multiplier`. The data populates *one* of those two columns per stat and
@@ -630,7 +628,7 @@ it is where the 269 and 220 counts came from.
 
 <a id="data-12"></a>
 
-### DATA-12 — Melding wall damage rate is invented [ ] open
+### data-12 — Melding wall damage rate is invented [ ] open
 
 [HazardSim](../../UdpHosts/GameServer/Systems/Hazards/HazardSim.cs) takes 5% of max health every
 500ms off anyone standing in the melding, which kills in about twelve seconds through a full shield
@@ -651,7 +649,7 @@ tightening it is one constant.
 
 <a id="data-13"></a>
 
-### DATA-13 — The water description nibble can't be resolved, so all water is row 10001 [~] resolved where the map agrees, 2026-10-08; nibble 2 in zone 448 unexplained
+### data-13 — The water description nibble can't be resolved, so all water is row 10001 [~] resolved where the map agrees, 2026-10-08; nibble 2 in zone 448 unexplained
 
 `WaterLevelAndDesc` arrives from the client packed `ddddllll`. The low nibble is submersion and is
 fully understood — see [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs), where
@@ -719,7 +717,7 @@ Rejected: trusting the index outright (nibble 2 would drown players in the shall
 
 <a id="data-14"></a>
 
-### DATA-14 — No ammo or reload model, so small-clip NPC weapons fire at an inflated rate [ ] open
+### data-14 — No ammo or reload model, so small-clip NPC weapons fire at an inflated rate [ ] open
 
 [AttackWindow](../../UdpHosts/GameServer/Systems/AI/AttackWindow.cs) paces an NPC from `MsPerBurst`,
 `MsBurstDuration` and `RoundsPerBurst` and stops there. `BaseClipSize`, `ReloadTime` and
@@ -747,20 +745,20 @@ recommendation this defect can poison.
 
 <a id="data-15"></a>
 
-### DATA-15 — Spawn group placements are PIN's own content, not retail's [ ] open, by necessity
+### data-15 — Spawn group placements are PIN's own content, not retail's [ ] open, by necessity
 
 [spawn_group.json](../../UdpHosts/GameServer/StaticDB/CustomData/spawn_group.json) says where zone
 448's standing monsters are, what they are and how fast they come back. Every one of those decisions
 is PIN's. Retail kept placements in server-side spawn tables, and the two server-side aptitude
 commands that drove them, `ActivateSpawnTableCommandDef` and `UpdateSpawnTableCommandDef`, are both
-in the empty-stub pile [DATA-5](#data-5) counts.
+in the empty-stub pile [data-5](#data-5) counts.
 
 It is worth being clear about how thoroughly this one is unrecoverable, because the neighbouring
 files are not. `deployable.json`, `melding.json` and `outpost.json` are all recovered content:
 melding perimeters carry the same names the client's own `system/maps/448.zone` uses, because the
 client has to draw them. Nothing has to draw a spawner. The zone file holds terrain, melding
 perimeters, cinematic camera paths and dropship scripting, and no monster placements at all, which
-is the same wall [DATA-10](#data-10) hit from the other side.
+is the same wall [data-10](#data-10) hit from the other side.
 
 So the groups are authored, and the [restoration charter](../Restoration.md) is what makes that
 acceptable rather than a shortfall: the goal is the loop working on 1962, not a survey of where
@@ -817,7 +815,7 @@ What is still worth writing down is which parts are guesses and which aren't:
   `SpawnGroupSim` audits every standing pair at startup rather than trusting anyone to remember.
 - **Respawn delays (90 to 120s) and pack sizes (3 to 6) are invented outright.** Nothing anywhere
   suggests what retail used.
-- **Where the groups can go is decided by [DATA-10](#data-10)'s perception number, not by design.**
+- **Where the groups can go is decided by [data-10](#data-10)'s perception number, not by design.**
   Anything hostile within perception of Aero kills it, and the only ground near the station anything
   has been seen standing on is a shelf about 45m across with Aero on it. At the original 40m no
   hostile group fitted there at all, which is why zone 448 has nothing to fight within 120m of where
@@ -833,7 +831,7 @@ before anyone tunes the numbers by feel.
 
 <a id="data-16"></a>
 
-### DATA-16 — `roll_mode` is unmapped, so PIN's loot-drop rates are inferred [ ] open
+### data-16 — `roll_mode` is unmapped, so PIN's loot-drop rates are inferred [ ] open
 
 `dbitems::LootTable.roll_mode` decides how a table's entries combine, carries six distinct values
 across 2472 rows, and nothing documents any of them. The client is the only thing that ever
@@ -867,17 +865,17 @@ otherwise 100 — which keeps a table internally consistent and gets both known 
 does not pay the wrong thing, because quantities and item ids come off the rows directly.
 [LootRollerTests](../../Tests/GameServer.Tests/Loot/LootRollerTests.cs) pins the reading so a change
 to it is deliberate, and [K2](../../Game Testing/Kill-Rewards.html) — twenty kills counted against an
-expected quarter — is the only measurement available in game. Unlike [DATA-10](#data-10), there is no
+expected quarter — is the only measurement available in game. Unlike [data-10](#data-10), there is no
 shipped string to recover the answer from: the semantics were never data.
 
 <a id="data-17"></a>
 
-### DATA-17 — The zone's richest deposit sat inside a no-thumping zone [x] closed 2026-08-14
+### data-17 — The zone's richest deposit sat inside a no-thumping zone [x] closed 2026-08-14
 
 Deposit 1 was written into
 [resource_deposit.json](../../UdpHosts/GameServer/StaticDB/CustomData/resource_deposit.json) by
 hand, on a coordinate a tester had walked over, which is the standard PIN adopted after
-[DATA-15](#data-15). Walked ground turned out not to be enough. Its center was 14.7m from outpost
+[data-15](#data-15). Walked ground turned out not to be enough. Its center was 14.7m from outpost
 17's, and the client refuses a thumper anywhere near a base without asking the server: every scan
 taken on the station shelf on 2026-08-13 came back `NOTHUMPINGZONE` before a position ever reached
 the GameServer. Ten scans that evening produced seven refusals and three `OK`s, which is what proved
@@ -901,7 +899,7 @@ simply in places the client would not let anyone drill.
 
 <a id="data-18"></a>
 
-### DATA-18 — A thumper's state-change animations are hardcoded ability ids [~] fixed in code 2026-10-08, not yet seen in game
+### data-18 — A thumper's state-change animations are hardcoded ability ids [~] fixed in code 2026-10-08, not yet seen in game
 
 A thumper announces each stage of its life by firing an ability, and the ability is what carries
 the animation and the sound. Four fire over a full cycle, and **three of the four are literals in
@@ -986,7 +984,7 @@ launch.
 
 <a id="data-19"></a>
 
-### DATA-19 — No ultimate-charge model [x] built 2026-10-03, passed in game 2026-10-04/05
+### data-19 — No ultimate-charge model [x] built 2026-10-03, passed in game 2026-10-04/05
 
 **Closed 2026-10-05.** `35971cb` built it. `SuperCharge` lives on `CharacterEntity` and runs 0 to
 100: it is empty at login and kept through death. `UltimateCharge` fills it while the player is in
@@ -998,7 +996,7 @@ Percent points. The client is sent changes in whole-point steps and at full and 
 
 ULT-1..4 passed on 2026-10-04 and the ultimate-damage rule passed on 2026-10-05. The answer to the
 first open question below turned out to be a character stat the server owns. The rates are
-invented and are [DATA-29](#data-29). P1 is unblocked and still unrun.
+invented and are [data-29](#data-29). P1 is unblocked and still unrun.
 
 Original entry, kept for the record:
 
@@ -1010,7 +1008,7 @@ this, and so is any other sweep candidate that turns out to sit on an Ultimate.
 
 Retail charged the meter through combat activity. Whatever carries that gain — a stat the server
 ticks, a per-hit grant, a message the client waits for — PIN never sends it, so the client's meter
-sits where slotting left it. Same family as [DATA-7](#data-7)'s hardcoded progression: a
+sits where slotting left it. Same family as [data-7](#data-7)'s hardcoded progression: a
 regeneration the server is supposed to drive and doesn't. Untouched so far by every ability test in
 the queue because nothing before P1 ever equipped an Ultimate.
 
@@ -1022,11 +1020,11 @@ testing prediction.
 
 <a id="data-20"></a>
 
-### DATA-20 — Monster damage is never scaled, so most NPC gunfire lands for 1 point [~] tiered creatures scale 2026-08-15, the unit problem survives
+### data-20 — Monster damage is never scaled, so most NPC gunfire lands for 1 point [~] tiered creatures scale 2026-08-15, the unit problem survives
 
 A whole pack shooting a player does almost nothing. Measured over five minutes in the Basin Mouth
 pack with `invuln` off: **8,977 hits of 1 damage against 265 of 49**, and a player taking 4 minutes
-40 seconds to die from 19192 health ([DATA-3](#data-3)).
+40 seconds to die from 19192 health ([data-3](#data-3)).
 
 **The resolution code is correct — this was checked before it was blamed.** Both weapons in that
 fight read out of the db exactly as PIN computed them:
@@ -1036,12 +1034,12 @@ fight read out of the db exactly as PIN computed them:
 | 20046 (melee, range 2.6m) | 225 | 0.22 | 49.5 → **49** | 49 |
 | 85953 (rifle, range 100m, clip 30) | **1** | 1.0 | **1** | 1 |
 
-So the 49s are right to the unit, which also re-confirms [DATA-11](#data-11)'s modifier fix on a
+So the 49s are right to the unit, which also re-confirms [data-11](#data-11)'s modifier fix on a
 live path. And the rifle's 1 is what build 1962 actually shipped in
 `dbitems::WeaponTemplates`. Nothing is being annihilated.
 
-**The missing piece is level scaling, which makes this [DATA-6](#data-6)'s twin rather than
-DATA-11's.** `dbcharacter::MonsterScaling` ships whole — 80 rows — and carries a **`damage` column
+**The missing piece is level scaling, which makes this [data-6](#data-6)'s twin rather than
+data-11's.** `dbcharacter::MonsterScaling` ships whole — 80 rows — and carries a **`damage` column
 beside `health`**, keyed by level, at a flat 2:1 ratio the entire way up:
 
 | Level | Damage | Health |
@@ -1055,13 +1053,13 @@ beside `health`**, keyed by level, at a flat 2:1 ratio the entire way up:
 
 Retail scaled a monster's damage by its level the same way it scaled its health, and an NPC weapon
 template's `damage_per_round` is a unit value that scaling multiplied. PIN has no level for a
-monster — level was server content, the same wall DATA-6 hit — so it applies no scaling to either
+monster — level was server content, the same wall data-6 hit — so it applies no scaling to either
 side and reads the raw 1.
 
-DATA-6 was half-answered on 2026-08-13 by dropping monster health to a flat 500, roughly level 8 on
+data-6 was half-answered on 2026-08-13 by dropping monster health to a flat 500, roughly level 8 on
 this curve. **The damage half never got the same treatment**, which is why monsters stopped being
 sponges while the player quietly became one. Whatever number is chosen here should be chosen against
-the same level DATA-6's 500 implies, or the two halves describe different creatures.
+the same level data-6's 500 implies, or the two halves describe different creatures.
 
 **Not a regression.** Rotated logs from 2026-08-14, two builds earlier, carry the same split (253
 hits of 1 against 18 of 49).
@@ -1079,7 +1077,7 @@ enormously across the weapon templates. So the reading this entry now favours is
 `MonsterScaling.damage` is a **per-creature damage budget** that its weapon spends, not a per-round
 value — but the arithmetic that would prove it has not been done.
 
-The top end argues the same way. Taking the [DATA-6](#data-6) tier read above and mapping
+The top end argues the same way. Taking the [data-6](#data-6) tier read above and mapping
 `difficulty_cost` onto levels, a rating-300 mini-boss lands somewhere around level 20–30. Its
 `damage` column there is 1,950–5,057 against a player's 19192 — survivable per hit, brutal as a
 one-second budget, absurd if a 30-round clip delivers it per round. Any candidate reading can be
@@ -1095,7 +1093,7 @@ a different animal.
 
 That mapping exists now —
 [`MonsterTier`](../../UdpHosts/GameServer/Systems/Combat/MonsterTier.cs), written up in full under
-[DATA-6](#data-6). A graded creature's damage is scaled by `ScalingDamageMultiplier`, applied in
+[data-6](#data-6). A graded creature's damage is scaled by `ScalingDamageMultiplier`, applied in
 `CharacterEntity.GetEffectiveWeaponDamage`, which is the single funnel every damage path already goes
 through — `ProjectileSim`, `FireProjectileCommand` and `InflictDamageCommand` all resolve there.
 
@@ -1140,11 +1138,11 @@ question above — whether retail scaled a unit `damage_per_round` multiplicativ
 than one point. **That question is now the only thing keeping this entry from closing**, and it got
 sharper rather than vaguer: it is no longer "what unit is the column in" but "does a template value
 of 1 mean one point, given that scaling it cannot produce a meaningful spread". The 2,203 ungraded
-creature types are DATA-6's remainder, not this one's.
+creature types are data-6's remainder, not this one's.
 
 <a id="data-22"></a>
 
-### DATA-22 — 252 objects in New Eden convert to nothing, so you can shoot through them [~] fixed in code 2026-10-08, not yet seen in game
+### data-22 — 252 objects in New Eden convert to nothing, so you can shoot through them [~] fixed in code 2026-10-08, not yet seen in game
 
 **A tester was shot through a rock formation by a Chosen Fiend that should have had no line of
 sight, on the first deliberate sitting against terrain collision
@@ -1188,7 +1186,7 @@ level that carries a collision layer at all — 26.8MB of it in `1_0243_0917`, a
 0, 1, 2 and 4. The loader is reading everything there is to read.
 
 **Two more layers in that same file are parsed into objects and consumed by nobody** (both consumed
-since 2026-10-08: water materials for [DATA-13](#data-13), movement blockers for NPC steering), confirmed by
+since 2026-10-08: water materials for [data-13](#data-13), movement blockers for NPC steering), confirmed by
 grep across the game server at the time: `ChunkWaterCollisionLayer`, which is the half
 [Submersion](../../UdpHosts/GameServer/Systems/Hazards/Submersion.cs) is missing, and
 `ChunkMovementBlockerCollisionLayer`, the invisible bounds nothing enforces. Neither is scenery and
@@ -1249,7 +1247,7 @@ which the version bump does on the next start. It took over four minutes on the 
 
 <a id="data-23"></a>
 
-### DATA-23 — Nothing asks the world where the ground is [x] built 2026-08-17, verified in game 2026-08-19
+### data-23 — Nothing asks the world where the ground is [x] built 2026-08-17, verified in game 2026-08-19
 
 **Terrain has been loaded since 2026-08-16 and no code queries it. Every height in the server is
 still borrowed or assumed, and the first sitting on real ground produced two symptoms of the same
@@ -1270,7 +1268,7 @@ ring is underground. Until this week a buried sapper was still shootable, becaus
 through the ground too; now the ground stops them and the attacker cannot be killed while it damages
 the machine. The tester's report on 2026-08-17 — *"they spawned inside the ground which prevented my
 attacks from hitting them"* — reads as a terrain regression and is really an old placement bug that
-terrain made visible. It is [DATA-15](#data-15)'s problem inside the encounter rather than in
+terrain made visible. It is [data-15](#data-15)'s problem inside the encounter rather than in
 authored content: `spawngroup add` refuses a footing nobody walked to, and nothing protects a
 runtime spawn the same way.
 
@@ -1312,13 +1310,13 @@ was opened for.
 A third consumer was named here and is now built. No admin command could ask what a ray hits:
 `target` casts one but reports "Failed to find target" when the ray strikes the world, which is
 indistinguishable from hitting nothing, so "does this rock have collision?" could not be answered in
-game and [DATA-22](#data-22) had to be measured offline. `probe` answers it — the ray's verdict,
+game and [data-22](#data-22) had to be measured offline. `probe` answers it — the ray's verdict,
 the distance, and the ground height under the caller, which is the same query this entry is about
 made visible from inside the game.
 
 <a id="data-24"></a>
 
-### DATA-24 — Weapon damage was read off the shared template, so every item of a type hit for the same amount [x] fixed 2026-08-20, unverified in game
+### data-24 — Weapon damage was read off the shared template, so every item of a type hit for the same amount [x] fixed 2026-08-20, unverified in game
 
 **A stream sitting on 2026-08-20 produced two complaints an hour apart that turned out to be one
 bug from both ends: the Recon's rifle "does about 1 damage", and the Tigerclaw's Fusion Cannon is
@@ -1352,15 +1350,15 @@ server disagreed in front of the player — 115 printed, 1 dealt.
 the resolver runs on every shot.
 
 **Creature output is deliberately almost untouched, which is what keeps
-[DATA-6](#data-6)'s anchor still standing.** 513 of the 596 weapons monsters carry have no item
+[data-6](#data-6)'s anchor still standing.** 513 of the 596 weapons monsters carry have no item
 attributes at all — including weapon 20046, the Spyder melee `MonsterTier` is calibrated against —
 so they keep reading the template exactly as before. The 83 that do carry a tuned number now get it.
 
-**What this does not fix is [DATA-20](#data-20), and the same session measured it again.** 45 of
+**What this does not fix is [data-20](#data-20), and the same session measured it again.** 45 of
 those 596 monster weapons have a template damage of 1 *and* no attribute, so there is nothing
 anywhere to read; 249 monster rows carry one. In the session that produced this entry the NPC
 Assault Rifle (85953) landed **128 hits for 2 damage each** against a 1000-health player, while the
-Spyder's melee landed 49s. That is DATA-20's quantisation problem unchanged, and this entry supplies
+Spyder's melee landed 49s. That is data-20's quantisation problem unchanged, and this entry supplies
 no new evidence for it beyond confirming it survives.
 
 **How it was found is worth keeping.** The Recon half was read out of the db offline. The Tigerclaw
@@ -1375,10 +1373,10 @@ same session's hit counts and intervals; nobody has fired the changed weapons ye
 
 <a id="data-25"></a>
 
-### DATA-25 — 35,006 items carry no client-side listing bits, so the inventory panel will never draw them [ ] open, found 2026-08-20
+### data-25 — 35,006 items carry no client-side listing bits, so the inventory panel will never draw them [ ] open, found 2026-08-20
 
 **Three sittings failed to see a created item, and the item was the defect.** `createitem 20003` (the
-DevTEST Shotgun) was the test [NET-18](network.md#net-18) had been run with since 2026-08-10. It
+DevTEST Shotgun) was the test [net-18](network.md#net-18) had been run with since 2026-08-10. It
 never appeared. The finding that broke the deadlock was that **it was also absent after a full
 inventory** — the login send on 2026-08-20 at 22:14:51 carried 62 items including eight shotguns,
 and the panel's own search for "DevTEST" returned nothing. No delivery bug can explain an item that
@@ -1411,9 +1409,9 @@ reading is that these are exactly what they look like — dev and internal items
 player — in which case the entry is a **testing hazard rather than a bug**, and the work is to know
 which items are drawable before choosing one as an instrument.
 
-**What it cost.** It masked [NET-18](network.md#net-18) for ten days, and it produced a false
+**What it cost.** It masked [net-18](network.md#net-18) for ten days, and it produced a false
 regression report — "resend used to work and doesn't any more" — because a resend of an undrawable
-item looks identical to a broken resend. NET-18's client confirmation arrived the same evening the
+item looks identical to a broken resend. net-18's client confirmation arrived the same evening the
 moment the test used `85968` instead.
 
 Open work: establish what the two bits are, from the client binary or by sampling items known to
@@ -1421,7 +1419,7 @@ have been player-visible in retail, and record the drawable set so a test never 
 
 <a id="data-28"></a>
 
-### DATA-28 — Almost every tiny-object step shipped empty, and the working ones are mapped by hand [ ] open, found 2026-10-03
+### data-28 — Almost every tiny-object step shipped empty, and the working ones are mapped by hand [ ] open, found 2026-10-03
 
 A tiny object is a small server-side thing an ability leaves in the world: a poison cloud, a blast, a
 fire patch, a spore mine. Each `dbcharacter::TinyObject` row did ship, and names the status effect
@@ -1453,9 +1451,9 @@ current [test run](../../Game%20Testing/test-run.html).
 
 <a id="data-29"></a>
 
-### DATA-29 — The ultimate meter's rates are PIN's own [ ] open, by necessity
+### data-29 — The ultimate meter's rates are PIN's own [ ] open, by necessity
 
-[DATA-19](#data-19)'s meter works, but every number in it was made up:
+[data-19](#data-19)'s meter works, but every number in it was made up:
 - 120 s from empty to full while in combat
 - in combat means a hit dealt or taken in the last 10 s
 - a damage bonus of 10 points per target's worth of health dealt, at most 5 from one hit
@@ -1470,7 +1468,7 @@ is the M6 save file.
 
 <a id="data-30"></a>
 
-### DATA-30 — Area and cone targeting doesn't check walls [~] fixed in code 2026-10-05, unverified in game
+### data-30 — Area and cone targeting doesn't check walls [~] fixed in code 2026-10-05, unverified in game
 
 **Fixed in code 2026-10-05.** The open question below, whether the client respects walls, is
 answered from its own code. `apt::TargetPBAECommand`'s constructor (0xbb8520) builds a flags word
@@ -1504,7 +1502,7 @@ ability reaches through rocks and buildings
 [TargetPBAECommand.cs:22](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Target/TargetPBAECommand.cs#L22)).
 The code comment gives the reason as "the server has no terrain to test against", which was true
 when it was written and stopped being true on 2026-08-17, when terrain loaded
-([DATA-23](#data-23)). The line-of-sight raycast NPCs use already gives a rise cover from creature
+([data-23](#data-23)). The line-of-sight raycast NPCs use already gives a rise cover from creature
 fire, and it would serve here too.
 
 Also unread: `UseBodyPosition` on `TargetPBAE` (`TargetConeAE` reads it), and `IncludeInteractives`

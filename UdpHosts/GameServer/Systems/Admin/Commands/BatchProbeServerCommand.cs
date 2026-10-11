@@ -7,7 +7,7 @@ using GameServer.Systems.Crafting;
 namespace GameServer.Systems.Admin.Commands;
 
 /// <summary>
-///     GRADE1's probe: sends the client material stacks carrying a quality and five stats, to see whether
+///     graded-crafting-1's probe: sends the client material stacks carrying a quality and five stats, to see whether
 ///     it draws them and whether it keeps two batches of one material apart.
 /// </summary>
 /// <remarks>
@@ -17,7 +17,7 @@ namespace GameServer.Systems.Admin.Commands;
 ///     different values in <c>Resource.Unk2</c>, the one unnamed field that could be a batch id.
 /// </remarks>
 [ServerCommand(
-    "Send a material stack with a quality and stats (GRADE1 probe)",
+    "Send a material stack with a quality and stats (graded-crafting-1 probe)",
     "batch <itemId> <quantity> <quality> [stat1..stat5] | batch pair <itemId> [tagged]",
     "batch")]
 public class BatchProbeServerCommand : ServerCommand

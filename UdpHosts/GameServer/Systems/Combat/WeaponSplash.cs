@@ -11,7 +11,7 @@ namespace GameServer.Systems.Combat;
 ///     <para>
 ///     <c>dbitems::Ammo.impact_radius</c> shipped with a real radius on 612 of 1264 rows and PIN loaded the
 ///     record without ever reading the field, so no weapon in the game splashed — a round landing on the
-///     ground between two enemies was a miss, because the ground has no health. DATA-21.
+///     ground between two enemies was a miss, because the ground has no health. data-21.
 ///     </para>
 ///     <para>
 ///     Two of the three readings here could plausibly have gone the other way, which is why they are a

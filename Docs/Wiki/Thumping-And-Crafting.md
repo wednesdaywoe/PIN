@@ -116,7 +116,7 @@ still knows the `/manufacturing/certs` web endpoint.
 
 Thumping is a server-side job. Data, protocol and UI are all present, so it is implementation
 work against a client that is still expecting it — the same shape as everything else in
-[the progress ledger](../PROGRESS.md).
+the worklog's plans.
 
 Crafting has one hard blocker, and it is the surface, not the data or the protocol. Nine
 thousand recipes are useless without a screen to pick them on. But the screen was Lua, not

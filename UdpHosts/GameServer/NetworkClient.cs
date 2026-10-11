@@ -252,12 +252,12 @@ public class NetworkClient : INetworkClient
                     else if (typecode.ToString().EndsWith("View", StringComparison.Ordinal))
                     {
                         // The client is holding an entity this shard has forgotten and will re-ask every few
-                        // seconds for the rest of the session unless something tells it otherwise (NET-24).
+                        // seconds for the rest of the session unless something tells it otherwise (net-24).
                         // Warning at it was the entire old response: one 32-minute sitting logged 648 of these
                         // across four finished thumpers without sending a byte back. The scope-out is the same
                         // message removal should already have delivered, so re-sending it costs one packet per
                         // stale request and ends the loop whichever way the first one went missing -- dropped
-                        // on a channel that acks but never resends (NET-1), or raced past by a keyframe this
+                        // on a channel that acks but never resends (net-1), or raced past by a keyframe this
                         // thread answered while the shard tick was removing the entity.
                         Logger.Warning("KeyframeRequest for {Entity} ({TypeCode}) which no longer exists, scoping it out", request.Entity, typecode);
                         NetChannels[ChannelType.ReliableGss].SendViewScopeOut(requestedEntityId, typecode);

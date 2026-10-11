@@ -1,12 +1,11 @@
-<title>PIN — Crafting (CRAFT1–CRAFT5)</title>
+<title>PIN — Crafting (crafting-1–crafting-5)</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Crafting (CRAFT1–CRAFT5)</h1>
+    <h1>Crafting (crafting-1–crafting-5)</h1>
     <p class="standfirst">Part of the in-game test queue . Setup, admin commands and the monster type id table:
-    <a href="Session-Setup.html">Session Setup</a>. The stream doc:
-    <a href="../Docs/streams/crafting.md">Crafting — the second loop</a>.</p>
+    <a href="Session-Setup.html">Session Setup</a>. The plan: <code>worklog show crafting</code>.</p>
   </header>
   <div class="bar">
     <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
@@ -17,10 +16,9 @@
   </div>
   <section class="doc">
     <p>Part of the in-game test queue. Setup, admin commands and the monster type id table:
-    <a href="Session-Setup.html">Session Setup</a>. The stream this sheets entries come from:
-    <a href="../Docs/streams/crafting.md">Crafting — the second loop</a>.</p>
+    <a href="Session-Setup.html">Session Setup</a>. The plan this sheet's entries come from: <code>worklog show crafting</code>.</p>
     <p>Crafting is the second loop the charter ordered after thumping: turn resources the thumper brings
-    up into an item you equip. It runs <a href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s whole problem in
+    up into an item you equip. It runs <a href="../Docs/gaps/network.md#net-18">net-18</a>'s whole problem in
     miniature — a crafted item has to arrive in your inventory the same way any created item does, so it
     cannot start until item delivery is confirmed. The first entry below is that confirmation, and it is
     the gate for everything after it.</p>
@@ -41,7 +39,7 @@
     are stubs, <code>Blueprint_Resources</code> is shipped data that nothing reads — so the work has an address.</p>
     <p><strong>The loop cannot open until items can be received.</strong> Every crafting entry below ends with an
     item appearing in your inventory. If PIN's partial <code>InventoryUpdate</code> will not list a created item
-    (the <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> defect, still open), a crafted item would arrive the same
+    (the <a href="../Docs/gaps/network.md#net-18">net-18</a> defect, still open), a crafted item would arrive the same
     way any created item does — resolved, listed server-side, never drawn — and no amount of recipe work would
     show. So the first entry is the client confirmation of the fix that just landed, and nothing past it runs
     until it passes.</p>
@@ -61,8 +59,8 @@
     <div class="block-body">
       <div class="entry"><div class="entry-head"><span class="id">CRAFT-0</span><span class="marker pass">[x]</span><span class="entry-t">a created item appears without a resend</span></div><p><strong>Passed in game 2026-08-20, on the second attempt with a different item.</strong>
       <code>createitem 85968</code> (Heavy Machine Gun) was listed by the client on its own, no
-      <code>dbg_inventory resend</code>. That is <a href="../Docs/ISSUE-REGISTER.md">NET-18</a>'s client
-      confirmation: the <code>0x02</code> arrival flag was the fix, and item delivery works. CRAFT1–CRAFT5 are
+      <code>dbg_inventory resend</code>. That is <a href="../Docs/gaps/network.md#net-18">net-18</a>'s client
+      confirmation: the <code>0x02</code> arrival flag was the fix, and item delivery works. crafting-1–crafting-5 are
       unblocked.</p>
       <p><strong>The first attempt failed and the item was at fault, not the server.</strong> Three sittings using
       <code>20003</code> (DevTEST Shotgun) showed nothing — and the shotguns were not merely undrawn on arrival,
@@ -70,9 +68,9 @@
       explain. <code>20003</code> carries client item flags <code>0x0800</code>; every item the panel does draw
       carries <code>0x4803</code>. Splitting that inventory on the two low bits gives 45 drawn and 17 not, and the
       17 are exactly the shotguns, the Battlemedics, the four unnamed items and the three chassis. 35,006 of the
-      game's items are on the wrong side of that line. See <a href="../Docs/gaps/data.md#data-25">DATA-25</a> —
+      game's items are on the wrong side of that line. See <a href="../Docs/gaps/data.md#data-25">data-25</a> —
       <strong>do not test item delivery with 20003.</strong></p>
-      <p>Blocks CRAFT1–CRAFT5. Run it before any of them.</p>
+      <p>Blocks crafting-1–crafting-5. Run it before any of them.</p>
       <div class="steps"><ol>
       <label class="step"><input data-k="crafting-0-1" type="checkbox"/><span class="step-body"><span class="lede">Log in, open the inventory before creating anything, and note whether the frame's default gear
          is listed. This is the control — if the starting inventory is empty too, the problem was never about
@@ -80,16 +78,16 @@
       <label class="step"><input data-k="crafting-0-2" type="checkbox"/><span class="step-body"><span class="lede"><code>createitem</code> an item the client is willing to draw — <code>85968</code> (Heavy Machine Gun),
          which carries the same item flags as the gear already visible in your bag. <strong>Not
          <code>20003</code></strong>: the client never lists it however it is delivered
-         (<a href="../Docs/gaps/data.md#data-25">DATA-25</a>). This is an ordinary single-item add, the shape the
+         (<a href="../Docs/gaps/data.md#data-25">data-25</a>). This is an ordinary single-item add, the shape the
          fix was calibrated against.</span></span></label>
       <label class="step"><input data-k="crafting-0-3" type="checkbox"/><span class="step-body"><span class="lede">Watch the inventory <strong>without touching anything</strong>. The item should appear on its own — the
          whole point is that no <code>resend</code> follows it. This is the pass condition.</span></span></label>
       <label class="step"><input data-k="crafting-0-4" type="checkbox"/><span class="step-body"><span class="lede">If it appears: confirm it is real — <code>dbg_inventory</code> lists it, it equips in the garage, the flags
-         round-trip — then <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> closes and item delivery is confirmed.
+         round-trip — then <a href="../Docs/gaps/network.md#net-18">net-18</a> closes and item delivery is confirmed.
          Crafting can proceed.</span></span></label>
       <label class="step"><input data-k="crafting-0-5" type="checkbox"/><span class="step-body"><span class="lede">If it does <strong>not</strong> appear without a resend: check the item's flags before blaming the
          server — an item whose client record lacks the two low bits will never be listed, however it arrives
-         (<a href="../Docs/gaps/data.md#data-25">DATA-25</a>). Only once the item is known drawable does the
+         (<a href="../Docs/gaps/data.md#data-25">data-25</a>). Only once the item is known drawable does the
          old trail apply: run <code>dbg_inventory resend</code> to confirm it is server-side real, then the
          <a href="Inventory.html">INVENTORY-1</a> comparison — capture message [9], the 37-byte retail
          single-item add reproduced in <a href="Capture-Replay.html">Capture Replay</a> — and the remaining
@@ -101,7 +99,7 @@
         <code>&lt;id&gt; guid &lt;hex&gt; Weapon in Gear flags 0</code> (or the module's sub-inventory) with no resend
         needed.</li>
       <li><strong>Listed by <code>dbg_inventory</code> but not shown, and <code>resend</code> makes it appear</strong> — the
-        same <a href="../Docs/ISSUE-REGISTER.md">NET-18</a> outcome, the arrival flag was not it. Re-run the
+        same <a href="../Docs/gaps/network.md#net-18">net-18</a> outcome, the arrival flag was not it. Re-run the
         capture comparison above.</li>
       <li><strong>Listed by <code>dbg_inventory</code> but not shown, and <code>resend</code> doesn't help</strong> — the
         client rejects the item itself; the suspects are all in the item struct.</li>
@@ -114,12 +112,12 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
   </section>
   <section class="block" data-open="true" id="-crafting-1-a-panel-reaches-fabrication">
     <button class="block-head" type="button">
-      <span class="block-n">CRAFT1</span>
+      <span class="block-n">crafting-1</span>
       <span class="block-t">A panel reaches fabrication</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT1</span><span class="marker warn">[~]</span><span class="entry-t">A panel reaches fabrication</span></div><p>The client surface. Scoped 2026-08-20 by reading
+      <div class="entry"><div class="entry-head"><span class="id">crafting-1</span><span class="marker warn">[~]</span><span class="entry-t">A panel reaches fabrication</span></div><p>The client surface. Scoped 2026-08-20 by reading
       <code>system/gui</code> and the client binary; the entry below is what that found, and it changes the
       choice this entry was written to make. <strong>Steps 1 and 2 ran the same evening and the unknown is
       settled — see the probe result below.</strong></p>
@@ -154,7 +152,7 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
       the panel leads.</strong> <code>FabProbe</code> ran at login against a PIN server that has no fabrication
       handler of any kind, and the client answered <strong>6,251 recipes</strong> anyway. Nothing on commands
       240&#8211;247 reached the server during the run. A panel can therefore list, describe and cost every recipe
-      in the game before PIN sends a single fabrication message, and CRAFT2 does not have to supply the
+      in the game before PIN sends a single fabrication message, and crafting-2 does not have to supply the
       catalogue.</p></div>
 
       <p><strong>What the probe found.</strong> All eight functions are callable.
@@ -181,8 +179,8 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
       Medium Health Packs&#8221;, whose output is a certificate rather than an item; 52201 &#8220;Pack of Sonic
       Detonators (10)&#8221;, five of which can run at once; 77474 &#8220;Raw Resource Refining II&#8221;.</p>
 
-      <p>One thing worth carrying into CRAFT2 and CRAFT3: recipes carry <code>required_certs</code>, so the
-      cert delivery closed under <a href="../Docs/ISSUE-REGISTER.md">NET-19</a> is load-bearing here.</p>
+      <p>One thing worth carrying into crafting-2 and crafting-3: recipes carry <code>required_certs</code>, so the
+      cert delivery closed under <a href="../Docs/gaps/network.md#net-19">net-19</a> is load-bearing here.</p>
 
       <div class="callout warn"><p><strong>Careful with these 6,251.</strong> They are the client&#8217;s
       <em>Lua-facing</em> recipe store, built from <code>dbitems::Blueprints</code>. The client&#8217;s
@@ -199,7 +197,7 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
          <code>FabProbe:</code>. The addon path is confirmed working:
          <code>Documents\Firefall\Addons\&lt;Name&gt;\</code>, loaded at startup only.</span></span></label>
       <label class="step"><input data-k="crafting-1-2" type="checkbox"/><span class="step-body"><span class="lede"><strong>Done 2026-08-20 — client-side, panel leads.</strong> 6,251 recipes with PIN
-         sending nothing. CRAFT2 stays behind this entry.</span></span></label>
+         sending nothing. crafting-2 stays behind this entry.</span></span></label>
       <label class="step"><input data-k="crafting-1-3" type="checkbox"/><span class="step-body"><span class="lede">Author the panel into <code>FabTest</code>, listing whatever the probe proved reachable. Not a
          finished screen &#8212; a list, and one button.</span></span></label>
       <label class="step"><input data-k="crafting-1-4" type="checkbox" checked="checked"/><span class="step-body"><span class="lede"><strong>Done 2026-08-20 &#8212; there is no send.</strong> <code>FabCart</code> called
@@ -214,10 +212,10 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
          starts.</span></span></label>
       </ol></div>
       <p>Pass: a panel lists a recipe, sends a fabrication request, and the request reaches the server. The
-      recipe itself resolving is CRAFT2's job.</p>
+      recipe itself resolving is crafting-2's job.</p>
 
       <div class="callout warn"><p><strong>That pass condition is unreachable and the entry is superseded.</strong>
-      No client-side send exists to reach the server with, so the panel cannot be the thing that opens CRAFT2.
+      No client-side send exists to reach the server with, so the panel cannot be the thing that opens crafting-2.
       CRAFT1b replaces it: prove the client still <em>accepts</em> a server-authored fabrication message. Three
       further things came out of the same binary read and are worth having on record. The client still prints
       every fabrication reply to its own console (&#8220;Fabrication Recipe List:&#8221;, &#8220;Recipe
@@ -228,7 +226,7 @@ grep -a "createitem" ~/Games/PIN/logs/GameServer.log | tail -5
       <code>ends_at</code>, <code>upgrade_chance</code> and about twenty more. And there is a client setting
       called <code>fabrication.enabled</code> whose default and effect are both untested.</p></div>
       <div class="callout warn"><p>Not a finished screen. The charter says the deliverable is a decision with a working
-      spike behind it — a panel that proves the route is open is enough to open CRAFT2.</p></div>
+      spike behind it — a panel that proves the route is open is enough to open crafting-2.</p></div>
       <span class="cmd"><pre><code>FF_DOCS=~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/compatdata/227700/pfx/drive_c/users/steamuser/Documents/Firefall
 mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Addons/"
 </code></pre><button class="copy" type="button">Copy</button></span><div class="result"><label for="r-crafting-1">Result</label><textarea data-k="n-crafting-1" id="r-crafting-1" placeholder="What happened"></textarea></div></div>
@@ -248,7 +246,7 @@ mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Add
       column header in the client console <em>and</em> <code>FabCart: EVENT ON_FAB_FETCH_RECIPES</code> in Lua.
       Server 23:58:16 &#8594; client elapsed 02:06; 00:00:22 &#8594; 04:12; 00:05:10 &#8594; 01:00 of the next
       client session. <strong>An unprompted, server-authored fabrication message is accepted, decoded and acted
-      on.</strong> That is the premise everything after CRAFT1 rests on, and it is no longer an
+      on.</strong> That is the premise everything after crafting-1 rests on, and it is no longer an
       assumption.</p></div>
 
       <div class="callout warn"><p><strong>The list arrived empty three times.</strong> The header printed with
@@ -289,7 +287,7 @@ mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Add
       type and 265 a result loot table, so they point at something. Names resolved offline by joining the
       recipe table&#8217;s text ids against the client&#8217;s localisation table, no session needed.</p>
 
-      <p>Worth carrying into CRAFT3: these are a <em>tiered</em> set, four grades per family, not a flat
+      <p>Worth carrying into crafting-3: these are a <em>tiered</em> set, four grades per family, not a flat
       catalogue. The economy decision has to price a ladder.</p>
 
       <p>Two cosmetic things the 254-row run showed, neither blocking. Recipe 124820 prints with a blank name and
@@ -309,7 +307,7 @@ mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Add
       be named by hashing candidates until one matches. That is how <code>dbfabrication::Recipe</code> got its
       name.</p></div>
 
-      <p>CRAFT1 established that the client can never ask for a build, so every fabrication message from here on
+      <p>crafting-1 established that the client can never ask for a build, so every fabrication message from here on
       is one PIN sends unprompted. That is a new thing for this server to do and it has never been tried, so it
       gets tried on the cheapest message in the set before anything is built on top of it.</p>
 
@@ -357,7 +355,7 @@ mkdir -p "$FF_DOCS/Addons" &amp;&amp; cp -r Client/Addons/FabProbe "$FF_DOCS/Add
       </ol></div>
       <p>Pass: <code>Fabrication Recipe List:</code> appears in the client console, or
       <code>FabCart: EVENT fetch_recipes</code> appears, or both. Either proves the client still accepts a recipe
-      list PIN authored, and CRAFT2 can be built on that. <strong>Passed 2026-08-21, envelope and contents both,
+      list PIN authored, and crafting-2 can be built on that. <strong>Passed 2026-08-21, envelope and contents both,
       at 254 recipes.</strong></p>
       <div class="callout warn"><p>No reply in chat at all means the command never reached the server. The first
       time this was run it was typed as <code>/fabrecipes</code> and the leading slash swallowed it &#8212; the
@@ -375,12 +373,12 @@ grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesof
   </section>
   <section class="block" data-open="true" id="-crafting-2-fabrication-runs-server-side">
     <button class="block-head" type="button">
-      <span class="block-n">CRAFT2</span>
+      <span class="block-n">crafting-2</span>
       <span class="block-t">Crafting runs server-side</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT2</span><span class="marker pass">[x]</span><span class="entry-t">Crafting runs server-side</span></div><p>The server side: resolve a recipe's ingredients against
+      <div class="entry"><div class="entry-head"><span class="id">crafting-2</span><span class="marker pass">[x]</span><span class="entry-t">Crafting runs server-side</span></div><p>The server side: resolve a recipe's ingredients against
       inventory, spend them, place the output item. <strong>Built and passed 2026-08-21.</strong> Requires CRAFT-0
       to have passed — the output item has to be deliverable.</p>
 
@@ -400,7 +398,7 @@ grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesof
       25,823 of its 25,881 rows, 99.8%. The reader was still written, because a blueprint that cites a raw-material
       row has to be <em>refused out loud</em> rather than built for nothing — which is exactly the free-craft trap
       the warning below names.</p>
-      <p><strong>3. The trigger is a server command, because the client has no sender.</strong> CRAFT1 settled that:
+      <p><strong>3. The trigger is a server command, because the client has no sender.</strong> crafting-1 settled that:
       748 exported <code>Game.*</code> names in the 1962 binary, not one of them sends a fabrication command. So
       "send a fabrication request" is not a step anyone can perform. <code>craft</code> is the trigger.</p></div>
 
@@ -425,11 +423,11 @@ grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesof
 
       <div class="callout"><p><strong>The first two sittings were void, and neither was crafting's fault. Both
       bugs were older than this entry and both are fixed.</strong></p>
-      <p><a href="../Docs/ISSUE-REGISTER.md">NET-27</a> — the command printed one line and appeared to stop.
+      <p><a href="../Docs/gaps/network.md#net-27">net-27</a> — the command printed one line and appeared to stop.
       It had thrown: Aero's generated chat message sizes its buffer by counting <em>characters</em> and then writes
       <em>UTF-8 bytes</em>, so a single em dash overran it by two bytes and unwound the whole command before any
       ingredient was checked. Ordinary player chat had the same fault, silently, for any accented character.</p>
-      <p><a href="../Docs/ISSUE-REGISTER.md">NET-28</a> — with chat fixed the command ran, charged all three
+      <p><a href="../Docs/gaps/network.md#net-28">net-28</a> — with chat fixed the command ran, charged all three
       ingredients, and died before the payout. Emptying a resource stack to <em>exactly</em> zero threw inside
       <code>ConsumeResource</code>, which removes the stack and then reads it straight back to update the client.
       Nothing in PIN had ever emptied one exactly, so the boundary sat unhit; an ability that spends a resource
@@ -438,14 +436,14 @@ grep -a -E "Fabrication Recipe List|FabCart: EVENT" "$HOME/.var/app/com.valvesof
       whole diagnosis. <code>SourceFeedback</code> writes to the log before it sends, so a command that logs more
       than it says has thrown, not stopped.</p></div>
 
-      <div class="callout warn"><p><strong>One finding the pass turned up, and it lands on CRAFT3 and CRAFT4:
+      <div class="callout warn"><p><strong>One finding the pass turned up, and it lands on crafting-3 and crafting-4:
       the inventory panel only draws Crystite and Red Bean tokens.</strong> The tester saw deduction toasts for
       all three ingredients, but the two crafting materials have no row in the panel at all — they are held, spent
       and delivered invisibly. Delivery is fine; this is a client display limit, the same shape as
-      <a href="../Docs/gaps/data.md#data-25">DATA-25</a>. It cost this entry nothing, because the toasts and the
-      server log carried the evidence. It costs CRAFT4 everything: a thumper payout the player cannot see is a
-      loop with its middle missing. Recorded as <a href="../Docs/gaps/client.md">CLIENT-4</a>, and it belongs in
-      the CRAFT3 decision rather than after it.</p></div>
+      <a href="../Docs/gaps/data.md#data-25">data-25</a>. It cost this entry nothing, because the toasts and the
+      server log carried the evidence. It costs crafting-4 everything: a thumper payout the player cannot see is a
+      loop with its middle missing. Recorded as <a href="../Docs/gaps/client.md">client-4</a>, and it belongs in
+      the crafting-3 decision rather than after it.</p></div>
 
       <p>The recipe this run uses is <strong>blueprint 92906</strong>, which builds the ability module
       <strong>Meteor Strike (item 88042, level 6)</strong> out of 15 Crystite (item <code>10</code>), 1 Chitin Fibers
@@ -496,7 +494,7 @@ craft 92906</code></pre><button class="copy" type="button">Copy</button></span><
       build spent <code>86667 x30 toward class 128, 86669 x20 toward class 128</code> — filling the line from the
       first material and taking only the shortfall from the second. A partial draw is stronger evidence than the
       planned split: it shows the class is being counted, not the stacks. The Cryogenic Recharger arrived.
-      Blueprint 80411, which CRAFT2 recorded as correctly refused, is now accepted and priced at 250 Metals
+      Blueprint 80411, which crafting-2 recorded as correctly refused, is now accepted and priced at 250 Metals
       reading CPU — the withdrawal above stands confirmed.</p>
       <p><strong>The re-run closed it out.</strong> Blueprint 81986 was refused by name:
       <code>costs material class(es) 3299, 3298, which no surviving item belongs to</code>, with each line
@@ -517,7 +515,7 @@ craft 92906</code></pre><button class="copy" type="button">Copy</button></span><
       <code>missing 0 of 50 units</code>, printing what you held where the shortfall belonged. It now reads
       <code>50 units of material class 128 (holding 0, ...)</code>, matching how item lines report.</p></div>
 
-      <div class="callout warn"><p><strong>CRAFT2 shipped with a false claim in it, and this entry is the
+      <div class="callout warn"><p><strong>crafting-2 shipped with a false claim in it, and this entry is the
       correction.</strong> It recorded <code>Blueprint_Resources</code> as dead data on the grounds that only 137
       of its 5,509 rows named a surviving item — 2.5%. That join used the wrong column. Its
       <code>item_type</code> is not an item id at all: it is a <code>RootItem.item_subtype</code>, a material
@@ -534,7 +532,7 @@ craft 92906</code></pre><button class="copy" type="button">Copy</button></span><
       <p><strong>The stat is reported and does nothing yet, on purpose.</strong> A material's stat values are
       per-batch: they ride on the item as a packed string rather than living in static data, and PIN does not
       write them. So this entry proves the class half only — that a class line is met, spent and refused
-      correctly. What the stats then do to the output is CRAFT4's question.</p>
+      correctly. What the stats then do to the output is crafting-4's question.</p>
 
       <p>The recipe here is <strong>blueprint 82081</strong>, which builds <strong>Cryogenic Recharger I^Q
       (item 81626)</strong> for <strong>50 units of class 128, Metals</strong>, reading their Power. The
@@ -555,13 +553,13 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <label class="step"><input data-k="crafting-2b-4" type="checkbox"/><span class="step-body"><span class="lede">Build it. The reply should name both metals separately, 30 and 20, spent toward the one class.</span>
       <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
       <label class="step"><input data-k="crafting-2b-5" type="checkbox"/><span class="step-body"><span class="lede">Confirm on screen: both metal stacks gone, and Cryogenic Recharger I^Q in the inventory. Watch the
-         toasts — CLIENT-4 means the metals themselves may have no row in the panel.</span>
+         toasts — client-4 means the metals themselves may have no row in the panel.</span>
       <span class="cmd"><pre><code>craft 82081</code></pre><button class="copy" type="button">Copy</button></span></span></label>
       <label class="step"><input data-k="crafting-2b-6" type="checkbox"/><span class="step-body"><span class="lede">Now the refusal, against a class that really is empty. Blueprint 81986 builds Plasma Reactor I^Q for
          75 units of "Gas" and 50 of "Mineral" — two of the nine classes with no item of any kind left in them. It
          must be refused, naming both.</span>
       <span class="cmd"><pre><code>craft check 81986</code></pre><button class="copy" type="button">Copy</button></span></span></label>
-      <label class="step"><input data-k="crafting-2b-7" type="checkbox"/><span class="step-body"><span class="lede">And confirm the recipe CRAFT2 wrongly recorded as refused is now accepted, and asks for Metals.</span>
+      <label class="step"><input data-k="crafting-2b-7" type="checkbox"/><span class="step-body"><span class="lede">And confirm the recipe crafting-2 wrongly recorded as refused is now accepted, and asks for Metals.</span>
       <span class="cmd"><pre><code>craft check 80411</code></pre><button class="copy" type="button">Copy</button></span></span></label>
       </ol></div>
 
@@ -583,12 +581,12 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
   </section>
   <section class="block" data-open="true" id="-crafting-5-the-loop-closes-in-game">
     <button class="block-head" type="button">
-      <span class="block-n">CRAFT5</span>
+      <span class="block-n">crafting-5</span>
       <span class="block-t">The loop closes in game</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT5</span><span class="marker warn">[~]</span><span class="entry-t">The loop closes in game</span></div>
+      <div class="entry"><div class="entry-head"><span class="id">crafting-5</span><span class="marker warn">[~]</span><span class="entry-t">The loop closes in game</span></div>
 
       <div class="callout pass"><p><strong>Steps 1&#8211;6 passed on the first attempt, 2026-08-22. Iron mined out
       of the ground became an item, with no <code>createitem</code> anywhere in the chain.</strong> Five thumps
@@ -609,15 +607,15 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <code>item 86667 (ResourceItem) x50 toward class 128</code> and paid <code>81626 x1</code>. Three Bars
       left over, confirmed by <code>dbg_inventory</code> a minute later: <code>86667 x3</code>. Per-thump yield
       of Bars ran <strong>7 to 14</strong>, so the predicted three-to-eight-run loop was five.</p>
-      <p><strong>DATA-27 was demonstrated live rather than argued.</strong> The same five thumps piled up
+      <p><strong>data-27 was demonstrated live rather than argued.</strong> The same five thumps piled up
       <strong>147 Iron Ore</strong> &#8212; nearly three times the Bars &#8212; and not one unit of it can be
       spent on anything. Standing on node 238 put both rows in <code>/mats</code> at once, which is exactly the
       picture the entry was re-pointed at 238 to get.</p>
       <p><strong>Outstanding: steps 7 and 8.</strong> The equip and the relog have not run, so the entry stays
-      <code>[~]</code>. Nothing in the log suggests they will fail &#8212; the item is in the bag and CRAFT2's
+      <code>[~]</code>. Nothing in the log suggests they will fail &#8212; the item is in the bag and crafting-2's
       output survived a relog &#8212; but the claim is not proven until they do.</p></div>
 
-      <p><strong>Moved ahead of CRAFT3 and CRAFT4 on 2026-08-21, at the user's call.</strong> The whole
+      <p><strong>Moved ahead of crafting-3 and crafting-4 on 2026-08-21, at the user's call.</strong> The whole
       endeavour hinges on one question: can you go out into the world, thump for resources, fight what comes,
       come back and build something out of what you mined? Deciding an economy before knowing that answer is
       arranging furniture in a house nobody has walked through.</p>
@@ -641,7 +639,7 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
 
       <div class="callout warn"><p><strong>The node type is the one thing that will silently ruin this run.</strong>
       Checked against <code>dbzonemetadata::ResourceNodeTypeResource</code> on 2026-08-21 and recorded as
-      <a href="../Docs/ISSUE-REGISTER.md">DATA-27</a>. The game ships 42 node types. <strong>Thirty-four of them
+      <a href="../Docs/gaps/data.md#data-27">data-27</a>. The game ships 42 node types. <strong>Thirty-four of them
       pay ore in class 3288 "Raw Metals"</strong> — Iron, Tungsten, Titanium, Uranium Ore — and
       <strong>no blueprint in the game asks for class 3288.</strong> What the metal recipes want is class
       <strong>128 "Metals"</strong>: <strong>Iron Bars</strong> (86667) and Tungsten Bars, the refined tier.
@@ -649,7 +647,7 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       fills the bag with a material that cannot be spent — which is what the node 233 run did.</p>
       <p>That is the 1.6 cull showing, not a bug. Refining ore into bars was the molecular printer's job, and
       the printer's panel ships as 528 lines of whitespace. The ore is the input to a step that was deleted.
-      CRAFT3 inherits the question of what to do about it.</p></div>
+      crafting-3 inherits the question of what to do about it.</p></div>
 
       <div class="callout"><p><strong>Given the right node, it needs no economy decision and no new recipes.</strong>
       Iron Bars sit in class 128, which <strong>263 blueprints</strong> ask for. <strong>157 of those are priced
@@ -659,7 +657,7 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
 
       <p><strong>Stand on node type 238.</strong> It is the only one that pays <em>both</em> Iron Bars and Iron
       Ore, so a single thump puts a spendable material and an unspendable one side by side in
-      <code>/mats</code> — the clearest possible picture of what DATA-27 means. Prefer 235 or 237 for a run with
+      <code>/mats</code> — the clearest possible picture of what data-27 means. Prefer 235 or 237 for a run with
       only Bars in it, or 240 if you also want Crystite separating into the wallet.</p>
 
       <div class="steps"><ol>
@@ -699,7 +697,7 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <code>createitem</code> anywhere in the chain, and every step of it was visible on screen.</p>
 
       <div class="callout warn"><p><strong>Step 7 as first written was impossible, and finding out why answered
-      CRAFT4's main question.</strong> The entry said "equip the crafted result". <strong>81626 is item type 17,
+      crafting-4's main question.</strong> The entry said "equip the crafted result". <strong>81626 is item type 17,
       CraftingComponent</strong> — a part that slots into equipment, not equipment. Worse, in shipped data
       <strong>nothing consumes it at all</strong>: no blueprint names it and no blueprint asks for its class,
       2259. It is a dead end.</p>
@@ -717,14 +715,14 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
       <tr><td>3</td><td>81162</td><td>the Receiver + the Barrel + 200 Crystite</td><td><strong>Burst Rifle
         (85988), a Weapon</strong></td></tr>
       </table>
-      <p>125 Iron Bars total, plus 200 Crystite. This is <strong>CRAFT4's answer arriving early</strong> — the
+      <p>125 Iron Bars total, plus 200 Crystite. This is <strong>crafting-4's answer arriving early</strong> — the
       curated recipe set has a first entry and it was found by a failed test step rather than by design work.</p>
       <p><strong>Do not thump thirteen times for it.</strong> Two things shorten the run, both landed
       2026-08-22. Node type <strong>237</strong> pays Iron Bars 13-26 at its centre against 238's 8-15, so it is
       close to twice the vein for the same five minutes. And a deposit now carries a <strong>richness
       multiplier</strong> — <code>deposit add 237 60 4</code> places one paying four times its gradient, which
       is roughly two thumps for the whole rifle. Richness is PIN's own field, filling the hole where retail's
-      server-side deposit records used to be; see <a href="../Docs/streams/m4-thump-placement.md">m4</a>.
+      server-side deposit records used to be; see m4.
       Crystite needs no thumping if you are already carrying 200.</p></div>
 
       <div class="callout warn"><p><strong>The one thing that would quietly invalidate the run is using
@@ -741,16 +739,16 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
   </section>
   <section class="block" data-open="true" id="-crafting-3-the-economy-decisions">
     <button class="block-head" type="button">
-      <span class="block-n">CRAFT3</span>
+      <span class="block-n">crafting-3</span>
       <span class="block-t">The economy decisions</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT3</span><span class="marker none">[ ]</span><span class="entry-t">The economy decisions</span></div><p>The decisions, now decidable because resources exist in the world. Three calls: which resource
+      <div class="entry"><div class="entry-head"><span class="id">crafting-3</span><span class="marker none">[ ]</span><span class="entry-t">The economy decisions</span></div><p>The decisions, now decidable because resources exist in the world. Three calls: which resource
       economy (five-stat graded materials, or the level-banded veins the node types are written for); where
       crafted output lands (1962's item system, or a parallel track free of level-45 balance); how resources are
       carried in inventory. The user's call; the data supports either economy and imposes neither. Wanted before
-      CRAFT4, not before CRAFT2 — the recipes are priced against whatever CRAFT3 picks.</p>
+      crafting-4, not before crafting-2 — the recipes are priced against whatever crafting-3 picks.</p>
       <p>This is a decision, not a pass/fail entry. The run sheet records the decision and the data behind it;
       there is no client command that settles it.</p>
       <div class="steps"><ol>
@@ -758,30 +756,30 @@ craft check 82081</code></pre><button class="copy" type="button">Copy</button></
          crafted item at, and what a thumper payout looks like under each.</span></span></label>
       <label class="step"><input data-k="crafting-3-2" type="checkbox"/><span class="step-body"><span class="lede">Settle where crafted output lands: 1962's item system, or a parallel track. Note the trade — a parallel
          track is free of level-45 balance but is a second inventory path to verify.</span></span></label>
-      <label class="step"><input data-k="crafting-3-3" type="checkbox"/><span class="step-body"><span class="lede">Record the three decisions in the stream doc, with the data behind each, so CRAFT4 has a price to meet and
+      <label class="step"><input data-k="crafting-3-3" type="checkbox"/><span class="step-body"><span class="lede">Record the three decisions in the stream doc, with the data behind each, so crafting-4 has a price to meet and
          a landing place to target.</span></span></label>
       </ol></div>
-      <p>Pass: the three decisions are written down with the data behind them. CRAFT4 prices recipes against
+      <p>Pass: the three decisions are written down with the data behind them. crafting-4 prices recipes against
       them.</p>
       <div class="result"><label for="r-crafting-3">Result</label><textarea data-k="n-crafting-3" id="r-crafting-3" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-crafting-4-a-curated-recipe-set">
     <button class="block-head" type="button">
-      <span class="block-n">CRAFT4</span>
+      <span class="block-n">crafting-4</span>
       <span class="block-t">A curated recipe set</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">CRAFT4</span><span class="marker none">[ ]</span><span class="entry-t">A curated recipe set</span></div><p>The first recipes that consume what a thumper brings up and produce something worth
-      equipping, chosen from the 5,052 resolvable blueprints and priced against the economy CRAFT3 picks. The
+      <div class="entry"><div class="entry-head"><span class="id">crafting-4</span><span class="marker none">[ ]</span><span class="entry-t">A curated recipe set</span></div><p>The first recipes that consume what a thumper brings up and produce something worth
+      equipping, chosen from the 5,052 resolvable blueprints and priced against the economy crafting-3 picks. The
       curation approach, not the full set — expanding a working subset is cheap, authoring 5,052 up front is not.
-      Requires CRAFT3 (a price to meet) and CRAFT2 (the recipe to resolve).</p>
+      Requires crafting-3 (a price to meet) and crafting-2 (the recipe to resolve).</p>
       <div class="steps"><ol>
       <label class="step"><input data-k="crafting-4-1" type="checkbox"/><span class="step-body"><span class="lede">Choose recipes whose ingredients a thumper actually pays out (from the payout table in
          <a href="Thump-Placement.html">Thump Placement</a>), and whose output is equippable and worth the cost
-         against the CRAFT3 price.</span></span></label>
-      <label class="step"><input data-k="crafting-4-2" type="checkbox"/><span class="step-body"><span class="lede">Craft each under CRAFT2 and confirm the ingredients cost what the economy says and the output arrives
+         against the crafting-3 price.</span></span></label>
+      <label class="step"><input data-k="crafting-4-2" type="checkbox"/><span class="step-body"><span class="lede">Craft each under crafting-2 and confirm the ingredients cost what the economy says and the output arrives
          without a resend (CRAFT-0's path). Note any recipe whose output the economy prices below its cost.</span></span></label>
       </ol></div>
       <p>Pass: a recipe consumes a real thumper payout, spends its ingredients, and produces an equippable item that

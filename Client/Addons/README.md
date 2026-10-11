@@ -36,7 +36,7 @@ does not reappear, restart.
 
 - **FabProbe** — read-only. Asks the client's surviving recipe functions what they return and writes
   the answers to the client log, to settle whether recipe lists come from the client's own database or
-  from the server. This is CRAFT1's first step; see
+  from the server. This is crafting-1's first step; see
   [Crafting](../../Game%20Testing/Crafting.html). Output is prefixed `FabProbe:` and re-runnable in
   game with `/fabprobe`.
 
@@ -63,9 +63,9 @@ does not reappear, restart.
   `Fabrication Recipe List:`, which needs no addon at all.
 
 - **InvProbe** — read-only. Dumps both return values of `Player.GetInventory()`: the items table and
-  the resources table, entry by entry, with every field. It settles [UI2](../../Docs/streams/client-ui.md) —
+  the resources table, entry by entry, with every field. It settles client-ui-2 —
   whether raw resources reach Lua at all, and under what field names — and its counts are what
-  [UI1](../../Docs/streams/client-ui.md) measures against `dbg_inventory`. Output is prefixed
+  client-ui-1 measures against `dbg_inventory`. Output is prefixed
   `InvProbe:`. Run it with `/invprobe`, or `/invprobe items` to list the items half too.
 
   **Both answered, 2026-08-21.** The engine hands Lua the raw tier in full — Iron Ore arrived with a
@@ -90,7 +90,7 @@ does not reappear, restart.
 - **MatList** — a panel, not a probe, and the first PIN-authored screen a player uses. `/mats` opens a
   scrolling list of every material the character holds, grouped by category, each row an icon, a name
   and a quantity, with the client's own item tooltip on hover. It is
-  [UI3 and UI4](../../Docs/streams/client-ui.md), confirmed on screen 2026-08-21 — including the two
+  client-ui-3 and client-ui-4, confirmed on screen 2026-08-21 — including the two
   melded resources no shipped surface has ever drawn.
 
   The whole point is in `Gather()`. There is no single call that returns everything — `GetInventory()`

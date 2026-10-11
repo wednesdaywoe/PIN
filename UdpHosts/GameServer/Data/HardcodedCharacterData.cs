@@ -20,7 +20,7 @@ public static class HardcodedCharacterData
     // game running beta's creature scale — a player eighteen times the size of everything shooting at it,
     // which is why nothing could threaten a defender and no wave table could serve a newcomer and a veteran
     // at once. Restoration's rule decides it: numbers from 1962, design from 0.7. This is a build override,
-    // taken deliberately, and it is DATA-3's entry in the issue register.
+    // taken deliberately, and it is data-3's entry in the issue register.
     //
     // ~1000 is corroborated three ways that share no assumptions. Beta trash health (0.6 cut shell-less
     // Hissers and Skivers to 200) puts player output near 100 damage a second rather than the 612 the
@@ -49,7 +49,7 @@ public static class HardcodedCharacterData
     //
     // Kept here only for the creatures that still cannot be tiered: 2203 of 3109 creature types carry no
     // grade at all, and they get this. That is exactly the behaviour PIN had before tiering, so the
-    // ungraded majority is unchanged and no spawn can regress. DATA-6 stays open for them.
+    // ungraded majority is unchanged and no spawn can regress. data-6 stays open for them.
     public static int MonsterMaxHealth = Systems.Combat.MonsterTier.AnchorHealth;
 
     // The dump happened (MinimalSDB dump, prod-1962): build 1962 had no shields. base_shields is non-zero on

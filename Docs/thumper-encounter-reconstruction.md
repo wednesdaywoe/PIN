@@ -274,7 +274,7 @@ Two cautions before building on it:
   fallback for unrated types instead of treating 0 as free.
 - **The rating orders creatures; it does not price them in health.** Converting a rating to hit
   points goes through `MonsterScaling`, and the anchoring for that is
-  [DATA-6](gaps/data.md#data-6), not this document. §5's own **200 for shell-less hissers and
+  [data-6](gaps/data.md#data-6), not this document. §5's own **200 for shell-less hissers and
   skivers** `[notes]` is the one anchor that holds: it is level 4 on that curve, within 3%, and
   because it is an absolute figure from patch notes rather than a converted time-to-kill it does not
   depend on which build's weapons you measure against. A second anchor — a tester's beta-video
@@ -361,7 +361,7 @@ per-creature encounter behaviour that nobody had catalogued, and it is a better 
 grep: the *creatures* of the wave survived even though the *wave* did not.
 
 One table that looks like a lead and is not: `dbcharacter::MonsterAttributeRange` has a `per_level`
-column, and it is 0.0 in all 167 rows. Ruled out, see [DATA-6](gaps/data.md#data-6).
+column, and it is 0.0 in all 167 rows. Ruled out, see [data-6](gaps/data.md#data-6).
 
 ---
 

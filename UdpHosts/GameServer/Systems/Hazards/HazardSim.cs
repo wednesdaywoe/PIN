@@ -47,7 +47,7 @@ public class HazardSim
     private const float DyingRampPerTick = 1.05f;
 
     /// <summary>
-    ///     Invented, and the only invented number here — see DATA-12. No melding-wall effect is findable in
+    ///     Invented, and the only invented number here — see data-12. No melding-wall effect is findable in
     ///     the db: of the 20 status effects that inflict damage type 29 (Melding), every one that could be
     ///     read is a melded creature's attack, with a PBAE target selector and a radius. 5% of max health a
     ///     tick is about eleven seconds through a full health and shield pool, which is lethal enough to

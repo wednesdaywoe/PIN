@@ -198,7 +198,7 @@ public class CharacterInventory
             SubInventory = GetInventoryTypeByItemTypeId(sdbId),
             Durability = 1000,
 
-            // NET-18 — a created item is real and equippable but the client never lists it until the
+            // net-18 — a created item is real and equippable but the client never lists it until the
             // whole inventory is redrawn (it only appears after a full <c>dbg_inventory resend</c>).
             // The partial <c>InventoryUpdate</c> the client declines is missing its arrival flag.
             // Retail's ordinary single-item add carries DynamicFlags = 2 (the 0x02 "is new" bit, which

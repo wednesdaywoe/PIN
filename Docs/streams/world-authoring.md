@@ -3,15 +3,14 @@ project: pin
 kind: stream
 title: "Appendix: Authoring World Content"
 relates:
-  - ../PROGRESS.md
   - ../gaps/data.md
 ---
 
 # Appendix: Authoring World Content
 
 PIN has to place things in the world itself. Retail's placements were server content and are gone
-([DATA-15](../gaps/data.md#data-15)), and this isn't confined to monsters: [M4](m4-thump-placement.md)
-needs a per-zone resource map and [M7](m7-encounter-combat.md) needs encounter spawn points, both of
+([data-15](../gaps/data.md#data-15)), and this isn't confined to monsters: M4
+needs a per-zone resource map and M7 needs encounter spawn points, both of
 which are the same problem wearing different names.
 
 Two attempts at zone 448's spawn groups failed on 2026-08-13, both on placement rather than on code.
@@ -31,7 +30,7 @@ to break line of sight, and nothing for a spawn to stand on.
 
 Three consequences already have entries: NPC ground clamping borrows the target's footing because
 there is nothing to raycast against, spawn anchors are inferred from shipped object positions
-([DATA-15](../gaps/data.md#data-15)), and shots pass through scenery.
+([data-15](../gaps/data.md#data-15)), and shots pass through scenery.
 
 ## What already exists, which is more than expected
 
@@ -112,7 +111,7 @@ vertical slice needs, that is fine.
 **Tier 2, finish the terrain pipeline. The real answer, and its own project.** Write the extractor.
 The payoff is not mainly authoring: it is a downward raycast for NPC ground clamping instead of the
 target-footing hack, real cover for every shot in the game, snap-to-ground for anything placed, and
-the precondition for pathing. It would close [DATA-15](../gaps/data.md#data-15) outright rather than
+the precondition for pathing. It would close [data-15](../gaps/data.md#data-15) outright rather than
 managing it.
 
 The unknown is entirely in the chunk format. The Havok end is done, the Bepu end is done, and the

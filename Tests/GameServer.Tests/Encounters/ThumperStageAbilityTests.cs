@@ -5,7 +5,7 @@ using Xunit;
 namespace GameServer.Tests.Encounters;
 
 /// <summary>
-///     Pins which ability marks each stage of a thumper's life (DATA-18). Landing and departure come from
+///     Pins which ability marks each stage of a thumper's life (data-18). Landing and departure come from
 ///     the calldown def, so the tests pass their own ids through and check they come back. The two
 ///     literals in between have no shipped source and are pinned as they are.
 /// </summary>

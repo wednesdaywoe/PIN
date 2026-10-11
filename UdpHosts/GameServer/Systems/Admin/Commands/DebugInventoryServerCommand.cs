@@ -81,7 +81,7 @@ public class DebugInventoryServerCommand : ServerCommand
 
         // Resources go to the server log too. The client's debug window has a size cap and 70 items
         // overrun it, so the resource section is the half that gets cut, which is exactly the half
-        // UI1 compares against /invprobe. Items stay client-side; there are too many to be worth it.
+        // client-ui-1 compares against /invprobe. Items stay client-side; there are too many to be worth it.
         foreach (var resource in resources)
         {
             Logger.Information(

@@ -4,7 +4,7 @@ namespace Shared.Collision.Tagfile;
 
 /// <summary>
 ///     Preparing an <c>hkpConvexVerticesShape</c>'s points for Bepu's hull builder, which is stricter than
-///     Havok about what it will accept (DATA-22).
+///     Havok about what it will accept (data-22).
 /// </summary>
 internal static class ConvexPoints
 {

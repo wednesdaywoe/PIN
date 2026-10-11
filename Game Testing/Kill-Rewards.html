@@ -16,9 +16,9 @@
   <section class="doc">
     <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../Docs/streams/m5-kill-rewards.md">M5</a>. One sentence: kill something and come away holding
+    <p>The check on M5. One sentence: kill something and come away holding
     crystite you didn't have.</p>
-    <p><strong>KILL-REWARDS-1 passed on 2026-08-13 and closed <a href="../Docs/streams/m5-kill-rewards.md">M5</a></strong> — a Gaia creature paid 4
+    <p><strong>KILL-REWARDS-1 passed on 2026-08-13 and closed M5</strong> — a Gaia creature paid 4
     crystite and the tester saw it arrive. It took two attempts. The first found that crystite was being
     rolled correctly and then filed as an unpayable item, because the resource-or-item check asked
     <code>dbitems::ResourceItem</code> — the gatherable-materials list (ids 75537 and up), which does not contain
@@ -27,7 +27,7 @@
     <p><strong>That run also confirmed the basis-points guess, on a table that is on the kill path.</strong> "Melded Loot
     Common" (5463) is reached from monster 528's second loot table and its rows are 5000/1000/100. Read
     as percentages that is a distribution that drops something every time; it is out of 10000.
-    <code>LootRoller</code> now decides the scale per table from its own rows. See <a href="../Docs/gaps/data.md">DATA-16</a>.</p>
+    <code>LootRoller</code> now decides the scale per table from its own rows. See <a href="../Docs/gaps/data.md">data-16</a>.</p>
     <p><strong>KILL-REWARDS-2 settled on 2026-08-16 and the stream is now 3 of 5.</strong> Thirty-nine kills of monster 528 in one
     post-fix session paid crystite on <strong>8</strong>, which is 20.5% against an expected 25% — inside the noise
     band, and large enough to mean something where the two earlier sessions were not. KILL-REWARDS-3 passed the day
@@ -90,7 +90,7 @@
     sub-loot) and both roll equipment and resource-item tiers. <strong>The equipment and powerups are paid as of
     2026-08-21</strong> — <code>KillRewardSim</code> puts anything without the <code>Resource</code> flag on the ground where the
     creature fell, and it reaches a bag only when somebody picks it up. Whether the player can <em>see</em> one is a separate question and belongs to
-    <a href="../Docs/gaps/data.md#data-25">DATA-25</a>: the two powerups this table drops carry no listing bits.
+    <a href="../Docs/gaps/data.md#data-25">data-25</a>: the two powerups this table drops carry no listing bits.
     <a href="#-kill-rewards-6-a-rolled-item-lands-on-the-ground">KILL-REWARDS-6</a> is the check.</p>
     <p><strong>The melded resources off that second table are paid, and KILL-REWARDS-1 is where that turned up.</strong> 77343,
     77344 and 77345 carry the <code>Resource</code> flag, so they take the same route crystite does and land in the
@@ -130,7 +130,7 @@
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-1</span><span class="marker pass">[x]</span><span class="entry-t">A kill pays crystite</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on the second attempt, and it closes <a href="../Docs/streams/m5-kill-rewards.md">M5</a>.</strong> A
+      <div class="entry"><div class="entry-head"><span class="id">KILL-REWARDS-1</span><span class="marker pass">[x]</span><span class="entry-t">A kill pays crystite</span></div><div class="callout pass"><p><strong>Passed 2026-08-13 on the second attempt, and it closes M5.</strong> A
       Gaia creature died and paid 4 crystite, which the tester saw arrive:</p></div>
       <span class="cmd"><pre><code>20:22:47 NPC 2305176846901314560 died to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:22:47 Kill of monster type 528 paid 4 of resource 10 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:22:47 Kill of monster type 528 paid 1 of resource 77344 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:23:07 Kill of monster type 1196 rolled item 33815 x1, not paid — item drops are unbuilt</code></pre><button class="copy" type="button">Copy</button></span><span class="cmd"><pre><code>      20:23:07 Kill of monster type 1196 paid 1 of resource 77345 to 11072869122414870784</code></pre><button class="copy" type="button">Copy</button></span>
       <p>4 is the bottom band of "Small Crystite Drops (2-20)", the 80% row — the common case landing on the
@@ -470,7 +470,7 @@
       pickup logs "magazines refilled"; and step 5 shows no new items.</p></div>
       <div class="callout fail"><p><strong>Fail, health does not move on screen but the log restored some:</strong> the server healed and the client
       did not hear about it. <code>SetCurrentHealth</code> writes both the observer view and the owner's own
-      controller, so this would be the same class of defect as NET-26 rather than anything about loot.</p></div>
+      controller, so this would be the same class of defect as net-26 rather than anything about loot.</p></div>
       <div class="callout fail"><p><strong>Fail, a powerup lands in the bag:</strong> <code>Powerups.Apply</code> did not recognise the id and
       <code>ItemPayout</code> took it. Only 33815/33816 and their 30286/30294 twins are handled by id — anything
       else of type Powerup is an XP boost or a title unlock and belongs in a bag.</p></div><div class="result"><label for="r-kill-rewards-7">Result</label><textarea data-k="n-kill-rewards-7" id="r-kill-rewards-7" placeholder="What happened"></textarea></div></div>

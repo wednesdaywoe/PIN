@@ -284,7 +284,7 @@ public static class Facing
     ///     <c>GetProjectileOrigin</c> and the physics engine both invert it on the way out. Local forward
     ///     is +Y, per <see cref="ForwardAxisOffset"/>; it was +X until 2026-08-15, a guess N1 seemed to
     ///     confirm because a humanoid's rendered body follows the aim vector closely enough to mask a
-    ///     wrong quaternion. A creature's doesn't, which was the whole of CLIENT-3: the sideways Aranha
+    ///     wrong quaternion. A creature's doesn't, which was the whole of client-3: the sideways Aranha
     ///     was the one rig honest enough to show the convention error every character had. Player
     ///     orientations never pass through here — clients author them in their own convention, which is
     ///     exactly the one this now matches. This is the only place in the server that derives an

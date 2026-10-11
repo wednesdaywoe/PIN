@@ -10,7 +10,7 @@ namespace CaptureReplay;
 
 /// <summary>
 ///     Measures which way retail's server said each character was facing, against which way that
-///     character was actually travelling. Exists for CLIENT-3: PIN orients every NPC with the same
+///     character was actually travelling. Exists for client-3: PIN orients every NPC with the same
 ///     +X-forward convention, a Chosen renders correctly under it and an Aranha stands 90° off, and
 ///     nothing shipped to the client says which models differ. If retail baked a per-rig offset into
 ///     the orientation it sent, this reads the offset straight off the wire; if retail's numbers match

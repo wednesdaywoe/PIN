@@ -3,7 +3,6 @@ project: pin
 kind: stream
 title: "Battleframe Constraints: Mass, Power and CPU"
 relates:
-  - ../PROGRESS.md
   - ../Restoration.md
 ---
 

@@ -8,7 +8,7 @@ namespace GameServer.Systems.AI;
 /// <summary>
 ///     Scores what an NPC can see into its threat table and picks a current target from it.
 ///     Nothing in dbmonster carries a perception or aggro radius, so the constants below are an
-///     invented first pass, not shipped data (tracked as DATA-10).
+///     invented first pass, not shipped data (tracked as data-10).
 /// </summary>
 public static class TargetSelection
 {
@@ -16,7 +16,7 @@ public static class TargetSelection
     ///     How close something has to be before an NPC starts building threat on it.
     ///
     ///     Was 40m through M2, which is wider than anything retail shipped: the `perceptionDist` values
-    ///     parsed out of the behaviour strings top out at 25m and are most often 10 or 15 (DATA-10).
+    ///     parsed out of the behaviour strings top out at 25m and are most often 10 or 15 (data-10).
     ///     40m was kept deliberately while the spawn groups were being proven, so a placement failure
     ///     couldn't be confused with a tuning change, and it cost something concrete — zone 448's
     ///     starting shelf is about 45m across with Aero standing on it, so nothing hostile fitted on it

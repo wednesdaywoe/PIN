@@ -16,7 +16,7 @@
   <section class="doc">
     <p>Part of the in-game test queue. Setup, admin commands and the type-id tables:
     <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>The check on <a href="../Docs/gaps/network.md#net-23">NET-23</a>, which is the last thing standing between the
+    <p>The check on <a href="../Docs/gaps/network.md#net-23">net-23</a>, which is the last thing standing between the
     project's loop and a session that survives losing a fight. Until now a player who died stayed dead:
     the server killed them correctly, the client offered nothing, and the only way on was to reconnect.
     <a href="NPC-Combat.html">NPC-COMBAT-16</a> found it on 2026-08-13, and <a href="Thumper-Defence.html">M7</a> made it matter — a
@@ -30,7 +30,7 @@
     the give-up prompt appears within its 2-second gate, the key reaches the server, the fallback covers
     anyone who ignores it, and both respawns put the character on real footing.</p>
     <p><strong>Both sessions ended in menu logouts with clean character saves.</strong> Every previous PIN session that
-    contained a player death ended in a reconnect. <a href="../Docs/gaps/network.md#net-23">NET-23</a>'s symptom is
+    contained a player death ended in a reconnect. <a href="../Docs/gaps/network.md#net-23">net-23</a>'s symptom is
     gone.</p>
     <p>What is left is small: the countdown's visible reading (DEATH-RESPAWN-2, whose main risk DEATH-RESPAWN-1 already retired),
     monsters still dying properly (DEATH-RESPAWN-4), and dying inside a thumper defence (DEATH-RESPAWN-5).</p>
@@ -153,7 +153,7 @@
       </ol></div>
       <div class="callout pass"><p>Pass: the line appears once and you respawn without touching the keyboard.</p></div>
       <div class="callout fail"><p>Fail, nothing after a minute: the sim is not seeing the character. This is the failure that looks
-      identical to NET-23 unfixed from the player's seat, which is why it has its own entry.</p></div><div class="result"><label for="r-death-respawn-3">Result</label><textarea data-k="n-death-respawn-3" id="r-death-respawn-3" placeholder="What happened"></textarea></div></div>
+      identical to net-23 unfixed from the player's seat, which is why it has its own entry.</p></div><div class="result"><label for="r-death-respawn-3">Result</label><textarea data-k="n-death-respawn-3" id="r-death-respawn-3" placeholder="What happened"></textarea></div></div>
     </div>
   </section>
   <section class="block" data-open="true" id="-death-respawn-4-monsters-still-die-properly">
@@ -220,7 +220,7 @@
       cycle still ends in a payout or a destruction line. Your death must not appear as a wave-member
       kill.</p></div>
       <div class="callout fail"><p>Fail, the shard stops: read the tail of the log for an exception. A player death routes through the
-      same event M7 uses to count wave kills (<a href="../Docs/streams/m7-encounter-combat.md">EncounterComponent</a>),
+      same event M7 uses to count wave kills (EncounterComponent),
       and a downed player is a new case on that path.</p></div><div class="result"><label for="r-death-respawn-5">Result</label><textarea data-k="n-death-respawn-5" id="r-death-respawn-5" placeholder="What happened"></textarea></div></div>
     </div>
   </section>

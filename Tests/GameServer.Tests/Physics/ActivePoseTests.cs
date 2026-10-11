@@ -11,7 +11,7 @@ namespace GameServer.Tests.Physics;
 
 /// <summary>
 ///     A ray hit on a pose names a compound child index, and the hit's body part, damage mod and headshot
-///     flag come from looking that index up in the pose data. These pin that the two line up (NET-7).
+///     flag come from looking that index up in the pose data. These pin that the two line up (net-7).
 /// </summary>
 public class ActivePoseTests
 {

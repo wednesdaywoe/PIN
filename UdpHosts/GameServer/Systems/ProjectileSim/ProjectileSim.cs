@@ -96,7 +96,7 @@ public class ProjectileSim
     {
         // No ammo-radius splash here, unlike the weapon path above. An ability's area damage comes from the
         // ammo's impact ability (below) or InflictDamageCommand's own radius, so reading the ammo radius as well
-        // would apply a second blast. DATA-21 is about weapons.
+        // would apply a second blast. data-21 is about weapons.
         if (ammo.ProjectileSpeed <= 0)
         {
             var resolved = TryResolveHit(shooter, origin, direction, 0, out var hit, out var target);
@@ -328,7 +328,7 @@ public class ProjectileSim
     ///     Which ammo explodes and how the blast falls off is <see cref="WeaponSplash"/>'s reading of the
     ///     shipped columns, and the notes on why those columns read the way they do live there. Ability
     ///     splash is a separate path that was never affected — <c>InflictDamageCommand</c> has always had
-    ///     its own, off <c>Splashrange</c> — and this deliberately does not touch it. DATA-21.
+    ///     its own, off <c>Splashrange</c> — and this deliberately does not touch it. data-21.
     ///     </para>
     ///     <para>
     ///     Walking every entity in the shard per shot is the same thing <c>InflictDamageCommand</c> does and

@@ -579,7 +579,7 @@ public class EntityManager
                 // entity removed from another thread part-way through this pass arrives here with no set
                 // left. The indexer threw KeyNotFoundException for that, and nothing between here and
                 // Shard.RunThread catches anything -- the same way an encounter throwing from its own
-                // Tick used to take the whole shard down (NET-21).
+                // Tick used to take the whole shard down (net-21).
                 if (!_scopedPlayersByEntity.TryGetValue(entity.EntityId, out var currentlyScoped))
                 {
                     continue;
@@ -1247,7 +1247,7 @@ public class EntityManager
 
         // A scope-in can outlive the entity it is for: the queue drains on a tick, and Remove takes
         // the scope set with it. Sending the keyframe regardless would hand the client a fresh copy of
-        // something the shard has already forgotten, which is NET-24's symptom arriving by a second
+        // something the shard has already forgotten, which is net-24's symptom arriving by a second
         // route -- a client holding an entity nothing will ever scope out again.
         if (!_scopedPlayersByEntity.TryGetValue(entity.EntityId, out var scopedPlayers))
         {

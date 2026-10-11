@@ -1,6 +1,6 @@
 -- FabProbe — asks the client what its recipe API still answers, and writes the answer to the log.
 --
--- CRAFT1 turns on one question nothing in the repo can settle: when the client is asked for a recipe
+-- crafting-1 turns on one question nothing in the repo can settle: when the client is asked for a recipe
 -- list, does it answer out of its own clientdb, or does it wait for the server? Those lead to opposite
 -- plans. Locally answered means a panel can be built and demonstrated before PIN sends a single
 -- fabrication message. Server answered means PIN has to reply to FabricationFetchAllRecipes (command

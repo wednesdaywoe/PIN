@@ -2,8 +2,6 @@
 project: pin
 kind: stream
 title: "Appendix: What a Public Server Would Need"
-relates:
-  - ../PROGRESS.md
 ---
 
 # Appendix: What a Public Server Would Need
@@ -31,7 +29,7 @@ seeds off the client's clock. That's fine when the client is you. With strangers
 and teleport bounds, fire rate ceilings, ammo accounting, and a server-side spread seed. Full
 server authority over movement is a rewrite and shouldn't be the first move; bounds-checking what
 arrives catches most of it for a fraction of the work. M4's placement trust gap (see
-[m4-thump-placement.md](m4-thump-placement.md)) is the same problem in miniature.
+the `thump-placement` plan) is the same problem in miniature.
 
 ## Two of these are already milestones
 
@@ -47,7 +45,7 @@ story that a single-player server never needed.
 | One process hosts one `ZoneId`, and MatrixServer answers `KISS` with a hardcoded `25001` | Something that routes a client to the right process for the right zone. Matrix can't currently say anything else |
 | `_maxPlayersPerShard = 64`, gameplay single-threaded per shard | The cap is probably fine. It's never been tested above one, and scope-in batching, change flush, and the 16-bit `EntityRefMap` are where it would show |
 | `Shard.RunThread` spins on `Thread.Yield()` with no sleep | A paced timestep. Every shard pegs a core right now whether or not anyone is in it, so idle zones cost the same as busy ones |
-| ~~`CurrentShortTime` wraps every ~65 seconds~~ | Closed 2026-10-05 as not a defect: the wire fields are 16-bit and the server never compares short times ([NET-2](../gaps/network.md#net-2)). Player count doesn't change that |
+| ~~`CurrentShortTime` wraps every ~65 seconds~~ | Closed 2026-10-05 as not a defect: the wire fields are 16-bit and the server never compares short times ([net-2](../gaps/network.md#net-2)). Player count doesn't change that |
 | ASP.NET dev certs and `localhost` in `firefall.ini` | Real certs, real DNS, and finding out how much the client actually validates |
 
 ## Operations

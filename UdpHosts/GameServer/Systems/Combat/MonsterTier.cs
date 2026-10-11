@@ -38,7 +38,7 @@ namespace GameServer.Systems.Combat;
 ///     sent to the client.
 ///     </para>
 ///     <para>
-///     Closes the health half of DATA-6 and the damage half of DATA-20. See
+///     Closes the health half of data-6 and the damage half of data-20. See
 ///     <c>Docs/gaps/data.md</c>.
 ///     </para>
 /// </remarks>

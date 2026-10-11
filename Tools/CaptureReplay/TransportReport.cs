@@ -11,7 +11,7 @@ namespace CaptureReplay;
 /// <summary>
 ///     Reads the transport underneath the messages: what got resent, how long the sender waited
 ///     before resending it, and how the far side acked. PIN has no outbound reliability at all
-///     (NET-1), so a real session's numbers are the only thing an implementation can be calibrated
+///     (net-1), so a real session's numbers are the only thing an implementation can be calibrated
 ///     against instead of guessed at.
 /// </summary>
 public sealed class TransportReport

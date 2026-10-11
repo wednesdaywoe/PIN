@@ -336,7 +336,7 @@ bool TryReadColumn(StaticDB db, string spec, out List<ulong> values, out string 
 // Table and column names live in the file as hashes, so nothing can list them and a table you can't
 // name is a table you can't ask for. Content is the way in: if you know a string the data would have
 // to contain, every string column in the file can be read without knowing what any of them are called.
-// This is how DATA-10 established that retail's behaviour parameters sit on dbcharacter::Monster and
+// This is how data-10 established that retail's behaviour parameters sit on dbcharacter::Monster and
 // nowhere else, which is a negative result no amount of guessing at names could have produced.
 int Find(StaticDB db, JsonElement cfg, string loaderFile, string[] extraArgs)
 {

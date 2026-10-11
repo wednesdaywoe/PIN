@@ -2,8 +2,6 @@
 project: pin
 kind: gap-detail
 title: "Issue Register — Networking & Protocol (NET)"
-relates:
-  - ../ISSUE-REGISTER.md
 ---
 
 # Networking & Protocol (NET)
@@ -16,12 +14,12 @@ subsystem; IDs are flat across all of them.
 
 <a id="net-1"></a>
 
-### NET-1 — No retransmit queue [x] built and verified in game 2026-08-14
+### net-1 — No retransmit queue [x] built and verified in game 2026-08-14
 
 `Control_PacketAvailable` logged client acks and discarded them; nothing tracked what PIN itself
 sent, so nothing could resend it. "Reliable" meant the server acked what the client sent, not that
 the server's own messages survived loss. Invisible on a LAN, and the reason
-[M8](../streams/m8-session-stability.md) had to land before this was shown to anyone over a real
+M8 had to land before this was shown to anyone over a real
 connection.
 
 **Built 2026-08-14.** [RetransmitQueue](../../UdpHosts/GameServer/RetransmitQueue.cs) holds every
@@ -56,7 +54,7 @@ ever finds out.
 
 <a id="net-2"></a>
 
-### NET-2 — `CurrentShortTime` wraps every ~65 seconds [x] closed 2026-10-05, not a defect
+### net-2 — `CurrentShortTime` wraps every ~65 seconds [x] closed 2026-10-05, not a defect
 
 **Closed by an audit of every use, 2026-10-05.** The wrap is real and is the protocol's. Every
 `ShortTime` and `NextShortTime` field in AeroMessages is a `ushort`, so retail's server wrapped on the
@@ -86,7 +84,7 @@ this gets worse with scale, but it's not scale-gated — it can bite today.
 
 <a id="net-3"></a>
 
-### NET-3 — Inbound resend detection [x] confirmed and fixed 2026-08-14
+### net-3 — Inbound resend detection [x] confirmed and fixed 2026-08-14
 
 `Channel` carried its own TODO about whether its resend-detection and XOR-decode logic was correct,
 and nobody had constructed a case that would prove or disprove it. The 2016 capture is that case.
@@ -102,7 +100,7 @@ lost packet: PIN now re-acks it, which is what stops the loop, and drops the cop
 
 **A second fault on the same path could take the shard down.** A resent fragment arriving inside a
 split run hit `SortedDictionary.Add` with a key already in the dictionary, which throws, on the
-shard thread, with no isolation around it — the same shape as [NET-21](#net-21). It's an indexer
+shard thread, with no isolation around it — the same shape as [net-21](#net-21). It's an indexer
 assignment now.
 
 Neither has been seen in game. The capture holds exactly one client-to-server resend across the
@@ -116,7 +114,7 @@ split buffer, which also makes a split that spans the sequence wraparound reasse
 
 <a id="net-4"></a>
 
-### NET-4 — `MTUProbe` silently dropped [~] needs confirmation
+### net-4 — `MTUProbe` silently dropped [~] needs confirmation
 
 [NetworkClient.cs:325](../../UdpHosts/GameServer/NetworkClient.cs#L325) receives the control packet
 and does nothing with it — no response sent. Unclear whether the client ever depends on getting one
@@ -124,7 +122,7 @@ back; needs a capture to check what retail did here.
 
 <a id="net-5"></a>
 
-### NET-5 — Oversized UGSS messages aren't split [~] fixed 2026-10-05, unit-tested, not seen in game
+### net-5 — Oversized UGSS messages aren't split [~] fixed 2026-10-05, unit-tested, not seen in game
 
 **Fixed 2026-10-05.** `Channel.Send` already split any oversized message into fragments with the split
 bit set, on every sequenced channel, the unreliable one included. The TODO asked for something else:
@@ -156,7 +154,7 @@ has no split-and-reassemble path. Fine until something large enough to need it g
 
 <a id="net-6"></a>
 
-### NET-6 — Physics material id 0 has no fallback [ ] open
+### net-6 — Physics material id 0 has no fallback [ ] open
 
 [PhysicsEngine.cs:323](../../UdpHosts/GameServer/Physics/PhysicsEngine.cs#L323) (see also
 [layer 7](../Architecture/07-physics-and-world.md)) resolves material id 0 to null instead of a
@@ -164,7 +162,7 @@ default, silently dropping hit attribution for anything that lands on it.
 
 <a id="net-7"></a>
 
-### NET-7 — HKX loader desyncs shape child index [x] closed 2026-10-05, not a defect
+### net-7 — HKX loader desyncs shape child index [x] closed 2026-10-05, not a defect
 
 **Closed 2026-10-05 by reading the code and the logs.** The FIXME this entry quotes sat on the
 primitive-shape branch of `CreateActivePose` and described a problem the code never had. The lookup
@@ -197,7 +195,7 @@ it's the one with a gameplay-visible failure mode.
 
 <a id="net-8"></a>
 
-### NET-8 — Shapeless tagfiles fall back to a placeholder box [ ] open
+### net-8 — Shapeless tagfiles fall back to a placeholder box [ ] open
 
 [PhysicsEngine.Shapes.cs:81](../../UdpHosts/GameServer/Physics/PhysicsEngine.Shapes.cs#L81) plus
 [TagfileLoader.cs:23,504,514,520](../../Lib/Shared.Collision/Tagfile/TagfileLoader.cs): a tagfile with no
@@ -208,7 +206,7 @@ bug look like working collision until someone notices the box doesn't match the 
 
 <a id="net-9"></a>
 
-### NET-9 — Entity scope-in bypasses proper tick logic [ ] open, workaround
+### net-9 — Entity scope-in bypasses proper tick logic [ ] open, workaround
 
 [EntityManager.cs:2023](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs#L2023) is
 marked `TEMP: Hack` in its own code — it pushes new entities to clients by bypassing the real
@@ -217,7 +215,7 @@ for still needs building.
 
 <a id="net-10"></a>
 
-### NET-10 — `ScopeRange == 0` semantics unknown [~] needs confirmation
+### net-10 — `ScopeRange == 0` semantics unknown [~] needs confirmation
 
 [EntityManager.cs:207](../../UdpHosts/GameServer/Systems/EntityManager/EntityManager.cs#L207):
 unclear whether zero means "no scope range" or "use the default" — currently falls back to the
@@ -225,14 +223,14 @@ component default, unconfirmed against what the original data intended.
 
 <a id="net-11"></a>
 
-### NET-11 — Weapon ammo overrides not applied [ ] open
+### net-11 — Weapon ammo overrides not applied [ ] open
 
 [WeaponSim.cs:79](../../UdpHosts/GameServer/Systems/WeaponSim/WeaponSim.cs#L79): ammo resolution
 for a fired shot ignores any override, always resolving the base ammo type.
 
 <a id="net-12"></a>
 
-### NET-12 — `MovementState` packing widened without confirmation [~] needs confirmation
+### net-12 — `MovementState` packing widened without confirmation [~] needs confirmation
 
 [MovementRelay.cs:61](../../UdpHosts/GameServer/Systems/MovementRelay/MovementRelay.cs#L61) carries
 its own comment flagging doubt — "This was ushort previously!" — about whether the wider packing is
@@ -240,7 +238,7 @@ correct or a regression.
 
 <a id="net-13"></a>
 
-### NET-13 — Vehicle handling: seat assignment and view refresh [ ] open
+### net-13 — Vehicle handling: seat assignment and view refresh [ ] open
 
 Two related vehicle defects: seat-assignment logic blocks taking the last seat on some vehicles
 (Hauler id 201, Convoy id 66,
@@ -251,7 +249,7 @@ which works but costs more than it needs to.
 
 <a id="net-14"></a>
 
-### NET-14 — `SpawnDeployable` computes a faction it then discards [~] fixed in code 2026-10-02, unverified
+### net-14 — `SpawnDeployable` computes a faction it then discards [~] fixed in code 2026-10-02, unverified
 
 **Fixed in code 2026-10-02 (`7b14bae`)**: `hostilityInfo.FactionId` now takes the computed
 faction (`EntityManager.cs:189`), and `DeployableSpawnCommand` passes `useOwnerFaction` when the
@@ -268,7 +266,7 @@ because deployable 348 happens to default to faction 1 anyway, but any deployabl
 
 <a id="net-15"></a>
 
-### NET-15 — `OrientationLockCommand` sends an unpaired cancel event [ ] open, deferred by design
+### net-15 — `OrientationLockCommand` sends an unpaired cancel event [ ] open, deferred by design
 
 [OrientationLockCommand.cs:29-36](../../UdpHosts/GameServer/Systems/Aptitude/Commands/Movement/OrientationLockCommand.cs#L29-L36)
 sends `ForcedMovementCancelled` on removal for a movement-start the server never announced. This is
@@ -280,7 +278,7 @@ itself is still there, just not currently causing visible harm.
 
 <a id="net-16"></a>
 
-### NET-16 — Predicted effects reach the owning client twice [ ] open, low priority
+### net-16 — Predicted effects reach the owning client twice [ ] open, low priority
 
 [Charge-Camera.md D5h](../../Game Testing/Charge-Camera.html): every predicted effect now arrives via
 both `CombatController`/`CombatView` and the newly-written `LocalEffectsController`, tripling
@@ -289,7 +287,7 @@ certainly sent owner-private effects once, not twice.
 
 <a id="net-17"></a>
 
-### NET-17 — `LocalEffectsData.Entity` semantics unconfirmed [~] needs confirmation
+### net-17 — `LocalEffectsData.Entity` semantics unconfirmed [~] needs confirmation
 
 [Charge-Camera.md](../../Game Testing/Charge-Camera.html): whether `Entity` names the initiator or the
 carrier/target of a predicted effect is unconfirmed — only self-applied effects have been tested.
@@ -298,7 +296,7 @@ Blocks correctness for any effect predicted onto a target rather than the caster
 
 <a id="net-18"></a>
 
-### NET-18 — partial item `InventoryUpdate` is not merged by the client [x] fixed and confirmed in game 2026-08-20
+### net-18 — partial item `InventoryUpdate` is not merged by the client [x] fixed and confirmed in game 2026-08-20
 
 [Inventory.md](../../Game Testing/Inventory.html): I1 landed on its own middle branch, twice in one
 sitting (20003, then 86074): a created item appears only after `dbg_inventory resend` pushes the
@@ -344,7 +342,7 @@ client; the flag is a suspect, not a finding.
 bit retail's ordinary adds do not carry. This also settles a disagreement in the record: the code
 comment had described the 13 adds as `IsBound|Unk_0x02` (`3`), but the measured table says `2`, and
 the measured artifact wins. The arrival flag is set either way (`2` and `3` both set `0x02`), which
-is further evidence the NET-18 direction was right all along — the missing thing was always the
+is further evidence the net-18 direction was right all along — the missing thing was always the
 `0x02` bit, and the earlier `3` already had it, just with a speculative extra.
 
 **Headless check passed 2026-08-20** ([ItemArrivalFlagTests](../../Tests/GameServer.Tests/Inventory/ItemArrivalFlagTests.cs)):
@@ -361,7 +359,7 @@ confirmed working. This entry closes.
 
 **Three sittings failed first, and the item was the reason.** Every attempt before this one used
 `20003`, the DevTEST Shotgun, and it is one of the 35,006 items the client refuses to list under any
-circumstances — [DATA-25](data.md#data-25), found by noticing that the shotguns were missing from a
+circumstances — [data-25](data.md#data-25), found by noticing that the shotguns were missing from a
 *full* login inventory that carried eight of them. Against an undrawable item, a working delivery
 path and a working `resend` are indistinguishable from broken ones, which is exactly how this entry
 read from 2026-08-10 onward. The lesson is procedural rather than technical: an instrument has to be
@@ -369,7 +367,7 @@ known-good before a negative result from it means anything.
 
 <a id="net-19"></a>
 
-### NET-19 — Two 2026-08-11 prediction fixes await confirmation [x] confirmed 2026-08-14
+### net-19 — Two 2026-08-11 prediction fixes await confirmation [x] confirmed 2026-08-14
 
 **Both confirmed by [Prediction-Sweep P0](../../Game Testing/Prediction-Sweep.html) on 2026-08-14**:
 module 86074, refused outright on 2026-08-10, slotted on the Dreadnaught, and every garage frame
@@ -377,12 +375,12 @@ reads level 45. The original entry, for the record — two fixes deployed the sa
 unverified pending P0: PIN previously never sent
 `UnlocksUpdate` (certificates), silently blocking cert-gated module slotting client-side; and
 `EntityManager.cs:1160` sent `ProgressionXPRefresh` with no `entityId`, so it addressed entity 0 and
-was dropped by the real client. If P0 doesn't hold, [DATA-9](data.md#data-9)'s stub endpoints are
+was dropped by the real client. If P0 doesn't hold, [data-9](data.md#data-9)'s stub endpoints are
 the next suspect.
 
 <a id="net-20"></a>
 
-### NET-20 — The Prediction Sweep is almost entirely unverified [~] needs confirmation, large scope
+### net-20 — The Prediction Sweep is almost entirely unverified [~] needs confirmation, large scope
 
 [Prediction-Sweep.md](../../Game Testing/Prediction-Sweep.html) covers 47 effects shaped like the one
 D5h fixed (27 player-reachable); all of it blocks on P0. One rollup entry rather than 47, since
@@ -390,7 +388,7 @@ none of them are independently actionable until P0 confirms the cert-gate fix ho
 
 <a id="net-21"></a>
 
-### NET-21 — An encounter could kill the shard thread outright [x] fixed 2026-08-12
+### net-21 — An encounter could kill the shard thread outright [x] fixed 2026-08-12
 
 The Coral Forest thumper reliably ended every session it was left running in. Around seven and a
 half minutes after the zone loaded, `Thumper.OnSuccess` reached `BaseEncounter.RewardWithResource`,
@@ -434,7 +432,7 @@ it. Worth extending the same treatment outward if a second system ever manages i
 
 <a id="net-22"></a>
 
-### NET-22 — An NPC's pose never reached the client [x] fixed 2026-08-13
+### net-22 — An NPC's pose never reached the client [x] fixed 2026-08-13
 
 Monsters teleported. Found on the first locomotion session, 2026-08-13: an NPC would sit at its
 spawn, then appear somewhere else entirely, having neither walked nor slid. The steering was not the
@@ -498,18 +496,18 @@ Two things this cost, worth remembering next time something looks like an AI bug
 Confirmed the same day: with the pose replicated, [N8–N13](../../Game Testing/NPC-Combat.html) all pass.
 That also settles `0x2004` as the running movement state — an NPC now plays a run animation while it
 closes, so the value derived from `Movestate` and `MovementFlags` in
-[N9](../../Game Testing/NPC-Combat.html) is right, and the packing [NET-12](#net-12) flags as unconfirmed
+[N9](../../Game Testing/NPC-Combat.html) is right, and the packing [net-12](#net-12) flags as unconfirmed
 has at least one asserted value that the client agrees with.
 
 <a id="net-23"></a>
 
-### NET-23 — A dead player has no way back [~] built 2026-08-15, 4 of 5 checks passed
+### net-23 — A dead player has no way back [~] built 2026-08-15, 4 of 5 checks passed
 
 **Status 2026-10-05: the narrative below is from before the fix.** `b33d5e5` (2026-08-15) added
 `BleedoutSim`, and the character now goes through `Incapacitated` with `respawn_input` set and
 `RespawnTimes` filled. DEATH-RESPAWN-1, 3, 4 and 5 passed on 2026-08-15/16, and ULT-4 died, gave up
 and respawned normally on 2026-10-04. Only DEATH-RESPAWN-2, the countdown's units, is unrun. The
-summary in the [register](../ISSUE-REGISTER.md) has the detail.
+summary in the `net` plan has the detail.
 
 Death is a one-way door. Found by [N16](../../Game Testing/NPC-Combat.html) on 2026-08-13, which is the
 first time in PIN's history that a player has been killed by the game rather than by a command: the
@@ -566,7 +564,7 @@ field this entry suspected never gets a chance to be read. `CharacterStatus` has
 PIN writes four of them: `Spawning`, `Respawning`, `Living`, `Dead`. `Incapacitated`, `Ghost` and
 `Traumatized` are never written anywhere in the server.
 
-**This is not [NET-26](#net-26)'s missing state, which was checked the same day and ruled out** —
+**This is not [net-26](#net-26)'s missing state, which was checked the same day and ruled out** —
 that entry's effects require `living`, which PIN does write. The two share a state machine and not
 a bug.
 
@@ -584,7 +582,7 @@ tester who dies has to reconnect.
 
 <a id="net-24"></a>
 
-### NET-24 — A finished thumper never leaves the client [x] fixed 2026-08-14, verified by L6
+### net-24 — A finished thumper never leaves the client [x] fixed 2026-08-14, verified by L6
 
 **Closed 2026-08-14 by [L6](../../Game Testing/Reliability.html), the first full-cycle thumper after
 M8's fixes went in.** Both halves of the symptom are gone: the log held exactly 2 stale keyframe
@@ -621,7 +619,7 @@ because no thumper had ever finished while a player was watching — [S3–S5](.
 on 2026-08-14 were the first runs to take one all the way through. Second, and more useful: **the
 thumpers a player cut short left no stale requests at all.** Two early collections that day (both at
 deposit 5, completions 0.04 and 0.03) produced none, while all four full-cycle runs produced them.
-That is the same split as [DATA-18](data.md#data-18) — `OnInteraction` transitions a `THUMPING`
+That is the same split as [data-18](data.md#data-18) — `OnInteraction` transitions a `THUMPING`
 thumper straight to `LEAVING` itself, where a completed one is transitioned from `OnUpdate` — so the
 suspicion is that something about the `CLOSING`/`COMPLETED` leg leaves the client holding a view the
 scope-out does not cover, not that removal is broken.
@@ -629,7 +627,7 @@ scope-out does not cover, not that removal is broken.
 The client's own log shows it adding an observer view to a thumper **already in state 7, `LEAVING`**
 (`tfResourceNode::AddView(Observer) - owner=Fallback, beaconId=33978, state=7`), with the owner
 unresolvable. An entity introduced to a client twelve seconds before it is destroyed, through
-[NET-9](#net-9)'s scope-in hack, is a plausible way to end up with a copy nothing later accounts
+[net-9](#net-9)'s scope-in hack, is a plausible way to end up with a copy nothing later accounts
 for.
 
 No session has been shown to end because of this. The 2026-08-14 client did quit with two loops
@@ -645,7 +643,7 @@ thumper, so one empty msg 6 on the sole view is how retail removed one. Nothing 
 ever sends a message naming a thumper's entity id; the only three are the keyframe, the view deltas
 and that scope-out.
 
-**So the likeliest reading is that NET-24 is [NET-1](#net-1) in costume.** That scope-out is sent
+**So the likeliest reading is that net-24 is [net-1](#net-1) in costume.** That scope-out is sent
 once, on a channel that acks inbound packets and has no outbound tracking whatsoever —
 `Channel` only ever calls `SendAck`, and `NetworkClient.NetworkTick`'s own comment promises a
 "reliable retransmission" that does not exist. Lose that one packet and nothing ever says it again.
@@ -678,24 +676,24 @@ to measure whether deltas are being lost before anything is tuned on the guess t
   discriminates the hypotheses above.
 - A queued scope-in whose entity died before the queue reached it is dropped. `_queuedScopeIn` drains
   one per 20ms and `Remove` takes the scope set with it, so this handed clients fresh copies of
-  removed entities — NET-24's symptom arriving by a second route.
+  removed entities — net-24's symptom arriving by a second route.
 
 The same pass fixed a latent shard kill next door. `GetScopedPlayers` reads the scope map with
 `TryGetValue` and documents a missing key as normal, but `ScopeIn`, `ScopeOut` and the periodic scope
 check all used the raw indexer, which throws `KeyNotFoundException`. `Shard.Tick` and
-`Shard.RunThread` catch nothing — NET-21's fix only wrapped the encounter loop — so an entity removed
+`Shard.RunThread` catch nothing — net-21's fix only wrapped the encounter loop — so an entity removed
 from the network thread part-way through a scope pass could take the whole shard down. All three now
 read it safely.
 
 <a id="net-25"></a>
 
-### NET-25 — An ack claims a packet that never arrived [ ] open, found 2026-08-14
+### net-25 — An ack claims a packet that never arrived [ ] open, found 2026-08-14
 
 `Channel.Process` acks the highest inbound sequence it has seen, not the highest it has seen with no
 gap behind it. So if the client sends 8, 9 and 10 and 8 is lost, PIN acks 9 and then 10, and the
 client reads that as confirmation that 8 arrived.
 
-**That is the exact mirror of [NET-1](#net-1), on the inbound side, and it survives NET-1's fix.**
+**That is the exact mirror of [net-1](#net-1), on the inbound side, and it survives net-1's fix.**
 An ack is cumulative — 36753 of the 2016 capture's 36759 acks put `NextSeqNum` at `AckForNum + 1`,
 which is only meaningful if `AckForNum` names the end of an unbroken run — so PIN is telling the
 client that everything up to the number it names got through. Whatever was in packet 8 is lost
@@ -704,7 +702,7 @@ silently, and the client is the only party that could have resent it.
 **Found by reading, not by running, and deliberately not fixed the same day.** Fixing it means PIN
 holding its ack at the gap until the missing packet arrives, which needs a record of what was taken
 above the gap so the resends of 9 and 10 aren't run a second time. `DeliveredSequences` is already
-that record, added for the duplicate suppression in [NET-3](#net-3), so the work is small. What is
+that record, added for the duplicate suppression in [net-3](#net-3), so the work is small. What is
 missing is the other half of the policy: what to do when the gap never fills. The capture shows
 retail's client acking, never retail's server recovering, so there is no evidence for how long to
 stall before giving up and jumping the ack forward, and a wrong answer here stalls the channel for
@@ -717,7 +715,7 @@ ever run has been on loopback.
 
 <a id="net-26"></a>
 
-### NET-26 — A predicted toggle cancels itself while the server holds the effect [ ] open, found 2026-08-14
+### net-26 — A predicted toggle cancels itself while the server holds the effect [ ] open, found 2026-08-14
 
 [Prediction-Sweep P2](../../Game Testing/Prediction-Sweep.html), the first prediction entry run after
 P0 opened the certificate gate. Turret Mode (ability 39434, effect 10810) engages on keypress and
@@ -752,7 +750,7 @@ Suspects, reordered by that second data point:
 
 1. **The `requirecstate` common to both chains** — now the prime suspect. The question is which
    state each effect requires and who is supposed to set it; both answers are in the SDB.
-2. **[NET-16](#net-16)'s double delivery.** Both failed abilities are toggle/mode-shaped, so a
+2. **[net-16](#net-16)'s double delivery.** Both failed abilities are toggle/mode-shaped, so a
    copy arriving twice reading as on-then-off still fits both — but it doesn't explain the server
    keeping 10810 set.
 3. **The companion cascade** (10812–10815 cleared in ~20ms) — demoted: it could explain Turret,
@@ -774,13 +772,13 @@ pressing a button that won't hold). What the chains then did differs:
 So a status effect being set is neither necessary (Hover held without one) nor sufficient (Turret
 died with one) for the client's copy to survive. That points the `requirecstate` reading at
 something more specific: **a character *state*, not a status effect** — the stance/mode machine
-(the same family as the movement state [NET-12](#net-12) packs) that retail's server drove and
+(the same family as the movement state [net-12](#net-12) packs) that retail's server drove and
 PIN never writes. Turret setting effect 10810 doesn't satisfy a check on *state* "in turret
 mode"; nothing PIN sends does. The SDB read of the two `requirecstate` targets should land on
 exactly which state enum each one names.
 
 One incidental sighting in the same window: the shard short-time wrapped mid-log
-(`Time 64809` → `Time 1679` twelve seconds apart), [NET-2](#net-2) visible in the wild.
+(`Time 64809` → `Time 1679` twelve seconds apart), [net-2](#net-2) visible in the wild.
 
 **The critical experiment ran the same sitting and confirmed the split.**
 [P3](../../Game Testing/Prediction-Sweep.html), Hover Mode — whose required state (airborne) the
@@ -790,7 +788,7 @@ the log half of P3's pass is still pending). So the failing CSTATEs are specific
 can set, the server never sets it, and the copy ends itself by design. The fix direction is the
 server setting those states — which states, and on what carrier, is the SDB read: name 1184 and
 10812–10815, and read the exact `requirecstate` targets of 10810 and 2322. (Hover's missing lift
-is a separate gameplay gap, likely [DATA-5](data.md#data-5) territory, recorded in P3.)
+is a separate gameplay gap, likely [data-5](data.md#data-5) territory, recorded in P3.)
 
 **The SDB read ran on 2026-08-15 and refutes the paragraph above.** Both effects require the same
 state, and it is `living`:
@@ -815,7 +813,7 @@ duration is airborne-based and never consults `cstate` at all. What is now open 
 own answer to "am I living?" goes false seconds after a keypress when the server says otherwise —
 the value, its `Time` stamp, or when the client last received it, rather than a state nobody sends.
 `CharacterStateData` carries `State` **and** `Time`, `Respawn` writes `Living` at
-`CurrentTime + 1`, and [NET-2](#net-2)'s ~65-second wrap was sighted in this very log window, which
+`CurrentTime + 1`, and [net-2](#net-2)'s ~65-second wrap was sighted in this very log window, which
 is the first thing to rule in or out.
 
 The lookup is reproducible: walk `apt::StatusEffectData` to the chain head, follow
