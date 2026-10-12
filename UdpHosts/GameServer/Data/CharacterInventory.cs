@@ -431,6 +431,23 @@ public class CharacterInventory
         return true;
     }
 
+    /// <summary>
+    ///     Replaces an item's <c>Modules</c> list and resends it. What the list holds is unconfirmed: module
+    ///     item SDB ids is the guess graded-crafting-2's probe tests. Not saved.
+    /// </summary>
+    public bool SetItemModules(ulong guid, uint[] modules)
+    {
+        if (!_items.TryGetValue(guid, out var item))
+        {
+            return false;
+        }
+
+        item.Modules = modules;
+        _items[guid] = item;
+        SendItemUpdate(guid);
+        return true;
+    }
+
     public void SendItemUpdate(ulong guid)
     {
         if (!EnablePartialUpdates)

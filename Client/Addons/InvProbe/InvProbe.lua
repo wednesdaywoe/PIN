@@ -320,6 +320,9 @@ function RunProbe(args)
 				Attrs("as listed", ITEM)
 				local okInfo, info = pcall(Player.GetItemInfo, guid)
 				Attrs("Player.GetItemInfo("..tostring(guid)..")", okInfo and info)
+				if okInfo and type(info) == "table" then
+					log("InvProbe:     slotted_modules "..Describe(info.slotted_modules).."  hidden_modules "..Describe(info.hidden_modules))
+				end
 			end
 		end
 		if held == 0 then
@@ -328,6 +331,49 @@ function RunProbe(args)
 		end
 		local okType, typeInfo = pcall(Game.GetItemInfoByType, id)
 		Attrs("Game.GetItemInfoByType", okType and typeInfo)
+		log("InvProbe: ---- end")
+		return
+	end
+
+	-- graded-crafting-2, the module route: does the client fold a module's effect into an item's numbers
+	-- itself? Asks for the item's info with each module as hidden, then as slotted, and prints what moved.
+	if args and args[1] == "modtest" then
+		local itemId = tonumber(args[2])
+		if itemId == nil or args[3] == nil then
+			log("InvProbe: usage /invprobe modtest 85988 123353 123364")
+			return
+		end
+		local function Numbers(info)
+			local out = {}
+			for _, att in pairs(type(info) == "table" and type(info.attributes) == "table" and info.attributes or {}) do
+				if type(att) == "table" then
+					out[tostring(att.stat_id)] = att.value
+				end
+			end
+			return out
+		end
+		local function Show(label, info)
+			local parts = {}
+			for id, value in pairs(Numbers(info)) do
+				table.insert(parts, id.."="..tostring(value))
+			end
+			table.sort(parts)
+			log("InvProbe:   "..label..": "..(type(info) == "table" and table.concat(parts, ", ") or "no info"))
+		end
+		log("InvProbe: ---- module test on "..tostring(itemId))
+		local okBase, base = pcall(Game.GetItemInfoByType, itemId)
+		Show("plain", okBase and base)
+		for i = 3, #args do
+			local moduleId = tonumber(args[i])
+			local okFits, fits = pcall(Game.IsModuleForItem, moduleId, itemId)
+			log("InvProbe:   module "..tostring(moduleId).." "..NameOf(moduleId).."  IsModuleForItem "..tostring(okFits and fits or fits))
+			local okHidden, hidden = pcall(Game.GetItemInfoByType, itemId, {moduleId}, {})
+			Show("hidden "..tostring(moduleId), okHidden and hidden or nil)
+			if not okHidden then log("InvProbe:     raised: "..tostring(hidden)) end
+			local okSlotted, slotted = pcall(Game.GetItemInfoByType, itemId, {}, {moduleId})
+			Show("slotted "..tostring(moduleId), okSlotted and slotted or nil)
+			if not okSlotted then log("InvProbe:     raised: "..tostring(slotted)) end
+		end
 		log("InvProbe: ---- end")
 		return
 	end
