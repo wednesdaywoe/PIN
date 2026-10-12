@@ -282,6 +282,53 @@ function RunProbe(args)
 		return
 	end
 
+	-- graded-crafting-2: does a held item's tooltip read its own attribute values (sent per item in
+	-- Item.Unk6) or the item type's? Prints both for every held copy of one item.
+	if args and args[1] == "attrs" then
+		local id = tonumber(args[2])
+		if id == nil then
+			log("InvProbe: usage /invprobe attrs 85988")
+			return
+		end
+		local function Attrs(label, info)
+			if type(info) ~= "table" then
+				log("InvProbe:   "..label..": no info")
+				return
+			end
+			local parts = {}
+			for k, att in pairs(type(info.attributes) == "table" and info.attributes or {}) do
+				if type(att) == "table" then
+					table.insert(parts, tostring(att.stat_id or att.id or k).."="..tostring(att.value or att.current)
+						.." ("..tostring(att.display_name or att.name or "")..")")
+				else
+					table.insert(parts, tostring(k).."="..tostring(att))
+				end
+			end
+			table.sort(parts)
+			log("InvProbe:   "..label..": "..#parts.." attribute(s): "..table.concat(parts, ", "))
+		end
+		log("InvProbe: ---- attributes of "..tostring(id))
+		local ok, items = pcall(Player.GetInventory)
+		local held = 0
+		for _, ITEM in pairs(ok and type(items) == "table" and items or {}) do
+			if ITEM.item_sdb_id == id then
+				held = held + 1
+				local guid = ITEM.item_guid or ITEM.itemId or ITEM.item_id
+				log("InvProbe:   held copy "..held.." keys "..table.concat(Sorted(ITEM), ", "))
+				Attrs("as listed", ITEM)
+				local okInfo, info = pcall(Player.GetItemInfo, guid)
+				Attrs("Player.GetItemInfo("..tostring(guid)..")", okInfo and info)
+			end
+		end
+		if held == 0 then
+			log("InvProbe:   you hold no "..tostring(id))
+		end
+		local okType, typeInfo = pcall(Game.GetItemInfoByType, id)
+		Attrs("Game.GetItemInfoByType", okType and typeInfo)
+		log("InvProbe: ---- end")
+		return
+	end
+
 	local want_items = args and args[1] == "items"
 
 	log("InvProbe: ---- begin")

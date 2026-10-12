@@ -413,6 +413,24 @@ public class CharacterInventory
         _player.NetChannels[ChannelType.ReliableGss].SendMessage(update, _character.EntityId);
     }
 
+    /// <summary>
+    ///     Replaces an item's per-item attribute pairs (<c>Item.Unk6</c>: attribute id, then the value's float
+    ///     bits) and resends it. Retail sent an item's whole attribute set this way, some values differing
+    ///     from the item type's (2016 capture, item 87059). Not saved, and combat still reads the SDB.
+    /// </summary>
+    public bool SetItemAttributes(ulong guid, ItemUnkData[] attributes)
+    {
+        if (!_items.TryGetValue(guid, out var item))
+        {
+            return false;
+        }
+
+        item.Unk6 = attributes;
+        _items[guid] = item;
+        SendItemUpdate(guid);
+        return true;
+    }
+
     public void SendItemUpdate(ulong guid)
     {
         if (!EnablePartialUpdates)

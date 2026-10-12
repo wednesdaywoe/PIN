@@ -1,10 +1,10 @@
-<title>PIN — Material quality and the Burst Rifle</title>
+<title>PIN — An item's own numbers</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Material quality and the Burst Rifle (graded-crafting-1, RIFLE)</h1>
-    <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: Session Setup .</p>
+    <h1>An item's own numbers (graded-crafting-2)</h1>
+    <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
   </header>
   <div class="bar">
     <span class="tally"><b id="done">0</b>/<span id="total">0</span> steps</span>
@@ -14,181 +14,43 @@
     <button type="button" id="reset">Reset</button>
   </div>
   <section class="doc">
-    <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
-    Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p><strong>Last run (2026-10-11, part A only): the quality text reached the game but not the add-on.</strong>
-    The server sent Aluminum with quality 300 and its five stats, yet <code>/mats</code> drew plain "Aluminum 5".
-    The game's log shows why: the material arrives in the interface with no quality text on it at all. The one
-    place left to look is the material's list of stacks, one per batch, which the probe only printed as
-    <code>{...}</code>. Both add-ons now look inside each stack. This run repeats part A to read them.</p>
-    <p>Crafting is back, with the goal you chose: refining returns, and the quality of what you mine carries through
-    to what you craft. The plan: <code>worklog show graded-crafting</code>. This run has two parts that
-    don't depend on each other.</p>
-    <p><strong>Part 1 (graded-crafting-1-A to C): can the game show a material's quality, and hold two batches of one
-    material?</strong> In the original game every mined batch had a quality from 0 to 1000 and five stats, such as
-    Conductivity or Toughness, packed into one short text sent with the stack. The server has always sent that text
-    empty. The new <code>batch</code> command sends Aluminum stacks with it filled in. These stacks are for looking
-    only: the server doesn't record them, and <code>dbg_inventory resend</code> clears them.</p>
-    <p><strong>Part 2 (RIFLE-1 to 4): mine metal, craft a Burst Rifle, equip it, log out and back in.</strong> This
-    finishes the August run, which crafted a part nothing could equip. The rifle is three recipes: 50 metal makes a
-    receiver, 75 metal makes a barrel, and both parts plus 200 Crystite make the rifle. Nothing is created with
-    <code>createitem</code>.</p>
-    <p>Start the server on the new build first: <code class="run">~/Games/PIN/start-pin.sh</code></p>
+    <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.</p>
+    <p>Last run: everything passed. A material shows its quality and stats, two batches of one material stay
+    apart, and a Burst Rifle went from the ground to your hands and survived a relog (it came back unequipped,
+    which persistence-4 now tracks).</p>
+    <p><strong>This run asks one question: can one item carry its own numbers?</strong> For graded crafting to
+    matter, a rifle built from good metal has to show better numbers than one built from poor metal. In the 2016
+    recording of the real game, the server sent some items with their own values. One weapon's damage was 48.7
+    where the catalogue says 86. The question is whether this game client shows such values in the tooltip, or
+    ignores them and shows the catalogue's.</p>
+    <p>The new <code>itemattr</code> command rewrites your Burst Rifle's numbers on the wire only. The server
+    doesn't save them, and shooting still does the normal damage. This is about what the tooltip shows.</p>
+    <p>Start the server on the new build first: <code class="run">~/Games/PIN/start-pin.sh</code>. Restart the
+    game client too, so it loads the updated <code>/invprobe</code>.</p>
   </section>
-  <section class="block" data-open="true" id="grade1-a">
+  <section class="block" data-open="true" id="grade2-a">
     <button class="block-head" type="button">
-      <span class="block-n">graded-crafting-1-A</span>
-      <span class="block-t">A material shows its quality and stats</span>
+      <span class="block-n">graded-crafting-2-A</span>
+      <span class="block-t">The rifle's tooltip shows numbers sent for that one rifle</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-A</span><span class="marker">[ ]</span><span class="entry-t">A material shows its quality and stats</span></div>
-      <p>One Aluminum stack with quality 300 and five stats of 100, 150, 200, 250 and 300.</p>
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-2-A</span><span class="marker">[ ]</span><span class="entry-t">The rifle's tooltip shows numbers sent for that one rifle</span></div>
+      <p>The Burst Rifle (item 85988) normally reads Damage 8 and Magazine Size 36. This sends it with Damage 99 and Magazine Size 77, everything else unchanged.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="grade1-a-1" type="checkbox"/><span class="step-body"><span class="lede">Restart the game client first, so it loads the updated add-ons. Then clear any leftover Aluminum: <code class="run">dbg_inventory resend</code>, and open your materials list, which stays open: <code class="run">/mats</code>. Aluminum shouldn't be listed</span></span></label>
-      <label class="step"><input data-k="grade1-a-2" type="checkbox"/><span class="step-body"><span class="lede">Send the stack: <code class="run">batch 77705 5 300 100 150 200 250 300</code></span></span></label>
-      <label class="step"><input data-k="grade1-a-3" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, find Aluminum (5), and hover it. Note every line of the tooltip, especially any stat names and numbers. Then hover Aluminum in <code>/mats</code> too: its row should now read <strong>Aluminum Q300</strong>, and its tooltip should list Quality and the stats</span></span></label>
-      <label class="step"><input data-k="grade1-a-4" type="checkbox"/><span class="step-body"><span class="lede">Run the add-on that prints your inventory to the game's log: <code class="run">/invprobe</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-1" type="checkbox"/><span class="step-body"><span class="lede">Check you still hold the Burst Rifle from last run: <code class="run">dbg_inventory</code>. If it's missing, make one: <code class="run">createitem 85988</code>, then <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-2" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, hover the Burst Rifle, and note its Damage and Magazine Size. Then record what the game reports: <code class="run">/invprobe attrs 85988</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-3" type="checkbox"/><span class="step-body"><span class="lede">Send the rifle with its own numbers: <code class="run">itemattr 85988 954 99 956 77</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-4" type="checkbox"/><span class="step-body"><span class="lede">Hover the rifle again (close and reopen the inventory if the tooltip doesn't change). Note Damage and Magazine Size. If you can, equip it and look in the garage too. Then run <code class="run">/invprobe attrs 85988</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-5" type="checkbox"/><span class="step-body"><span class="lede">Put it back: <code class="run">itemattr 85988 clear</code>, hover once more, and note the numbers</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
+      <span class="cmd"><pre><code>grep -aE "item attribute probe" ~/Games/PIN/logs/GameServer.log | tail -5
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: the tooltip shows up to five stat names with the numbers 100, 150, 200, 250 and 300 (only names the game knows for Aluminum's family are shown). I'll check the add-on's output in the game's log myself.</li>
-      <li>Also note whether anything shows the quality (300): a number, a colour, or a rarity word like Common or Uncommon.</li>
-      <li><strong>Run 2 (2026-10-11): /mats drew plain "Aluminum 5", and /invprobe showed the material carries no quality text itself. This run reads inside its stacks. If a stack carries the text, the /mats row reads <strong>Aluminum Q300</strong>; if it still reads "Aluminum 5", that's a real answer too, and I'll read the stack fields from the game's log.</strong></li>
-      <li>Run 1 (2026-10-08): the inventory tooltip showed no stats. Why: the game's own tooltip only reads the quality text for entries without a 'type' field, and materials from your inventory have one, so it never looks. The game does keep the text (it hands it to the interface as <code>resource_type</code>). <code>/mats</code> now reads it itself: re-test by sending the stack again and hovering Aluminum in <code>/mats</code>. The inventory tooltip staying blank is expected.</li>
-      </ul><div class="result"><label for="r-grade1-a">Result</label><textarea data-k="n-grade1-a" id="r-grade1-a" placeholder="Stats shown? Which names and numbers? Any sign of the quality?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="grade1-b">
-    <button class="block-head" type="button">
-      <span class="block-n">graded-crafting-1-B</span>
-      <span class="block-t">Two batches of one material</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-B</span><span class="marker">[ ]</span><span class="entry-t">Two batches of one material</span></div>
-      <p>Two Aluminum stacks in one message: 5 at quality 300 with low stats, and 7 at quality 900 with high stats (700 to 900). The question is whether the game shows two rows or merges them into one.</p>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="grade1-b-1" type="checkbox"/><span class="step-body"><span class="lede">Clear part A's stack: <code class="run">dbg_inventory resend</code>. Check Aluminum is gone from <code class="run">/mats</code></span></span></label>
-      <label class="step"><input data-k="grade1-b-2" type="checkbox"/><span class="step-body"><span class="lede">Send the pair: <code class="run">batch pair 77705</code></span></span></label>
-      <label class="step"><input data-k="grade1-b-3" type="checkbox"/><span class="step-body"><span class="lede">Look at Aluminum in the inventory and in /mats: one row or two? What counts (5, 7, or 12)? Hover each row and note the stats</span></span></label>
-      <label class="step"><input data-k="grade1-b-4" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">/invprobe</code></span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass (the good outcome): two Aluminum rows, 5 and 7, each with its own stats in the tooltip.</li>
-      <li>Also useful: one row of 7 with the high stats (the second replaced the first), or one row of 12. Any of these settles the question; just note exactly what you see.</li>
-      </ul><div class="result"><label for="r-grade1-b">Result</label><textarea data-k="n-grade1-b" id="r-grade1-b" placeholder="One row or two? Counts? Stats on each?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="grade1-c">
-    <button class="block-head" type="button">
-      <span class="block-n">graded-crafting-1-C</span>
-      <span class="block-t">Two batches with different batch numbers</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-C</span><span class="marker">[ ]</span><span class="entry-t">Two batches with different batch numbers</span></div>
-      <p>The same pair, but each stack also gets a different number in the one unnamed field the stack carries (1 and 2), in case the game uses it to tell batches apart.</p>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="grade1-c-1" type="checkbox"/><span class="step-body"><span class="lede">Clear part B: <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="grade1-c-2" type="checkbox"/><span class="step-body"><span class="lede">Send the tagged pair: <code class="run">batch pair 77705 tagged</code></span></span></label>
-      <label class="step"><input data-k="grade1-c-3" type="checkbox"/><span class="step-body"><span class="lede">Same as part B: one row or two, which counts, and the stats on each</span></span></label>
-      <label class="step"><input data-k="grade1-c-4" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">/invprobe</code>, then clear it all: <code class="run">dbg_inventory resend</code></span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "batch probe|InventoryUpdate" ~/Games/PIN/logs/GameServer.log | tail -10
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: note what you see. If part B merged the rows and this one shows two, that field is the batch number, which settles how the server must send batches.</li>
-      </ul><div class="result"><label for="r-grade1-c">Result</label><textarea data-k="n-grade1-c" id="r-grade1-c" placeholder="One row or two? Counts? Different from part B?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="rifle-1">
-    <button class="block-head" type="button">
-      <span class="block-n">RIFLE-1</span>
-      <span class="block-t">Mine the metal and Crystite</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">RIFLE-1</span><span class="marker">[ ]</span><span class="entry-t">Mine the metal and Crystite</span></div>
-      <p>Mining spot type 240 pays Iron Bars and Crystite together. A spot with richness 5 pays about five times the normal amount, so expect about five defended thumps.</p>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="rifle-1-1" type="checkbox"/><span class="step-body"><span class="lede">Note your starting materials: <code class="run">/mats</code> <code class="run">dbg_inventory</code></span></span></label>
-      <label class="step"><input data-k="rifle-1-2" type="checkbox"/><span class="step-body"><span class="lede">Somewhere with room to fight, place the mining spot around you, 60 m across, at richness 5: <code class="run">deposit add 240 60 5</code></span></span></label>
-      <label class="step"><input data-k="rifle-1-3" type="checkbox"/><span class="step-body"><span class="lede">Call down a thumper and defend it: <code class="run">thumper</code>. The payout shrinks with the damage it takes, so fight</span></span></label>
-      <label class="step"><input data-k="rifle-1-4" type="checkbox"/><span class="step-body"><span class="lede">When it pays, note the Iron Bars and Crystite figures in /mats</span></span></label>
-      <label class="step"><input data-k="rifle-1-5" type="checkbox"/><span class="step-body"><span class="lede">Repeat until /mats shows at least 125 Iron Bars and 200 Crystite</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: each cycle pays both Iron Bars and Crystite, and the totals reach 125 and 200 after a handful of thumps. The log shows a <code>paying</code> line for each.</li>
-      </ul><div class="result"><label for="r-rifle-1">Result</label><textarea data-k="n-rifle-1" id="r-rifle-1" placeholder="Thumps needed? Bars and Crystite per thump?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="rifle-2">
-    <button class="block-head" type="button">
-      <span class="block-n">RIFLE-2</span>
-      <span class="block-t">Craft the two rifle parts</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">RIFLE-2</span><span class="marker">[ ]</span><span class="entry-t">Craft the two rifle parts</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="rifle-2-1" type="checkbox"/><span class="step-body"><span class="lede">Build the receiver from 50 metal: <code class="run">craft 81160</code>. Iron Bars in /mats should drop by 50</span></span></label>
-      <label class="step"><input data-k="rifle-2-2" type="checkbox"/><span class="step-body"><span class="lede">Build the barrel from 75 metal: <code class="run">craft 81161</code>. Iron Bars should drop by another 75</span></span></label>
-      <label class="step"><input data-k="rifle-2-3" type="checkbox"/><span class="step-body"><span class="lede">Check both parts are in your inventory: Burst Rifle Receiver I and Burst Rifle Barrel I</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: both crafts succeed, Iron Bars fall by 125 in total, and both parts arrive.</li>
-      </ul><div class="result"><label for="r-rifle-2">Result</label><textarea data-k="n-rifle-2" id="r-rifle-2" placeholder="Both parts? Bars dropped by 125?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="rifle-3">
-    <button class="block-head" type="button">
-      <span class="block-n">RIFLE-3</span>
-      <span class="block-t">Craft and equip the Burst Rifle</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">RIFLE-3</span><span class="marker">[ ]</span><span class="entry-t">Craft and equip the Burst Rifle</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="rifle-3-1" type="checkbox"/><span class="step-body"><span class="lede">Check the plan first: <code class="run">craft check 81162</code>. It should say you have everything</span></span></label>
-      <label class="step"><input data-k="rifle-3-2" type="checkbox"/><span class="step-body"><span class="lede">Build it: <code class="run">craft 81162</code>. Crystite should drop by 200 and both parts should leave your inventory</span></span></label>
-      <label class="step"><input data-k="rifle-3-3" type="checkbox"/><span class="step-body"><span class="lede">Equip it as your secondary weapon: <code class="run">equipitem 85988 Secondary</code></span></span></label>
-      <label class="step"><input data-k="rifle-3-4" type="checkbox"/><span class="step-body"><span class="lede">Switch to it and fire a few shots at something</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: the Burst Rifle arrives, equips, appears in your hands, and fires.</li>
-      </ul><div class="result"><label for="r-rifle-3">Result</label><textarea data-k="n-rifle-3" id="r-rifle-3" placeholder="Rifle arrived? Equipped? Fires?"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="rifle-4">
-    <button class="block-head" type="button">
-      <span class="block-n">RIFLE-4</span>
-      <span class="block-t">The rifle survives logging out</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">RIFLE-4</span><span class="marker">[ ]</span><span class="entry-t">The rifle survives logging out</span></div>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="rifle-4-1" type="checkbox"/><span class="step-body"><span class="lede">Log out from the menu and log back in</span></span></label>
-      <label class="step"><input data-k="rifle-4-2" type="checkbox"/><span class="step-body"><span class="lede">Check: <code class="run">dbg_inventory</code> <code class="run">/mats</code>. Is the Burst Rifle still held and still equipped? Are the Iron Bars and Crystite still spent?</span></span></label>
-      <label class="step"><input data-k="rifle-4-3" type="checkbox"/><span class="step-body"><span class="lede">Optionally, remove the rich mining spot so it doesn't linger: run deposit list, then deposit remove with its number</span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "Encounter .*paying|craft|equipitem" ~/Games/PIN/logs/GameServer.log | tail -30
-      </code></pre><button class="copy" type="button">Copy</button></span>
-      <ul>
-      <li>Pass: the rifle is still there and still equipped, and the spent materials stay spent.</li>
-      </ul><div class="result"><label for="r-rifle-4">Result</label><textarea data-k="n-rifle-4" id="r-rifle-4" placeholder="Still held? Still equipped? Materials still spent?"></textarea></div></div>
+      <li>Pass: after step 3 the tooltip reads Damage 99 and Magazine Size 77, and after step 5 it's back to 8 and 36. That means one rifle can carry better numbers than another, which is what graded crafting needs.</li>
+      <li>Also a real answer: the tooltip never changes. Then the client draws from its catalogue, and a better batch has to pick a better ready-made version of a part instead. Just note exactly what you saw; I'll read the probe's output from the game's log myself.</li>
+      </ul><div class="result"><label for="r-grade2-a">Result</label><textarea data-k="n-grade2-a" id="r-grade2-a" placeholder="Damage and Magazine Size before, after itemattr, and after clear? Inventory and garage?"></textarea></div></div>
     </div>
   </section>
 </div>
-<div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-11-grade1-stacks-1"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-12-grade2-1"></script>
