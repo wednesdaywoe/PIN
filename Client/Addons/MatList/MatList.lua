@@ -203,12 +203,36 @@ local function Gather()
 		}
 	end
 
+	-- The entry itself never carries resource_type (graded-crafting-1, run 2); each of its stacks is one
+	-- batch, so a stack's text, if it has one, makes that stack its own row.
+	local function TakeStacks(entry)
+		if type(entry) ~= "table" then
+			return
+		end
+		local split = false
+		for _, stack in pairs(type(entry.stacks) == "table" and entry.stacks or {}) do
+			if type(stack) == "table" and type(stack.resource_type) == "string" and stack.resource_type ~= "" then
+				local row = {}
+				for k, v in pairs(entry) do
+					row[k] = v
+				end
+				row.resource_type = stack.resource_type
+				row.total = stack.quantity or stack.amount or stack.total or stack.count
+				Take(row)
+				split = true
+			end
+		end
+		if not split then
+			Take(entry)
+		end
+	end
+
 	local ok, items, resources = pcall(Player.GetInventory)
 	if ok and type(resources) == "table" then
 		for _, RESOURCE in pairs(resources) do
 			if type(RESOURCE) == "table" then
-				Take(RESOURCE.raw)
-				Take(RESOURCE.refined)
+				TakeStacks(RESOURCE.raw)
+				TakeStacks(RESOURCE.refined)
 			end
 		end
 	end

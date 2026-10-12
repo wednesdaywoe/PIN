@@ -16,8 +16,11 @@
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.
     Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
-    <p>Last run: area objects are drawn now (blasts, fire patches, spore mines, poison clouds), and area abilities
-    stop at walls.</p>
+    <p><strong>Last run (2026-10-11, part A only): the quality text reached the game but not the add-on.</strong>
+    The server sent Aluminum with quality 300 and its five stats, yet <code>/mats</code> drew plain "Aluminum 5".
+    The game's log shows why: the material arrives in the interface with no quality text on it at all. The one
+    place left to look is the material's list of stacks, one per batch, which the probe only printed as
+    <code>{...}</code>. Both add-ons now look inside each stack. This run repeats part A to read them.</p>
     <p>Crafting is back, with the goal you chose: refining returns, and the quality of what you mine carries through
     to what you craft. The plan: <code>worklog show graded-crafting</code>. This run has two parts that
     don't depend on each other.</p>
@@ -42,7 +45,7 @@
       <div class="entry"><div class="entry-head"><span class="id">graded-crafting-1-A</span><span class="marker">[ ]</span><span class="entry-t">A material shows its quality and stats</span></div>
       <p>One Aluminum stack with quality 300 and five stats of 100, 150, 200, 250 and 300.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="grade1-a-1" type="checkbox"/><span class="step-body"><span class="lede">Open your materials list, which stays open: <code class="run">/mats</code>. Note whether Aluminum is already listed (it shouldn't be)</span></span></label>
+      <label class="step"><input data-k="grade1-a-1" type="checkbox"/><span class="step-body"><span class="lede">Restart the game client first, so it loads the updated add-ons. Then clear any leftover Aluminum: <code class="run">dbg_inventory resend</code>, and open your materials list, which stays open: <code class="run">/mats</code>. Aluminum shouldn't be listed</span></span></label>
       <label class="step"><input data-k="grade1-a-2" type="checkbox"/><span class="step-body"><span class="lede">Send the stack: <code class="run">batch 77705 5 300 100 150 200 250 300</code></span></span></label>
       <label class="step"><input data-k="grade1-a-3" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, find Aluminum (5), and hover it. Note every line of the tooltip, especially any stat names and numbers. Then hover Aluminum in <code>/mats</code> too: its row should now read <strong>Aluminum Q300</strong>, and its tooltip should list Quality and the stats</span></span></label>
       <label class="step"><input data-k="grade1-a-4" type="checkbox"/><span class="step-body"><span class="lede">Run the add-on that prints your inventory to the game's log: <code class="run">/invprobe</code></span></span></label>
@@ -52,7 +55,8 @@
       <ul>
       <li>Pass: the tooltip shows up to five stat names with the numbers 100, 150, 200, 250 and 300 (only names the game knows for Aluminum's family are shown). I'll check the add-on's output in the game's log myself.</li>
       <li>Also note whether anything shows the quality (300): a number, a colour, or a rarity word like Common or Uncommon.</li>
-      <li><strong>Run 1 (2026-10-08): the inventory tooltip showed no stats. Why: the game's own tooltip only reads the quality text for entries without a 'type' field, and materials from your inventory have one, so it never looks. The game does keep the text (it hands it to the interface as <code>resource_type</code>). <code>/mats</code> now reads it itself: re-test by sending the stack again and hovering Aluminum in <code>/mats</code>. The inventory tooltip staying blank is expected. /invprobe wasn't run last time; please run it this time.</strong></li>
+      <li><strong>Run 2 (2026-10-11): /mats drew plain "Aluminum 5", and /invprobe showed the material carries no quality text itself. This run reads inside its stacks. If a stack carries the text, the /mats row reads <strong>Aluminum Q300</strong>; if it still reads "Aluminum 5", that's a real answer too, and I'll read the stack fields from the game's log.</strong></li>
+      <li>Run 1 (2026-10-08): the inventory tooltip showed no stats. Why: the game's own tooltip only reads the quality text for entries without a 'type' field, and materials from your inventory have one, so it never looks. The game does keep the text (it hands it to the interface as <code>resource_type</code>). <code>/mats</code> now reads it itself: re-test by sending the stack again and hovering Aluminum in <code>/mats</code>. The inventory tooltip staying blank is expected.</li>
       </ul><div class="result"><label for="r-grade1-a">Result</label><textarea data-k="n-grade1-a" id="r-grade1-a" placeholder="Stats shown? Which names and numbers? Any sign of the quality?"></textarea></div></div>
     </div>
   </section>
@@ -187,4 +191,4 @@
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-07-grade1-rifle-1"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-11-grade1-stacks-1"></script>

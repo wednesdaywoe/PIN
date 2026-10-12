@@ -106,6 +106,16 @@ local function DumpSide(label, entry)
 	log("InvProbe:     "..label..": "..NameOf(entry.item_sdb_id))
 	log("InvProbe:       fields "..Describe(entry))
 	log("InvProbe:       "..DescribeStats(entry.resource_type))
+	-- One stack per batch, so a batch's own text, if the engine passes it, is in here. Describe stops a
+	-- level short of a stack's fields, which is how run 2 of graded-crafting-1 missed them.
+	if type(entry.stacks) == "table" then
+		for i, stack in pairs(entry.stacks) do
+			log("InvProbe:       stack "..tostring(i).." "..Describe(stack))
+			if type(stack) == "table" then
+				log("InvProbe:         "..DescribeStats(stack.resource_type))
+			end
+		end
+	end
 end
 
 local function DumpResources(resources)
