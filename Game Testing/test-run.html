@@ -49,7 +49,7 @@
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
       <li><strong>Run 1 (2026-10-12): no difference between the two rifles, but the run couldn't settle it.</strong> The server changed only the first rifle it found, so it's unclear which one was hovered, and <code>/invprobe</code> couldn't find either rifle (it compared the id as a number; the game hands it over as text). Now <code>itemattr</code> changes every rifle you hold, the probe compares as text, and the new step 5 redraws the inventory in case the tooltip kept the old numbers.</li>
-      <li>Pass: after step 3 the tooltip reads Damage 99 and Magazine Size 77, and after step 5 it's back to 8 and 36. That means one rifle can carry better numbers than another, which is what graded crafting needs.</li>
+      <li>Pass: after step 3 the tooltip reads Damage 99 and Magazine Size 77, and after the last step it's back to 8 and 36. That means one rifle can carry better numbers than another, which is what graded crafting needs.</li>
       <li>Also a real answer: the tooltip never changes. Then the client draws from its catalogue, and a better batch has to pick a better ready-made version of a part instead. Just note exactly what you saw; I'll read the probe's output from the game's log myself.</li>
       </ul><div class="result"><label for="r-grade2-a">Result</label><textarea data-k="n-grade2-a" id="r-grade2-a" placeholder="Damage and Magazine Size before, after itemattr, and after clear? Inventory and garage?"></textarea></div></div>
     </div>
