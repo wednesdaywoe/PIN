@@ -1,9 +1,9 @@
-<title>PIN — An item's own numbers</title>
+<title>PIN — Modules on a crafted item</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>An item's own numbers (graded-crafting-2)</h1>
+    <h1>Modules on a crafted item (graded-crafting-2, module route)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
   </header>
   <div class="bar">
@@ -15,44 +15,57 @@
   </div>
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.</p>
-    <p>Last run: everything passed. A material shows its quality and stats, two batches of one material stay
-    apart, and a Burst Rifle went from the ground to your hands and survived a relog (it came back unequipped,
-    which persistence-4 now tracks).</p>
-    <p><strong>This run asks one question: can one item carry its own numbers?</strong> For graded crafting to
-    matter, a rifle built from good metal has to show better numbers than one built from poor metal. In the 2016
-    recording of the real game, the server sent some items with their own values. One weapon's damage was 48.7
-    where the catalogue says 86. The question is whether this game client shows such values in the tooltip, or
-    ignores them and shows the catalogue's.</p>
-    <p>The new <code>itemattr</code> command rewrites your Burst Rifle's numbers on the wire only. The server
-    doesn't save them, and shooting still does the normal damage. This is about what the tooltip shows.</p>
+    <p>Last run settled one thing: the game ignores numbers the server sends for a single item. Both rifles read
+    damage 8 however the server described them, even after a full redraw.</p>
+    <p><strong>This run tries the other route: modules.</strong> A module is an upgrade part fitted into a weapon,
+    and each one adds to a stat. The game's own code works out a weapon's stats from its modules itself, and each
+    item can carry "hidden" modules the player never sees. If crafting quality could choose a hidden module, a
+    better batch would build a better rifle. The game's data even has a ladder of damage modules, from +10 to +44.</p>
+    <p>Two questions, one part each. Part M1 is all inside the game's interface code and changes nothing.
+    Part M2 has the server fit a module to your rifles; like last time, it's on the wire only and isn't saved.</p>
     <p>Start the server on the new build first: <code class="run">~/Games/PIN/start-pin.sh</code>. Restart the
     game client too, so it loads the updated <code>/invprobe</code>.</p>
   </section>
-  <section class="block" data-open="true" id="grade2-a">
+  <section class="block" data-open="true" id="mod-a">
     <button class="block-head" type="button">
-      <span class="block-n">graded-crafting-2-A</span>
-      <span class="block-t">The rifle's tooltip shows numbers sent for that one rifle</span>
+      <span class="block-n">graded-crafting-2-M1</span>
+      <span class="block-t">The game applies a module's effect when asked</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-2-A</span><span class="marker">[ ]</span><span class="entry-t">The rifle's tooltip shows numbers sent for that one rifle</span></div>
-      <p>The Burst Rifle (item 85988) normally reads Damage 8 and Magazine Size 36. This sends it with Damage 99 and Magazine Size 77, everything else unchanged.</p>
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-2-M1</span><span class="marker">[ ]</span><span class="entry-t">The game applies a module's effect when asked</span></div>
+      <p>Asks the game for the Burst Rifle's stats with the weakest, a middle and the strongest damage module from the ladder.</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="grade2-a-1" type="checkbox"/><span class="step-body"><span class="lede">Check you still hold the Burst Rifle from last run: <code class="run">dbg_inventory</code>. If it's missing, make one: <code class="run">createitem 85988</code>, then <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="grade2-a-2" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, hover the Burst Rifle, and note its Damage and Magazine Size. Then record what the game reports: <code class="run">/invprobe attrs 85988</code></span></span></label>
-      <label class="step"><input data-k="grade2-a-3" type="checkbox"/><span class="step-body"><span class="lede">Send the rifle with its own numbers: <code class="run">itemattr 85988 954 99 956 77</code></span></span></label>
-      <label class="step"><input data-k="grade2-a-4" type="checkbox"/><span class="step-body"><span class="lede">Hover each rifle you hold (close and reopen the inventory first). Note Damage and Magazine Size. If you can, equip one and look in the garage too. Then run <code class="run">/invprobe attrs 85988</code></span></span></label>
-      <label class="step"><input data-k="grade2-a-4b" type="checkbox"/><span class="step-body"><span class="lede">Redraw the whole inventory, which keeps the changed numbers: <code class="run">dbg_inventory resend</code>. Hover the rifles again, note the numbers, and run <code class="run">/invprobe attrs 85988</code> once more</span></span></label>
-      <label class="step"><input data-k="grade2-a-5" type="checkbox"/><span class="step-body"><span class="lede">Put it back: <code class="run">itemattr 85988 clear</code>, hover once more, and note the numbers</span></span></label>
+      <label class="step"><input data-k="mod-a-1" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">/invprobe modtest 85988 123353 123358 123364</code>. It only writes to the game's log; nothing changes on screen</span></span></label>
       </ol></div>
-      <span class="cmd"><pre><code>grep -aE "item attribute probe" ~/Games/PIN/logs/GameServer.log | tail -5
+      <ul>
+      <li>Nothing to look at: I'll read the result from the game's log. Pass: the rifle's damage comes out higher with a module than without.</li>
+      </ul><div class="result"><label for="r-mod-a">Result</label><textarea data-k="n-mod-a" id="r-mod-a" placeholder="Anything odd? (Otherwise leave blank.)"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="mod-b">
+    <button class="block-head" type="button">
+      <span class="block-n">graded-crafting-2-M2</span>
+      <span class="block-t">A module the server fits shows on the rifle</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-2-M2</span><span class="marker">[ ]</span><span class="entry-t">A module the server fits shows on the rifle</span></div>
+      <p>The server puts the strongest damage module (+44) on every Burst Rifle you hold.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="mod-b-1" type="checkbox"/><span class="step-body"><span class="lede">Check you hold a Burst Rifle: <code class="run">dbg_inventory</code>. If not: <code class="run">createitem 85988</code>, then <code class="run">dbg_inventory resend</code></span></span></label>
+      <label class="step"><input data-k="mod-b-2" type="checkbox"/><span class="step-body"><span class="lede">Fit the module: <code class="run">itemmod 85988 123364</code></span></span></label>
+      <label class="step"><input data-k="mod-b-3" type="checkbox"/><span class="step-body"><span class="lede">Close and reopen the inventory, hover the rifle, and note Damage Per Round and anything new in the tooltip (a module line, an icon). If the garage shows module slots for the rifle, note those too. Then run <code class="run">/invprobe attrs 85988</code></span></span></label>
+      <label class="step"><input data-k="mod-b-4" type="checkbox"/><span class="step-body"><span class="lede">Redraw the whole inventory, which keeps the module: <code class="run">dbg_inventory resend</code>. Hover again and run <code class="run">/invprobe attrs 85988</code></span></span></label>
+      <label class="step"><input data-k="mod-b-5" type="checkbox"/><span class="step-body"><span class="lede">Take it off: <code class="run">itemmod 85988 clear</code></span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "item module probe" ~/Games/PIN/logs/GameServer.log | tail -5
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li><strong>Run 1 (2026-10-12): no difference between the two rifles, but the run couldn't settle it.</strong> The server changed only the first rifle it found, so it's unclear which one was hovered, and <code>/invprobe</code> couldn't find either rifle (it compared the id as a number; the game hands it over as text). Now <code>itemattr</code> changes every rifle you hold, the probe compares as text, and the new step 5 redraws the inventory in case the tooltip kept the old numbers.</li>
-      <li>Pass: after step 3 the tooltip reads Damage 99 and Magazine Size 77, and after the last step it's back to 8 and 36. That means one rifle can carry better numbers than another, which is what graded crafting needs.</li>
-      <li>Also a real answer: the tooltip never changes. Then the client draws from its catalogue, and a better batch has to pick a better ready-made version of a part instead. Just note exactly what you saw; I'll read the probe's output from the game's log myself.</li>
-      </ul><div class="result"><label for="r-grade2-a">Result</label><textarea data-k="n-grade2-a" id="r-grade2-a" placeholder="Damage and Magazine Size before, after itemattr, and after clear? Inventory and garage?"></textarea></div></div>
+      <li>Pass: Damage Per Round goes above 8 after the module is fitted, and back to 8 after it's taken off.</li>
+      <li>Also a real answer: nothing changes. Note what you see; I'll read the probe's output from the game's log.</li>
+      </ul><div class="result"><label for="r-mod-b">Result</label><textarea data-k="n-mod-b" id="r-mod-b" placeholder="Damage before, with the module, after resend, after clear? Anything new in the tooltip or garage?"></textarea></div></div>
     </div>
   </section>
 </div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-12-grade2-2"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-12-modules-1"></script>
