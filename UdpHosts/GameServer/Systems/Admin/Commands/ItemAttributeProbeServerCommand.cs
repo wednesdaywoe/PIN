@@ -7,7 +7,7 @@ using GameServer.StaticDB;
 namespace GameServer.Systems.Admin.Commands;
 
 /// <summary>
-///     graded-crafting-2's probe: writes per-item attribute values onto one held item, to see whether the
+///     graded-crafting-2's probe: writes per-item attribute values onto every held copy of an item, to see whether the
 ///     client's tooltip draws them in place of the item type's.
 /// </summary>
 /// <remarks>
@@ -56,11 +56,14 @@ public class ItemAttributeProbeServerCommand : ServerCommand
         var pairs = values
             .Select(pair => new ItemUnkData { Unk1 = pair.Key, Unk2 = BitConverter.SingleToUInt32Bits(pair.Value) })
             .ToArray();
-        var guid = held[0].GUID;
-        inventory.SetItemAttributes(guid, pairs);
-
+        // Every held copy: run 1 had two rifles and no way to tell which one the tooltip showed.
         var shown = string.Join(", ", values.Select(pair => $"{pair.Key}={pair.Value}"));
-        Logger.Information("item attribute probe: item {ItemId} guid {Guid:X}, {Count} pair(s): {Pairs}", itemId, guid, pairs.Length, shown);
-        SourceFeedback($"Sent {itemId} ({guid:X}) with {pairs.Length} attribute(s): {shown}", context);
+        foreach (var item in held)
+        {
+            inventory.SetItemAttributes(item.GUID, pairs);
+            Logger.Information("item attribute probe: item {ItemId} guid {Guid:X}, {Count} pair(s): {Pairs}", itemId, item.GUID, pairs.Length, shown);
+        }
+
+        SourceFeedback($"Sent {held.Count} cop{(held.Count == 1 ? "y" : "ies")} of {itemId} with {pairs.Length} attribute(s): {shown}", context);
     }
 }

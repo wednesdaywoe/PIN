@@ -41,16 +41,18 @@
       <label class="step"><input data-k="grade2-a-1" type="checkbox"/><span class="step-body"><span class="lede">Check you still hold the Burst Rifle from last run: <code class="run">dbg_inventory</code>. If it's missing, make one: <code class="run">createitem 85988</code>, then <code class="run">dbg_inventory resend</code></span></span></label>
       <label class="step"><input data-k="grade2-a-2" type="checkbox"/><span class="step-body"><span class="lede">Open your inventory, hover the Burst Rifle, and note its Damage and Magazine Size. Then record what the game reports: <code class="run">/invprobe attrs 85988</code></span></span></label>
       <label class="step"><input data-k="grade2-a-3" type="checkbox"/><span class="step-body"><span class="lede">Send the rifle with its own numbers: <code class="run">itemattr 85988 954 99 956 77</code></span></span></label>
-      <label class="step"><input data-k="grade2-a-4" type="checkbox"/><span class="step-body"><span class="lede">Hover the rifle again (close and reopen the inventory if the tooltip doesn't change). Note Damage and Magazine Size. If you can, equip it and look in the garage too. Then run <code class="run">/invprobe attrs 85988</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-4" type="checkbox"/><span class="step-body"><span class="lede">Hover each rifle you hold (close and reopen the inventory first). Note Damage and Magazine Size. If you can, equip one and look in the garage too. Then run <code class="run">/invprobe attrs 85988</code></span></span></label>
+      <label class="step"><input data-k="grade2-a-4b" type="checkbox"/><span class="step-body"><span class="lede">Redraw the whole inventory, which keeps the changed numbers: <code class="run">dbg_inventory resend</code>. Hover the rifles again, note the numbers, and run <code class="run">/invprobe attrs 85988</code> once more</span></span></label>
       <label class="step"><input data-k="grade2-a-5" type="checkbox"/><span class="step-body"><span class="lede">Put it back: <code class="run">itemattr 85988 clear</code>, hover once more, and note the numbers</span></span></label>
       </ol></div>
       <span class="cmd"><pre><code>grep -aE "item attribute probe" ~/Games/PIN/logs/GameServer.log | tail -5
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
+      <li><strong>Run 1 (2026-10-12): no difference between the two rifles, but the run couldn't settle it.</strong> The server changed only the first rifle it found, so it's unclear which one was hovered, and <code>/invprobe</code> couldn't find either rifle (it compared the id as a number; the game hands it over as text). Now <code>itemattr</code> changes every rifle you hold, the probe compares as text, and the new step 5 redraws the inventory in case the tooltip kept the old numbers.</li>
       <li>Pass: after step 3 the tooltip reads Damage 99 and Magazine Size 77, and after step 5 it's back to 8 and 36. That means one rifle can carry better numbers than another, which is what graded crafting needs.</li>
       <li>Also a real answer: the tooltip never changes. Then the client draws from its catalogue, and a better batch has to pick a better ready-made version of a part instead. Just note exactly what you saw; I'll read the probe's output from the game's log myself.</li>
       </ul><div class="result"><label for="r-grade2-a">Result</label><textarea data-k="n-grade2-a" id="r-grade2-a" placeholder="Damage and Magazine Size before, after itemattr, and after clear? Inventory and garage?"></textarea></div></div>
     </div>
   </section>
 </div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-12-grade2-1"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-12-grade2-2"></script>

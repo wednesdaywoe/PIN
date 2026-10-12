@@ -311,7 +311,9 @@ function RunProbe(args)
 		local ok, items = pcall(Player.GetInventory)
 		local held = 0
 		for _, ITEM in pairs(ok and type(items) == "table" and items or {}) do
-			if ITEM.item_sdb_id == id then
+			-- Ids reach Lua as text or as numbers depending on the call (Inventory.lua tostring()s
+			-- them before comparing), so compare as text. Run 1 of graded-crafting-2 matched nothing.
+			if tostring(ITEM.item_sdb_id or ITEM.itemTypeId) == tostring(id) then
 				held = held + 1
 				local guid = ITEM.item_guid or ITEM.itemId or ITEM.item_id
 				log("InvProbe:   held copy "..held.." keys "..table.concat(Sorted(ITEM), ", "))
@@ -321,7 +323,8 @@ function RunProbe(args)
 			end
 		end
 		if held == 0 then
-			log("InvProbe:   you hold no "..tostring(id))
+			log("InvProbe:   you hold no "..tostring(id).." among "..Count(ok and items or nil).." item(s); first entry "
+				..Describe(select(2, next(ok and type(items) == "table" and items or {})) or {}))
 		end
 		local okType, typeInfo = pcall(Game.GetItemInfoByType, id)
 		Attrs("Game.GetItemInfoByType", okType and typeInfo)
