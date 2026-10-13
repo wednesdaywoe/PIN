@@ -94,6 +94,23 @@ public class SavedCharacterTests
         Assert.Equal(JsonSerializer.Serialize(forwards), JsonSerializer.Serialize(backwards));
     }
 
+    /// <summary>
+    ///     graded-crafting-3: each batch saves as its own row with its text, and an ungraded row writes no
+    ///     Batch at all, so a save made before batches reads back, and writes, exactly as it did.
+    /// </summary>
+    [Fact]
+    public void KeepsEachBatchAndLeavesUngradedRowsAsTheyWere()
+    {
+        var good = Resource(86667, 7);
+        good.TextKey = "1-1uzv-p0-jg-ku-m8-nm-p0-0-0-";
+
+        var saved = Snapshot(resources: [Resource(86667, 5), good], items: []);
+        var json = JsonSerializer.Serialize(saved);
+
+        Assert.Equal([null, good.TextKey], saved.Resources.Select(r => r.Batch));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(json, "\"Batch\""));
+    }
+
     private static SavedCharacter Snapshot(IEnumerable<Resource> resources, IEnumerable<Item> items)
     {
         return SavedCharacter.Snapshot(0x99aabbccddee01c0, 448, 17, 3600, resources, items, SavedAt);

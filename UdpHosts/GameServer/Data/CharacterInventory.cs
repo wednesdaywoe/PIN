@@ -6,6 +6,7 @@ using AeroMessages.GSS.V66.Character.Event;
 using GameServer.Entities.Character;
 using GameServer.Enums;
 using GameServer.StaticDB;
+using GameServer.Systems.Crafting;
 using Serilog;
 using LoadoutVisualType = AeroMessages.GSS.V66.Character.LoadoutConfig_Visual.LoadoutVisualType;
 
@@ -16,7 +17,10 @@ public class CharacterInventory
     private static readonly ILogger _logger = Log.ForContext<CharacterEntity>();
 
     private readonly Dictionary<ulong, Item> _items; // By guid
-    private readonly Dictionary<uint, Resource> _resources; // By typeid
+    // By type id and batch. A batch is the packed quality-and-stats text the stack carries (ResourceStats);
+    // an ungraded stack, Crystite or anything mined before batches, has empty text. Two batches of one
+    // material are two stacks on the wire too, which the client keeps apart (graded-crafting-1).
+    private readonly Dictionary<(uint SdbId, string Batch), Resource> _resources;
     private readonly Dictionary<int, Loadout> _loadouts; // By loadoutid
 
     /// <summary>
@@ -277,58 +281,92 @@ public class CharacterInventory
 
     public void AddResource(uint sdbId, uint quantity)
     {
-        if (!_resources.ContainsKey(sdbId))
+        AddResource(sdbId, quantity, string.Empty);
+    }
+
+    /// <summary>Adds to the stack of <paramref name="sdbId"/> in <paramref name="batch"/>, opening it if new.</summary>
+    public void AddResource(uint sdbId, uint quantity, string batch)
+    {
+        batch ??= string.Empty;
+        if (!_resources.TryGetValue((sdbId, batch), out var res))
         {
-            Resource resource = new Resource()
+            res = new Resource()
             {
                 Quantity = 0,
                 SdbId = sdbId,
                 SubInventory = GetInventoryTypeByItemTypeId(sdbId),
-                TextKey = string.Empty,
+                TextKey = batch,
                 Unk2 = 0,
             };
-
-            _resources.Add(sdbId, resource);
         }
 
-        var res = _resources[sdbId];
         res.Quantity += quantity;
-        _resources[sdbId] = res;
+        _resources[(sdbId, batch)] = res;
         SendResourceUpdate(sdbId);
     }
 
     public bool ConsumeResource(uint sdbId, uint cost)
     {
-        if (!_resources.TryGetValue(sdbId, out var res))
+        return SpendResource(sdbId, cost) != null;
+    }
+
+    /// <summary>
+    ///     Takes <paramref name="cost"/> of <paramref name="sdbId"/>, from the named <paramref name="batch"/> or,
+    ///     when it is null, across every batch held: ungraded stacks first, then the lowest quality first, so
+    ///     an unchosen spend keeps the best material. Nothing is taken unless all of it can be.
+    /// </summary>
+    /// <returns>What was taken from each batch, or null when there wasn't enough.</returns>
+    public IReadOnlyList<(string Batch, uint Quantity)> SpendResource(uint sdbId, uint cost, string batch = null)
+    {
+        var stacks = _resources.Values
+                               .Where(r => r.SdbId == sdbId && (batch == null || r.TextKey == batch))
+                               .OrderBy(r => ResourceStats.Unpack(r.TextKey)?.Quality ?? -1)
+                               .ThenBy(r => r.TextKey, StringComparer.Ordinal)
+                               .ToList();
+        if (stacks.Sum(r => (long)r.Quantity) < cost)
         {
-            return false;
+            return null;
         }
 
-        if (res.Quantity < cost)
+        var spent = new List<(string Batch, uint Quantity)>();
+        var left = cost;
+        foreach (var stack in stacks)
         {
-            return false;
-        }
-        else
-        {
-            res.Quantity -= cost;
+            if (left == 0)
+            {
+                break;
+            }
 
+            var take = Math.Min(left, stack.Quantity);
+            var res = stack;
+            res.Quantity -= take;
             if (res.Quantity > 0)
             {
-                _resources[sdbId] = res;
+                _resources[(sdbId, res.TextKey)] = res;
             }
             else
             {
-                _resources.Remove(sdbId);
+                _resources.Remove((sdbId, res.TextKey));
             }
 
-            SendResourceUpdate(sdbId);
-            return true;
+            spent.Add((res.TextKey, take));
+            left -= take;
         }
+
+        SendResourceUpdate(sdbId, spent.Select(s => s.Batch));
+        return spent;
     }
 
+    /// <summary>Every batch held of <paramref name="sdbId"/> added together.</summary>
     public uint GetResourceQuantity(uint sdbId)
     {
-        return _resources.TryGetValue(sdbId, out var value) ? value.Quantity : 0;
+        return (uint)_resources.Values.Where(r => r.SdbId == sdbId).Sum(r => (long)r.Quantity);
+    }
+
+    /// <summary>The stacks held of <paramref name="sdbId"/>, one per batch.</summary>
+    public IEnumerable<Resource> GetResourceBatches(uint sdbId)
+    {
+        return _resources.Values.Where(r => r.SdbId == sdbId);
     }
 
     public void AddLoadout(Loadout loadout)
@@ -482,6 +520,15 @@ public class CharacterInventory
     }
 
     /// <summary>Sends material stacks exactly as given, as a partial update. For probes; nothing is stored.</summary>
+    private static Resource EmptyRow(uint sdbId, string batch) => new()
+    {
+        Quantity = 0,
+        SdbId = sdbId,
+        SubInventory = GetInventoryTypeByItemTypeId(sdbId),
+        TextKey = batch,
+        Unk2 = 0,
+    };
+
     public void SendResources(IEnumerable<Resource> resources)
     {
         var update = new InventoryUpdate()
@@ -505,29 +552,33 @@ public class CharacterInventory
 
     public void SendResourceUpdate(uint sdbId)
     {
+        SendResourceUpdate(sdbId, []);
+    }
+
+    /// <summary>
+    ///     Sends every batch held of <paramref name="sdbId"/>, plus a zero row for each batch in
+    ///     <paramref name="emptied"/> that is now gone.
+    /// </summary>
+    public void SendResourceUpdate(uint sdbId, IEnumerable<string> emptied)
+    {
         if (!EnablePartialUpdates)
         {
             return;
         }
 
-        // Spending a stack down to exactly zero removes it from _resources, and ConsumeResource calls
-        // this straight afterwards — so the read has to survive the key being gone. It did not, and
-        // indexing threw KeyNotFoundException on the first stack anyone ever emptied. Nothing emptied
-        // one until crafting existed, which is why this sat here unhit.
-        //
-        // Sending nothing would be worse than the crash was loud: the client keeps drawing whatever
-        // count it was last told, so an emptied stack would still read as full. A row of zero is the
-        // update, and it is what a stack that just ran out actually holds.
-        if (!_resources.TryGetValue(sdbId, out var resource))
+        // A stack spent down to zero is gone from _resources, and saying nothing would leave the client
+        // drawing whatever count it was last told. A row of zero is the update: it is what the stack now
+        // holds. Before batches this was one row per material; now it is one per emptied batch, and with
+        // nothing held or emptied at all, the ungraded row at zero as before.
+        var rows = GetResourceBatches(sdbId).ToList();
+        foreach (var batch in emptied.Distinct().Where(b => !_resources.ContainsKey((sdbId, b))))
         {
-            resource = new Resource()
-            {
-                Quantity = 0,
-                SdbId = sdbId,
-                SubInventory = GetInventoryTypeByItemTypeId(sdbId),
-                TextKey = string.Empty,
-                Unk2 = 0,
-            };
+            rows.Add(EmptyRow(sdbId, batch));
+        }
+
+        if (rows.Count == 0)
+        {
+            rows.Add(EmptyRow(sdbId, string.Empty));
         }
 
         var update = new InventoryUpdate()
@@ -539,10 +590,7 @@ public class CharacterInventory
             ItemsPart2 = [],
             ItemsPart3Length = 0,
             ItemsPart3 = [],
-            Resources =
-            [
-                resource
-            ],
+            Resources = [.. rows],
             Loadouts = [],
             Unk = 0, // Partial update, see SendItemUpdate
             SecondItems = [],

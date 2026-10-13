@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using AeroMessages.GSS.V66.Character.Event;
 using GameServer.Enums;
 
@@ -70,7 +71,13 @@ public class SavedCharacter
             Resources = [.. resources
                 .Where(resource => resource.Quantity > 0)
                 .OrderBy(resource => resource.SdbId)
-                .Select(resource => new SavedResource { SdbId = resource.SdbId, Quantity = resource.Quantity })],
+                .ThenBy(resource => resource.TextKey ?? string.Empty, StringComparer.Ordinal)
+                .Select(resource => new SavedResource
+                {
+                    SdbId = resource.SdbId,
+                    Quantity = resource.Quantity,
+                    Batch = string.IsNullOrEmpty(resource.TextKey) ? null : resource.TextKey
+                })],
             Items = [.. items
                 .OrderBy(item => item.SdbId)
                 .ThenBy(item => item.TimestampEpoch)
@@ -101,6 +108,14 @@ public class SavedResource
     public uint SdbId { get; set; }
 
     public uint Quantity { get; set; }
+
+    /// <summary>
+    ///     The batch's packed quality and stats (<see cref="Systems.Crafting.ResourceStats"/>), or null for
+    ///     an ungraded stack. Added without a version bump: a save written before it reads as ungraded,
+    ///     which is what every stack then was.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string Batch { get; set; }
 }
 
 public class SavedItem

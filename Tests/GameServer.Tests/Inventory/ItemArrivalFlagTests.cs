@@ -85,7 +85,7 @@ public class ItemArrivalFlagTests
         Assert.NotEmpty(client.Outgoing);
     }
 
-    private static void SeedEmptyRootItems()
+    internal static void SeedEmptyRootItems()
     {
         var field = typeof(SDBInterface).GetField("_rootItem", BindingFlags.NonPublic | BindingFlags.Static);
         field!.SetValue(null, Activator.CreateInstance(field.FieldType));
@@ -96,7 +96,7 @@ public class ItemArrivalFlagTests
     ///     <c>CharacterEntity</c> reads at construction. Everything else throws — nothing in this
     ///     path reaches it.
     /// </summary>
-    private sealed class FakeShard : IShard
+    internal sealed class FakeShard : IShard
     {
         private ushort _guid;
 
@@ -142,7 +142,7 @@ public class ItemArrivalFlagTests
     ///     The smallest <see cref="INetworkClient"/> <c>SendItemUpdate</c> needs: a
     ///     <c>ReliableGss</c> channel to send on and a queue to catch the bytes that land on it.
     /// </summary>
-    private sealed class CapturingClient : INetworkClient
+    internal sealed class CapturingClient : INetworkClient
     {
         private readonly Channel _reliable;
 

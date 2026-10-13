@@ -1,9 +1,9 @@
-<title>PIN — Modules on a crafted item</title>
+<title>PIN — Materials by batch</title>
 <link rel="stylesheet" href="tests.css">
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">PIN · in-game test queue</div>
-    <h1>Modules on a crafted item (graded-crafting-2, module route)</h1>
+    <h1>Materials by batch (graded-crafting-3)</h1>
     <p class="standfirst">The current test run. Setup, admin commands and the monster type id table: <a href="Session-Setup.html">Session Setup</a>.</p>
   </header>
   <div class="bar">
@@ -15,57 +15,59 @@
   </div>
   <section class="doc">
     <p><strong>The current test run.</strong> This page is rewritten for every run; earlier runs are in git history.</p>
-    <p>Last run settled one thing: the game ignores numbers the server sends for a single item. Both rifles read
-    damage 8 however the server described them, even after a full redraw.</p>
-    <p><strong>This run tries the other route: modules.</strong> A module is an upgrade part fitted into a weapon,
-    and each one adds to a stat. The game's own code works out a weapon's stats from its modules itself, and each
-    item can carry "hidden" modules the player never sees. If crafting quality could choose a hidden module, a
-    better batch would build a better rifle. The game's data even has a ladder of damage modules, from +10 to +44.</p>
-    <p>Two questions, one part each. Part M1 is all inside the game's interface code and changes nothing.
-    Part M2 has the server fit a module to your rifles; like last time, it's on the wire only and isn't saved.</p>
-    <p>Start the server on the new build first: <code class="run">~/Games/PIN/start-pin.sh</code>. Restart the
-    game client too, so it loads the updated <code>/invprobe</code>.</p>
+    <p>Last run: a crafted item can carry its own numbers. The server builds a hidden module into it, and the
+    game shows the better stats (the rifle went from 8 damage to 12).</p>
+    <p><strong>This run: the server now keeps each batch of a material separate.</strong> Until now it kept one
+    pile per material, so two batches of Iron Bars at different qualities would have merged. Now each batch keeps
+    its own quality and count, is saved, and is spent in a set order: material with no quality first, then the
+    worst batch first, so the best is kept. This is the base the rest of graded crafting builds on.</p>
+    <p>Unlike the last few runs, these batches are real: they're saved, and crafting can spend them.</p>
+    <p>Start the server on the new build first: <code class="run">~/Games/PIN/start-pin.sh</code></p>
   </section>
-  <section class="block" data-open="true" id="mod-a">
+  <section class="block" data-open="true" id="g3-a">
     <button class="block-head" type="button">
-      <span class="block-n">graded-crafting-2-M1</span>
-      <span class="block-t">The game applies a module's effect when asked</span>
+      <span class="block-n">graded-crafting-3-A</span>
+      <span class="block-t">Two batches stay two, and survive a relog</span>
       <span class="block-meta"><span class="chev"></span></span>
     </button>
     <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-2-M1</span><span class="marker">[ ]</span><span class="entry-t">The game applies a module's effect when asked</span></div>
-      <p>Asks the game for the Burst Rifle's stats with the weakest, a middle and the strongest damage module from the ladder.</p>
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-3-A</span><span class="marker">[ ]</span><span class="entry-t">Two batches stay two, and survive a relog</span></div>
+      <p>Thirty Iron Bars at a poor quality (200) and thirty at a good one (900).</p>
       <div class="steps"><ol>
-      <label class="step"><input data-k="mod-a-1" type="checkbox"/><span class="step-body"><span class="lede">Run <code class="run">/invprobe modtest 85988 123353 123358 123364</code>. It only writes to the game's log; nothing changes on screen</span></span></label>
+      <label class="step"><input data-k="g3-a-1" type="checkbox"/><span class="step-body"><span class="lede">Open your materials list: <code class="run">/mats</code>. Note how many Iron Bars you hold now (likely 3, with no quality)</span></span></label>
+      <label class="step"><input data-k="g3-a-2" type="checkbox"/><span class="step-body"><span class="lede">Add the poor batch: <code class="run">batch give 86667 30 200 100 120 140 160 180</code></span></span></label>
+      <label class="step"><input data-k="g3-a-3" type="checkbox"/><span class="step-body"><span class="lede">Add the good batch: <code class="run">batch give 86667 30 900 700 750 800 850 900</code></span></span></label>
+      <label class="step"><input data-k="g3-a-4" type="checkbox"/><span class="step-body"><span class="lede">Add 5 more to the poor batch: <code class="run">batch give 86667 5 200 100 120 140 160 180</code>. In <code>/mats</code>, Iron Bars should now be three rows: the old ones, Q200 with 35, and Q900 with 30</span></span></label>
+      <label class="step"><input data-k="g3-a-5" type="checkbox"/><span class="step-body"><span class="lede">Log out from the menu and log back in. Open <code class="run">/mats</code> again: the same three rows and counts?</span></span></label>
       </ol></div>
-      <ul>
-      <li>Nothing to look at: I'll read the result from the game's log. Pass: the rifle's damage comes out higher with a module than without.</li>
-      </ul><div class="result"><label for="r-mod-a">Result</label><textarea data-k="n-mod-a" id="r-mod-a" placeholder="Anything odd? (Otherwise leave blank.)"></textarea></div></div>
-    </div>
-  </section>
-  <section class="block" data-open="true" id="mod-b">
-    <button class="block-head" type="button">
-      <span class="block-n">graded-crafting-2-M2</span>
-      <span class="block-t">A module the server fits shows on the rifle</span>
-      <span class="block-meta"><span class="chev"></span></span>
-    </button>
-    <div class="block-body">
-      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-2-M2</span><span class="marker">[ ]</span><span class="entry-t">A module the server fits shows on the rifle</span></div>
-      <p>The server puts the strongest damage module (+44) on every Burst Rifle you hold.</p>
-      <div class="steps"><ol>
-      <label class="step"><input data-k="mod-b-1" type="checkbox"/><span class="step-body"><span class="lede">Check you hold a Burst Rifle: <code class="run">dbg_inventory</code>. If not: <code class="run">createitem 85988</code>, then <code class="run">dbg_inventory resend</code></span></span></label>
-      <label class="step"><input data-k="mod-b-2" type="checkbox"/><span class="step-body"><span class="lede">Fit the module: <code class="run">itemmod 85988 123364</code></span></span></label>
-      <label class="step"><input data-k="mod-b-3" type="checkbox"/><span class="step-body"><span class="lede">Close and reopen the inventory, hover the rifle, and note Damage Per Round and anything new in the tooltip (a module line, an icon). If the garage shows module slots for the rifle, note those too. Then run <code class="run">/invprobe attrs 85988</code></span></span></label>
-      <label class="step"><input data-k="mod-b-4" type="checkbox"/><span class="step-body"><span class="lede">Redraw the whole inventory, which keeps the module: <code class="run">dbg_inventory resend</code>. Hover again and run <code class="run">/invprobe attrs 85988</code></span></span></label>
-      <label class="step"><input data-k="mod-b-5" type="checkbox"/><span class="step-body"><span class="lede">Take it off: <code class="run">itemmod 85988 clear</code></span></span></label>
-      </ol></div>
-      <span class="cmd"><pre><code>grep -aE "item module probe" ~/Games/PIN/logs/GameServer.log | tail -5
+      <span class="cmd"><pre><code>grep -aE "batch give|Saved character" ~/Games/PIN/logs/GameServer.log | tail -8
       </code></pre><button class="copy" type="button">Copy</button></span>
       <ul>
-      <li>Pass: Damage Per Round goes above 8 after the module is fitted, and back to 8 after it's taken off.</li>
-      <li>Also a real answer: nothing changes. Note what you see; I'll read the probe's output from the game's log.</li>
-      </ul><div class="result"><label for="r-mod-b">Result</label><textarea data-k="n-mod-b" id="r-mod-b" placeholder="Damage before, with the module, after resend, after clear? Anything new in the tooltip or garage?"></textarea></div></div>
+      <li>Pass: three Iron Bars rows (plain, Q200 x35, Q900 x30), the same after the relog.</li>
+      </ul><div class="result"><label for="r-g3-a">Result</label><textarea data-k="n-g3-a" id="r-g3-a" placeholder="Rows and counts before and after the relog?"></textarea></div></div>
+    </div>
+  </section>
+  <section class="block" data-open="true" id="g3-b">
+    <button class="block-head" type="button">
+      <span class="block-n">graded-crafting-3-B</span>
+      <span class="block-t">Spending takes the worst first, or exactly the batch named</span>
+      <span class="block-meta"><span class="chev"></span></span>
+    </button>
+    <div class="block-body">
+      <div class="entry"><div class="entry-head"><span class="id">graded-crafting-3-B</span><span class="marker">[ ]</span><span class="entry-t">Spending takes the worst first, or exactly the batch named</span></div>
+      <p>The rifle-receiver recipe (82081) takes 50 metal. With the plain bars, 35 at Q200 and 30 at Q900, it should use up all the plain bars and all of Q200, then the rest from Q900.</p>
+      <div class="steps"><ol>
+      <label class="step"><input data-k="g3-b-1" type="checkbox"/><span class="step-body"><span class="lede">Craft it: <code class="run">craft 82081</code>. Check <code>/mats</code>: the plain and Q200 rows should be gone, and Q900 down by whatever was still needed</span></span></label>
+      <label class="step"><input data-k="g3-b-2" type="checkbox"/><span class="step-body"><span class="lede">Add a small poor batch back: <code class="run">batch give 86667 10 200 100 120 140 160 180</code></span></span></label>
+      <label class="step"><input data-k="g3-b-3" type="checkbox"/><span class="step-body"><span class="lede">Spend from the good batch by name: <code class="run">batch spend 86667 5 900</code>. Only Q900 should drop by 5; Q200 stays at 10</span></span></label>
+      <label class="step"><input data-k="g3-b-4" type="checkbox"/><span class="step-body"><span class="lede">Ask for too much from one batch: <code class="run">batch spend 86667 50 200</code>. It should refuse, and nothing should change</span></span></label>
+      </ol></div>
+      <span class="cmd"><pre><code>grep -aE "craft|batch spend|batch give" ~/Games/PIN/logs/GameServer.log | tail -10
+      </code></pre><button class="copy" type="button">Copy</button></span>
+      <ul>
+      <li>Pass: the craft spends worst first and the server log names the batches; a named spend touches only its batch; an impossible one changes nothing. I'll check the log myself.</li>
+      </ul><div class="result"><label for="r-g3-b">Result</label><textarea data-k="n-g3-b" id="r-g3-b" placeholder="Rows and counts after the craft, after the named spend, after the refused one?"></textarea></div></div>
     </div>
   </section>
 </div>
-<script src="tests.js" data-ls="pin-test-run-2026-10-12-modules-1"></script>
+<script src="tests.js" data-ls="pin-test-run-2026-10-12-batches-1"></script>

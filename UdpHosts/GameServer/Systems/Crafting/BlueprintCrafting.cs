@@ -233,27 +233,29 @@ public static class BlueprintCrafting
 
         foreach (var line in plan.Inputs.Where(l => l.IsResource))
         {
-            // Checked above, but ConsumeResource is the only thing that can say no for certain.
-            if (!inventory.ConsumeResource(line.ItemId, line.Quantity))
+            // Checked above, but SpendResource is the only thing that can say no for certain.
+            var batches = inventory.SpendResource(line.ItemId, line.Quantity);
+            if (batches == null)
             {
                 error = $"{Describe(line.ItemId)} went missing between the check and the spend";
                 return false;
             }
 
-            spent.Add($"{Describe(line.ItemId)} x{line.Quantity}");
+            spent.Add($"{Describe(line.ItemId)} x{line.Quantity}{Batches(batches)}");
         }
 
         foreach (var draw in classDraws)
         {
             foreach (var (itemId, take) in draw.Resources)
             {
-                if (!inventory.ConsumeResource(itemId, take))
+                var batches = inventory.SpendResource(itemId, take);
+                if (batches == null)
                 {
                     error = $"{Describe(itemId)} went missing between the check and the spend";
                     return false;
                 }
 
-                spent.Add($"{Describe(itemId)} x{take} toward class {draw.Line.ClassId}");
+                spent.Add($"{Describe(itemId)} x{take}{Batches(batches)} toward class {draw.Line.ClassId}");
             }
 
             if (draw.Guids.Count > 0)
@@ -285,6 +287,18 @@ public static class BlueprintCrafting
         }
 
         return true;
+    }
+
+    /// <summary>" (q200 x5, ungraded x2)": which batches a spend drew on, for the log. Empty when all ungraded.</summary>
+    private static string Batches(IReadOnlyList<(string Batch, uint Quantity)> batches)
+    {
+        if (batches.All(b => string.IsNullOrEmpty(b.Batch)))
+        {
+            return string.Empty;
+        }
+
+        return " (" + string.Join(", ", batches.Select(b =>
+            (ResourceStats.Unpack(b.Batch) is { } stats ? $"q{stats.Quality}" : "ungraded") + $" x{b.Quantity}")) + ")";
     }
 
     public static string Describe(uint itemId)

@@ -435,7 +435,7 @@ public class NetworkPlayer : NetworkClient, INetworkPlayer
 
         foreach (var resource in saved.Resources)
         {
-            Inventory.AddResource(resource.SdbId, resource.Quantity);
+            Inventory.AddResource(resource.SdbId, resource.Quantity, resource.Batch);
         }
 
         foreach (var item in saved.Items)

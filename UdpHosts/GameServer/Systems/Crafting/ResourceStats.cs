@@ -34,6 +34,32 @@ public static class ResourceStats
         return text.ToString();
     }
 
+    /// <summary>
+    ///     The quality and five stats packed into <paramref name="text"/>, or null when it is empty or isn't
+    ///     that format. An ungraded stack (Crystite, anything mined before batches) carries empty text.
+    /// </summary>
+    public static (uint SdbId, int Quality, int[] Stats)? Unpack(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return null;
+        }
+
+        var parts = text.Split('-', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 8 || parts.Any(p => p.Any(c => !Digits.Contains(c))))
+        {
+            return null;
+        }
+
+        var values = parts.Select(FromBase36).ToArray();
+        return ((uint)values[1], (int)values[2], values.Skip(3).Take(5).Select(v => (int)v).ToArray());
+    }
+
+    private static long FromBase36(string text)
+    {
+        return text.Aggregate(0L, (value, c) => value * 36 + Digits.IndexOf(c));
+    }
+
     internal static string ToBase36(long value)
     {
         if (value < 0)

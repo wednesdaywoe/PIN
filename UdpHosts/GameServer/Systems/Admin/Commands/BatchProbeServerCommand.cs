@@ -15,10 +15,12 @@ namespace GameServer.Systems.Admin.Commands;
 ///     real update for the same material (or <c>dbg_inventory resend</c>) overwrites what the client shows.
 ///     <c>pair</c> sends two batches of one material in a single message; <c>tagged</c> also gives them
 ///     different values in <c>Resource.Unk2</c>, the one unnamed field that could be a batch id.
+///     <c>give</c> and <c>spend</c> are real (graded-crafting-3): they add a batch to the server's inventory,
+///     which is saved, and spend from the one batch of a given quality.
 /// </remarks>
 [ServerCommand(
     "Send a material stack with a quality and stats (graded-crafting-1 probe)",
-    "batch <itemId> <quantity> <quality> [stat1..stat5] | batch pair <itemId> [tagged]",
+    "batch <itemId> <quantity> <quality> [stat1..stat5] | batch pair <itemId> [tagged] | batch give <itemId> <quantity> <quality> [stat1..stat5] | batch spend <itemId> <quantity> <quality>",
     "batch")]
 public class BatchProbeServerCommand : ServerCommand
 {
@@ -28,6 +30,12 @@ public class BatchProbeServerCommand : ServerCommand
         if (inventory == null)
         {
             SourceFeedback("Need a player inventory", context);
+            return;
+        }
+
+        if (parameters.Length >= 4 && parameters[0] is "give" or "spend")
+        {
+            GiveOrSpend(parameters, inventory, context);
             return;
         }
 
@@ -66,6 +74,35 @@ public class BatchProbeServerCommand : ServerCommand
             Logger.Information("batch probe: item {ItemId} x{Quantity}, unk2 {Unk2}, text '{Text}'", stack.SdbId, stack.Quantity, stack.Unk2, stack.TextKey);
             SourceFeedback($"Sent {stack.SdbId} x{stack.Quantity} '{stack.TextKey}' unk2 {stack.Unk2}", context);
         }
+    }
+
+    private void GiveOrSpend(string[] parameters, Data.CharacterInventory inventory, ServerCommandContext context)
+    {
+        var itemId = ParseUIntParameter(parameters[1]);
+        var quantity = ParseUIntParameter(parameters[2]);
+        var quality = (int)ParseUIntParameter(parameters[3]);
+        if (SDBInterface.GetRootItem(itemId) == null)
+        {
+            SourceFeedback($"No item {itemId}", context);
+            return;
+        }
+
+        if (parameters[0] == "give")
+        {
+            var stats = parameters.Skip(4).Take(5).Select(p => (int)ParseUIntParameter(p)).ToArray();
+            var batch = ResourceStats.Pack(itemId, quality, stats);
+            inventory.AddResource(itemId, quantity, batch);
+            Logger.Information("batch give: item {ItemId} x{Quantity}, batch '{Batch}', now {Total} across {Count} batch(es)", itemId, quantity, batch, inventory.GetResourceQuantity(itemId), inventory.GetResourceBatches(itemId).Count());
+            SourceFeedback($"Gave {itemId} x{quantity} at quality {quality}; you hold {inventory.GetResourceQuantity(itemId)} in {inventory.GetResourceBatches(itemId).Count()} batch(es)", context);
+            return;
+        }
+
+        var named = inventory.GetResourceBatches(itemId).Where(r => ResourceStats.Unpack(r.TextKey)?.Quality == quality).Select(r => r.TextKey).FirstOrDefault();
+        var spent = named == null ? null : inventory.SpendResource(itemId, quantity, named);
+        Logger.Information("batch spend: item {ItemId} x{Quantity} at quality {Quality}: {Result}", itemId, quantity, quality, spent == null ? "refused" : "spent");
+        SourceFeedback(spent == null
+            ? $"No batch of {itemId} at quality {quality} holds {quantity}"
+            : $"Spent {quantity} of {itemId} at quality {quality}; you hold {inventory.GetResourceQuantity(itemId)} in {inventory.GetResourceBatches(itemId).Count()} batch(es)", context);
     }
 
     private static Resource Stack(uint itemId, uint quantity, int quality, int[] stats, uint unk2) => new()
