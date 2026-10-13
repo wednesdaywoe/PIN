@@ -113,18 +113,27 @@ public class ConvexVerticesTests
     {
         var pool = new BufferPool();
         var simulation = Simulation.Create(pool, new NarrowPhaseCallbacks(), new PoseIntegratorCallbacks(Vector3.Zero), new SolveDescription(8, 1));
-        var loader = new TagfileLoader(simulation, pool, null);
+        try
+        {
+            var loader = new TagfileLoader(simulation, pool, null);
 
-        ITagfileExternalStorage layer = null;
-        var statics = loader.ProcessObject(Shape(points), ref layer);
+            ITagfileExternalStorage layer = null;
+            var statics = loader.ProcessObject(Shape(points), ref layer);
 
-        var only = Assert.Single(statics);
-        Assert.NotEqual(loader.PlaceholderBox, only.Shape);
-        Assert.Equal(ConvexHull.Id, only.Shape.Type);
+            var only = Assert.Single(statics);
+            Assert.NotEqual(loader.PlaceholderBox, only.Shape);
+            Assert.Equal(ConvexHull.Id, only.Shape.Type);
 
-        var hull = simulation.Shapes.GetShape<ConvexHull>(only.Shape.Index);
-        hull.ComputeBounds(Quaternion.Identity, out var min, out var max);
-        return (min + only.Pose.Position, max + only.Pose.Position);
+            var hull = simulation.Shapes.GetShape<ConvexHull>(only.Shape.Index);
+            hull.ComputeBounds(Quaternion.Identity, out var min, out var max);
+            return (min + only.Pose.Position, max + only.Pose.Position);
+        }
+        finally
+        {
+            // A pool left holding blocks kills the test host from its finalizer (progress-1).
+            simulation.Dispose();
+            pool.Clear();
+        }
     }
 
     /// <summary>Packs points the way Havok stores them: transposed in fours, the last group padded.</summary>

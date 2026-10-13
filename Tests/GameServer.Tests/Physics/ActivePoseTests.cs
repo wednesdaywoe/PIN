@@ -18,7 +18,7 @@ public class ActivePoseTests
     [Fact]
     public void EveryCompoundChildMapsToTheShapeItWasBuiltFrom()
     {
-        var engine = new PhysicsEngine(new EventBus(), 0, isDebugPipeClient: true);
+        using var engine = new PhysicsEngine(new EventBus(), 0, isDebugPipeClient: true);
         var pose = new PoseData
         {
             Name = "test",

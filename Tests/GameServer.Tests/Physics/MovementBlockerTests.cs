@@ -16,7 +16,7 @@ public class MovementBlockerTests
     [Fact]
     public void ALineThroughABlockerIsBlocked()
     {
-        var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
+        using var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
 
         Assert.True(engine.IsMovementBlocked(new Vector3(0f, 0f, 1f), new Vector3(20f, 0f, 1f)));
     }
@@ -24,7 +24,7 @@ public class MovementBlockerTests
     [Fact]
     public void ALineThatStopsShortIsNot()
     {
-        var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
+        using var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
 
         Assert.False(engine.IsMovementBlocked(new Vector3(0f, 0f, 1f), new Vector3(7f, 0f, 1f)));
     }
@@ -32,7 +32,7 @@ public class MovementBlockerTests
     [Fact]
     public void SomethingInsideABlockerCanWalkOut()
     {
-        var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
+        using var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
 
         Assert.False(engine.IsMovementBlocked(new Vector3(10f, 0f, 1f), new Vector3(15f, 0f, 1f)));
     }
@@ -40,7 +40,7 @@ public class MovementBlockerTests
     [Fact]
     public void BlockersAreInvisibleToTheWorld()
     {
-        var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
+        using var engine = WithBlockerAt(new Vector3(10f, 0f, 1f), 2f);
 
         Assert.False(engine.TryHitWorld(new Vector3(0f, 0f, 1f), Vector3.UnitX, 20f, out _));
         Assert.False(engine.TryGetGroundHeight(new Vector3(10f, 0f, 1f), out _));

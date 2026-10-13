@@ -23,7 +23,7 @@ namespace GameServer.Physics;
 /// <summary>
 ///    Runs physics simulations (primarily hit detection)
 /// </summary>
-public partial class PhysicsEngine
+public partial class PhysicsEngine : IDisposable
 {
     public const float TargetTimestepDuration = 50; // (1/20f)
     public const float TargetDebugTickDuration = 200;
@@ -115,6 +115,20 @@ public partial class PhysicsEngine
     public double TimeAccumulator { get; protected set; }
     public PoseLoader.PoseLoader PoseLoader { get; private set; }
     private DebugProjectileHitCallbacks? DebugProjectileHitCallbacks { get; set; }
+
+    /// <summary>
+    ///     Hands back everything the engine took from Bepu. A <see cref="BufferPool"/> left holding blocks
+    ///     asserts in its finalizer, and in a debug build that assert kills whatever process the GC
+    ///     happened to finalize it in, which for the tests was the test host (progress-1).
+    /// </summary>
+    public void Dispose()
+    {
+        Simulation?.Dispose();
+        Blockers?.Dispose();
+        BufferPool?.Clear();
+        ThreadDispatcher?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     public void LoadZone(uint zoneId)
     {
